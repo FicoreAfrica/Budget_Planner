@@ -170,6 +170,7 @@ translations = {
         'Invalid Email': 'Invalid Email',
         'Language selected!': 'Language selected!',
         'Language required': 'Language required',
+        'Continue to Income': 'Continue to Income',
         'Next': 'Next',
         'Step 1': 'Step 1',
         # budget_step2.html
@@ -302,6 +303,7 @@ translations = {
         'Invalid Email': 'Imel Ba daidai ba ne',
         'Language selected!': 'An zaɓi yare!',
         'Language required': 'Ana buƙatar yare',
+        'Continue to Income': 'Ci gaba zuwa Kuɗin Shiga',
         'Next': 'Na Gaba',
         'Step 1': 'Mataki na 1',
         # budget_step2.html
