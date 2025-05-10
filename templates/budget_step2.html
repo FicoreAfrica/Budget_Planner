@@ -38,7 +38,7 @@
     return gk_fileData[filename] || "";
     }
 </script><!DOCTYPE html>
-<html lang="{{ translations['language'] }}">
+<html lang="{{ language }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -94,11 +94,11 @@
             {% endif %}
         {% endwith %}
         <div class="form-card slide-in">
-            <h3>Step 2: {{ translations['Income'] }}</h3>
+            <h3>{{ translations['Step 2'] }}: {{ translations['Income'] }}</h3>
             <form method="POST" id="step2-form">
                 {{ form.hidden_tag() }}
                 <div class="form-group">
-                    {{ form.income.label(class="form-label") }}
+                    <label for="income" class="form-label">{{ translations['Monthly Income'] }}</label>
                     <div style="position: relative;">
                         {{ form.income(class="form-control number-input", type="number", step="0.01", min="0", placeholder=translations['e.g. ₦150,000'], **{'aria-required': 'true'}) }}
                         <span class="number-display" data-for="income"></span>
@@ -108,8 +108,8 @@
                     <div class="invalid-feedback">{{ translations['Invalid Number'] }}</div>
                 </div>
                 <div class="text-center">
-                    <a href="{{ url_for('step1') }}" class="btn btn-secondary">Back</a>
-                    {{ form.submit(class="btn btn-primary") }}
+                    <a href="{{ url_for('step1') }}" class="btn btn-secondary">{{ translations['Back'] }}</a>
+                    {{ form.submit(class="btn btn-primary", value=translations['Next']) }}
                 </div>
             </form>
         </div>
