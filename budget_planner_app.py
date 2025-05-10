@@ -45,7 +45,7 @@ for var in required_env_vars:
 app.config['SESSION_TYPE'] = 'filesystem'
 app.config['SESSION_FILE_DIR'] = os.path.join(app.root_path, 'flask_session')
 app.config['SESSION_PERMANENT'] = False
-app.config['PERMANENT_SESSION_LIFETIME'] = 3600  # Increased to 1 hour
+app.config['PERMANENT_SESSION_LIFETIME'] = 3600  # 1 hour
 app.config['SESSION_USE_SIGNER'] = True
 app.config['SESSION_COOKIE_NAME'] = 'session_id'
 app.config['SESSION_COOKIE_SECURE'] = True  # Secure cookies in production
@@ -67,7 +67,7 @@ try:
 except OSError as e:
     logger.error(f"Failed to create cache directory: {e}")
     logger.warning("Cache initialization failed. Proceeding without caching.")
-    cache = Cache(app, config={'CACHE_TYPE': 'null'})
+    cache = Cache(app, config={'CACHE_TYPE': 'null'}
 
 # Google Sheets setup
 SCOPE = ['https://www.googleapis.com/auth/spreadsheets']
@@ -104,6 +104,7 @@ translations = {
         'Error retrieving data. Please try again.': 'Error retrieving data. Please try again.',
         'Error saving data. Please try again.': 'Error saving data. Please try again.',
         'Send Email Report': 'Email report sent successfully!',
+        'Google Sheets Error': 'Unable to access Google Sheets. Please try again later.',
         # budget_dashboard.html
         'Budget Dashboard': 'Budget Dashboard',
         'Financial growth passport for Africa': 'Financial growth passport for Africa',
@@ -170,8 +171,8 @@ translations = {
         'Invalid Email': 'Invalid Email',
         'Language selected!': 'Language selected!',
         'Language required': 'Language required',
-        'Continue to Income': 'Continue to Income',
         'Next': 'Next',
+        'Continue to Income': 'Continue to Income',
         'Step 1': 'Step 1',
         # budget_step2.html
         'Income': 'Income',
@@ -237,6 +238,7 @@ translations = {
         'Error retrieving data. Please try again.': 'Kuskure wajen dawo da bayanai. Da fatan za a sake gwadawa.',
         'Error saving data. Please try again.': 'Kuskure wajen ajiye bayanai. Da fatan za a sake gwadawa.',
         'Send Email Report': 'An aika rahoton imel cikin nasara!',
+        'Google Sheets Error': 'Ba a iya samun damar Google Sheets ba. Da fatan za a sake gwadawa daga baya.',
         # budget_dashboard.html
         'Budget Dashboard': 'Dashboard na Kasafin Kuɗi',
         'Financial growth passport for Africa': 'Fasfo na ci gaban kuɗi don Afirka',
@@ -288,8 +290,8 @@ translations = {
         'Results copied to clipboard': 'An kwafi sakamakon zuwa allo',
         'Failed to copy results': 'An kasa kwafi sakamakon',
         # budget_step1.html
-        'Monthly Budget Planner': 'Mai GLOBA Tsara Kasafin Kuɗi na Wata',
-        'Personal Information': 'Bayanin Kai',
+        'Monthly Budget Planner': 'Mai Tsara Kasafin Kuɗi na Wata',
+        'Personal Information': 'Bayanai na Kai',
         'First Name': 'Sunan Farko',
         'Enter your first name': 'Shigar da sunan farko',
         'Enter your first name for your report.': 'Shigar da sunan farko don rahotonku.',
@@ -303,8 +305,8 @@ translations = {
         'Invalid Email': 'Imel Ba daidai ba ne',
         'Language selected!': 'An zaɓi yare!',
         'Language required': 'Ana buƙatar yare',
-        'Continue to Income': 'Ci gaba zuwa Kuɗin Shiga',
         'Next': 'Na Gaba',
+        'Continue to Income': 'Ci gaba zuwa Kuɗin Shiga',
         'Step 1': 'Mataki na 1',
         # budget_step2.html
         'Income': 'Kuɗin Shiga',
@@ -370,7 +372,7 @@ def sanitize_input(text):
     text = re.sub(r'[<>";]', '', text.strip())[:100]
     return text
 
-def initialize_sheets(max_retries=5, backoff_factor=2):
+def initialize_sheets(max_retries=3, backoff_factor=1):
     """Initialize Google Sheets client with retries."""
     global sheets
     with sheets_lock:
@@ -393,16 +395,20 @@ def initialize_sheets(max_retries=5, backoff_factor=2):
                 logger.error(f"Invalid GOOGLE_CREDENTIALS_JSON format: {e}")
                 return False
             except gspread.exceptions.APIError as e:
-                logger.error(f"Google Sheets API error on attempt {attempt + 1}: {e} (Status: {e.response.status_code})")
+                logger.error(f"Google Sheets API error on attempt {attempt + 1}: {e} (Status: {getattr(e.response, 'status_code', 'unknown')}, Response: {getattr(e.response, 'text', 'no response')})")
                 if attempt < max_retries - 1:
-                    time.sleep(backoff_factor + 2)  # Conservative delay
+                    time.sleep(backoff_factor)
+            except PermissionError as e:
+                logger.error(f"Permission error accessing spreadsheet {SPREADSHEET_ID} on attempt {attempt + 1}: {e}")
+                if attempt < max_retries - 1:
+                    time.sleep(backoff_factor)
             except (ValueError, KeyError, TypeError) as e:
                 logger.error(f"Configuration error on attempt {attempt + 1}: {e}")
                 return False
             except Exception as e:
                 logger.exception(f"Unexpected error on attempt {attempt + 1}: {e}")
                 if attempt < max_retries - 1:
-                    time.sleep(backoff_factor + 2)
+                    time.sleep(backoff_factor)
         logger.critical("Max retries exceeded for Google Sheets initialization.")
         return False
 
@@ -413,18 +419,22 @@ def get_sheets_client():
         if sheets is None:
             if not initialize_sheets():
                 logger.error("Google Sheets initialization failed.")
-                raise RuntimeError("Google Sheets initialization failed.")
+                return None
         return sheets
     except Exception as e:
         logger.exception(f"Failed to get sheets client: {e}")
-        raise
+        return None
 
 @cache.memoize(timeout=600)
-def fetch_data_from_sheet(email=None, max_retries=5, backoff_factor=2):
+def fetch_data_from_sheet(email=None, max_retries=3, backoff_factor=1):
     """Fetch data from Google Sheets with retries."""
     for attempt in range(max_retries):
         try:
-            worksheet = get_sheets_client().worksheet('Sheet1')
+            client = get_sheets_client()
+            if client is None:
+                logger.error(f"Attempt {attempt + 1}: Google Sheets client not initialized.")
+                return pd.DataFrame(columns=PREDETERMINED_HEADERS)
+            worksheet = client.worksheet('Sheet1')
             values = worksheet.get_all_values()
             if not values:
                 logger.info(f"Attempt {attempt + 1}: No data in Google Sheet.")
@@ -442,9 +452,9 @@ def fetch_data_from_sheet(email=None, max_retries=5, backoff_factor=2):
             logger.info(f"Fetched {len(df)} rows for email {email if email else 'all'}.")
             return df
         except gspread.exceptions.APIError as e:
-            logger.error(f"Google Sheets API error on attempt {attempt + 1}: {e} (Status: {e.response.status_code})")
+            logger.error(f"Google Sheets API error on attempt {attempt + 1}: {e} (Status: {getattr(e.response, 'status_code', 'unknown')}, Response: {getattr(e.response, 'text', 'no response')})")
             if attempt < max_retries - 1:
-                time.sleep(backoff_factor + 2)
+                time.sleep(backoff_factor)
         except gspread.exceptions.WorksheetNotFound as e:
             logger.error(f"Worksheet 'Sheet1' not found: {e}")
             return pd.DataFrame(columns=PREDETERMINED_HEADERS)
@@ -454,19 +464,23 @@ def fetch_data_from_sheet(email=None, max_retries=5, backoff_factor=2):
         except Exception as e:
             logger.exception(f"Unexpected error on attempt {attempt + 1}: {e}")
             if attempt < max_retries - 1:
-                time.sleep(backoff_factor + 2)
+                time.sleep(backoff_factor)
     logger.error("Max retries reached while fetching data.")
     return pd.DataFrame(columns=PREDETERMINED_HEADERS)
 
 def set_sheet_headers():
     """Set Google Sheets headers."""
     try:
-        worksheet = get_sheets_client().worksheet('Sheet1')
+        client = get_sheets_client()
+        if client is None:
+            logger.error("Google Sheets client not initialized for setting headers.")
+            return False
+        worksheet = client.worksheet('Sheet1')
         worksheet.update('A1:Q1', [PREDETERMINED_HEADERS])
         logger.info("Sheet1 headers updated.")
         return True
     except gspread.exceptions.APIError as e:
-        logger.error(f"Google Sheets API error setting headers: {e} (Status: {e.response.status_code})")
+        logger.error(f"Google Sheets API error setting headers: {e} (Status: {getattr(e.response, 'status_code', 'unknown')}, Response: {getattr(e.response, 'text', 'no response')})")
         return False
     except gspread.exceptions.WorksheetNotFound as e:
         logger.error(f"Worksheet 'Sheet1' not found: {e}")
@@ -482,7 +496,11 @@ def append_to_sheet(data):
             if not data or len(data) != len(PREDETERMINED_HEADERS):
                 logger.error(f"Invalid data length ({len(data)}) for headers ({len(PREDETERMINED_HEADERS)}): {data}")
                 return False
-            worksheet = get_sheets_client().worksheet('Sheet1')
+            client = get_sheets_client()
+            if client is None:
+                logger.error("Google Sheets client not initialized for appending data.")
+                return False
+            worksheet = client.worksheet('Sheet1')
             current_headers = worksheet.row_values(1)
             if not current_headers or current_headers != PREDETERMINED_HEADERS:
                 logger.info("Headers missing or incorrect. Setting headers.")
@@ -493,10 +511,10 @@ def append_to_sheet(data):
                 logger.info("Headers already correct. Skipping header update.")
             worksheet.append_row(data, value_input_option='RAW')
             logger.info(f"Appended data to sheet: {data}")
-            time.sleep(2)  # Respect API rate limits
+            time.sleep(1)  # Respect API rate limits
             return True
         except gspread.exceptions.APIError as e:
-            logger.error(f"Google Sheets API error appending to sheet: {e} (Status: {e.response.status_code})")
+            logger.error(f"Google Sheets API error appending to sheet: {e} (Status: {getattr(e.response, 'status_code', 'unknown')}, Response: {getattr(e.response, 'text', 'no response')})")
             return False
         except gspread.exceptions.WorksheetNotFound as e:
             logger.error(f"Worksheet 'Sheet1' not found: {e}")
@@ -678,7 +696,7 @@ def step2():
                 flash(translations[language]['Please enter a valid income amount'], 'error')
                 return render_template('budget_step2.html', form=form, translations=translations.get(language, translations['en']))
             session['budget_data']['monthly_income'] = income
-            session.modified = True  # Ensure session is marked as modified
+            session.modified = True
             logger.info(f"Step 2 completed for {session['budget_data']['email']}. Updated session data: {session['budget_data']}")
             return redirect(url_for('step3'))
         return render_template('budget_step2.html', form=form, translations=translations.get(language, translations['en']))
@@ -711,7 +729,7 @@ def step3():
                     flash(translations[language]['Please enter valid amounts for all expenses'], 'error')
                     return render_template('budget_step3.html', form=form, translations=translations.get(language, translations['en']))
             session['budget_data'].update(expenses)
-            session.modified = True  # Ensure session is marked as modified
+            session.modified = True
             logger.info(f"Step 3 completed for {session['budget_data']['email']}. Updated session data: {session['budget_data']}")
             return redirect(url_for('step4'))
         return render_template('budget_step3.html', form=form, translations=translations.get(language, translations['en']))
@@ -741,7 +759,7 @@ def step4():
                 'savings_goal': savings_goal,
                 'auto_email': form.auto_email.data
             })
-            session.modified = True  # Ensure session is marked as modified
+            session.modified = True
             data = session['budget_data']
             logger.info(f"Step 4 session data after update: {data}")
 
@@ -751,7 +769,6 @@ def step4():
             if missing_keys:
                 logger.error(f"Missing keys in session['budget_data']: {missing_keys}")
                 flash(translations[language]['Incomplete Data'], 'error')
-                # Redirect to appropriate step based on missing keys
                 if 'monthly_income' in missing_keys:
                     return redirect(url_for('step2'))
                 if any(key in missing_keys for key in ['housing_expenses', 'food_expenses', 'transport_expenses', 'other_expenses']):
@@ -771,24 +788,25 @@ def step4():
                 'datasets': [{'data': [data['monthly_income'], total_expenses], 'backgroundColor': ['#36A2EB', '#FF6384']}]
             }
 
-            # Fetch existing data to calculate rank
+            # Fetch existing data to calculate rank (with fallback)
             all_users_df = fetch_data_from_sheet()
             if all_users_df.empty:
-                logger.warning("No data retrieved from Google Sheets.")
-                flash(translations[language]['Error retrieving data. Please try again.'], 'error')
-                return redirect(url_for('step1'))
-
-            # Calculate metrics for ranking
-            all_users_df = calculate_budget_metrics(all_users_df)
-            all_users_df['surplus_deficit'] = pd.to_numeric(all_users_df['surplus_deficit'], errors='coerce').fillna(0.0)
-            all_users_df = all_users_df.sort_values('surplus_deficit', ascending=False).reset_index(drop=True)
-            total_users = len(all_users_df.drop_duplicates(subset=['email']))
-            user_df = pd.DataFrame([data])
-            user_df = calculate_budget_metrics(user_df)
-            user_index = all_users_df.index[all_users_df['email'] == data['email']].tolist()
-            rank = user_index[0] + 1 if user_index else total_users
+                logger.warning("No data retrieved from Google Sheets. Assigning default rank.")
+                flash(translations[language]['Google Sheets Error'], 'warning')
+                rank = 1
+                total_users = 1
+            else:
+                all_users_df = calculate_budget_metrics(all_users_df)
+                all_users_df['surplus_deficit'] = pd.to_numeric(all_users_df['surplus_deficit'], errors='coerce').fillna(0.0)
+                all_users_df = all_users_df.sort_values('surplus_deficit', ascending=False).reset_index(drop=True)
+                total_users = len(all_users_df.drop_duplicates(subset=['email']))
+                user_df = pd.DataFrame([data])
+                user_df = calculate_budget_metrics(user_df)
+                user_index = all_users_df.index[all_users_df['email'] == data['email']].tolist()
+                rank = user_index[0] + 1 if user_index else total_users
 
             # Assign badges
+            user_df = pd.DataFrame([data])
             user_df['Timestamp'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             badges = assign_badges(user_df)
 
@@ -813,11 +831,10 @@ def step4():
                 str(total_users)
             ]
 
-            # Append to Google Sheets
+            # Append to Google Sheets (with fallback)
             if not append_to_sheet(sheet_data):
                 logger.error(f"Failed to save data for {data['email']} to Google Sheets.")
-                flash(translations[language]['Error saving data. Please try again.'], 'error')
-                return redirect(url_for('step1'))
+                flash(translations[language]['Google Sheets Error'], 'warning')
 
             # Send email if requested
             if data.get('auto_email') and data.get('email'):
