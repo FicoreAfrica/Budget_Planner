@@ -309,7 +309,7 @@ translations = {
         'First Name': 'Sunan Farko',
         'Enter your first name': 'Shigar da sunan farko',
         'Enter your first name for your report.': 'Shigar da sunan farko don rahotonku.',
-        'Email': 'Imel',
+        'Email': 'Im  'Email': 'Imel',
         'Enter your email': 'Shigar da imel ɗin ku',
         'Get your budget report by email.': 'Samu rahoton kasafin kuɗin ku ta imel.',
         'Language': 'Yare',
@@ -634,7 +634,7 @@ def send_budget_email(data, total_expenses, savings, surplus_deficit, chart_data
         flash("Error sending email notification. Dashboard will still display.", 'warning')
         return False
     except (ValueError, TypeError, KeyError) as e:
-        logger.error(f"Data processing error sending email: {e}")
+        logger.error(f "Data processing error sending email: {e}")
         flash("Invalid email data. Dashboard will still display.", 'warning')
         return False
     except Exception as e:
@@ -661,7 +661,7 @@ class Step3Form(FlaskForm):
     submit = SubmitField('Continue to Savings & Review')
 
 class Step4Form(FlaskForm):
-    savings_goal = FloatField('Savings Goal Ditto for savings_goal
+    savings_goal = FloatField('Savings Goal', validators=[Optional()])
     auto_email = BooleanField('Receive Email Report')
     submit = SubmitField('Continue to Dashboard')
 
@@ -932,7 +932,7 @@ def send_budget_email_route():
         dashboard_data = session.get('dashboard_data', {})
         if not dashboard_data:
             logger.warning("Dashboard data missing in session for email route.")
-            flash(translations['en']['Session Expired'], 'error')
+            flash(trans  flash(translations['en']['Session Expired'], 'error')
             return redirect(url_for('step1'))
         language = dashboard_data.get('language', 'en')
 
