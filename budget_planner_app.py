@@ -67,7 +67,7 @@ try:
 except OSError as e:
     logger.error(f"Failed to create cache directory: {e}")
     logger.warning("Cache initialization failed. Proceeding without caching.")
-    cache = Cache(app, config={'CACHE_TYPE': 'null'}
+    cache = Cache(app, config={'CACHE_TYPE': 'null'})
 
 # Google Sheets setup
 SCOPE = ['https://www.googleapis.com/auth/spreadsheets']
