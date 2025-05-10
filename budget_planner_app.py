@@ -70,7 +70,7 @@ PREDETERMINED_HEADERS = [
 
 # Define URL constants
 FEEDBACK_FORM_URL = os.getenv('FEEDBACK_FORM_URL', 'https://forms.gle/1g1FVulyf7ZvvXr7G0q7hAKwbGJMxV4blpjBuqrSjKzQ')
-WAITLIST_FORM_URL = os.getenv('WAITLIST_FORM_URL', 'https://forms.gle/17e0XYcp-z3hCl0I-j2JkHoKKJrp4PfgujsK8D7uqNxo')
+WAITLIST_FORM_URL = os.getenv('FEEDBACK_FORM_URL', 'https://forms.gle/17e0XYcp-z3hCl0I-j2JkHoKKJrp4PfgujsK8D7uqNxo')
 CONSULTANCY_FORM_URL = os.getenv('CONSULTANCY_FORM_URL', 'https://forms.gle/1TKvlT7OTvNS70YNd8DaPpswvqd9y7hKydxKr07gpK9A')
 COURSE_URL = os.getenv('COURSE_URL', 'https://example.com/course')
 COURSE_TITLE = os.getenv('COURSE_TITLE', 'Learn Budgeting')
@@ -466,7 +466,11 @@ def calculate_budget_metrics(df):
             df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0.0)
         df['total_expenses'] = df['housing_expenses'] + df['food_expenses'] + df['transport_expenses'] + df['other_expenses']
         df['savings'] = df.apply(
-            lambda row: max(0, row['robesecsv8c5a7b0d1e1a4b4c6a0b8c5a7b0d1e1a4b4c6a0b8c5a7b0d1e1a4b4c6a0b8c5a7b0d1e1a4b4c6a0b8c5a7b0d1.e('surplus_deficit').apply(
+            lambda row: max(0, row['monthly_income'] * 0.1) if pd.isna(row['savings_goal']) or row['savings_goal'] == 0 else row['savings_goal'],
+            axis=1
+        )
+        df['surplus_deficit'] = df['monthly_income'] - df['total_expenses'] - df['savings']
+        df['advice'] = df['surplus_deficit'].apply(
             lambda x: 'Great job! Save or invest your surplus to grow your wealth.' if x >= 0 else 'Reduce non-essential spending to balance your budget.'
         )
         return df
