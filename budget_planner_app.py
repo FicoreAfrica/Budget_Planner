@@ -156,6 +156,9 @@ def fetch_data_from_sheet(email=None, max_retries=5, backoff_factor=2):
             logger.error(f"Google Sheets API error on attempt {attempt + 1}: {e}")
             if attempt < max_retries - 1:
                 time.sleep(backoff_factor ** attempt)
+        except gspread.exceptions.WorksheetNotFound as e:
+            logger.error(f"Worksheet 'Sheet1' not found: {e}")
+            return pd.DataFrame(columns=PREDETERMINED_HEADERS)
         except (ValueError, TypeError, KeyError) as e:
             logger.error(f"Data processing error on attempt {attempt + 1}: {e}")
             return pd.DataFrame(columns=PREDETERMINED_HEADERS)
@@ -176,6 +179,9 @@ def set_sheet_headers():
     except gspread.exceptions.APIError as e:
         logger.error(f"Google Sheets API error setting headers: {e}")
         return False
+    except gspread.exceptions.WorksheetNotFound as e:
+        logger.error(f"Worksheet 'Sheet1' not found: {e}")
+        return False
     except Exception as e:
         logger.exception(f"Unexpected error setting headers: {e}")
         return False
@@ -190,15 +196,21 @@ def append_to_sheet(data):
             worksheet = get_sheets_client().worksheet('Sheet1')
             current_headers = worksheet.row_values(1)
             if not current_headers or current_headers != PREDETERMINED_HEADERS:
+                logger.info("Headers missing or incorrect. Setting headers.")
                 if not set_sheet_headers():
                     logger.error("Failed to set sheet headers.")
                     return False
+            else:
+                logger.info("Headers already correct. Skipping header update.")
             worksheet.append_row(data, value_input_option='RAW')
             logger.info(f"Appended data to sheet: {data}")
             time.sleep(1)  # Respect API rate limits
             return True
         except gspread.exceptions.APIError as e:
             logger.error(f"Google Sheets API error appending to sheet: {e}")
+            return False
+        except gspread.exceptions.WorksheetNotFound as e:
+            logger.error(f"Worksheet 'Sheet1' not found: {e}")
             return False
         except (ValueError, TypeError) as e:
             logger.error(f"Data validation error appending to sheet: {e}")
@@ -312,7 +324,7 @@ def send_budget_email(data, total_expenses, savings, surplus_deficit, chart_data
 class Step1Form(FlaskForm):
     first_name = StringField('First Name', validators=[DataRequired()])
     email = StringField('Email', validators=[DataRequired(), Email()])
-    language = SelectField('Language', choices=[('en', 'English'), ('es', 'Spanish'), ('fr', 'French')], default='en')
+    language = SelectField('Language', choices=[('en', 'English'), ('ha', 'Hausa')], default='en')
     submit = SubmitField('Next')
 
 class Step2Form(FlaskForm):
@@ -343,25 +355,15 @@ translations = {
         'Send Email Report': 'Email report sent successfully!',
         'Budget Report Subject': 'Your Budget Report'
     },
-    'es': {
-        'First Budget Completed!': '¡Primer presupuesto completado!',
-        'Check Inbox': 'Revisa tu bandeja de entrada para el informe de presupuesto.',
-        'Submission Success': '¡Presupuesto enviado con éxito!',
-        'Session Expired': 'Sesión expirada. Por favor, comienza de nuevo.',
-        'Error retrieving data. Please try again.': 'Error al recuperar datos. Por favor, intenta de nuevo.',
-        'Error saving data. Please try again.': 'Error al guardar datos. Por favor, intenta de nuevo.',
-        'Send Email Report': '¡Informe por correo enviado con éxito!',
-        'Budget Report Subject': 'Tu Informe de Presupuesto'
-    },
-    'fr': {
-        'First Budget Completed!': 'Premier budget complété !',
-        'Check Inbox': 'Vérifiez votre boîte de réception pour le rapport de budget.',
-        'Submission Success': 'Budget soumis avec succès !',
-        'Session Expired': 'Session expirée. Veuillez recommencer.',
-        'Error retrieving data. Please try again.': 'Erreur lors de la récupération des données. Veuillez réessayer.',
-        'Error saving data. Please try again.': 'Erreur lors de l\'enregistrement des données. Veuillez réessayer.',
-        'Send Email Report': 'Rapport par e-mail envoyé avec succès !',
-        'Budget Report Subject': 'Votre Rapport de Budget'
+    'ha': {
+        'First Budget Completed!': 'An kammala kasafin kuɗi na farko!',
+        'Check Inbox': 'Duba akwatin saƙonku don rahoton kasafin kuɗi.',
+        'Submission Success': 'An ƙaddamar da kasafin kuɗi cikin nasara!',
+        'Session Expired': 'Zaman ya ƙare. Da fatan za a sake farawa.',
+        'Error retrieving data. Please try again.': 'Kuskure wajen dawo da bayanai. Da fatan za a sake gwadawa.',
+        'Error saving data. Please try again.': 'Kuskure wajen ajiye bayanai. Da fatan za a sake gwadawa.',
+        'Send Email Report': 'An aika rahoton imel cikin nasara!',
+        'Budget Report Subject': 'Rahoton Kasafin Kuɗin Ku'
     }
 }
 
