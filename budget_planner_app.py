@@ -245,6 +245,63 @@ def send_budget_email(data, total_expenses, savings, surplus_deficit, chart_data
         logger.error(f"Failed to send email: {e}")
         flash("Error sending email notification. Dashboard will still display.", 'warning')
 
+# Form Definitions
+class Step1Form(FlaskForm):
+    first_name = StringField('First Name', validators=[DataRequired()])
+    email = StringField('Email', validators=[DataRequired(), Email()])
+    language = SelectField('Language', choices=[('en', 'English'), ('es', 'Spanish'), ('fr', 'French')], default='en')
+    submit = SubmitField('Next')
+
+class Step2Form(FlaskForm):
+    income = FloatField('Monthly Income', validators=[DataRequired()])
+    submit = SubmitField('Next')
+
+class Step3Form(FlaskForm):
+    housing = FloatField('Housing Expenses', validators=[DataRequired()])
+    food = FloatField('Food Expenses', validators=[DataRequired()])
+    transport = FloatField('Transport Expenses', validators=[DataRequired()])
+    other = FloatField('Other Expenses', validators=[DataRequired()])
+    submit = SubmitField('Next')
+
+class Step4Form(FlaskForm):
+    savings_goal = FloatField('Savings Goal', validators=[Optional()])
+    auto_email = BooleanField('Receive Email Report')
+    submit = SubmitField('Submit')
+
+# Translations Dictionary
+translations = {
+    'en': {
+        'First Budget Completed!': 'First Budget Completed!',
+        'Check Inbox': 'Check your inbox for the budget report.',
+        'Submission Success': 'Budget submitted successfully!',
+        'Session Expired': 'Session expired. Please start over.',
+        'Error retrieving data. Please try again.': 'Error retrieving data. Please try again.',
+        'Error saving data. Please try again.': 'Error saving data. Please try again.',
+        'Send Email Report': 'Email report sent successfully!',
+        'Budget Report Subject': 'Your Budget Report'
+    },
+    'es': {
+        'First Budget Completed!': '¡Primer presupuesto completado!',
+        'Check Inbox': 'Revisa tu bandeja de entrada para el informe de presupuesto.',
+        'Submission Success': '¡Presupuesto enviado con éxito!',
+        'Session Expired': 'Sesión expirada. Por favor, comienza de nuevo.',
+        'Error retrieving data. Please try again.': 'Error al recuperar datos. Por favor, intenta de nuevo.',
+        'Error saving data. Please try again.': 'Error al guardar datos. Por favor, intenta de nuevo.',
+        'Send Email Report': '¡Informe por correo enviado con éxito!',
+        'Budget Report Subject': 'Tu Informe de Presupuesto'
+    },
+    'fr': {
+        'First Budget Completed!': 'Premier budget complété !',
+        'Check Inbox': 'Vérifiez votre boîte de réception pour le rapport de budget.',
+        'Submission Success': 'Budget soumis avec succès !',
+        'Session Expired': 'Session expirée. Veuillez recommencer.',
+        'Error retrieving data. Please try again.': 'Erreur lors de la récupération des données. Veuillez réessayer.',
+        'Error saving data. Please try again.': 'Erreur lors de l\'enregistrement des données. Veuillez réessayer.',
+        'Send Email Report': 'Rapport par e-mail envoyé avec succès !',
+        'Budget Report Subject': 'Votre Rapport de Budget'
+    }
+}
+
 # Routes
 @app.route('/', methods=['GET', 'POST'])
 def step1():
