@@ -932,7 +932,7 @@ def send_budget_email_route():
         dashboard_data = session.get('dashboard_data', {})
         if not dashboard_data:
             logger.warning("Dashboard data missing in session for email route.")
-            flash(trans  flash(translations['en']['Session Expired'], 'error')
+            flash(translations['en']['Session Expired'], 'error')
             return redirect(url_for('step1'))
         language = dashboard_data.get('language', 'en')
 
