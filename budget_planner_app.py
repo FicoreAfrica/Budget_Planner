@@ -36,6 +36,7 @@ if not app.config['SECRET_KEY']:
 app.config['SESSION_TYPE'] = 'filesystem'
 app.config['SESSION_FILE_DIR'] = os.path.join(app.root_path, 'flask_session')
 app.config['SESSION_PERMANENT'] = False
+app.config['PERMANENT_SESSION_LIFETIME'] = 1800  # 30 minutes
 app.config['SESSION_USE_SIGNER'] = True
 app.config['SESSION_COOKIE_NAME'] = 'session_id'
 Session(app)
@@ -43,6 +44,7 @@ Session(app)
 # Create session directory if it doesn't exist
 try:
     os.makedirs(app.config['SESSION_FILE_DIR'], exist_ok=True)
+    logger.info(f"Session directory created at {app.config['SESSION_FILE_DIR']}")
 except OSError as e:
     logger.error(f"Failed to create session directory: {e}")
     raise RuntimeError("Failed to create session directory.")
@@ -638,6 +640,7 @@ def step3():
                 'other_expenses': form.other.data
             })
             logger.info(f"Step 3 completed for {session['budget_data']['email']}")
+            logger.info(f"Step 3 session data: {session['budget_data']}")
             return redirect(url_for('step4'))
         return render_template('budget_step3.html', form=form, translations=translations.get(language, translations['en']))
     except Exception as e:
@@ -661,6 +664,15 @@ def step4():
                 'auto_email': form.auto_email.data
             })
             data = session['budget_data']
+            logger.info(f"Step 4 session data: {data}")
+
+            # Validate required keys
+            required_keys = ['first_name', 'email', 'language', 'monthly_income', 'housing_expenses', 'food_expenses', 'transport_expenses', 'other_expenses']
+            missing_keys = [key for key in required_keys if key not in data]
+            if missing_keys:
+                logger.error(f"Missing keys in session['budget_data']: {missing_keys}")
+                flash(translations[language]['Session Expired'], 'error')
+                return redirect(url_for('step1'))
 
             # Calculate metrics
             total_expenses = data['housing_expenses'] + data['food_expenses'] + data['transport_expenses'] + data['other_expenses']
@@ -684,7 +696,8 @@ def step4():
 
             # Calculate metrics for ranking
             all_users_df = calculate_budget_metrics(all_users_df)
-            all_users_df['surplus_deficit'] = pd.to_numeric(all_users_df['surplus_deficit'], errors='coerce').fillna(0.0)
+            all_users_df['surplus_deficit'] = pd.to_numeric(all_users_df['surplus_deficit'], errors='co DEVELOPMENT
+erce').fillna(0.0)
             all_users_df = all_users_df.sort_values('surplus_deficit', ascending=False).reset_index(drop=True)
             total_users = len(all_users_df.drop_duplicates(subset=['email']))
             user_df = pd.DataFrame([data])
