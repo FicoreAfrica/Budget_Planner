@@ -45,7 +45,7 @@ for var in required_env_vars:
 app.config['SESSION_TYPE'] = 'filesystem'
 app.config['SESSION_FILE_DIR'] = os.path.join(app.root_path, 'flask_session')
 app.config['SESSION_PERMANENT'] = False
-app.config['PERMANENT_SESSION_LIFETIME'] = 1800  # 30 minutes
+app.config['PERMANENT_SESSION_LIFETIME'] = 3600  # Increased to 1 hour
 app.config['SESSION_USE_SIGNER'] = True
 app.config['SESSION_COOKIE_NAME'] = 'session_id'
 app.config['SESSION_COOKIE_SECURE'] = True  # Secure cookies in production
@@ -100,6 +100,7 @@ translations = {
         'Check Inbox': 'Check your inbox for the budget report.',
         'Submission Success': 'Budget submitted successfully!',
         'Session Expired': 'Session expired. Please start over.',
+        'Incomplete Data': 'Incomplete data. Please complete all steps.',
         'Error retrieving data. Please try again.': 'Error retrieving data. Please try again.',
         'Error saving data. Please try again.': 'Error saving data. Please try again.',
         'Send Email Report': 'Email report sent successfully!',
@@ -166,7 +167,6 @@ translations = {
         'Choose your language.': 'Choose your language.',
         'Looks good!': 'Looks good!',
         'First Name Required': 'First Name Required',
-        'Continue to Income': 'Continue to Income',
         'Invalid Email': 'Invalid Email',
         'Language selected!': 'Language selected!',
         'Language required': 'Language required',
@@ -219,12 +219,12 @@ translations = {
         'Budget Report Subject': 'Your Budget Report',
         'Your Budget Report': 'Your Budget Report',
         'Dear': 'Dear',
-        'Summary with Emoji': 'Summary 📊',
-        'Advice with Emoji': 'Advice 💡',
-        'Recommended Learning with Emoji': 'Recommended Learning 📚',
         'Here is your monthly budget summary.': 'Here is your monthly budget summary.',
         'Budget Summary': 'Budget Summary',
-        'Thank you for choosing Ficore Africa!': 'Thank you for choosing Ficore Africa!'
+        'Thank you for choosing Ficore Africa!': 'Thank you for choosing Ficore Africa!',
+        'Summary with Emoji': 'Summary 📊',
+        'Advice with Emoji': 'Advice 💡',
+        'Recommended Learning with Emoji': 'Recommended Learning 📚'
     },
     'ha': {
         # Flask routes and flash messages
@@ -232,6 +232,7 @@ translations = {
         'Check Inbox': 'Duba akwatin saƙonku don rahoton kasafin kuɗi.',
         'Submission Success': 'An ƙaddamar da kasafin kuɗi cikin nasara!',
         'Session Expired': 'Zaman ya ƙare. Da fatan za a sake farawa.',
+        'Incomplete Data': 'Bayanai ba su cika ba. Da fatan za a cika dukkan matakai.',
         'Error retrieving data. Please try again.': 'Kuskure wajen dawo da bayanai. Da fatan za a sake gwadawa.',
         'Error saving data. Please try again.': 'Kuskure wajen ajiye bayanai. Da fatan za a sake gwadawa.',
         'Send Email Report': 'An aika rahoton imel cikin nasara!',
@@ -286,7 +287,7 @@ translations = {
         'Results copied to clipboard': 'An kwafi sakamakon zuwa allo',
         'Failed to copy results': 'An kasa kwafi sakamakon',
         # budget_step1.html
-        'Monthly Budget Planner': 'Mai Tsara Kasafin Kuɗi na Wata',
+        'Monthly Budget Planner': 'Mai GLOBA Tsara Kasafin Kuɗi na Wata',
         'Personal Information': 'Bayanin Kai',
         'First Name': 'Sunan Farko',
         'Enter your first name': 'Shigar da sunan farko',
@@ -329,7 +330,7 @@ translations = {
         'e.g. ₦20,000': 'misali ₦20,000',
         'Internet, clothes, or other spending.': 'Intanet, tufafi, ko sauran kashe kuɗi.',
         'Step 3': 'Mataki na 3',
-        'Continue сегодняшний деньSavings & Review': 'Ci gaba zuwa Tattalin Arziki & Dubawa',
+        'Continue to Savings & Review': 'Ci gaba zuwa Tattalin Arziki & Dubawa',
         'Please enter valid amounts for all expenses': 'Da fatan za a shigar da adadin da ya dace ga duk kashe kuɗi',
         # budget_step4.html
         'Savings & Review': 'Tattara Kuɗi & Dubawa',
@@ -349,13 +350,13 @@ translations = {
         # budget_email.html
         'Budget Report Subject': 'Rahoton Kasafin Kuɗi',
         'Your Budget Report': 'Rahoton Kasafin Kuɗi',
-        'Dear': 'Barka Da Warhaka',
-        'Summary with Emoji': 'Taƙaice 📊',
-        'Advice with Emoji': 'Shawara 💡',
-        'Recommended Learning with Emoji': 'Koyon da Aka Shawarta 📚',
+        'Dear': 'Masoyi',
         'Here is your monthly budget summary.': 'Ga takaitaccen kasafin kuɗin ku na wata.',
         'Budget Summary': 'Takaitaccen Kasafin Kuɗi',
-        'Thank you for choosing Ficore Africa!': 'Muna godiya da zaɓin Ficore Afirka!'
+        'Thank you for choosing Ficore Africa!': 'Muna godiya da zaɓin Ficore Afirka!',
+        'Summary with Emoji': 'Taƙaice 📊',
+        'Advice with Emoji': 'Shawara 💡',
+        'Recommended Learning with Emoji': 'Koyon da Aka Shawarta 📚'
     }
 }
 
@@ -649,7 +650,7 @@ def step1():
                 'email': email,
                 'language': form.language.data
             }
-            logger.info(f"Step 1 completed for {email}")
+            logger.info(f"Step 1 completed for {email}. Session data: {session['budget_data']}")
             return redirect(url_for('step2'))
         return render_template('budget_step1.html', form=form, translations=translations.get(language, translations['en']))
     except Exception as e:
@@ -661,6 +662,7 @@ def step1():
 def step2():
     """Handle Step 2: Income."""
     try:
+        logger.info(f"Step 2 accessed. Current session data: {session.get('budget_data', {})}")
         form = Step2Form()
         if 'budget_data' not in session:
             logger.warning("Session data missing in step2.")
@@ -673,8 +675,9 @@ def step2():
                 logger.error(f"Invalid income: {income}")
                 flash(translations[language]['Please enter a valid income amount'], 'error')
                 return render_template('budget_step2.html', form=form, translations=translations.get(language, translations['en']))
-            session['budget_data'].update({'monthly_income': income})
-            logger.info(f"Step 2 completed for {session['budget_data']['email']}")
+            session['budget_data']['monthly_income'] = income
+            session.modified = True  # Ensure session is marked as modified
+            logger.info(f"Step 2 completed for {session['budget_data']['email']}. Updated session data: {session['budget_data']}")
             return redirect(url_for('step3'))
         return render_template('budget_step2.html', form=form, translations=translations.get(language, translations['en']))
     except Exception as e:
@@ -686,6 +689,7 @@ def step2():
 def step3():
     """Handle Step 3: Expenses."""
     try:
+        logger.info(f"Step 3 accessed. Current session data: {session.get('budget_data', {})}")
         form = Step3Form()
         if 'budget_data' not in session:
             logger.warning("Session data missing in step3.")
@@ -705,8 +709,8 @@ def step3():
                     flash(translations[language]['Please enter valid amounts for all expenses'], 'error')
                     return render_template('budget_step3.html', form=form, translations=translations.get(language, translations['en']))
             session['budget_data'].update(expenses)
-            logger.info(f"Step 3 completed for {session['budget_data']['email']}")
-            logger.info(f"Step 3 session data: {session['budget_data']}")
+            session.modified = True  # Ensure session is marked as modified
+            logger.info(f"Step 3 completed for {session['budget_data']['email']}. Updated session data: {session['budget_data']}")
             return redirect(url_for('step4'))
         return render_template('budget_step3.html', form=form, translations=translations.get(language, translations['en']))
     except Exception as e:
@@ -718,6 +722,7 @@ def step3():
 def step4():
     """Handle Step 4: Savings and Submission."""
     try:
+        logger.info(f"Step 4 accessed. Current session data: {session.get('budget_data', {})}")
         form = Step4Form()
         if 'budget_data' not in session:
             logger.warning("Session data missing in step4.")
@@ -734,15 +739,21 @@ def step4():
                 'savings_goal': savings_goal,
                 'auto_email': form.auto_email.data
             })
+            session.modified = True  # Ensure session is marked as modified
             data = session['budget_data']
-            logger.info(f"Step 4 session data: {data}")
+            logger.info(f"Step 4 session data after update: {data}")
 
             # Validate required keys
             required_keys = ['first_name', 'email', 'language', 'monthly_income', 'housing_expenses', 'food_expenses', 'transport_expenses', 'other_expenses']
             missing_keys = [key for key in required_keys if key not in data]
             if missing_keys:
                 logger.error(f"Missing keys in session['budget_data']: {missing_keys}")
-                flash(translations[language]['Session Expired'], 'error')
+                flash(translations[language]['Incomplete Data'], 'error')
+                # Redirect to appropriate step based on missing keys
+                if 'monthly_income' in missing_keys:
+                    return redirect(url_for('step2'))
+                if any(key in missing_keys for key in ['housing_expenses', 'food_expenses', 'transport_expenses', 'other_expenses']):
+                    return redirect(url_for('step3'))
                 return redirect(url_for('step1'))
 
             # Calculate metrics
@@ -829,7 +840,7 @@ def step4():
                 'total_users': total_users,
                 'badges': badges
             }
-            logger.info(f"Step 4 completed for {data['email']}")
+            logger.info(f"Step 4 completed for {data['email']}. Dashboard data: {session['dashboard_data']}")
             return redirect(url_for('dashboard'))
 
         return render_template('budget_step4.html', form=form, translations=translations.get(language, translations['en']))
@@ -842,6 +853,7 @@ def step4():
 def dashboard():
     """Render user dashboard."""
     try:
+        logger.info(f"Dashboard accessed. Current dashboard data: {session.get('dashboard_data', {})}")
         dashboard_data = session.get('dashboard_data', {})
         if not dashboard_data:
             logger.warning("Dashboard data missing in session.")
@@ -883,6 +895,7 @@ def dashboard():
 def send_budget_email_route():
     """Handle manual email report request."""
     try:
+        logger.info(f"Send budget email accessed. Current dashboard data: {session.get('dashboard_data', {})}")
         dashboard_data = session.get('dashboard_data', {})
         if not dashboard_data:
             logger.warning("Dashboard data missing in session for email route.")
