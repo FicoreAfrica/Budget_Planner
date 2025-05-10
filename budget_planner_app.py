@@ -15,15 +15,13 @@ import gspread
 from google.oauth2.service_account import Credentials
 import pandas as pd
 from flask_session import Session
+from flask_caching import Cache
 
 # Configure logging
 logging.basicConfig(
     level=logging.DEBUG,
     format='%(asctime)s [%(levelname)s] %(name)s: %(message)s',
-    handlers=[
-        logging.StreamHandler(),
-        logging.FileHandler('app.log')
-    ]
+    handlers=[logging.StreamHandler(), logging.FileHandler('app.log')]
 )
 logger = logging.getLogger(__name__)
 
@@ -45,9 +43,16 @@ Session(app)
 # Create session directory if it doesn't exist
 os.makedirs(app.config['SESSION_FILE_DIR'], exist_ok=True)
 
+# Configure caching
+app.config['CACHE_TYPE'] = 'filesystem'
+app.config['CACHE_DIR'] = os.path.join(app.root_path, 'cache')
+app.config['CACHE_DEFAULT_TIMEOUT'] = 300  # 5 minutes cache timeout
+cache = Cache(app)
+os.makedirs(app.config['CACHE_DIR'], exist_ok=True)
+
 # Google Sheets setup
 SCOPE = ['https://www.googleapis.com/auth/spreadsheets']
-SPREADSHEET_ID = os.getenv('SPREADSHEET_ID', 'your-spreadsheet-id')  # Set this in Render
+SPREADSHEET_ID = os.getenv('SPREADSHEET_ID', 'your-spreadsheet-id')
 PREDETERMINED_HEADERS = [
     'Timestamp', 'first_name', 'email', 'language', 'monthly_income',
     'housing_expenses', 'food_expenses', 'transport_expenses', 'other_expenses',
@@ -55,7 +60,7 @@ PREDETERMINED_HEADERS = [
     'badges', 'rank', 'total_users'
 ]
 
-# Thread-safe Google Sheets client
+# Thread-safe Google Sheets client (lazy initialization)
 sheets = None
 sheets_lock = threading.Lock()
 
@@ -92,178 +97,46 @@ def initialize_sheets(max_retries=5, backoff_factor=2):
         logger.critical("Max retries exceeded for Google Sheets initialization.")
         return False
 
-# Initialize sheets at startup
-if not initialize_sheets():
-    logger.critical("Failed to initialize Google Sheets. App will not function correctly.")
-    raise RuntimeError("Google Sheets initialization failed.")
+# Lazy initialization of sheets on first use
+def get_sheets_client():
+    global sheets
+    if sheets is None:
+        if not initialize_sheets():
+            raise RuntimeError("Google Sheets initialization failed.")
+    return sheets
 
-# Constants for external links
-FEEDBACK_FORM_URL = 'https://forms.gle/1g1FVulyf7ZvvXr7G0q7hAKwbGJMxV4blpjBuqrSjKzQ'
-WAITLIST_FORM_URL = 'https://forms.gle/17e0XYcp-z3hCl0I-j2JkHoKKJrp4PfgujsK8D7uqNxo'
-CONSULTANCY_FORM_URL = 'https://forms.gle/1TKvlT7OTvNS70YNd8DaPpswvqd9y7hKydxKr07gpK9A'
-LINKEDIN_URL = 'https://www.linkedin.com/in/ficore-africa-58913a363/'
-TWITTER_URL = 'https://x.com/Hassanahm4d'
-COURSE_URL = 'https://example.com/budgeting-course'
-COURSE_TITLE = 'Budgeting 101'
-
-# Translations (same as your original app.py, simplified for brevity)
-translations = {
-    'en': {
-        'Monthly Budget Planner': 'Monthly Budget Planner',
-        'Plan Your Monthly Budget': 'Plan Your Monthly Budget',
-        'Personal Information': 'Personal Information',
-        'Income': 'Income',
-        'Expenses': 'Expenses',
-        'Savings & Review': 'Savings & Review',
-        'First Name': 'First Name',
-        'Enter your first name': 'Enter your first name',
-        'First Name Required': 'First Name Required',
-        'Email': 'Email',
-        'Enter your email': 'Enter your email',
-        'Invalid Email': 'Invalid Email',
-        'Language': 'Language',
-        'Choose your language.': 'Choose your language.',
-        'Monthly Income': 'Monthly Income',
-        'Housing Expenses': 'Housing Expenses',
-        'Food Expenses': 'Food Expenses',
-        'Transport Expenses': 'Transport Expenses',
-        'Other Expenses': 'Other Expenses',
-        'Savings Goal': 'Savings Goal',
-        'Auto Email': 'Send Report to Email',
-        'Start Planning Your Budget!': 'Start Planning Your Budget!',
-        'Budget Surplus/Deficit': 'Budget Surplus/Deficit',
-        'Great job! Save or invest your surplus to grow your wealth.': 'Great job! Save or invest your surplus to grow your wealth.',
-        'Reduce non-essential spending to balance your budget.': 'Reduce non-essential spending to balance your budget.',
-        'Budget Dashboard': 'Budget Dashboard',
-        'Welcome': 'Welcome',
-        'Your Budget Summary': 'Your Budget Summary',
-        'Total Expenses': 'Total Expenses',
-        'Savings': 'Savings',
-        'Surplus/Deficit': 'Surplus/Deficit',
-        'Advice': 'Advice',
-        'Rank': 'Rank',
-        'out of': 'out of',
-        'users': 'users',
-        'Budget Breakdown': 'Budget Breakdown',
-        'Your Badges': 'Your Badges',
-        'No Badges Yet': 'No Badges Yet',
-        'First Budget Completed!': 'First Budget Completed!',
-        'Quick Tips': 'Quick Tips',
-        'Recommended Learning': 'Recommended Learning',
-        'Whats Next': 'What’s Next',
-        'Back to Home': 'Back to Home',
-        'Send Email Report': 'Send Email Report',
-        'Your Budget Report': 'Your Budget Report',
-        'Dear': 'Dear',
-        'Here is your monthly budget summary.': 'Here is your monthly budget summary.',
-        'Budget Summary': 'Budget Summary',
-        'Thank you for choosing Ficore Africa!': 'Thank you for choosing Ficore Africa!',
-        'Budget Report Subject': 'Your Budget Report from Ficore Africa',
-        'Submission Success': 'Your budget is submitted successfully! Check your dashboard below 👇',
-        'Check Inbox': 'Please check your inbox or junk folders if email doesn’t arrive in a few minutes.',
-        'Error saving data. Please try again.': 'Error saving data. Please try again.',
-        'Error retrieving data. Please try again.': 'Error retrieving data. Please try again.',
-        'Session Expired': 'Your session has expired. Please refresh the page and try again.'
-    },
-    'ha': {
-        'Monthly Budget Planner': 'Mai Tsara Kasafin Kuɗi na Wata',
-        'Plan Your Monthly Budget': 'Tsara Kasafin Kuɗin Wata',
-        'Personal Information': 'Bayanan Sirri',
-        'Income': 'Kuɗin Shiga',
-        'Expenses': 'Kashe Kuɗi',
-        'Savings & Review': 'Tattara Kuɗi & Bita',
-        'First Name': 'Sunan Farko',
-        'Enter your first name': 'Shigar da sunanka na farko',
-        'First Name Required': 'Ana buƙatar sunan farko',
-        'Email': 'Imel',
-        'Enter your email': 'Shigar da imel ɗinka',
-        'Invalid Email': 'Imel mara inganci',
-        'Language': 'Harsa',
-        'Choose your language.': 'Zaɓi harshenka.',
-        'Monthly Income': 'Kuɗin Shiga na Wata',
-        'Housing Expenses': 'Kuɗaɗen Gidaje',
-        'Food Expenses': 'Kuɗaɗen Abinci',
-        'Transport Expenses': 'Kuɗaɗen Sufuri',
-        'Other Expenses': 'Sauran Kuɗaɗe',
-        'Savings Goal': 'Makasudin Tattara Kuɗi',
-        'Auto Email': 'Aika Rahoto ta Imel',
-        'Start Planning Your Budget!': 'Fara Tsara Kasafin Kuɗinka!',
-        'Budget Surplus/Deficit': 'Ragowa/Kasawa na Kasafi',
-        'Great job! Save or invest your surplus to grow your wealth.': 'Aikin kyau! Ajiye ko saka ragowar kuɗin don haɓaka dukiyarka.',
-        'Reduce non-essential spending to balance your budget.': 'Rage kashewa mara amfani don daidaita kasafin kuɗinka.',
-        'Budget Dashboard': 'Dashboard na Kasafi',
-        'Welcome': 'Barka da Zuwa',
-        'Your Budget Summary': 'Takaitaccen Kasafinku',
-        'Total Expenses': 'Jimlar Kashewa',
-        'Savings': 'Tattara Kuɗi',
-        'Surplus/Deficit': 'Ragowa/Kasawa',
-        'Advice': 'Shawara',
-        'Rank': 'Matsayi',
-        'out of': 'daga cikin',
-        'users': 'masu amfani',
-        'Budget Breakdown': 'Rarraba Kasafi',
-        'Your Badges': 'Bajojin Ka',
-        'No Badges Yet': 'Babu Bajojin Har Yanzu',
-        'First Budget Completed!': 'An Kammala Kasafin Farko!',
-        'Quick Tips': 'Shawara Mai Sauri',
-        'Recommended Learning': 'Koyon da Aka Shawarta',
-        'Whats Next': 'Me Zai Biyo Baya',
-        'Back to Home': 'Koma Gida',
-        'Send Email Report': 'Aika Rahoton Imel',
-        'Your Budget Report': 'Rahoton Kasafin Kuɗinka',
-        'Dear': 'Dear',
-        'Here is your monthly budget summary.': 'Ga takaitaccen rahoton kasafin kuɗinka na wata.',
-        'Budget Summary': 'Takaitaccen Kasafi',
-        'Thank you for choosing Ficore Africa!': 'Muna godiya da zaɓar Ficore Africa!',
-        'Budget Report Subject': 'Rahoton Kasafin Kuɗinka daga Ficore Africa',
-        'Submission Success': 'An shigar da kasafinka cikin nasara! Duba dashboard ɗinka a ƙasa 👇',
-        'Check Inbox': 'Da fatan za a duba akwatin saƙonku ko foldar na Spam idan imel ɗin bai zo ba cikin ƴan mintuna.',
-        'Error saving data. Please try again.': 'Anyi Kuskure wajen adana bayanai. Da fatan za a sake gwadawa.',
-        'Error retrieving data. Please try again.': 'Anyi Kuskure wajen dawo da bayanai. Da fatan za a sake gwadawa.',
-        'Session Expired': 'Lokacin aikin ku ya ƙare. Da fatan za a sake shigar da shafin kuma a gwada sake.'
-    }
-}
-
-# Simulated user data (will be updated from Google Sheets)
-user_data = {'total_users': 1000, 'user_rank': 250, 'badges': ['First Budget Completed!']}
-
-# Flask-WTF Forms (same as your original app.py)
-class Step1Form(FlaskForm):
-    first_name = StringField('First Name', validators=[DataRequired()])
-    email = StringField('Email', validators=[Optional(), Email()])
-    language = SelectField('Language', choices=[('en', 'English'), ('ha', 'Hausa')], validators=[DataRequired()])
-    submit = SubmitField('Next')
-
-class Step2Form(FlaskForm):
-    income = FloatField('Monthly Income', validators=[DataRequired()])
-    submit = SubmitField('Next')
-
-class Step3Form(FlaskForm):
-    housing = FloatField('Housing Expenses', validators=[DataRequired()])
-    food = FloatField('Food Expenses', validators=[DataRequired()])
-    transport = FloatField('Transport Expenses', validators=[DataRequired()])
-    other = FloatField('Other Expenses', validators=[DataRequired()])
-    submit = SubmitField('Next')
-
-class Step4Form(FlaskForm):
-    savings_goal = FloatField('Savings Goal', validators=[Optional()])
-    auto_email = BooleanField('Auto Email')
-    submit = SubmitField('Review & Submit')
-
-# Google Sheets Utilities
-def get_sheet_headers():
-    try:
-        worksheet = sheets.worksheet('Sheet1')
-        headers = worksheet.row_values(1)
-        logger.debug(f"Fetched headers: {headers}")
-        return headers
-    except Exception as e:
-        logger.error(f"Error fetching sheet headers: {e}")
-        return None
+# Google Sheets Utilities with caching
+@cache.memoize(timeout=300)  # Cache for 5 minutes
+def fetch_data_from_sheet(email=None, max_retries=5, backoff_factor=2):
+    for attempt in range(max_retries):
+        try:
+            worksheet = get_sheets_client().worksheet('Sheet1')
+            values = worksheet.get_all_values()
+            if not values:
+                logger.info(f"Attempt {attempt + 1}: No data in Google Sheet.")
+                return pd.DataFrame(columns=PREDETERMINED_HEADERS)
+            headers = values[0]
+            rows = values[1:] if len(values) > 1 else []
+            adjusted_rows = [
+                row + [''] * (len(PREDETERMINED_HEADERS) - len(row)) if len(row) < len(PREDETERMINED_HEADERS) else row[:len(PREDETERMINED_HEADERS)]
+                for row in rows
+            ]
+            df = pd.DataFrame(adjusted_rows, columns=PREDETERMINED_HEADERS)
+            df['language'] = df['language'].replace('', 'en').apply(lambda x: x if x in translations else 'en')
+            if email:
+                df = df[df['email'] == email].head(1)  # Limit to one row for user-specific data
+            logger.info(f"Fetched {len(df)} rows for email {email if email else 'all'}.")
+            return df
+        except Exception as e:
+            logger.error(f"Attempt {attempt + 1} failed: {e}")
+            if attempt < max_retries - 1:
+                time.sleep(backoff_factor ** attempt)
+    logger.error("Max retries reached while fetching data.")
+    return pd.DataFrame(columns=PREDETERMINED_HEADERS)  # Return empty DataFrame on failure
 
 def set_sheet_headers():
     try:
-        worksheet = sheets.worksheet('Sheet1')
+        worksheet = get_sheets_client().worksheet('Sheet1')
         worksheet.update('A1:Q1', [PREDETERMINED_HEADERS])
         logger.info("Sheet1 headers updated.")
         return True
@@ -274,8 +147,8 @@ def set_sheet_headers():
 def append_to_sheet(data):
     with sheets_lock:
         try:
-            worksheet = sheets.worksheet('Sheet1')
-            current_headers = get_sheet_headers()
+            worksheet = get_sheets_client().worksheet('Sheet1')
+            current_headers = worksheet.row_values(1)
             if not current_headers or current_headers != PREDETERMINED_HEADERS:
                 if not set_sheet_headers():
                     logger.error("Failed to set sheet headers.")
@@ -294,34 +167,8 @@ def append_to_sheet(data):
             logger.error(f"Unexpected error appending to sheet: {e}")
             return False
 
-def fetch_data_from_sheet(email=None, max_retries=5, backoff_factor=2):
-    for attempt in range(max_retries):
-        try:
-            worksheet = sheets.worksheet('Sheet1')
-            values = worksheet.get_all_values()
-            if not values:
-                logger.info(f"Attempt {attempt + 1}: No data in Google Sheet.")
-                return pd.DataFrame(columns=PREDETERMINED_HEADERS)
-            headers = values[0]
-            rows = values[1:] if len(values) > 1 else []
-            adjusted_rows = [
-                row + [''] * (len(PREDETERMINED_HEADERS) - len(row)) if len(row) < len(PREDETERMINED_HEADERS) else row[:len(PREDETERMINED_HEADERS)]
-                for row in rows
-            ]
-            df = pd.DataFrame(adjusted_rows, columns=PREDETERMINED_HEADERS)
-            df['language'] = df['language'].replace('', 'en').apply(lambda x: x if x in translations else 'en')
-            if email:
-                df = df[df['email'] == email]
-            logger.info(f"Fetched {len(df)} rows for email {email if email else 'all'}.")
-            return df
-        except Exception as e:
-            logger.error(f"Attempt {attempt + 1} failed: {e}")
-            if attempt < max_retries - 1:
-                time.sleep(backoff_factor ** attempt)
-    logger.error("Max retries reached while fetching data.")
-    return None
-
-# Business Logic
+# Business Logic with caching
+@cache.memoize(timeout=300)  # Cache for 5 minutes
 def calculate_budget_metrics(df):
     try:
         if df.empty:
@@ -338,7 +185,7 @@ def calculate_budget_metrics(df):
         return df
     except Exception as e:
         logger.error(f"Error calculating budget metrics: {e}")
-        raise
+        return df  # Return original DataFrame on error
 
 def assign_badges(user_df):
     badges = []
@@ -350,7 +197,7 @@ def assign_badges(user_df):
         user_df = user_df.sort_values('Timestamp', ascending=False)
     except Exception as e:
         logger.error(f"Error parsing timestamps in assign_badges: {e}")
-        raise
+        return badges
     user_row = user_df.iloc[0]
     language = user_row['language']
     if language not in translations:
@@ -459,13 +306,13 @@ def step4():
             'datasets': [{'data': [data['monthly_income'], total_expenses], 'backgroundColor': ['#36A2EB', '#FF6384']}]
         }
 
-        # Fetch existing data to calculate rank
+        # Fetch existing data to calculate rank (cached)
         all_users_df = fetch_data_from_sheet()
-        if all_users_df is None:
+        if all_users_df.empty:
             flash(translations[language]['Error retrieving data. Please try again.'], 'error')
             return redirect(url_for('step1'))
 
-        # Calculate metrics for ranking (simplified ranking based on surplus/deficit)
+        # Calculate metrics for ranking (cached)
         all_users_df = calculate_budget_metrics(all_users_df)
         all_users_df['surplus_deficit'] = pd.to_numeric(all_users_df['surplus_deficit'], errors='coerce').fillna(0.0)
         all_users_df = all_users_df.sort_values('surplus_deficit', ascending=False).reset_index(drop=True)
@@ -511,7 +358,7 @@ def step4():
 
         flash(translations[language]['Submission Success'], 'success')
 
-        # Store in session for dashboard
+        # Store minimal data in session for dashboard
         session['dashboard_data'] = {
             'language': language,
             'first_name': data['first_name'],
@@ -528,9 +375,7 @@ def step4():
             'bar_data': bar_data,
             'rank': rank,
             'total_users': total_users,
-            'badges': badges,
-            'user_df': user_df.to_dict(),
-            'all_users_df': all_users_df.to_dict()
+            'badges': badges
         }
         return redirect(url_for('dashboard'))
 
@@ -566,8 +411,7 @@ def dashboard():
                           WAITLIST_FORM_URL=WAITLIST_FORM_URL,
                           CONSULTANCY_FORM_URL=CONSULTANCY_FORM_URL,
                           linkedin_url=LINKEDIN_URL,
-                          twitter_url=TWITTER_URL,
-                          user_data_json=json.dumps(dashboard_data))
+                          twitter_url=TWITTER_URL)
 
 @app.route('/send_budget_email', methods=['POST'])
 def send_budget_email_route():
