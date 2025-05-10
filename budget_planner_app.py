@@ -309,7 +309,7 @@ translations = {
         'First Name': 'Sunan Farko',
         'Enter your first name': 'Shigar da sunan farko',
         'Enter your first name for your report.': 'Shigar da sunan farko don rahotonku.',
-        'Email': 'Im  'Email': 'Imel',
+        'Email': 'Imel',
         'Enter your email': 'Shigar da imel ɗin ku',
         'Get your budget report by email.': 'Samu rahoton kasafin kuɗin ku ta imel.',
         'Language': 'Yare',
