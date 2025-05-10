@@ -102,8 +102,6 @@
                 {% endfor %}
             </div>
             <div class="text-center">
-                <!-- Commented out PDF download button to fix BuildError -->
-                <!-- <a href="{{ url_for('download_pdf') }}" class="btn btn-primary">{{ translations['Download PDF'] }}</a> -->
                 <a href="{{ url_for('step1') }}" class="btn btn-secondary">{{ translations['Start Over'] }}</a>
             </div>
         </div>
