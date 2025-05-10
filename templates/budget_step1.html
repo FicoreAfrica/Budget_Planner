@@ -38,7 +38,7 @@
     return gk_fileData[filename] || "";
     }
 </script><!DOCTYPE html>
-<html lang="{{ translations['language'] }}">
+<html lang="{{ language }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -60,7 +60,7 @@
         .form-group { position: relative; margin-bottom: 1.5rem; }
         .form-label { color: #0288D1; font-weight: 500; margin-bottom: 5px; }
         .form-control, .form-select { border: 2px solid #0288D1; border-radius: 8px; padding: 10px; transition: border-color 0.3s ease; min-height: 48px; }
-        .form-control:focus, .form-select:focus { border-color: #2E7D32; box-shadow: 0 0 8px rgba(46,125,50,0.3); outline: none; }
+        . crept: border-color: #2E7D32; box-shadow: 0 0 8px rgba(46,125,50,0.3); outline: none; }
         .btn-primary { background: linear-gradient(135deg, #2E7D32, #0288D1); border: none; padding: 12px 24px; font-weight: 600; border-radius: 8px; color: white; transition: transform 0.2s ease; }
         .btn-primary:hover { transform: scale(1.05); background: linear-gradient(135deg, #1B5E20, #01579B); }
         .info-icon { cursor: pointer; color: #0288D1; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); }
@@ -91,32 +91,32 @@
             {% endif %}
         {% endwith %}
         <div class="form-card fade-in">
-            <h3>Step 1: {{ translations['Personal Information'] }}</h3>
+            <h3>{{ translations['Step 1'] }}: {{ translations['Personal Information'] }}</h3>
             <form method="POST" id="step1-form">
                 {{ form.hidden_tag() }}
                 <div class="form-group">
-                    {{ form.first_name.label(class="form-label") }}
+                    <label for="first_name" class="form-label">{{ translations['First Name'] }}</label>
                     {{ form.first_name(class="form-control", placeholder=translations['Enter your first name'], **{'aria-required': 'true'}) }}
                     <span class="info-icon"><i class="fas fa-info-circle"></i><span class="tooltip-text">{{ translations['Enter your first name for your report.'] }}</span></span>
                     <div class="valid-feedback">{{ translations['Looks good!'] }}</div>
                     <div class="invalid-feedback">{{ translations['First Name Required'] }}</div>
                 </div>
                 <div class="form-group">
-                    {{ form.email.label(class="form-label") }}
+                    <label for="email" class="form-label">{{ translations['Email'] }}</label>
                     {{ form.email(class="form-control", placeholder=translations['Enter your email']) }}
                     <span class="info-icon"><i class="fas fa-info-circle"></i><span class="tooltip-text">{{ translations['Get your budget report by email.'] }}</span></span>
                     <div class="valid-feedback">{{ translations['Looks good!'] }}</div>
                     <div class="invalid-feedback">{{ translations['Invalid Email'] }}</div>
                 </div>
                 <div class="form-group">
-                    {{ form.language.label(class="form-label") }}
+                    <label for="language" class="form-label">{{ translations['Language'] }}</label>
                     {{ form.language(class="form-select", **{'aria-required': 'true'}) }}
                     <span class="info-icon"><i class="fas fa-info-circle"></i><span class="tooltip-text">{{ translations['Choose your language.'] }}</span></span>
                     <div class="valid-feedback">{{ translations['Language selected!'] }}</div>
                     <div class="invalid-feedback">{{ translations['Language required'] }}</div>
                 </div>
                 <div class="text-center">
-                    {{ form.submit(class="btn btn-primary") }}
+                    {{ form.submit(class="btn btn-primary", value=translations['Next']) }}
                 </div>
             </form>
         </div>
