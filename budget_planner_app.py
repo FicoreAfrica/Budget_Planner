@@ -182,8 +182,96 @@ translations = {
         'e.g. ₦10,000': 'e.g. ₦10,000',
         'Bus, bike, taxi, or fuel costs.': 'Bus, bike, taxi, or fuel costs.',
         'Other Expenses': 'Other Expenses',
-        'e.g. ₦20,000': 'e.g. ₦20,000',
-        'Internet, clothes, or other spending.': 'Internet, clothes, or other spending.',
+        'e.g. ₦20,000': 2025-05-10T15:51:25.245577894Z [notice] To update, run: pip install --upgrade pip
+2025-05-10T15:51:31.910508362Z ==> Uploading build...
+2025-05-10T15:51:40.198975983Z ==> Uploaded in 6.6s. Compression took 1.7s
+2025-05-10T15:51:40.239819055Z ==> Build successful 🎉
+2025-05-10T15:51:44.058210257Z ==> Deploying...
+2025-05-10T15:52:03.63761733Z ==> Running 'gunicorn budget_planner_app:app --bind 0.0.0.0:$PORT'
+2025-05-10T15:52:04.731564724Z Traceback (most recent call last):
+2025-05-10T15:52:04.731585255Z   File "/opt/render/project/src/.venv/bin/gunicorn", line 8, in <module>
+2025-05-10T15:52:04.731648519Z     sys.exit(run())
+2025-05-10T15:52:04.731717883Z              ^^^^^
+2025-05-10T15:52:04.731723813Z   File "/opt/render/project/src/.venv/lib/python3.11/site-packages/gunicorn/app/wsgiapp.py", line 66, in run
+2025-05-10T15:52:04.73182681Z     WSGIApplication("%(prog)s [OPTIONS] [APP_MODULE]", prog=prog).run()
+2025-05-10T15:52:04.73183747Z   File "/opt/render/project/src/.venv/lib/python3.11/site-packages/gunicorn/app/base.py", line 235, in run
+2025-05-10T15:52:04.731975969Z     super().run()
+2025-05-10T15:52:04.731980969Z   File "/opt/render/project/src/.venv/lib/python3.11/site-packages/gunicorn/app/base.py", line 71, in run
+2025-05-10T15:52:04.732108677Z     Arbiter(self).run()
+2025-05-10T15:52:04.732117268Z     ^^^^^^^^^^^^^
+2025-05-10T15:52:04.732120578Z   File "/opt/render/project/src/.venv/lib/python3.11/site-packages/gunicorn/arbiter.py", line 57, in __init__
+2025-05-10T15:52:04.732248376Z     self.setup(app)
+2025-05-10T15:52:04.732254966Z   File "/opt/render/project/src/.venv/lib/python3.11/site-packages/gunicorn/arbiter.py", line 117, in setup
+2025-05-10T15:52:04.732360752Z     self.app.wsgi()
+2025-05-10T15:52:04.732367113Z   File "/opt/render/project/src/.venv/lib/python3.11/site-packages/gunicorn/app/base.py", line 66, in wsgi
+2025-05-10T15:52:04.732471439Z     self.callable = self.load()
+2025-05-10T15:52:04.732474279Z                     ^^^^^^^^^^^
+2025-05-10T15:52:04.732476379Z   File "/opt/render/project/src/.venv/lib/python3.11/site-packages/gunicorn/app/wsgiapp.py", line 57, in load
+2025-05-10T15:52:04.732551664Z     return self.load_wsgiapp()
+2025-05-10T15:52:04.732554464Z            ^^^^^^^^^^^^^^^^^^^
+2025-05-10T15:52:04.732556684Z   File "/opt/render/project/src/.venv/lib/python3.11/site-packages/gunicorn/app/wsgiapp.py", line 47, in load_wsgiapp
+2025-05-10T15:52:04.73265024Z     return util.import_app(self.app_uri)
+2025-05-10T15:52:04.73265821Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-05-10T15:52:04.732660501Z   File "/opt/render/project/src/.venv/lib/python3.11/site-packages/gunicorn/util.py", line 370, in import_app
+2025-05-10T15:52:04.732798819Z     mod = importlib.import_module(module)
+2025-05-10T15:52:04.732803529Z           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-05-10T15:52:04.73281607Z   File "/usr/local/lib/python3.11/importlib/__init__.py", line 126, in import_module
+2025-05-10T15:52:04.733561596Z     return _bootstrap._gcd_import(name[level:], package, level)
+2025-05-10T15:52:04.733568036Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-05-10T15:52:04.733570926Z   File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
+2025-05-10T15:52:04.733574026Z   File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+2025-05-10T15:52:04.733581137Z   File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+2025-05-10T15:52:04.733586347Z   File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+2025-05-10T15:52:04.733588987Z   File "<frozen importlib._bootstrap_external>", line 936, in exec_module
+2025-05-10T15:52:04.733590718Z   File "<frozen importlib._bootstrap_external>", line 1074, in get_code
+2025-05-10T15:52:04.733592327Z   File "<frozen importlib._bootstrap_external>", line 1004, in source_to_code
+2025-05-10T15:52:04.733594898Z   File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+2025-05-10T15:52:04.733602978Z   File "/opt/render/project/src/budget_planner_app.py", line 699
+2025-05-10T15:52:04.733618479Z     all_users_df['surplus_deficit'] = pd.to_numeric(all_users_df['surplus_deficit'], errors='co DEVELOPMENT
+2025-05-10T15:52:04.733657311Z                                                                                             ^
+2025-05-10T15:52:04.733663692Z SyntaxError: unterminated string literal (detected at line 699)
+2025-05-10T15:52:05.504129669Z ==> Exited with status 1
+2025-05-10T15:52:05.524820077Z ==> Common ways to troubleshoot your deploy: https://render.com/docs/troubleshooting-deploys
+2025-05-10T15:52:17.124235455Z ==> Running 'gunicorn budget_planner_app:app --bind 0.0.0.0:$PORT'
+2025-05-10T15:52:18.262065868Z Traceback (most recent call last):
+2025-05-10T15:52:18.2620858Z   File "/opt/render/project/src/.venv/bin/gunicorn", line 8, in <module>
+2025-05-10T15:52:18.262163774Z     sys.exit(run())
+2025-05-10T15:52:18.262169785Z              ^^^^^
+2025-05-10T15:52:18.262173625Z   File "/opt/render/project/src/.venv/lib/python3.11/site-packages/gunicorn/app/wsgiapp.py", line 66, in run
+2025-05-10T15:52:18.262222798Z     WSGIApplication("%(prog)s [OPTIONS] [APP_MODULE]", prog=prog).run()
+2025-05-10T15:52:18.26225718Z   File "/opt/render/project/src/.venv/lib/python3.11/site-packages/gunicorn/app/base.py", line 235, in run
+2025-05-10T15:52:18.262384498Z     super().run()
+2025-05-10T15:52:18.262388648Z   File "/opt/render/project/src/.venv/lib/python3.11/site-packages/gunicorn/app/base.py", line 71, in run
+2025-05-10T15:52:18.262461963Z     Arbiter(self).run()
+2025-05-10T15:52:18.262465713Z     ^^^^^^^^^^^^^
+2025-05-10T15:52:18.262468053Z   File "/opt/render/project/src/.venv/lib/python3.11/site-packages/gunicorn/arbiter.py", line 57, in __init__
+2025-05-10T15:52:18.26258514Z     self.setup(app)
+2025-05-10T15:52:18.26258895Z   File "/opt/render/project/src/.venv/lib/python3.11/site-packages/gunicorn/arbiter.py", line 117, in setup
+2025-05-10T15:52:18.262678666Z     self.app.wsgi()
+2025-05-10T15:52:18.262688096Z   File "/opt/render/project/src/.venv/lib/python3.11/site-packages/gunicorn/app/base.py", line 66, in wsgi
+2025-05-10T15:52:18.262783962Z     self.callable = self.load()
+2025-05-10T15:52:18.262787612Z                     ^^^^^^^^^^^
+2025-05-10T15:52:18.262789863Z   File "/opt/render/project/src/.venv/lib/python3.11/site-packages/gunicorn/app/wsgiapp.py", line 57, in load
+2025-05-10T15:52:18.262879908Z     return self.load_wsgiapp()
+2025-05-10T15:52:18.262883718Z            ^^^^^^^^^^^^^^^^^^^
+2025-05-10T15:52:18.262886529Z   File "/opt/render/project/src/.venv/lib/python3.11/site-packages/gunicorn/app/wsgiapp.py", line 47, in load_wsgiapp
+2025-05-10T15:52:18.262967373Z     return util.import_app(self.app_uri)
+2025-05-10T15:52:18.262970814Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-05-10T15:52:18.262973014Z   File "/opt/render/project/src/.venv/lib/python3.11/site-packages/gunicorn/util.py", line 370, in import_app
+2025-05-10T15:52:18.263101182Z     mod = importlib.import_module(module)
+2025-05-10T15:52:18.263104912Z           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-05-10T15:52:18.263107392Z   File "/usr/local/lib/python3.11/importlib/__init__.py", line 126, in import_module
+2025-05-10T15:52:18.263877849Z     return _bootstrap._gcd_import(name[level:], package, level)
+2025-05-10T15:52:18.263915651Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-05-10T15:52:18.263919181Z   File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
+2025-05-10T15:52:18.263922022Z   File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+2025-05-10T15:52:18.263924152Z   File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+2025-05-10T15:52:18.263938763Z   File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+2025-05-10T15:52:18.263941153Z   File "<frozen importlib._bootstrap_external>", line 936, in exec_module
+2025-05-10T15:52:18.263943293Z   File "<frozen importlib._bootstrap_external>", line 1074, in get_code
+2025-05-10T15:52:18.263945413Z   File "<frozen importlib._bootstrap_external>", line 1004, in source_to_code
+2025-05-10T15:52:18.263947463Z   File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+internet, clothes, or other spending.': 'Internet, clothes, or other spending.',
         'Step 3': 'Step 3',
         # budget_step4.html
         'Savings & Review': 'Savings & Review',
@@ -696,8 +784,7 @@ def step4():
 
             # Calculate metrics for ranking
             all_users_df = calculate_budget_metrics(all_users_df)
-            all_users_df['surplus_deficit'] = pd.to_numeric(all_users_df['surplus_deficit'], errors='co DEVELOPMENT
-erce').fillna(0.0)
+            all_users_df['surplus_deficit'] = pd.to_numeric(all_users_df['surplus_deficit'], errors='coerce').fillna(0.0)
             all_users_df = all_users_df.sort_values('surplus_deficit', ascending=False).reset_index(drop=True)
             total_users = len(all_users_df.drop_duplicates(subset=['email']))
             user_df = pd.DataFrame([data])
