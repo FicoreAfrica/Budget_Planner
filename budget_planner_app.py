@@ -218,6 +218,9 @@ translations = {
         'Budget Report Subject': 'Your Budget Report',
         'Your Budget Report': 'Your Budget Report',
         'Dear': 'Dear',
+        'Summary with Emoji': 'Summary 📊',
+        'Advice with Emoji': 'Advice 💡',
+        'Recommended Learning with Emoji': 'Recommended Learning 📚',
         'Here is your monthly budget summary.': 'Here is your monthly budget summary.',
         'Budget Summary': 'Budget Summary',
         'Thank you for choosing Ficore Africa!': 'Thank you for choosing Ficore Africa!'
@@ -345,7 +348,10 @@ translations = {
         # budget_email.html
         'Budget Report Subject': 'Rahoton Kasafin Kuɗi',
         'Your Budget Report': 'Rahoton Kasafin Kuɗi',
-        'Dear': 'Masoyi',
+        'Dear': 'Barka Da Warhaka',
+        'Summary with Emoji': 'Taƙaice 📊',
+        'Advice with Emoji': 'Shawara 💡',
+        'Recommended Learning with Emoji': 'Koyon da Aka Shawarta 📚',
         'Here is your monthly budget summary.': 'Ga takaitaccen kasafin kuɗin ku na wata.',
         'Budget Summary': 'Takaitaccen Kasafin Kuɗi',
         'Thank you for choosing Ficore Africa!': 'Muna godiya da zaɓin Ficore Afirka!'
