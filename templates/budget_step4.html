@@ -38,7 +38,7 @@
     return gk_fileData[filename] || "";
     }
 </script><!DOCTYPE html>
-<html lang="{{ translations['language'] }}">
+<html lang="{{ language }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -94,13 +94,13 @@
             {% endif %}
         {% endwith %}
         <div class="form-card slide-in">
-            <h3>Step 4: {{ translations['Savings & Review'] }}</h3>
+            <h3>{{ translations['Step 4'] }}: {{ translations['Savings & Review'] }}</h3>
             <form method="POST" id="step4-form">
                 {{ form.hidden_tag() }}
                 <div class="form-group">
-                    {{ form.savings_goal.label(class="form-label") }}
+                    <label for="savings_goal" class="form-label">{{ translations['Savings Goal'] }}</label>
                     <div style="position: relative;">
-                        {{ form.savings_goal(class="form-control number-input", type="number", step="0.01", min="0", placeholder=translations['e.g. ₦5,000']) }}
+                        {{ form.savings_goal(class="form-control number-input", type="number", step="0.01", min="0", placeholder=translations['e.g. ₦5,000'], **{'aria-required': 'true'}) }}
                         <span class="number-display" data-for="savings_goal"></span>
                         <span class="info-icon"><i class="fas fa-info-circle"></i><span class="tooltip-text">{{ translations['Desired monthly savings amount.'] }}</span></span>
                     </div>
@@ -109,14 +109,14 @@
                 </div>
                 <div class="form-group">
                     <div class="form-check">
-                        {{ form.auto_email(class="form-check-input") }}
-                        {{ form.auto_email.label(class="form-check-label") }}
+                        {{ form.auto_email(class="form-check-input", **{'aria-required': 'true'}) }}
+                        <label for="auto_email" class="form-check-label">{{ translations['Auto Email'] }}</label>
                         <span class="info-icon"><i class="fas fa-info-circle"></i><span class="tooltip-text">{{ translations['Get your budget report by email.'] }}</span></span>
                     </div>
                 </div>
                 <div class="text-center">
-                    <a href="{{ url_for('step3') }}" class="btn btn-secondary">Back</a>
-                    {{ form.submit(class="btn btn-primary") }}
+                    <a href="{{ url_for('step3') }}" class="btn btn-secondary">{{ translations['Back'] }}</a>
+                    {{ form.submit(class="btn btn-primary", value=translations['Submit']) }}
                 </div>
             </form>
         </div>
