@@ -634,7 +634,7 @@ def send_budget_email(data, total_expenses, savings, surplus_deficit, chart_data
         flash("Error sending email notification. Dashboard will still display.", 'warning')
         return False
     except (ValueError, TypeError, KeyError) as e:
-        logger.error(f "Data processing error sending email: {e}")
+        logger.error(f"Data processing error sending email: {e}")
         flash("Invalid email data. Dashboard will still display.", 'warning')
         return False
     except Exception as e:
