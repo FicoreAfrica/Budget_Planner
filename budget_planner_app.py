@@ -69,6 +69,20 @@ except OSError as e:
     logger.warning("Cache initialization failed. Proceeding without caching.")
     cache = Cache(app, config={'CACHE_TYPE': 'null'})
 
+# Define custom Jinja2 filter for currency formatting
+def format_currency(value, currency='NGN'):
+    """Format a number as currency with the specified symbol (default: NGN)."""
+    try:
+        # Format number with 2 decimal places and thousands separator
+        formatted = f"{float(value):,.2f}"
+        return f"₦{formatted}" if currency == 'NGN' else f"{currency} {formatted}"
+    except (ValueError, TypeError):
+        logger.error(f"Invalid value for format_currency: {value}")
+        return str(value)
+
+# Register the filter with Jinja2 environment
+app.jinja_env.filters['format_currency'] = format_currency
+
 # Google Sheets setup
 SCOPE = ['https://www.googleapis.com/auth/spreadsheets']
 SPREADSHEET_ID = os.getenv('SPREADSHEET_ID')
@@ -647,7 +661,7 @@ class Step3Form(FlaskForm):
     submit = SubmitField('Continue to Savings & Review')
 
 class Step4Form(FlaskForm):
-    savings_goal = FloatField('Savings Goal', validators=[Optional()])
+    savings_goal = FloatField('Savings Goal Ditto for savings_goal
     auto_email = BooleanField('Receive Email Report')
     submit = SubmitField('Continue to Dashboard')
 
