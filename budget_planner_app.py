@@ -3,6 +3,7 @@ import logging
 import json
 import threading
 import time
+import re
 from datetime import datetime
 from flask import Flask, render_template, request, flash, redirect, url_for, session
 from flask_wtf import FlaskForm
@@ -16,6 +17,7 @@ from google.oauth2.service_account import Credentials
 import pandas as pd
 from flask_session import Session
 from flask_caching import Cache
+from tenacity import retry, stop_after_attempt, wait_exponential
 
 # Configure logging
 logging.basicConfig(
@@ -27,10 +29,17 @@ logger = logging.getLogger(__name__)
 
 # Initialize Flask app
 app = Flask(__name__, template_folder='templates', static_folder='static')
-app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY', 'your-secret-key')
+app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY')
 if not app.config['SECRET_KEY']:
     logger.critical("FLASK_SECRET_KEY not set. Application will not start.")
     raise RuntimeError("FLASK_SECRET_KEY environment variable not set.")
+
+# Validate critical environment variables
+required_env_vars = ['SMTP_SERVER', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASSWORD', 'SPREADSHEET_ID']
+for var in required_env_vars:
+    if not os.getenv(var):
+        logger.critical(f"{var} not set. Application will not start.")
+        raise RuntimeError(f"{var} environment variable not set.")
 
 # Configure server-side session with flask-session
 app.config['SESSION_TYPE'] = 'filesystem'
@@ -39,30 +48,30 @@ app.config['SESSION_PERMANENT'] = False
 app.config['PERMANENT_SESSION_LIFETIME'] = 1800  # 30 minutes
 app.config['SESSION_USE_SIGNER'] = True
 app.config['SESSION_COOKIE_NAME'] = 'session_id'
-Session(app)
-
-# Create session directory if it doesn't exist
+app.config['SESSION_COOKIE_SECURE'] = True  # Secure cookies in production
 try:
     os.makedirs(app.config['SESSION_FILE_DIR'], exist_ok=True)
     logger.info(f"Session directory created at {app.config['SESSION_FILE_DIR']}")
 except OSError as e:
     logger.error(f"Failed to create session directory: {e}")
     raise RuntimeError("Failed to create session directory.")
+Session(app)
 
 # Configure caching
 app.config['CACHE_TYPE'] = 'filesystem'
 app.config['CACHE_DIR'] = os.path.join(app.root_path, 'cache')
-app.config['CACHE_DEFAULT_TIMEOUT'] = 300  # 5 minutes cache timeout
-cache = Cache(app)
+app.config['CACHE_DEFAULT_TIMEOUT'] = 600  # 10 minutes cache timeout
 try:
     os.makedirs(app.config['CACHE_DIR'], exist_ok=True)
+    cache = Cache(app)
 except OSError as e:
     logger.error(f"Failed to create cache directory: {e}")
-    raise RuntimeError("Failed to create cache directory.")
+    logger.warning("Cache initialization failed. Proceeding without caching.")
+    cache = Cache(app, config={'CACHE_TYPE': 'null'})
 
 # Google Sheets setup
 SCOPE = ['https://www.googleapis.com/auth/spreadsheets']
-SPREADSHEET_ID = os.getenv('SPREADSHEET_ID', 'your-spreadsheet-id')
+SPREADSHEET_ID = os.getenv('SPREADSHEET_ID')
 PREDETERMINED_HEADERS = [
     'Timestamp', 'first_name', 'email', 'language', 'monthly_income',
     'housing_expenses', 'food_expenses', 'transport_expenses', 'other_expenses',
@@ -164,12 +173,15 @@ translations = {
         'Step 1': 'Step 1',
         # budget_step2.html
         'Income': 'Income',
+        'Monthly Income': 'Monthly Income',
         'e.g. ₦150,000': 'e.g. ₦150,000',
         'Your monthly pay or income.': 'Your monthly pay or income.',
         'Valid amount!': 'Valid amount!',
         'Invalid Number': 'Invalid Number',
         'Back': 'Back',
         'Step 2': 'Step 2',
+        'Continue to Expenses': 'Continue to Expenses',
+        'Please enter a valid income amount': 'Please enter a valid income amount',
         # budget_step3.html
         'Expenses': 'Expenses',
         'Housing Expenses': 'Housing Expenses',
@@ -183,8 +195,10 @@ translations = {
         'Bus, bike, taxi, or fuel costs.': 'Bus, bike, taxi, or fuel costs.',
         'Other Expenses': 'Other Expenses',
         'e.g. ₦20,000': 'e.g. ₦20,000',
-        'internet, clothes, or other spending.': 'Internet, clothes, or other spending.',
+        'Internet, clothes, or other spending.': 'Internet, clothes, or other spending.',
         'Step 3': 'Step 3',
+        'Continue to Savings & Review': 'Continue to Savings & Review',
+        'Please enter valid amounts for all expenses': 'Please enter valid amounts for all expenses',
         # budget_step4.html
         'Savings & Review': 'Savings & Review',
         'Savings Goal': 'Savings Goal',
@@ -193,6 +207,13 @@ translations = {
         'Auto Email': 'Auto Email',
         'Submit': 'Submit',
         'Step 4': 'Step 4',
+        'Continue to Dashboard': 'Continue to Dashboard',
+        'Analyzing your budget': 'Analyzing your budget...',
+        'Please enter a valid savings goal amount': 'Please enter a valid savings goal amount',
+        # budget_dashboard.html
+        'Summary with Emoji': 'Summary 📊',
+        'Badges with Emoji': 'Badges 🏅',
+        'Tips with Emoji': 'Tips 💡',
         # budget_email.html
         'Budget Report Subject': 'Your Budget Report',
         'Your Budget Report': 'Your Budget Report',
@@ -280,12 +301,15 @@ translations = {
         'Step 1': 'Mataki na 1',
         # budget_step2.html
         'Income': 'Kuɗin Shiga',
+        'Monthly Income': 'Kuɗin Shiga na Wata',
         'e.g. ₦150,000': 'misali ₦150,000',
         'Your monthly pay or income.': 'Albashin ku na wata ko kuɗin shiga.',
         'Valid amount!': 'Adadin daidai ne!',
         'Invalid Number': 'Lamba Ba daidai ba ne',
         'Back': 'Koma Baya',
         'Step 2': 'Mataki na 2',
+        'Continue to Expenses': 'Ci gaba zuwa Kashe Kuɗi',
+        'Please enter a valid income amount': 'Da fatan za a shigar da adadin kuɗin shiga mai inganci',
         # budget_step3.html
         'Expenses': 'Kuɗaɗe',
         'Housing Expenses': 'Kuɗin Gida',
@@ -301,6 +325,8 @@ translations = {
         'e.g. ₦20,000': 'misali ₦20,000',
         'Internet, clothes, or other spending.': 'Intanet, tufafi, ko sauran kashe kuɗi.',
         'Step 3': 'Mataki na 3',
+        'Continue сегодняшний деньSavings & Review': 'Ci gaba zuwa Tattalin Arziki & Dubawa',
+        'Please enter valid amounts for all expenses': 'Da fatan za a shigar da adadin da ya dace ga duk kashe kuɗi',
         # budget_step4.html
         'Savings & Review': 'Tattara Kuɗi & Dubawa',
         'Savings Goal': 'Manufar Tattara Kuɗi',
@@ -309,6 +335,13 @@ translations = {
         'Auto Email': 'Imel ta atomatik',
         'Submit': 'Sallama',
         'Step 4': 'Mataki na 4',
+        'Continue to Dashboard': 'Ci gaba zuwa Dashboard',
+        'Analyzing your budget': 'Nazarin kasafin kuɗin ku...',
+        'Please enter a valid savings goal amount': 'Da fatan za a shigar da adadin manufa mai inganci',
+        # budget_dashboard.html
+        'Summary with Emoji': 'Taƙaice 📊',
+        'Badges with Emoji': 'Baja 🏅',
+        'Tips with Emoji': 'Shawara 💡',
         # budget_email.html
         'Budget Report Subject': 'Rahoton Kasafin Kuɗi',
         'Your Budget Report': 'Rahoton Kasafin Kuɗi',
@@ -318,6 +351,14 @@ translations = {
         'Thank you for choosing Ficore Africa!': 'Muna godiya da zaɓin Ficore Afirka!'
     }
 }
+
+def sanitize_input(text):
+    """Sanitize input to prevent XSS or injection attacks."""
+    if not text:
+        return text
+    # Remove potentially dangerous characters and limit length
+    text = re.sub(r'[<>";]', '', text.strip())[:100]
+    return text
 
 def initialize_sheets(max_retries=5, backoff_factor=2):
     """Initialize Google Sheets client with retries."""
@@ -342,16 +383,16 @@ def initialize_sheets(max_retries=5, backoff_factor=2):
                 logger.error(f"Invalid GOOGLE_CREDENTIALS_JSON format: {e}")
                 return False
             except gspread.exceptions.APIError as e:
-                logger.error(f"Google Sheets API error on attempt {attempt + 1}: {e}")
+                logger.error(f"Google Sheets API error on attempt {attempt + 1}: {e} (Status: {e.response.status_code})")
                 if attempt < max_retries - 1:
-                    time.sleep(backoff_factor ** attempt)
+                    time.sleep(backoff_factor + 2)  # Conservative delay
             except (ValueError, KeyError, TypeError) as e:
                 logger.error(f"Configuration error on attempt {attempt + 1}: {e}")
                 return False
             except Exception as e:
                 logger.exception(f"Unexpected error on attempt {attempt + 1}: {e}")
                 if attempt < max_retries - 1:
-                    time.sleep(backoff_factor ** attempt)
+                    time.sleep(backoff_factor + 2)
         logger.critical("Max retries exceeded for Google Sheets initialization.")
         return False
 
@@ -368,7 +409,7 @@ def get_sheets_client():
         logger.exception(f"Failed to get sheets client: {e}")
         raise
 
-@cache.memoize(timeout=300)
+@cache.memoize(timeout=600)
 def fetch_data_from_sheet(email=None, max_retries=5, backoff_factor=2):
     """Fetch data from Google Sheets with retries."""
     for attempt in range(max_retries):
@@ -391,9 +432,9 @@ def fetch_data_from_sheet(email=None, max_retries=5, backoff_factor=2):
             logger.info(f"Fetched {len(df)} rows for email {email if email else 'all'}.")
             return df
         except gspread.exceptions.APIError as e:
-            logger.error(f"Google Sheets API error on attempt {attempt + 1}: {e}")
+            logger.error(f"Google Sheets API error on attempt {attempt + 1}: {e} (Status: {e.response.status_code})")
             if attempt < max_retries - 1:
-                time.sleep(backoff_factor ** attempt)
+                time.sleep(backoff_factor + 2)
         except gspread.exceptions.WorksheetNotFound as e:
             logger.error(f"Worksheet 'Sheet1' not found: {e}")
             return pd.DataFrame(columns=PREDETERMINED_HEADERS)
@@ -403,7 +444,7 @@ def fetch_data_from_sheet(email=None, max_retries=5, backoff_factor=2):
         except Exception as e:
             logger.exception(f"Unexpected error on attempt {attempt + 1}: {e}")
             if attempt < max_retries - 1:
-                time.sleep(backoff_factor ** attempt)
+                time.sleep(backoff_factor + 2)
     logger.error("Max retries reached while fetching data.")
     return pd.DataFrame(columns=PREDETERMINED_HEADERS)
 
@@ -415,7 +456,7 @@ def set_sheet_headers():
         logger.info("Sheet1 headers updated.")
         return True
     except gspread.exceptions.APIError as e:
-        logger.error(f"Google Sheets API error setting headers: {e}")
+        logger.error(f"Google Sheets API error setting headers: {e} (Status: {e.response.status_code})")
         return False
     except gspread.exceptions.WorksheetNotFound as e:
         logger.error(f"Worksheet 'Sheet1' not found: {e}")
@@ -442,10 +483,10 @@ def append_to_sheet(data):
                 logger.info("Headers already correct. Skipping header update.")
             worksheet.append_row(data, value_input_option='RAW')
             logger.info(f"Appended data to sheet: {data}")
-            time.sleep(1)  # Respect API rate limits
+            time.sleep(2)  # Respect API rate limits
             return True
         except gspread.exceptions.APIError as e:
-            logger.error(f"Google Sheets API error appending to sheet: {e}")
+            logger.error(f"Google Sheets API error appending to sheet: {e} (Status: {e.response.status_code})")
             return False
         except gspread.exceptions.WorksheetNotFound as e:
             logger.error(f"Worksheet 'Sheet1' not found: {e}")
@@ -457,7 +498,7 @@ def append_to_sheet(data):
             logger.exception(f"Unexpected error appending to sheet: {e}")
             return False
 
-@cache.memoize(timeout=300)
+@cache.memoize(timeout=600)
 def calculate_budget_metrics(df):
     """Calculate budget metrics for DataFrame."""
     try:
@@ -473,7 +514,7 @@ def calculate_budget_metrics(df):
         )
         df['surplus_deficit'] = df['monthly_income'] - df['total_expenses'] - df['savings']
         df['advice'] = df['surplus_deficit'].apply(
-            lambda x: 'Great job! Save or invest your surplus to grow your wealth.' if x >= 0 else 'Reduce non-essential spending to balance your budget.'
+            lambda x: translations[df['language'].iloc[0]]['Great job! Save or invest your surplus to grow your wealth.'] if x >= 0 else translations[df['language'].iloc[0]]['Reduce non-essential spending to balance your budget.']
         )
         return df
     except (ValueError, TypeError, KeyError) as e:
@@ -507,18 +548,19 @@ def assign_badges(user_df):
         logger.exception(f"Unexpected error in assign_badges: {e}")
         return badges
 
+@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
 def send_budget_email(data, total_expenses, savings, surplus_deficit, chart_data, bar_data):
-    """Send budget report email to user."""
+    """Send budget report email to user with retries."""
     try:
         msg = MIMEMultipart('alternative')
         msg['Subject'] = translations[data.get('language', 'en')]['Budget Report Subject']
-        msg['From'] = os.getenv('SMTP_USER', 'ficoreafrica@gmail.com')
+        msg['From'] = os.getenv('SMTP_USER')
         msg['To'] = data['email']
 
         html = render_template(
             'budget_email.html',
             translations=translations[data.get('language', 'en')],
-            user_name=data.get('first_name', 'User'),
+            user_name=sanitize_input(data.get('first_name', 'User')),
             monthly_income=data.get('monthly_income', 0),
             housing_expenses=data.get('housing_expenses', 0),
             food_expenses=data.get('food_expenses', 0),
@@ -538,9 +580,9 @@ def send_budget_email(data, total_expenses, savings, surplus_deficit, chart_data
         part = MIMEText(html, 'html')
         msg.attach(part)
 
-        with smtplib.SMTP(os.getenv('SMTP_SERVER', 'smtp.gmail.com'), int(os.getenv('SMTP_PORT', '587'))) as server:
+        with smtplib.SMTP(os.getenv('SMTP_SERVER'), int(os.getenv('SMTP_PORT'))) as server:
             server.starttls()
-            server.login(os.getenv('SMTP_USER', 'ficoreafrica@gmail.com'), os.getenv('SMTP_PASSWORD', 'your-password'))
+            server.login(os.getenv('SMTP_USER'), os.getenv('SMTP_PASSWORD'))
             server.sendmail(msg['From'], msg['To'], msg.as_string())
         logger.info(f"Email sent to {data['email']}")
         flash(translations[data.get('language', 'en')]['Check Inbox'], 'info')
@@ -567,19 +609,19 @@ class Step1Form(FlaskForm):
 
 class Step2Form(FlaskForm):
     income = FloatField('Monthly Income', validators=[DataRequired()])
-    submit = SubmitField('Next')
+    submit = SubmitField('Continue to Expenses')
 
 class Step3Form(FlaskForm):
     housing = FloatField('Housing Expenses', validators=[DataRequired()])
     food = FloatField('Food Expenses', validators=[DataRequired()])
     transport = FloatField('Transport Expenses', validators=[DataRequired()])
     other = FloatField('Other Expenses', validators=[DataRequired()])
-    submit = SubmitField('Next')
+    submit = SubmitField('Continue to Savings & Review')
 
 class Step4Form(FlaskForm):
     savings_goal = FloatField('Savings Goal', validators=[Optional()])
     auto_email = BooleanField('Receive Email Report')
-    submit = SubmitField('Submit')
+    submit = SubmitField('Continue to Dashboard')
 
 # Routes
 @app.route('/', methods=['GET', 'POST'])
@@ -589,17 +631,23 @@ def step1():
         form = Step1Form()
         language = form.language.data if form.language.data in translations else 'en'
         if form.validate_on_submit():
+            first_name = sanitize_input(form.first_name.data)
+            email = sanitize_input(form.email.data)
+            if not first_name or not email:
+                logger.error(f"Invalid sanitized input: first_name={first_name}, email={email}")
+                flash(translations[language]['Invalid Email'], 'error')
+                return render_template('budget_step1.html', form=form, translations=translations.get(language, translations['en']))
             session['budget_data'] = {
-                'first_name': form.first_name.data,
-                'email': form.email.data,
+                'first_name': first_name,
+                'email': email,
                 'language': form.language.data
             }
-            logger.info(f"Step 1 completed for {form.email.data}")
+            logger.info(f"Step 1 completed for {email}")
             return redirect(url_for('step2'))
         return render_template('budget_step1.html', form=form, translations=translations.get(language, translations['en']))
     except Exception as e:
         logger.exception(f"Error in step1 route: {e}")
-        flash("An unexpected error occurred. Please try again.", 'error')
+        flash(translations.get('en')['Error retrieving data. Please try again.'], 'error')
         return redirect(url_for('step1'))
 
 @app.route('/step2', methods=['GET', 'POST'])
@@ -607,19 +655,24 @@ def step2():
     """Handle Step 2: Income."""
     try:
         form = Step2Form()
-        language = session.get('budget_data', {}).get('language', 'en')
+        if 'budget_data' not in session:
+            logger.warning("Session data missing in step2.")
+            flash(translations['en']['Session Expired'], 'error')
+            return redirect(url_for('step1'))
+        language = session['budget_data'].get('language', 'en')
         if form.validate_on_submit():
-            if 'budget_data' not in session:
-                logger.warning("Session data missing in step2.")
-                flash(translations[language]['Session Expired'], 'error')
-                return redirect(url_for('step1'))
-            session['budget_data'].update({'monthly_income': form.income.data})
+            income = form.income.data
+            if income < 0:
+                logger.error(f"Invalid income: {income}")
+                flash(translations[language]['Please enter a valid income amount'], 'error')
+                return render_template('budget_step2.html', form=form, translations=translations.get(language, translations['en']))
+            session['budget_data'].update({'monthly_income': income})
             logger.info(f"Step 2 completed for {session['budget_data']['email']}")
             return redirect(url_for('step3'))
         return render_template('budget_step2.html', form=form, translations=translations.get(language, translations['en']))
     except Exception as e:
         logger.exception(f"Error in step2 route: {e}")
-        flash("An unexpected error occurred. Please try again.", 'error')
+        flash(translations.get('en')['Error retrieving data. Please try again.'], 'error')
         return redirect(url_for('step1'))
 
 @app.route('/step3', methods=['GET', 'POST'])
@@ -627,25 +680,31 @@ def step3():
     """Handle Step 3: Expenses."""
     try:
         form = Step3Form()
-        language = session.get('budget_data', {}).get('language', 'en')
+        if 'budget_data' not in session:
+            logger.warning("Session data missing in step3.")
+            flash(translations['en']['Session Expired'], 'error')
+            return redirect(url_for('step1'))
+        language = session['budget_data'].get('language', 'en')
         if form.validate_on_submit():
-            if 'budget_data' not in session:
-                logger.warning("Session data missing in step3.")
-                flash(translations[language]['Session Expired'], 'error')
-                return redirect(url_for('step1'))
-            session['budget_data'].update({
+            expenses = {
                 'housing_expenses': form.housing.data,
                 'food_expenses': form.food.data,
                 'transport_expenses': form.transport.data,
                 'other_expenses': form.other.data
-            })
+            }
+            for key, value in expenses.items():
+                if value < 0:
+                    logger.error(f"Invalid {key}: {value}")
+                    flash(translations[language]['Please enter valid amounts for all expenses'], 'error')
+                    return render_template('budget_step3.html', form=form, translations=translations.get(language, translations['en']))
+            session['budget_data'].update(expenses)
             logger.info(f"Step 3 completed for {session['budget_data']['email']}")
             logger.info(f"Step 3 session data: {session['budget_data']}")
             return redirect(url_for('step4'))
         return render_template('budget_step3.html', form=form, translations=translations.get(language, translations['en']))
     except Exception as e:
         logger.exception(f"Error in step3 route: {e}")
-        flash("An unexpected error occurred. Please try again.", 'error')
+        flash(translations.get('en')['Error retrieving data. Please try again.'], 'error')
         return redirect(url_for('step1'))
 
 @app.route('/step4', methods=['GET', 'POST'])
@@ -653,14 +712,19 @@ def step4():
     """Handle Step 4: Savings and Submission."""
     try:
         form = Step4Form()
-        language = session.get('budget_data', {}).get('language', 'en')
+        if 'budget_data' not in session:
+            logger.warning("Session data missing in step4.")
+            flash(translations['en']['Session Expired'], 'error')
+            return redirect(url_for('step1'))
+        language = session['budget_data'].get('language', 'en')
         if form.validate_on_submit():
-            if 'budget_data' not in session:
-                logger.warning("Session data missing in step4.")
-                flash(translations[language]['Session Expired'], 'error')
-                return redirect(url_for('step1'))
+            savings_goal = form.savings_goal.data or 0
+            if savings_goal < 0:
+                logger.error(f"Invalid savings_goal: {savings_goal}")
+                flash(translations[language]['Please enter a valid savings goal amount'], 'error')
+                return render_template('budget_step4.html', form=form, translations=translations.get(language, translations['en']))
             session['budget_data'].update({
-                'savings_goal': form.savings_goal.data or 0,
+                'savings_goal': savings_goal,
                 'auto_email': form.auto_email.data
             })
             data = session['budget_data']
@@ -764,19 +828,19 @@ def step4():
         return render_template('budget_step4.html', form=form, translations=translations.get(language, translations['en']))
     except Exception as e:
         logger.exception(f"Error in step4 route: {e}")
-        flash("An unexpected error occurred. Please try again.", 'error')
+        flash(translations.get('en')['Error retrieving data. Please try again.'], 'error')
         return redirect(url_for('step1'))
 
 @app.route('/dashboard')
 def dashboard():
     """Render user dashboard."""
     try:
-        language = session.get('dashboard_data', {}).get('language', 'en')
         dashboard_data = session.get('dashboard_data', {})
         if not dashboard_data:
             logger.warning("Dashboard data missing in session.")
-            flash(translations[language]['Session Expired'], 'error')
+            flash(translations['en']['Session Expired'], 'error')
             return redirect(url_for('step1'))
+        language = dashboard_data.get('language', 'en')
 
         return render_template(
             'budget_dashboard.html',
@@ -805,19 +869,19 @@ def dashboard():
         )
     except Exception as e:
         logger.exception(f"Error in dashboard route: {e}")
-        flash("An unexpected error occurred. Please try again.", 'error')
+        flash(translations.get('en')['Error retrieving data. Please try again.'], 'error')
         return redirect(url_for('step1'))
 
 @app.route('/send_budget_email', methods=['POST'])
 def send_budget_email_route():
     """Handle manual email report request."""
     try:
-        language = session.get('dashboard_data', {}).get('language', 'en')
         dashboard_data = session.get('dashboard_data', {})
         if not dashboard_data:
             logger.warning("Dashboard data missing in session for email route.")
-            flash(translations[language]['Session Expired'], 'error')
+            flash(translations['en']['Session Expired'], 'error')
             return redirect(url_for('step1'))
+        language = dashboard_data.get('language', 'en')
 
         success = send_budget_email(
             dashboard_data,
@@ -832,7 +896,7 @@ def send_budget_email_route():
         return redirect(url_for('dashboard'))
     except Exception as e:
         logger.exception(f"Error in send_budget_email_route: {e}")
-        flash("An unexpected error occurred. Please try again.", 'error')
+        flash(translations.get('en')['Error retrieving data. Please try again.'], 'error')
         return redirect(url_for('step1'))
 
 if __name__ == '__main__':
