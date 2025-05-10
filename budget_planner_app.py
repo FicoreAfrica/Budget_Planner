@@ -166,6 +166,7 @@ translations = {
         'Choose your language.': 'Choose your language.',
         'Looks good!': 'Looks good!',
         'First Name Required': 'First Name Required',
+        'Continue to Income': 'Continue to Income',
         'Invalid Email': 'Invalid Email',
         'Language selected!': 'Language selected!',
         'Language required': 'Language required',
