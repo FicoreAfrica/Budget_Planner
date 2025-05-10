@@ -38,7 +38,7 @@
     return gk_fileData[filename] || "";
     }
 </script><!DOCTYPE html>
-<html lang="{{ translations['language'] }}">
+<html lang="{{ language }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -94,11 +94,11 @@
             {% endif %}
         {% endwith %}
         <div class="form-card slide-in">
-            <h3>Step 3: {{ translations['Expenses'] }}</h3>
+            <h3>{{ translations['Step 3'] }}: {{ translations['Expenses'] }}</h3>
             <form method="POST" id="step3-form">
                 {{ form.hidden_tag() }}
                 <div class="form-group">
-                    {{ form.housing.label(class="form-label") }}
+                    <label for="housing" class="form-label">{{ translations['Housing Expenses'] }}</label>
                     <div style="position: relative;">
                         {{ form.housing(class="form-control number-input", type="number", step="0.01", min="0", placeholder=translations['e.g. ₦30,000'], **{'aria-required': 'true'}) }}
                         <span class="number-display" data-for="housing"></span>
@@ -108,7 +108,7 @@
                     <div class="invalid-feedback">{{ translations['Invalid Number'] }}</div>
                 </div>
                 <div class="form-group">
-                    {{ form.food.label(class="form-label") }}
+                    <label for="food" class="form-label">{{ translations['Food Expenses'] }}</label>
                     <div style="position: relative;">
                         {{ form.food(class="form-control number-input", type="number", step="0.01", min="0", placeholder=translations['e.g. ₦45,000'], **{'aria-required': 'true'}) }}
                         <span class="number-display" data-for="food"></span>
@@ -118,7 +118,7 @@
                     <div class="invalid-feedback">{{ translations['Invalid Number'] }}</div>
                 </div>
                 <div class="form-group">
-                    {{ form.transport.label(class="form-label") }}
+                    <label for="transport" class="form-label">{{ translations['Transport Expenses'] }}</label>
                     <div style="position: relative;">
                         {{ form.transport(class="form-control number-input", type="number", step="0.01", min="0", placeholder=translations['e.g. ₦10,000'], **{'aria-required': 'true'}) }}
                         <span class="number-display" data-for="transport"></span>
@@ -128,7 +128,7 @@
                     <div class="invalid-feedback">{{ translations['Invalid Number'] }}</div>
                 </div>
                 <div class="form-group">
-                    {{ form.other.label(class="form-label") }}
+                    <label for="other" class="form-label">{{ translations['Other Expenses'] }}</label>
                     <div style="position: relative;">
                         {{ form.other(class="form-control number-input", type="number", step="0.01", min="0", placeholder=translations['e.g. ₦20,000'], **{'aria-required': 'true'}) }}
                         <span class="number-display" data-for="other"></span>
@@ -138,8 +138,8 @@
                     <div class="invalid-feedback">{{ translations['Invalid Number'] }}</div>
                 </div>
                 <div class="text-center">
-                    <a href="{{ url_for('step2') }}" class="btn btn-secondary">Back</a>
-                    {{ form.submit(class="btn btn-primary") }}
+                    <a href="{{ url_for('step2') }}" class="btn btn-secondary">{{ translations['Back'] }}</a>
+                    {{ form.submit(class="btn btn-primary", value=translations['Next']) }}
                 </div>
             </form>
         </div>
