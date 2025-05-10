@@ -188,6 +188,19 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     <script>
+        // Translations for JavaScript
+        const translations = {
+            'My Budget': '{{ translations['My Budget'] }}',
+            'Monthly Income': '{{ translations['Monthly Income'] }}',
+            'Total Expenses': '{{ translations['Total Expenses'] }}',
+            'Surplus/Deficit': '{{ translations['Surplus/Deficit'] }}',
+            'Check yours at': '{{ translations['Check yours at'] }}',
+            'Results copied to clipboard': '{{ translations['Results copied to clipboard'] }}',
+            'Failed to copy results': '{{ translations['Failed to copy results'] }}',
+            'Budget Breakdown': '{{ translations['Budget Breakdown'] }}',
+            'Income vs Expenses': '{{ translations['Income vs Expenses'] }}'
+        };
+
         document.addEventListener('DOMContentLoaded', () => {
             const cards = document.querySelectorAll('.card');
             cards.forEach((card, index) => {
@@ -198,14 +211,14 @@
             new Chart(pieCtx, {
                 type: 'pie',
                 data: {{ chart_data | safe }},
-                options: { responsive: true, plugins: { legend: { position: 'top' }, title: { display: true, text: '{{ translations['Budget Breakdown'] }}' } } }
+                options: { responsive: true, plugins: { legend: { position: 'top' }, title: { display: true, text: translations['Budget Breakdown'] } } }
             });
 
             const barCtx = document.getElementById('barChart').getContext('2d');
             new Chart(barCtx, {
                 type: 'bar',
                 data: {{ bar_data | safe }},
-                options: { responsive: true, scales: { y: { beginAtZero: true } }, plugins: { legend: { display: false }, title: { display: true, text: '{{ translations['Income vs Expenses'] }}' } } }
+                options: { responsive: true, scales: { y: { beginAtZero: true } }, plugins: { legend: { display: false }, title: { display: true, text: translations['Income vs Expenses'] } } }
             });
 
             document.getElementById('share-button').addEventListener('click', () => {
@@ -214,7 +227,7 @@
                 const surplusDeficit = {{ surplus_deficit | tojson }};
                 const shareText = `${translations['My Budget']}\n${translations['Monthly Income']}: ₦${formatCurrency(monthlyIncome)}\n${translations['Total Expenses']}: ₦${formatCurrency(totalExpenses)}\n${translations['Surplus/Deficit']}: ₦${formatCurrency(surplusDeficit)}\n${translations['Check yours at']}: ${window.location.origin}`;
                 if (navigator.share) {
-                    navigator.share({ title: translations['My Budget Results'], text: shareText, url: window.location.origin })
+                    navigator.share({ title: translations['My Budget'], text: shareText, url: window.location.origin })
                         .catch(error => console.error('Error sharing:', error));
                 } else {
                     navigator.clipboard.writeText(shareText)
