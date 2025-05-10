@@ -56,18 +56,45 @@
         <div class="dashboard-card slide-in">
             <div class="summary-box" aria-labelledby="summary-header">
                 <h3 id="summary-header" class="section-header">{{ translations['Summary with Emoji'] }}</h3>
-                <p>{{ budget_summary | safe }}</p>
+                <ul>
+                    <li><strong>{{ translations['Monthly Income'] }}:</strong> {{ monthly_income | format_currency('NGN') }}</li>
+                    <li><strong>{{ translations['Housing'] }}:</strong> {{ housing_expenses | format_currency('NGN') }}</li>
+                    <li><strong>{{ translations['Food'] }}:</strong> {{ food_expenses | format_currency('NGN') }}</li>
+                    <li><strong>{{ translations['Transport'] }}:</strong> {{ transport_expenses | format_currency('NGN') }}</li>
+                    <li><strong>{{ translations['Other'] }}:</strong> {{ other_expenses | format_currency('NGN') }}</li>
+                    <li><strong>{{ translations['Total Expenses'] }}:</strong> {{ total_expenses | format_currency('NGN') }}</li>
+                    <li><strong>{{ translations['Savings'] }}:</strong> {{ savings | format_currency('NGN') }}</li>
+                    <li><strong>{{ translations['Surplus/Deficit'] }}:</strong> {{ surplus_deficit | format_currency('NGN') }}</li>
+                    <li><strong>{{ translations['Your ranking'] }}:</strong> {{ translations['Rank'] }} {{ rank }} {{ translations['out of'] }} {{ total_users }} {{ translations['users'] }}</li>
+                </ul>
             </div>
             <div class="badges-box" aria-labelledby="badges-header">
                 <h3 id="badges-header" class="section-header">{{ translations['Badges with Emoji'] }}</h3>
-                {% for badge in badges %}
-                    <div class="badge-item">
-                        <strong>{{ badge.title }}</strong>: {{ badge.description }}
-                    </div>
-                {% endfor %}
+                {% if badges %}
+                    {% for badge in badges %}
+                        <div class="badge-item">
+                            <strong>{{ badge }}</strong>: {{ translations[badge] }}
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p>{{ translations['No Badges Yet'] }}</p>
+                {% endif %}
             </div>
             <div class="tips-box" aria-labelledby="tips-header">
                 <h3 id="tips-header" class="section-header">{{ translations['Tips with Emoji'] }}</h3>
+                {% set tips = [] %}
+                {% if surplus_deficit >= 0 %}
+                    {% set _ = tips.append({'title': translations['Great job! Save or invest your surplus.'], 'description': translations['Great job! Save or invest your surplus to grow your wealth.']}) %}
+                {% else %}
+                    {% set _ = tips.append({'title': translations['Spend less on non-essentials to balance your budget.'], 'description': translations['Reduce non-essential spending to balance your budget.']}) %}
+                {% endif %}
+                {% if housing_expenses / monthly_income > 0.3 %}
+                    {% set _ = tips.append({'title': translations['Housing costs are high.'], 'description': translations['Housing costs are high. Look for cheaper rent or utilities.']}) %}
+                {% endif %}
+                {% if food_expenses / monthly_income > 0.3 %}
+                    {% set _ = tips.append({'title': translations['Food spending is high.'], 'description': translations['Food spending is high. Try cooking at home more.']}) %}
+                {% endif %}
+                {% set _ = tips.append({'title': translations['Keep tracking your expenses every month.'], 'description': translations['Keep tracking your expenses every month.']}) %}
                 {% for tip in tips %}
                     <div class="tip-item">
                         <strong>{{ tip.title }}</strong>: {{ tip.description }}
@@ -75,7 +102,8 @@
                 {% endfor %}
             </div>
             <div class="text-center">
-                <a href="{{ url_for('download_pdf') }}" class="btn btn-primary">{{ translations['Download PDF'] }}</a>
+                <!-- Commented out PDF download button to fix BuildError -->
+                <!-- <a href="{{ url_for('download_pdf') }}" class="btn btn-primary">{{ translations['Download PDF'] }}</a> -->
                 <a href="{{ url_for('step1') }}" class="btn btn-secondary">{{ translations['Start Over'] }}</a>
             </div>
         </div>
