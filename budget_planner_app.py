@@ -81,6 +81,242 @@ TWITTER_URL = os.getenv('TWITTER_URL', 'https://x.com/Hassanahm4d')
 sheets = None
 sheets_lock = threading.Lock()
 
+# Translations Dictionary
+translations = {
+    'en': {
+        # Flask routes and flash messages
+        'First Budget Completed!': 'First Budget Completed!',
+        'Check Inbox': 'Check your inbox for the budget report.',
+        'Submission Success': 'Budget submitted successfully!',
+        'Session Expired': 'Session expired. Please start over.',
+        'Error retrieving data. Please try again.': 'Error retrieving data. Please try again.',
+        'Error saving data. Please try again.': 'Error saving data. Please try again.',
+        'Send Email Report': 'Email report sent successfully!',
+        # budget_dashboard.html
+        'Budget Dashboard': 'Budget Dashboard',
+        'Financial growth passport for Africa': 'Financial growth passport for Africa',
+        'Welcome': 'Welcome',
+        'Your Budget Summary': 'Your Budget Summary',
+        'Monthly Income': 'Monthly Income',
+        'Housing': 'Housing',
+        'Food': 'Food',
+        'Transport': 'Transport',
+        'Other': 'Other',
+        'Total Expenses': 'Total Expenses',
+        'Savings': 'Savings',
+        'Surplus/Deficit': 'Surplus/Deficit',
+        'Advice': 'Advice',
+        'Great job! Save or invest your surplus to grow your wealth.': 'Great job! Save or invest your surplus to grow your wealth.',
+        'Housing costs are high. Look for cheaper rent or utilities.': 'Housing costs are high. Look for cheaper rent or utilities.',
+        'Food spending is high. Try cooking at home more.': 'Food spending is high. Try cooking at home more.',
+        'Reduce non-essential spending to balance your budget.': 'Reduce non-essential spending to balance your budget.',
+        'Other spending is high. Cut back on non-essentials like clothes or entertainment.': 'Other spending is high. Cut back on non-essentials like clothes or entertainment.',
+        'Your ranking': 'Your ranking',
+        'Rank': 'Rank',
+        'out of': 'out of',
+        'users': 'users',
+        'Budget Breakdown': 'Budget Breakdown',
+        'Income vs Expenses': 'Income vs Expenses',
+        'Your Badges': 'Your Badges',
+        'Earned badges': 'Earned badges',
+        'No Badges Yet': 'No Badges Yet',
+        'Quick Tips': 'Quick Tips',
+        'Great job! Save or invest your surplus.': 'Great job! Save or invest your surplus.',
+        'Keep tracking your expenses every month.': 'Keep tracking your expenses every month.',
+        'Spend less on non-essentials to balance your budget.': 'Spend less on non-essentials to balance your budget.',
+        'Look for ways to earn extra income.': 'Look for ways to earn extra income.',
+        'Recommended Learning': 'Recommended Learning',
+        'Learn more about budgeting!': 'Learn more about budgeting!',
+        'Whats Next': 'What\'s Next',
+        'Back to Home': 'Back to Home',
+        'Provide Feedback': 'Provide Feedback',
+        'Join Waitlist': 'Join Waitlist',
+        'Book Consultancy': 'Book Consultancy',
+        'Connect on LinkedIn': 'Connect on LinkedIn',
+        'Follow on Twitter': 'Follow on Twitter',
+        'Share Your Results': 'Share Your Results',
+        'Contact Us': 'Contact Us',
+        'Click to Email': 'Click to Email',
+        'for support': 'for support',
+        'My Budget': 'My Budget',
+        'Check yours at': 'Check yours at',
+        'Results copied to clipboard': 'Results copied to clipboard',
+        'Failed to copy results': 'Failed to copy results',
+        # budget_step1.html
+        'Monthly Budget Planner': 'Monthly Budget Planner',
+        'Personal Information': 'Personal Information',
+        'First Name': 'First Name',
+        'Enter your first name': 'Enter your first name',
+        'Enter your first name for your report.': 'Enter your first name for your report.',
+        'Email': 'Email',
+        'Enter your email': 'Enter your email',
+        'Get your budget report by email.': 'Get your budget report by email.',
+        'Language': 'Language',
+        'Choose your language.': 'Choose your language.',
+        'Looks good!': 'Looks good!',
+        'First Name Required': 'First Name Required',
+        'Invalid Email': 'Invalid Email',
+        'Language selected!': 'Language selected!',
+        'Language required': 'Language required',
+        'Next': 'Next',
+        'Step 1': 'Step 1',
+        # budget_step2.html
+        'Income': 'Income',
+        'e.g. ₦150,000': 'e.g. ₦150,000',
+        'Your monthly pay or income.': 'Your monthly pay or income.',
+        'Valid amount!': 'Valid amount!',
+        'Invalid Number': 'Invalid Number',
+        'Back': 'Back',
+        'Step 2': 'Step 2',
+        # budget_step3.html
+        'Expenses': 'Expenses',
+        'Housing Expenses': 'Housing Expenses',
+        'e.g. ₦30,000': 'e.g. ₦30,000',
+        'Rent, electricity, or water bills.': 'Rent, electricity, or water bills.',
+        'Food Expenses': 'Food Expenses',
+        'e.g. ₦45,000': 'e.g. ₦45,000',
+        'Money spent on food each month.': 'Money spent on food each month.',
+        'Transport Expenses': 'Transport Expenses',
+        'e.g. ₦10,000': 'e.g. ₦10,000',
+        'Bus, bike, taxi, or fuel costs.': 'Bus, bike, taxi, or fuel costs.',
+        'Other Expenses': 'Other Expenses',
+        'e.g. ₦20,000': 'e.g. ₦20,000',
+        'Internet, clothes, or other spending.': 'Internet, clothes, or other spending.',
+        'Step 3': 'Step 3',
+        # budget_step4.html
+        'Savings & Review': 'Savings & Review',
+        'Savings Goal': 'Savings Goal',
+        'e.g. ₦5,000': 'e.g. ₦5,000',
+        'Desired monthly savings amount.': 'Desired monthly savings amount.',
+        'Auto Email': 'Auto Email',
+        'Submit': 'Submit',
+        'Step 4': 'Step 4',
+        # budget_email.html
+        'Budget Report Subject': 'Your Budget Report',
+        'Your Budget Report': 'Your Budget Report',
+        'Dear': 'Dear',
+        'Here is your monthly budget summary.': 'Here is your monthly budget summary.',
+        'Budget Summary': 'Budget Summary',
+        'Thank you for choosing Ficore Africa!': 'Thank you for choosing Ficore Africa!'
+    },
+    'ha': {
+        # Flask routes and flash messages
+        'First Budget Completed!': 'An kammala kasafin kuɗi na farko!',
+        'Check Inbox': 'Duba akwatin saƙonku don rahoton kasafin kuɗi.',
+        'Submission Success': 'An ƙaddamar da kasafin kuɗi cikin nasara!',
+        'Session Expired': 'Zaman ya ƙare. Da fatan za a sake farawa.',
+        'Error retrieving data. Please try again.': 'Kuskure wajen dawo da bayanai. Da fatan za a sake gwadawa.',
+        'Error saving data. Please try again.': 'Kuskure wajen ajiye bayanai. Da fatan za a sake gwadawa.',
+        'Send Email Report': 'An aika rahoton imel cikin nasara!',
+        # budget_dashboard.html
+        'Budget Dashboard': 'Dashboard na Kasafin Kuɗi',
+        'Financial growth passport for Africa': 'Fasfo na ci gaban kuɗi don Afirka',
+        'Welcome': 'Barka da Zuwa',
+        'Your Budget Summary': 'Takaitaccen Kasafin Kuɗin Ku',
+        'Monthly Income': 'Kuɗin Shiga na Wata',
+        'Housing': 'Gida',
+        'Food': 'Abinci',
+        'Transport': 'Sufuri',
+        'Other': 'Sauran',
+        'Total Expenses': 'Jimlar Kuɗaɗe',
+        'Savings': 'Tattara Kuɗi',
+        'Surplus/Deficit': 'Rage/Riba',
+        'Advice': 'Shawara',
+        'Great job! Save or invest your surplus to grow your wealth.': 'Aiki mai kyau! Ajiye ko saka ragowar kuɗin ku don bunkasa arzikinku.',
+        'Housing costs are high. Look for cheaper rent or utilities.': 'Kuɗin gida yana da yawa. Nemi haya mai rahusa ko kayan aiki.',
+        'Food spending is high. Try cooking at home more.': 'Kuɗin abinci yana da yawa. Gwada dafa abinci a gida sosai.',
+        'Reduce non-essential spending to balance your budget.': 'Rage kashe kuɗi marasa mahimmanci don daidaita kasafin kuɗin ku.',
+        'Other spending is high. Cut back on non-essentials like clothes or entertainment.': 'Sauran kashe kuɗi yana da yawa. Rage abubuwan da ba su da mahimmanci kamar tufafi ko nishaɗi.',
+        'Your ranking': 'Matsayin ku',
+        'Rank': 'Matsayi',
+        'out of': 'daga cikin',
+        'users': 'masu amfani',
+        'Budget Breakdown': 'Rarraba Kasafin Kuɗi',
+        'Income vs Expenses': 'Kuɗin Shiga vs Kuɗaɗe',
+        'Your Badges': 'Alamominku',
+        'Earned badges': 'Alamomīn da aka samu',
+        'No Badges Yet': 'Babu Alama Har Yanzu',
+        'Quick Tips': 'Shawarwari masu Sauƙi',
+        'Great job! Save or invest your surplus.': 'Aiki mai kyau! Ajiye ko saka ragowar kuɗin ku.',
+        'Keep tracking your expenses every month.': 'Ci gaba da bin diddigin kuɗaɗen ku kowane wata.',
+        'Spend less on non-essentials to balance your budget.': 'Kashe ƙasa da kima akan abubuwan da ba su da mahimmanci don daidaita kasafin kuɗin ku.',
+        'Look for ways to earn extra income.': 'Nemi hanyoyin samun ƙarin kuɗin shiga.',
+        'Recommended Learning': 'Koyon da Aka Shawarta',
+        'Learn more about budgeting!': 'Ƙara koyo game da tsara kasafin kuɗi!',
+        'Whats Next': 'Me ke Gaba',
+        'Back to Home': 'Koma Gida',
+        'Provide Feedback': 'Bayar da Shawara',
+        'Join Waitlist': 'Shiga Jerin Jira',
+        'Book Consultancy': 'Yi Alƙawarin Shawara',
+        'Connect on LinkedIn': 'Haɗa a LinkedIn',
+        'Follow on Twitter': 'Bi a Twitter',
+        'Share Your Results': 'Raba Sakamakonku',
+        'Contact Us': 'Tuntuɓe Mu',
+        'Click to Email': 'Danna don Imel',
+        'for support': 'don tallafi',
+        'My Budget': 'Kasafin Kuɗina',
+        'Check yours at': 'Duba naku a',
+        'Results copied to clipboard': 'An kwafi sakamakon zuwa allo',
+        'Failed to copy results': 'An kasa kwafi sakamakon',
+        # budget_step1.html
+        'Monthly Budget Planner': 'Mai Tsara Kasafin Kuɗi na Wata',
+        'Personal Information': 'Bayanin Kai',
+        'First Name': 'Sunan Farko',
+        'Enter your first name': 'Shigar da sunan farko',
+        'Enter your first name for your report.': 'Shigar da sunan farko don rahotonku.',
+        'Email': 'Imel',
+        'Enter your email': 'Shigar da imel ɗin ku',
+        'Get your budget report by email.': 'Samu rahoton kasafin kuɗin ku ta imel.',
+        'Language': 'Yare',
+        'Choose your language.': 'Zaɓi yarenku.',
+        'Looks good!': 'Yana da kyau!',
+        'First Name Required': 'Ana Buƙatar Sunan Farko',
+        'Invalid Email': 'Imel Ba daidai ba ne',
+        'Language selected!': 'An zaɓi yare!',
+        'Language required': 'Ana buƙatar yare',
+        'Next': 'Na Gaba',
+        'Step 1': 'Mataki na 1',
+        # budget_step2.html
+        'Income': 'Kuɗin Shiga',
+        'e.g. ₦150,000': 'misali ₦150,000',
+        'Your monthly pay or income.': 'Albashin ku na wata ko kuɗin shiga.',
+        'Valid amount!': 'Adadin daidai ne!',
+        'Invalid Number': 'Lamba Ba daidai ba ne',
+        'Back': 'Koma Baya',
+        'Step 2': 'Mataki na 2',
+        # budget_step3.html
+        'Expenses': 'Kuɗaɗe',
+        'Housing Expenses': 'Kuɗin Gida',
+        'e.g. ₦30,000': 'misali ₦30,000',
+        'Rent, electricity, or water bills.': 'Haya, wutar lantarki, ko kuɗin ruwa.',
+        'Food Expenses': 'Kuɗin Abinci',
+        'e.g. ₦45,000': 'misali ₦45,000',
+        'Money spent on food each month.': 'Kuɗin da aka kashe akan abinci kowane wata.',
+        'Transport Expenses': 'Kuɗin Sufuri',
+        'e.g. ₦10,000': 'misali ₦10,000',
+        'Bus, bike, taxi, or fuel costs.': 'Bas, keke, taksi, ko kuɗin mai.',
+        'Other Expenses': 'Sauran Kuɗaɗe',
+        'e.g. ₦20,000': 'misali ₦20,000',
+        'Internet, clothes, or other spending.': 'Intanet, tufafi, ko sauran kashe kuɗi.',
+        'Step 3': 'Mataki na 3',
+        # budget_step4.html
+        'Savings & Review': 'Tattara Kuɗi & Dubawa',
+        'Savings Goal': 'Manufar Tattara Kuɗi',
+        'e.g. ₦5,000': 'misali ₦5,000',
+        'Desired monthly savings amount.': 'Adadin tattara kuɗi na wata da ake so.',
+        'Auto Email': 'Imel ta atomatik',
+        'Submit': 'Sallama',
+        'Step 4': 'Mataki na 4',
+        # budget_email.html
+        'Budget Report Subject': 'Rahoton Kasafin Kuɗi',
+        'Your Budget Report': 'Rahoton Kasafin Kuɗi',
+        'Dear': 'Masoyi',
+        'Here is your monthly budget summary.': 'Ga takaitaccen kasafin kuɗin ku na wata.',
+        'Budget Summary': 'Takaitaccen Kasafin Kuɗi',
+        'Thank you for choosing Ficore Africa!': 'Muna godiya da zaɓin Ficore Afirka!'
+    }
+}
+
 def initialize_sheets(max_retries=5, backoff_factor=2):
     """Initialize Google Sheets client with retries."""
     global sheets
@@ -230,11 +466,7 @@ def calculate_budget_metrics(df):
             df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0.0)
         df['total_expenses'] = df['housing_expenses'] + df['food_expenses'] + df['transport_expenses'] + df['other_expenses']
         df['savings'] = df.apply(
-            lambda row: max(0, row['monthly_income'] * 0.1) if pd.isna(row['savings_goal']) or row['savings_goal'] == 0 else row['savings_goal'],
-            axis=1
-        )
-        df['surplus_deficit'] = df['monthly_income'] - df['total_expenses'] - df['savings']
-        df['advice'] = df['surplus_deficit'].apply(
+            lambda row: max(0, row['robesecsv8c5a7b0d1e1a4b4c6a0b8c5a7b0d1e1a4b4c6a0b8c5a7b0d1e1a4b4c6a0b8c5a7b0d1e1a4b4c6a0b8c5a7b0d1.e('surplus_deficit').apply(
             lambda x: 'Great job! Save or invest your surplus to grow your wealth.' if x >= 0 else 'Reduce non-essential spending to balance your budget.'
         )
         return df
@@ -342,30 +574,6 @@ class Step4Form(FlaskForm):
     savings_goal = FloatField('Savings Goal', validators=[Optional()])
     auto_email = BooleanField('Receive Email Report')
     submit = SubmitField('Submit')
-
-# Translations Dictionary
-translations = {
-    'en': {
-        'First Budget Completed!': 'First Budget Completed!',
-        'Check Inbox': 'Check your inbox for the budget report.',
-        'Submission Success': 'Budget submitted successfully!',
-        'Session Expired': 'Session expired. Please start over.',
-        'Error retrieving data. Please try again.': 'Error retrieving data. Please try again.',
-        'Error saving data. Please try again.': 'Error saving data. Please try again.',
-        'Send Email Report': 'Email report sent successfully!',
-        'Budget Report Subject': 'Your Budget Report'
-    },
-    'ha': {
-        'First Budget Completed!': 'An kammala kasafin kuɗi na farko!',
-        'Check Inbox': 'Duba akwatin saƙonku don rahoton kasafin kuɗi.',
-        'Submission Success': 'An ƙaddamar da kasafin kuɗi cikin nasara!',
-        'Session Expired': 'Zaman ya ƙare. Da fatan za a sake farawa.',
-        'Error retrieving data. Please try again.': 'Kuskure wajen dawo da bayanai. Da fatan za a sake gwadawa.',
-        'Error saving data. Please try again.': 'Kuskure wajen ajiye bayanai. Da fatan za a sake gwadawa.',
-        'Send Email Report': 'An aika rahoton imel cikin nasara!',
-        'Budget Report Subject': 'Rahoton Kasafin Kuɗin Ku'
-    }
-}
 
 # Routes
 @app.route('/', methods=['GET', 'POST'])
