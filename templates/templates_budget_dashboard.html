@@ -1,43 +1,43 @@
 <script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
+    var gk_isXlsx = false;
+    var gk_xlsxFileLookup = {};
+    var gk_fileData = {};
+    function filledCell(cell) {
+      return cell !== '' && cell != null;
+    }
+    function loadFileData(filename) {
+    if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+        try {
+            var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+            var firstSheetName = workbook.SheetNames[0];
+            var worksheet = workbook.Sheets[firstSheetName];
 
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
-                var filteredData = jsonData.filter(row => row.some(filledCell));
+            // Convert sheet to JSON to filter blank rows
+            var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+            // Filter out blank rows (rows where all cells are empty, null, or undefined)
+            var filteredData = jsonData.filter(row => row.some(filledCell));
 
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
-                var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                );
-                // Fallback
-                if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
-                }
-
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
+            // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+            var headerRowIndex = filteredData.findIndex((row, index) =>
+              row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+            );
+            // Fallback
+            if (headerRowIndex === -1 || headerRowIndex > 25) {
+              headerRowIndex = 0;
             }
+
+            // Convert filtered JSON back to CSV
+            var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+            csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+            return csv;
+        } catch (e) {
+            console.error(e);
+            return "";
         }
-        return gk_fileData[filename] || "";
-        }
-        </script><!DOCTYPE html>
+    }
+    return gk_fileData[filename] || "";
+    }
+</script><!DOCTYPE html>
 <html lang="{{ language }}">
 <head>
     <meta charset="UTF-8">
@@ -62,6 +62,8 @@
         .feedback-link { background-color: #2E7D32; color: white; }
         .waitlist-link { background-color: #0288D1; color: white; }
         .consultancy-link { background-color: #D81B60; color: white; }
+        .linkedin-link { background-color: #0077B5; color: white; }
+        .twitter-link { background-color: #1DA1F2; color: white; }
         .share-button { background: linear-gradient(135deg, #FF5722, #D81B60); border: none; padding: 10px 20px; font-weight: 500; border-radius: 8px; color: white; cursor: pointer; margin-right: 10px; }
         .budget-value { font-weight: 700; color: #2E7D32; }
         .deficit { color: #D32F2F; }
@@ -140,7 +142,7 @@
                 </div>
             {% else %}
                 <p>{{ translations['No Badges Yet'] }}</p>
-            {% endif }
+            {% endif %}
         </div>
         <div class="card fade-in" style="margin-top: 20px;">
             <h3>{{ translations['Quick Tips'] }}</h3>
@@ -163,9 +165,11 @@
             <h3>{{ translations['Whats Next'] }}</h3>
             <p>
                 <a href="{{ url_for('step1') }}" class="btn btn-primary">{{ translations['Back to Home'] }}</a>
-                <a href="https://example.com/feedback" class="feedback-link">{{ translations['Provide Feedback'] }}</a>
-                <a href="https://example.com/waitlist" class="waitlist-link">{{ translations['Join Waitlist'] }}</a>
-                <a href="https://example.com/consultancy" class="consultancy-link">{{ translations['Book Consultancy'] }}</a>
+                <a href="{{ FEEDBACK_FORM_URL }}" class="feedback-link">{{ translations['Provide Feedback'] }}</a>
+                <a href="{{ WAITLIST_FORM_URL }}" class="waitlist-link">{{ translations['Join Waitlist'] }}</a>
+                <a href="{{ CONSULTANCY_FORM_URL }}" class="consultancy-link">{{ translations['Book Consultancy'] }}</a>
+                <a href="{{ linkedin_url }}" class="linkedin-link">{{ translations['Connect on LinkedIn'] }}</a>
+                <a href="{{ twitter_url }}" class="twitter-link">{{ translations['Follow on Twitter'] }}</a>
                 <form action="{{ url_for('send_budget_email') }}" method="POST" style="display: inline;">
                     <input type="hidden" name="user_data_json" value="{{ user_data_json }}">
                     <button type="submit" class="btn btn-primary">{{ translations['Send Email Report'] }}</button>
