@@ -54,7 +54,7 @@
             </div>
         {% endif %}
     {% endwith %}
-    <form method="POST" action="{{ url_for('emergency_fund.step2') }}">
+    <form method="POST" action="{{ url_for('emergency_fund_step2') }}">
         <div class="mb-3">
             <label class="form-label">{{ t('Monthly Income') }}</label>
             <input type="number" name="income" class="form-control" min="0" max="10000000000" required>
