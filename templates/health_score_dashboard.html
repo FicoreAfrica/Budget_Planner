@@ -1,0 +1,120 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script>```html
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5">
+    <div class="gradient-bg mb-4">
+        <h1>{{ t('Financial Health Score') }}</h1>
+        <p>{{ t('Your personalized financial health score and insights.') }}</p>
+    </div>
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="alert alert-danger">
+                {% for message in messages %}
+                    {{ message }}<br>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+    <div class="card mb-4">
+        <div class="card-body">
+            <h2>{{ t('Your Score') }}: {{ data.score }}</h2>
+            <p>{{ t('Cash Flow') }}: ₦{{ data.cash_flow | format_number }}</p>
+            <p>{{ t('Debt-to-Income Ratio') }}: {{ data.debt_to_income | format_percentage }}</p>
+            <p>{{ t('Interest Burden') }}: {{ data.interest_burden }}%</p>
+        </div>
+    </div>
+    <canvas id="scoreChart" class="mb-4"></canvas>
+    <div class="card mb-4">
+        <div class="card-body">
+            <h3>{{ t('Badges') }}</h3>
+            {% if data.score >= 80 %}
+                <span class="badge bg-success"><i class="fas fa-trophy"></i> {{ t('Excellent Score') }}</span>
+            {% elif data.score >= 50 %}
+                <span class="badge bg-primary"><i class="fas fa-star"></i> {{ t('Good Score') }}</span>
+            {% else %}
+                <p>{{ t('No badges earned yet.') }}</p>
+            {% endif %}
+        </div>
+    </div>
+    <div class="card mb-4">
+        <div class="card-body">
+            <h3>{{ t('Recommendations') }}</h3>
+            <ul>
+                {% if data.debt_to_income > 0.4 %}
+                    <li>{{ t('Reduce high-interest debt to improve your score.') }}</li>
+                {% endif %}
+                {% if data.cash_flow < 0 %}
+                    <li>{{ t('Cut non-essential expenses to balance your budget.') }}</li>
+                {% else %}
+                    <li>{{ t('Save or invest your surplus to grow wealth.') }}</li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+    <div class="d-flex justify-content-between">
+        <a href="{{ url_for('health_score.step1') }}" class="btn btn-secondary">{{ t('Recalculate') }}</a>
+        <a href="{{ url_for('general_dashboard') }}" class="btn gradient-btn">{{ t('Go to Dashboard') }}</a>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+    const ctx = document.getElementById('scoreChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['{{ t("Score") }}', '{{ t("Cash Flow") }}', '{{ t("Debt-to-Income") }}'],
+            datasets: [{
+                label: '{{ t("Financial Metrics") }}',
+                data: [{{ data.score }}, {{ data.cash_flow / 1000 }}, {{ data.debt_to_income * 100 }}],
+                backgroundColor: ['#2E7D32', '#0288D1', '#dc3545']
+            }]
+        },
+        options: {
+            scales: {
+                y: { beginAtZero: true }
+            },
+            animation: false
+        }
+    });
+</script>
+{% endblock %}
+```
