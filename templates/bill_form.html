@@ -54,7 +54,7 @@
             </div>
         {% endif %}
     {% endwith %}
-    <form method="POST" action="{{ url_for('bill.form') }}">
+    <form method="POST" action="{{ url_for('bill_form') }}">
         <div class="mb-3">
             <label class="form-label">{{ t('Bill Name') }}</label>
             <input type="text" name="bill_name" class="form-control" required>
