@@ -1,7 +1,7 @@
 import os
 import uuid
 from flask import Flask, render_template, request, session, redirect, url_for, flash
-from translations import t
+from translations import get_translations
 from json_store import JsonStorageManager
 from blueprints.bill import bill_bp
 from blueprints.quiz import quiz_bp
@@ -19,8 +19,14 @@ app.config['SENDGRID_API_KEY'] = os.environ.get('SENDGRID_API_KEY')
 # Ensure session directory exists
 os.makedirs(app.config['SESSION_DIR'], exist_ok=True)
 
-# Make translation function available to templates
-app.jinja_env.globals['t'] = t
+# Translation context processor
+@app.context_processor
+def inject_translations():
+    lang = session.get('lang', 'en')
+    translations = get_translations(lang)
+    def t(key):
+        return translations.get(key, key)
+    return dict(t=t)
 
 # Initialize JsonStorageManager for each tool
 storage_managers = {
@@ -51,9 +57,9 @@ def index():
 def set_language(lang):
     if lang in ['en', 'ha']:
         session['lang'] = lang
-        flash(t('Language changed successfully', lang))
+        flash(get_translations(lang).get('Language changed successfully', 'Language changed successfully'))
     else:
-        flash(t('Invalid language selected', lang))
+        flash(get_translations(session.get('lang', 'en')).get('Invalid language selected', 'Invalid language selected'))
     return redirect(request.referrer or url_for('index'))
 
 @app.route('/general_dashboard')
