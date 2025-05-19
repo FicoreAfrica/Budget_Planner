@@ -41,41 +41,57 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>{{ t('Budget Report Subject') }}</title>
+    <title>{{ t('Quiz Report Subject') }}</title>
     <style>
         body { font-family: Arial, sans-serif; color: #333; }
         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
         .header { background: linear-gradient(90deg, #2E7D32, #0288D1); color: white; padding: 10px; text-align: center; }
         .content { padding: 20px; border: 1px solid #ddd; }
         .footer { text-align: center; font-size: 12px; color: #777; }
-        .gradient-btn { background: linear-gradient(90deg, #2E7D32, #0288D1); color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; }
+        .gradient-btn { HB
+            background: linear-gradient(90deg, #2E7D32, #0288D1); 
+            color: white; 
+            padding: 10px 20px; 
+            text-decoration: none; 
+            border-radius: 5px; 
+            display: inline-block; 
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>{{ t('Budget Planner') }}</h1>
+            <h1>{{ t('Financial Personality Quiz') }}</h1>
         </div>
         <div class="content">
-            <p>{{ t('Dear') }} {{ data.first_name or 'User' }},</p>
-            <p>{{ t('Here is your Budget Planner summary.') }}</p>
-            <h2>{{ t('Budget Summary') }}</h2>
-            <p>{{ t('Monthly Income') }}: ₦{{ data.income | format_number }}</p>
-            <p>{{ t('Total Expenses') }}: ₦{{ data.expenses | format_number }}</p>
-            <p>{{ t('Savings Goal') }}: ₦{{ data.savings_goal | format_number }}</p>
-            <p>{{ t('Surplus/Deficit') }}: ₦{{ data.surplus_deficit | format_number }}</p>
+            <p>{{ t('Dear User') }},</p>
+            <p>{{ t('Here is your Financial Personality Quiz summary.') }}</p>
+            <h2>{{ t('Your Personality') }}: {{ t(data.personality) }}</h2>
+            <p>{{ t('Score') }}: {{ data.score }} / 10</p>
+            <p>
+                {% if data.personality == 'Planner' %}
+                    {{ t('You are disciplined and plan your finances carefully.') }}
+                {% elif data.personality == 'Saver' %}
+                    {{ t('You prioritize saving and are cautious with spending.') }}
+                {% elif data.personality == 'Minimalist' %}
+                    {{ t('You keep spending simple and avoid unnecessary expenses.') }}
+                {% elif data.personality == 'Spender' %}
+                    {{ t('You enjoy spending and may need to focus on saving.') }}
+                {% else %}
+                    {{ t('You may avoid financial planning and could benefit from structure.') }}
+                {% endif %}
+            </p>
             <h3>{{ t('Recommendations') }}</h3>
             <ul>
-                {% if data.surplus_deficit < 0 %}
-                    <li>{{ t('Reduce expenses or increase income to meet your savings goal.') }}</li>
-                {% else %}
-                    <li>{{ t('Consider investing your surplus for long-term growth.') }}</li>
+                {% if data.personality in ['Spender', 'Avoider'] %}
+                    <li>{{ t('Try using a budgeting app to track your expenses.') }}</li>
                 {% endif %}
-                {% if data.savings_goal == 0 %}
-                    <li>{{ t('Set a savings goal to build financial security.') }}</li>
+                {% if data.personality != 'Saver' %}
+                    <li>{{ t('Set up an emergency fund for unexpected expenses.') }}</li>
                 {% endif %}
+                <li>{{ t('Review your financial goals monthly to stay on track.') }}</li>
             </ul>
-            <p><a href="{{ url_for('budget.step1', _external=True) }}" class="gradient-btn">{{ t('Recalculate Your Budget') }}</a></p>
+            <p><a href="{{ url_for('quiz.step1', _external=True) }}" class="gradient-btn">{{ t('Retake Quiz') }}</a></p>
             <p>{{ t('Thank you for choosing Ficore Africa!') }}</p>
         </div>
         <div class="footer">

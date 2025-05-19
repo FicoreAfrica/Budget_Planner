@@ -42,8 +42,8 @@
 {% block content %}
 <div class="container mt-5">
     <div class="gradient-bg mb-4">
-        <h1>{{ t('Budget Planner') }}</h1>
-        <p>{{ t('Your personalized budget summary.') }}</p>
+        <h1>{{ t('Financial Personality Quiz') }}</h1>
+        <p>{{ t('Provide your email to receive your results (optional).') }}</p>
     </div>
     {% with messages = get_flashed_messages() %}
         {% if messages %}
@@ -54,52 +54,21 @@
             </div>
         {% endif %}
     {% endwith %}
-    <div class="card mb-4">
-        <div class="card-body">
-            <h2>{{ t('Budget Summary') }}</h2>
-            <p>{{ t('Monthly Income') }}: ₦{{ data.income | format_number }}</p>
-            <p>{{ t('Total Expenses') }}: ₦{{ data.expenses | format_number }}</p>
-            <p>{{ t('Savings Goal') }}: ₦{{ data.savings_goal | format_number }}</p>
-            <p>{{ t('Surplus/Deficit') }}: ₦{{ data.surplus_deficit | format_number }}</p>
+    <form method="POST" action="{{ url_for('quiz.step3') }}">
+        <div class="mb-3">
+            <label class="form-label">{{ t('Email') }}</label>
+            <input type="email" name="email" class="form-control">
+            <div class="form-text">{{ t('Enter an active email to receive your personality results.') }}</div>
         </div>
-    </div>
-    <canvas id="budgetChart" class="mb-4"></canvas>
-    <div class="card mb-4">
-        <div class="card-body">
-            <h3>{{ t('Recommendations') }}</h3>
-            <ul>
-                {% if data.surplus_deficit < 0 %}
-                    <li>{{ t('Reduce expenses or increase income to meet your savings goal.') }}</li>
-                {% else %}
-                    <li>{{ t('Consider investing your surplus for long-term growth.') }}</li>
-                {% endif %}
-                {% if data.savings_goal == 0 %}
-                    <li>{{ t('Set a savings goal to build financial security.') }}</li>
-                {% endif %}
-            </ul>
+        <div class="mb-3 form-check">
+            <input type="checkbox" name="send_email" class="form-check-input">
+            <label class="form-check-label">{{ t('Send my results to this email.') }}</label>
         </div>
-    </div>
-    <div class="d-flex justify-content-between">
-        <a href="{{ url_for('budget.step1') }}" class="btn btn-secondary">{{ t('Recalculate') }}</a>
-        <a href="{{ url_for('general_dashboard') }}" class="btn gradient-btn">{{ t('Go to Dashboard') }}</a>
-    </div>
+        <div class="d-flex justify-content-between">
+            <a href="{{ url_for('quiz.step2') }}" class="btn btn-secondary">{{ t('Back') }}</a>
+            <button type="submit" class="btn gradient-btn">{{ t('See Results') }}</button>
+        </div>
+    </form>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-<script>
-    const ctx = document.getElementById('budgetChart').getContext('2d');
-    new Chart(ctx, {
-        type: 'pie',
-        data: {
-            labels: ['{{ t("Expenses") }}', '{{ t("Savings Goal") }}', '{{ t("Surplus/Deficit") }}'],
-            datasets: [{
-                data: [{{ data.expenses }}, {{ data.savings_goal }}, {{ data.surplus_deficit | abs }}],
-                backgroundColor: ['#2E7D32', '#0288D1', '#dc3545']
-            }]
-        },
-        options: {
-            animation: false
-        }
-    });
-</script>
 {% endblock %}
 ```
