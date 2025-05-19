@@ -41,11 +41,11 @@ def step1():
     if request.method == 'POST' and form.validate_on_submit():
         try:
             session['health_step1'] = form.data
-            return redirect(url_for('financial_health.step2'))
+            return redirect(url_for('health_score_step2'))
         except Exception as e:
             logging.exception(f"Error in financial_health.step1: {str(e)}")
             flash("Error processing step 1.")
-            return redirect(url_for('financial_health.step1'))
+            return redirect(url_for('health_score_step1'))
     return render_template('health_score_step1.html', form=form)
 
 @financial_health_bp.route('/step2', methods=['GET', 'POST'])
@@ -57,11 +57,11 @@ def step2():
     if request.method == 'POST' and form.validate_on_submit():
         try:
             session['health_step2'] = form.data
-            return redirect(url_for('financial_health.step3'))
+            return redirect(url_for('health_score_step3'))
         except Exception as e:
             logging.exception(f"Error in financial_health.step2: {str(e)}")
             flash("Invalid numeric input for income or expenses.")
-            return redirect(url_for('financial_health.step2'))
+            return redirect(url_for('health_score_step2.html'))
     return render_template('health_score_step2.html', form=form)
 
 @financial_health_bp.route('/step3', methods=['GET', 'POST'])
@@ -113,11 +113,11 @@ def step3():
             session.pop('health_step1', None)
             session.pop('health_step2', None)
             flash("Financial health assessment completed.")
-            return redirect(url_for('financial_health.dashboard'))
+            return redirect(url_for('health_score_dashboard'))
         except Exception as e:
             logging.exception(f"Error in financial_health.step3: {str(e)}")
             flash("Error processing financial health assessment.")
-            return redirect(url_for('financial_health.step3'))
+            return redirect(url_for('health_score_step3.html'))
     return render_template('health_score_step3.html', form=form)
 
 @financial_health_bp.route('/dashboard')
@@ -129,6 +129,6 @@ def dashboard():
         user_data = financial_health_storage.filter_by_session(session['sid'])
         return render_template('health_score_dashboard.html', data=user_data[-1]["data"] if user_data else {})
     except Exception as e:
-        logging.exception(f"Error in financial_health.dashboard: {str(e)}")
+        logging.exception(f"Error in health_score_dashboard: {str(e)}")
         flash("Error loading dashboard.")
         return render_template('health_score_dashboard.html', data={})
