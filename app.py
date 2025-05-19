@@ -10,7 +10,14 @@ try:
     load_dotenv()
 except ImportError:
     logging.warning("python_dotenv not found, using os.environ directly")
-from translations import get_translations, t
+try:
+    from translations import get_translations, t
+except ImportError as e:
+    logging.warning(f"Translations import failed: {str(e)}")
+    def t(key, lang=None):
+        return key  # Fallback: return the key untranslated
+    def get_translations(lang):
+        return {}  # Fallback: empty translations
 from json_store import JsonStorage
 from functools import wraps
 
@@ -67,11 +74,9 @@ def session_required(f):
 # Translation and context processor
 @app.context_processor
 def inject_translations():
-    def t(key):
-        lang = session.get('lang', 'en')
-        translations = get_translations(lang)
-        return translations.get(key, key)
-    return dict(t=t, current_year=datetime.now().year)
+    def context_t(key):
+        return t(key)
+    return dict(t=context_t, current_year=datetime.now().year)
 
 # General Routes
 @app.route('/')
@@ -86,9 +91,9 @@ def index():
 def set_language(lang):
     if lang in ['en', 'ha']:
         session['lang'] = lang
-        flash(t('Language changed successfully') or 'Language changed successfully')
+        flash(t('Language changed successfully'))
     else:
-        flash(t('Invalid language') or 'Invalid language')
+        flash(t('Invalid language'))
     return redirect(request.referrer or url_for('index'))
 
 @app.route('/general_dashboard')
@@ -113,12 +118,12 @@ def general_dashboard():
 # Error Handlers
 @app.errorhandler(404)
 def page_not_found(e):
-    return render_template('404.html', error=t('Page Not Found') or 'Page Not Found'), 404
+    return render_template('404.html', error=t('Page Not Found')), 404
 
 @app.errorhandler(500)
 def internal_server_error(e):
     logging.exception(f"500 Error: {str(e)}")
-    return render_template('500.html', error=t('Internal Server Error') or 'Internal Server Error'), 500
+    return render_template('500.html', error=t('Internal Server Error')), 500
 
 # Register Blueprints
 app.register_blueprint(financial_health_bp, url_prefix='/financial_health')
