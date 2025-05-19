@@ -2,7 +2,7 @@ from flask import Blueprint, request, session, redirect, url_for, render_templat
 from json_store import JsonStorageManager
 from sendgrid_email import send_email
 
-emergency_fund_bp = Blueprint('emergency_fund', __name__, template_folder='templates/emergency_fund')
+emergency_fund_bp = Blueprint('emergency_fund', __name__)
 emergency_fund_storage = JsonStorageManager('data/emergency_fund.json')
 
 @emergency_fund_bp.route('/step1', methods=['GET', 'POST'])
@@ -10,7 +10,7 @@ def step1():
     if request.method == 'POST':
         session['emergency_fund_step1'] = request.form.to_dict()
         return redirect(url_for('emergency_fund.step2'))
-    return render_template('emergency_fund/emergency_fund_step1.html')
+    return render_template('emergency_fund_step1.html')
 
 @emergency_fund_bp.route('/step2', methods=['GET', 'POST'])
 def step2():
@@ -41,7 +41,7 @@ def step2():
                 send_email(
                     to_email=email,
                     subject="Emergency Fund Report",
-                    template_name="emergency_fund/emergency_fund_email.html",
+                    template_name="emergency_fund_email.html",
                     data=record["data"],
                     lang=session.get('lang', 'en')
                 )
@@ -50,9 +50,9 @@ def step2():
         except ValueError:
             flash("Invalid numeric input.")
             return redirect(url_for('emergency_fund.step2'))
-    return render_template('emergency_fund/emergency_fund_step2.html')
+    return render_template('emergency_fund_step2.html')
 
 @emergency_fund_bp.route('/dashboard')
 def dashboard():
     user_data = emergency_fund_storage.filter_by_session(session.sid)
-    return render_template('emergency_fund/emergency_fund_dashboard.html', data=user_data[-1]["data"] if user_data else {})
+    return render_template('emergency_fund_dashboard.html', data=user_data[-1]["data"] if user_data else {})
