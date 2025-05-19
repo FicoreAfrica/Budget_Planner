@@ -54,7 +54,7 @@
             </div>
         {% endif %}
     {% endwith %}
-    <form method="POST" action="{{ url_for('health_score.step2') }}">
+    <form method="POST" action="{{ url_for('health_score_step2') }}">
         <div class="mb-3">
             <label class="form-label">{{ t('Business Name or Income Source') }}</label>
             <input type="text" name="business_name" class="form-control" required>
