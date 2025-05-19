@@ -1,5 +1,6 @@
 import os
 import uuid
+import logging
 from datetime import datetime
 from flask import Flask, render_template, request, session, redirect, url_for, flash
 from translations import get_translations
@@ -12,31 +13,27 @@ from blueprints.financial_health import financial_health_bp
 from blueprints.budget import budget_bp
 from functools import wraps
 
+# Initialize Flask app
 app = Flask(__name__)
-app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'your-secret-key')
+app.secret_key = os.environ.get('FLASK_SECRET_KEY') or 'your-secret-key'  # Warning: Set FLASK_SECRET_KEY in production
 
-# Set session directory
+# Configure filesystem-based sessions
 session_dir = os.environ.get('SESSION_DIR', 'data/sessions')
 os.makedirs(session_dir, exist_ok=True)
 app.config['SESSION_FILE_DIR'] = session_dir
 app.config['SESSION_TYPE'] = 'filesystem'
 
-# Custom datetimeformat filter
-def datetimeformat(value, format='%Y'):
-    if value == 'now':
-        return datetime.now().strftime(format)
-    return value
+# Set up logging for errors
+logging.basicConfig(filename='data/storage.txt', level=logging.ERROR)
 
-app.jinja_env.filters['datetimeformat'] = datetimeformat
-
-# Translation context processor
+# Translation and context processor
 @app.context_processor
 def inject_translations():
     def t(key):
         lang = session.get('lang', 'en')
         translations = get_translations(lang)
         return translations.get(key, key)
-    return dict(t=t)
+    return dict(t=t, current_year=datetime.now().year)
 
 # Initialize JsonStorageManager for each tool
 storage_managers = {
@@ -52,9 +49,8 @@ storage_managers = {
 def session_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if 'user_id' not in session:
-            session['user_id'] = str(uuid.uuid4())
-            session['sid'] = str(uuid.uuid4())  # Align with Blueprints
+        if 'sid' not in session:
+            session['sid'] = str(uuid.uuid4())
         return f(*args, **kwargs)
     return decorated_function
 
@@ -83,7 +79,10 @@ def general_dashboard():
     data = {}
     for tool, storage in storage_managers.items():
         records = storage.filter_by_session(session['sid'])
-        data[tool] = records[-1]['data'] if records else {}
+        data[tool] = records[-1]['data'] if records else {
+            'score': None, 'surplus_deficit': None, 'personality': None,
+            'bills': [], 'net_worth': None, 'savings_gap': None
+        }  # Default values to prevent template errors
     return render_template('general_dashboard.html', data=data)
 
 # Error Handlers
@@ -93,6 +92,7 @@ def page_not_found(e):
 
 @app.errorhandler(500)
 def internal_server_error(e):
+    logging.error(f"500 Error: {str(e)}")
     return render_template('500.html'), 500
 
 # Register Blueprints
