@@ -1,3 +1,4 @@
+from flask import session
 # translations.py
 # Contains translation strings for Ficore Africa Flask app in English and Hausa
 # Covers all tools: Financial Health Score, Budget Planner, Personality Quiz, Bill Planner, Net Worth Calculator, Emergency Fund Calculator
@@ -1257,3 +1258,10 @@ def get_translations(language='en'):
         }
     }
     return translations.get(language, translations['en'])
+
+def t(key, lang=None):
+    """Retrieve a translated string for the given key."""
+    if lang is None:
+        lang = session.get('lang', 'en')
+    translations = get_translations(lang)
+    return translations.get(key, key)
