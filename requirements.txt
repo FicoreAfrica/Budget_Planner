@@ -11,3 +11,4 @@ email_validator==2.2.0
 flask-caching==2.3.0
 tenacity==8.2.3
 requests==2.31.0
+python-json-store==1.0.0
