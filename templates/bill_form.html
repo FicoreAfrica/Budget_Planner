@@ -1,0 +1,103 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script>```html
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5">
+    <div class="gradient-bg mb-4">
+        <h1>{{ t('Bill Planner') }}</h1>
+        <p>{{ t('Add a new bill to track your expenses.') }}</p>
+    </div>
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="alert alert-danger">
+                {% for message in messages %}
+                    {{ message }}<br>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+    <form method="POST" action="{{ url_for('bill.form') }}">
+        <div class="mb-3">
+            <label class="form-label">{{ t('Bill Name') }}</label>
+            <input type="text" name="bill_name" class="form-control" required>
+            <div class="form-text">{{ t('E.g., Electricity, Rent, School Fees.') }}</div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">{{ t('Amount') }}</label>
+            <input type="number" name="amount" class="form-control" min="0" max="10000000000" required>
+            <div class="form-text">{{ t('Enter the bill amount in Naira.') }}</div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">{{ t('Due Date') }}</label>
+            <input type="date" name="due_date" class="form-control" required>
+            <div class="form-text">{{ t('Select the bill due date.') }}</div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">{{ t('Category') }}</label>
+            <select name="category" class="form-select" required>
+                <option value="">{{ t('Select a category') }}</option>
+                <option value="Utilities">{{ t('Utilities') }}</option>
+                <option value="Housing">{{ t('Housing') }}</option>
+                <option value="Education">{{ t('Education') }}</option>
+                <option value="Transport">{{ t('Transport') }}</option>
+                <option value="Other">{{ t('Other') }}</option>
+            </select>
+            <div class="form-text">{{ t('Choose the bill category.') }}</div>
+        </div>
+        <div class="mb-3 form-check">
+            <input type="checkbox" name="send_reminder" class="form-check-input">
+            <label class="form-check-label">{{ t('Send email reminder before due date.') }}</label>
+        </div>
+        <div class="d-flex justify-content-between">
+            <a href="{{ url_for('general_dashboard') }}" class="btn btn-secondary">{{ t('Back') }}</a>
+            <button type="submit" class="btn gradient-btn">{{ t('Add Bill') }}</button>
+        </div>
+    </form>
+<script>
+    document.querySelector('input[name="amount"]').addEventListener('input', function() {
+        if (this.value > 10000000000) {
+            this.value = 10000000000;
+            alert('{{ t("Amount cannot exceed ₦10 billion.") }}');
+        }
+    });
+</script>
+{% endblock %}
+```

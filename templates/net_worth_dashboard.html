@@ -1,0 +1,105 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script>```html
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5">
+    <div class="gradient-bg mb-4">
+        <h1>{{ t('Net Worth Calculator') }}</h1>
+        <p>{{ t('Your net worth summary.') }}</p>
+    </div>
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="alert alert-danger">
+                {% for message in messages %}
+                    {{ message }}<br>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+    <div class="card mb-4">
+        <div class="card-body">
+            <h2>{{ t('Net Worth') }}: ₦{{ data.net_worth | format_number }}</h2>
+            <p>{{ t('Total Assets') }}: ₦{{ data.total_assets | format_number }}</p>
+            <p>{{ t('Total Liabilities') }}: ₦{{ data.total_liabilities | format_number }}</p>
+        </div>
+    </div>
+    <canvas id="netWorthChart" class="mb-4"></canvas>
+    <div class="card mb-4">
+        <div class="card-body">
+            <h3>{{ t('Recommendations') }}</h3>
+            <ul>
+                {% if data.net_worth < 0 %}
+                    <li>{{ t('Focus on reducing liabilities to improve your net worth.') }}</li>
+                {% else %}
+                    <li>{{ t('Consider investing assets to grow your wealth.') }}</li>
+                {% endif %}
+                <li>{{ t('Review your net worth annually to track progress.') }}</li>
+            </ul>
+        </div>
+    </div>
+    <div class="d-flex justify-content-between">
+        <a href="{{ url_for('net_worth.step1') }}" class="btn btn-secondary">{{ t('Recalculate') }}</a>
+        <a href="{{ url_for('general_dashboard') }}" class="btn gradient-btn">{{ t('Go to Dashboard') }}</a>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+    const ctx = document.getElementById('netWorthChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['{{ t("Assets") }}', '{{ t("Liabilities") }}', '{{ t("Net Worth") }}'],
+            datasets: [{
+                label: '{{ t("Net Worth Metrics") }}',
+                data: [{{ data.total_assets / 1000 }}, {{ data.total_liabilities / 1000 }}, {{ data.net_worth / 1000 }}],
+                backgroundColor: ['#2E7D32', '#dc3545', '#0288D1']
+            }]
+        },
+        options: {
+            scales: {
+                y: { beginAtZero: true }
+            },
+            animation: false
+        }
+    });
+</script>
+{% endblock %}
+```
