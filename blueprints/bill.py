@@ -3,7 +3,7 @@ from json_store import JsonStorageManager
 from sendgrid_email import send_email
 from datetime import datetime
 
-bill_bp = Blueprint('bill', __name__, template_folder='templates/bill')
+bill_bp = Blueprint('bill', __name__)
 bill_storage = JsonStorageManager('data/bills.json')
 
 @bill_bp.route('/form', methods=['GET', 'POST'])
@@ -38,7 +38,7 @@ def form():
                 send_email(
                     to_email=email,
                     subject="Bill Reminder",
-                    template_name="bill/bill_reminder.html",
+                    template_name="bill_reminder.html",
                     data=record["data"],
                     lang=session.get('lang', 'en')
                 )
@@ -47,13 +47,13 @@ def form():
         except ValueError:
             flash(t("Invalid numeric input for amount."))
             return redirect(url_for('bill.form'))
-    return render_template('bill/bill_form.html')
+    return render_template('bill_form.html')
 
 @bill_bp.route('/dashboard')
 def dashboard():
     user_data = bill_storage.filter_by_session(session.sid)
     bills = [record["data"] for record in user_data]
-    return render_template('bill/bill_dashboard.html', bills=bills)
+    return render_template('bill_dashboard.html', bills=bills)
 
 @bill_bp.route('/view_edit', methods=['GET', 'POST'])
 def view_edit():
@@ -113,4 +113,4 @@ def view_edit():
                 flash(t("Bill not found."))
             return redirect(url_for('bill.view_edit'))
 
-    return render_template('bill/view_edit_bills.html', bills=bills)
+    return render_template('view_edit_bills.html', bills=bills)
