@@ -5,7 +5,11 @@ from datetime import datetime
 from flask import Flask, render_template, request, session, redirect, url_for, flash
 from flask_session import Session
 from flask_wtf.csrf import CSRFProtect
-from python_dotenv import load_dotenv
+try:
+    from python_dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    logging.warning("python_dotenv not found, using os.environ directly")
 from translations import get_translations, t
 from json_store import JsonStorage
 from functools import wraps
@@ -24,7 +28,6 @@ except ImportError as e:
 
 # Initialize Flask app
 app = Flask(__name__)
-load_dotenv()
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'your-secret-key')  # Warning: Set FLASK_SECRET_KEY in production
 
 # Configure filesystem-based sessions
