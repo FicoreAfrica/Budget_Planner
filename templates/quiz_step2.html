@@ -54,7 +54,7 @@
             </div>
         {% endif %}
     {% endwith %}
-    <form method="POST" action="{{ url_for('quiz.step2') }}">
+    <form method="POST" action="{{ url_for('quiz_step2') }}">
         <div class="mb-3">
             <label class="form-label">{{ t('Do you use budgeting tools or apps?') }}</label>
             <select name="use_budgeting_tools" class="form-select" required>
