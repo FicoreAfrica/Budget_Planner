@@ -1,5 +1,6 @@
 import os
 import uuid
+from datetime import datetime
 from flask import Flask, render_template, request, session, redirect, url_for, flash
 from translations import get_translations
 from json_store import JsonStorageManager
@@ -19,6 +20,14 @@ session_dir = os.environ.get('SESSION_DIR', 'data/sessions')
 os.makedirs(session_dir, exist_ok=True)
 app.config['SESSION_FILE_DIR'] = session_dir
 app.config['SESSION_TYPE'] = 'filesystem'
+
+# Custom datetimeformat filter
+def datetimeformat(value, format='%Y'):
+    if value == 'now':
+        return datetime.now().strftime(format)
+    return value
+
+app.jinja_env.filters['datetimeformat'] = datetimeformat
 
 # Translation context processor
 @app.context_processor
