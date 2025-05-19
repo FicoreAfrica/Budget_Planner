@@ -1,4 +1,15 @@
-<script type="text/javascript">
+<!DOCTYPE html>
+<html lang="{{ session.get('lang', 'en') }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ t('Ficore Africa') }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        /* Same styles as original index.html */
+    </style>
+    <script type="text/javascript">
         var gk_isXlsx = false;
         var gk_xlsxFileLookup = {};
         var gk_fileData = {};
@@ -37,88 +48,78 @@
         }
         return gk_fileData[filename] || "";
         }
-        </script><!DOCTYPE html>
-<html lang="{{ session.language | default('en') }}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ trans['Ficore Africa'] }}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-    <style>
-        /* Same styles as original index.html */
-    </style>
+    </script>
 </head>
 <body>
     {% extends 'base.html' %}
     {% block content %}
     <section class="hero">
-        <h2>{{ trans['Your All-in-One Toolkit for Personal & SME Financial Health Across Africa'] }}</h2>
-        <p>{{ trans['Use Ficore to Track your income, net worth, budgets, and bills, to grow your money with confidence.'] }}</p>
-        <a href="{{ url_for('health_score_step1') }}" class="cta-button">{{ trans['Where to Start? Get Your Free Health Score'] }}</a>
-        <a href="#tools-section" class="cta-button mt-3">{{ trans['Explore Ficore Tools'] }}</a>
+        <h2>{{ t('Your All-in-One Toolkit for Personal & SME Financial Health Across Africa') }}</h2>
+        <p>{{ t('Use Ficore to Track your income, net worth, budgets, and bills, to grow your money with confidence.') }}</p>
+        <a href="{{ url_for('health_score_step1') }}" class="cta-button">{{ t('Where to Start? Get Your Free Health Score') }}</a>
+        <a href="#tools-section" class="cta-button mt-3">{{ t('Explore Ficore Tools') }}</a>
     </section>
     <section class="tools-section" id="tools-section">
-        <h2>{{ trans['Choose a Tool'] }}</h2>
+        <h2>{{ t('Choose a Tool') }}</h2>
         <div class="tools-grid">
             <div class="tool-card">
-                <h3>{{ trans['Financial Health Score'] }}</h3>
-                <p>{{ trans['Evaluates income, expenses, and debt for a health score'] }}</p>
-                <a href="{{ url_for('health_score_step1') }}" aria-label="{{ trans['Start Financial Health W Score Assessment'] }}">{{ trans['Start'] }}</a>
+                <h3>{{ t('Financial Health Score') }}</h3>
+                <p>{{ t('Evaluates income, expenses, and debt for a health score') }}</p>
+                <a href="{{ url_for('health_score_step1') }}" aria-label="{{ t('Start Financial Health Score Assessment') }}">{{ t('Start') }}</a>
             </div>
             <div class="tool-card">
-                <h3>{{ trans['Budget Planner'] }}</h3>
-                <p>{{ trans['Allocate income across expense categories'] }}</p>
-                <a href="{{ url_for('budget_step1') }}" aria-label="{{ trans['Start Monthly Budget Planner'] }}">{{ trans['Start'] }}</a>
+                <h3>{{ t('Budget Planner') }}</h3>
+                <p>{{ t('Allocate income across expense categories') }}</p>
+                <a href="{{ url_for('budget_step1') }}" aria-label="{{ t('Start Monthly Budget Planner') }}">{{ t('Start') }}</a>
             </div>
             <div class="tool-card">
-                <h3>{{ trans['Personality Quiz'] }}</h3>
-                <p>{{ trans['Answer questions to assess financial literacy'] }}</p>
-                <a href="{{ url_for('quiz_step1') }}" aria-label="{{ trans['Start Personality Quiz'] }}">{{ trans['Start'] }}</a>
+                <h3>{{ t('Personality Quiz') }}</h3>
+                <p>{{ t('Answer questions to assess financial literacy') }}</p>
+                <a href="{{ url_for('quiz_step1') }}" aria-label="{{ t('Start Personality Quiz') }}">{{ t('Start') }}</a>
             </div>
             <div class="tool-card">
-                <h3>{{ trans['Bill Planner'] }}</h3>
-                <p>{{ trans['Manage and mark bills as paid'] }}</p>
-                <a href="{{ url_for('bill_form') }}" aria-label="{{ trans['Start Bill Planner'] }}">{{ trans['Start'] }}</a>
+                <h3>{{ t('Bill Planner') }}</h3>
+                <p>{{ t('Manage and mark bills as paid') }}</p>
+                <a href="{{ url_for('bill_form') }}" aria-label="{{ t('Start Bill Planner') }}">{{ t('Start') }}</a>
             </div>
             <div class="tool-card">
-                <h3>{{ trans['Net Worth Calculator'] }}</h3>
-                <p>{{ trans['Net worth is assets minus liabilities'] }}</p>
-                <a href="{{ url_for('net_worth') }}" aria-label="{{ trans['Start Net Worth Calculator'] }}">{{ trans['Start'] }}</a>
+                <h3>{{ t('Net Worth Calculator') }}</h3>
+                <p>{{ t('Net worth is assets minus liabilities') }}</p>
+                <a href="{{ url_for('net_worth') }}" aria-label="{{ t('Start Net Worth Calculator') }}">{{ t('Start') }}</a>
             </div>
             <div class="tool-card">
-                <h3>{{ trans['Emergency Fund Calculator'] }}</h3>
-                <p>{{ trans['Aims to cover 3-6 months of expenses for financial security'] }}</p>
-                <a href="{{ url_for('emergency_fund') }}" aria-label="{{ trans['Start Emergency Fund Calculator'] }}">{{ trans['Start'] }}</a>
+                <h3>{{ t('Emergency Fund Calculator') }}</h3>
+                <p>{{ t('Aims to cover 3-6 months of expenses for financial security') }}</p>
+                <a href="{{ url_for('emergency_fund') }}" aria-label="{{ t('Start Emergency Fund Calculator') }}">{{ t('Start') }}</a>
             </div>
         </div>
         <div class="testimonials-section">
-            <strong><i class="fas fa-quote-left"></i> {{ trans['What people are saying about Us'] }}</strong>
+            <strong><i class="fas fa-quote-left"></i> {{ t('What people are saying about Us') }}</strong>
             <div class="testimonial">
-                <span class="quote">“</span><span class="initials">MU</span> {{ trans['Testimonial 1'] | safe }}
+                <span class="quote">“</span><span class="initials">MU</span> {{ t('Testimonial 1') | safe }}
             </div>
             <div class="testimonial">
-                <span class="quote">“</span><span class="initials">AA</span> {{ trans['Testimonial 2'] | safe }}
+                <span class="quote">“</span><span class="initials">AA</span> {{ t('Testimonial 2') | safe }}
             </div>
             <div class="testimonial">
-                <span class="quote">“</span><span class="initials">ASU</span> {{ trans['Testimonial 3'] | safe }}
+                <span class="quote">“</span><span class="initials">ASU</span> {{ t('Testimonial 3') | safe }}
             </div>
         </div>
         <div class="recommended-learning">
-            <strong><i class="fas fa-book"></i> {{ trans['Recommended Learning'] }}</strong>
-            <p>{{ trans['Learn more about budgeting!'] }}</p>
+            <strong><i class="fas fa-book"></i> {{ t('Recommended Learning') }}</strong>
+            <p>{{ t('Learn more about budgeting!') }}</p>
         </div>
     </section>
     <section class="why-section">
-        <h2>{{ trans['Why Ficore Africa?'] }}</h2>
+        <h2>{{ t('Why Ficore Africa?') }}</h2>
         <ul class="why-list">
-            <li><i class="fas fa-check-circle"></i>{{ trans['Localized for Africa with support for Naira and regional financial contexts'] }}</li>
-            <li><i class="fas fa-check-circle"></i>{{ trans['Empowers financial literacy with easy-to-use tools'] }}</li>
-            <li><i class="fas fa-check-circle"></i>{{ trans['Provides actionable insights for better financial decisions'] }}</li>
+            <li><i class="fas fa-check-circle"></i>{{ t('Localized for Africa with support for Naira and regional financial contexts') }}</li>
+            <li><i class="fas fa-check-circle"></i>{{ t('Empowers financial literacy with easy-to-use tools') }}</li>
+            <li><i class="fas fa-check-circle"></i>{{ t('Provides actionable insights for better financial decisions') }}</li>
         </ul>
     </section>
     <section class="about-section">
-        <p>{{ trans['About Ficore Africa: Empowering financial growth across Africa since 2025'] }}</p>
+        <p>{{ t('About Ficore Africa: Empowering financial growth across Africa since 2025') }}</p>
     </section>
     {% endblock %}
 </body>
