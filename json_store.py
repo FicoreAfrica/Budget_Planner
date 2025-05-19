@@ -15,7 +15,7 @@ class JsonStorage:
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         # Initialize file if it doesn't exist
         if not os.path.exists(filename):
-            with open(filename, 'w') as f:
+            with open(self.filename, 'w') as f:
                 json.dump([], f)
 
     def _read(self):
