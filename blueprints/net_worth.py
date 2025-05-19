@@ -1,6 +1,6 @@
 from flask import Blueprint, request, session, redirect, url_for, render_template, flash
 from json_store import JsonStorageManager
-from sendgrid_email import send_email
+from mailersend_email import send_email
 
 net_worth_bp = Blueprint('net_worth', __name__)
 net_worth_storage = JsonStorageManager('data/networth.json')
