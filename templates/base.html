@@ -22,12 +22,12 @@
                             {{ t('Tools') }}
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{{ url_for('financial_health_bp.step1') }}">{{ t('Financial Health Score') }}</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('budget_bp.step1') }}">{{ t('Budget Planner') }}</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('quiz_bp.step1') }}">{{ t('Personality Quiz') }}</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('bill_bp.form') }}">{{ t('Bill Planner') }}</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('net_worth_bp.step1') }}">{{ t('Net Worth Calculator') }}</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('emergency_fund_bp.step1') }}">{{ t('Emergency Fund Calculator') }}</a></li>
+                            <li><a class="dropdown-item" href={{ url_for('financial_health.step1') }}">{{ t('Financial Health Score') }}</a></li>
+                            <li><a class="dropdown-item" href={{ url_for('budget.step1') }}">{{ t('Budget Planner') }}</a></li>
+                            <li><a class="dropdown-item" href={{ url_for('quiz.step1') }}">{{ t('Financial Personality Quiz') }}</a></li>
+                            <li><a class="dropdown-item" href={{ url_for('bill.form') }}">{{ t('Bill Planner') }}</a></li>
+                            <li><a class="dropdown-item" href={{ url_for('net_worth.step1') }}">{{ t('Net Worth Calculator') }}</a></li>
+                            <li><a class="dropdown-item" href={{ url_for('emergency_fund.step1') }}">{{ t('Emergency Fund Calculator') }}</a></li>
                         </ul>
                     </li>
                     <li class="nav-item">
@@ -47,6 +47,12 @@
         </div>
     </nav>
     <div class="container mt-4">
+        {% for message in get_flashed_messages() %}
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
         {% block content %}
         {% endblock %}
     </div>
