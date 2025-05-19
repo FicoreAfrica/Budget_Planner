@@ -54,7 +54,7 @@
             </div>
         {% endif %}
     {% endwith %}
-    <form method="POST" action="{{ url_for('net_worth.step2') }}">
+    <form method="POST" action="{{ url_for('net_worth_step2') }}">
         <div class="mb-3">
             <label class="form-label">{{ t('Cash and Savings') }}</label>
             <input type="number" name="cash_savings" class="form-control" min="0" max="10000000000" required>
