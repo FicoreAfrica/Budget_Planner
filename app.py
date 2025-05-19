@@ -13,8 +13,11 @@ from functools import wraps
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'your-secret-key')
-app.config['SESSION_DIR'] = os.environ.get('SESSION_DIR', 'data/sessions')
-app.config['SENDGRID_API_KEY'] = os.environ.get('SENDGRID_API_KEY')
+# Set session directory
+session_dir = os.environ.get('SESSION_DIR', 'data/sessions')
+os.makedirs(session_dir, exist_ok=True)
+app.config['SESSION_FILE_DIR'] = session_dir
+app.config['SESSION_TYPE'] = 'filesystem'
 
 # Ensure session directory exists
 os.makedirs(app.config['SESSION_DIR'], exist_ok=True)
@@ -22,9 +25,9 @@ os.makedirs(app.config['SESSION_DIR'], exist_ok=True)
 # Translation context processor
 @app.context_processor
 def inject_translations():
-    lang = session.get('lang', 'en')
-    translations = get_translations(lang)
     def t(key):
+        lang = session.get('lang', 'en')
+        translations = get_translations(lang)
         return translations.get(key, key)
     return dict(t=t)
 
@@ -51,15 +54,20 @@ def session_required(f):
 # General Routes
 @app.route('/')
 def index():
+    if 'sid' not in session:
+        session['sid'] = str(uuid.uuid4())
+    if 'lang' not in session:
+        session['lang'] = 'en'
     return render_template('index.html')
 
 @app.route('/set_language/<lang>')
 def set_language(lang):
     if lang in ['en', 'ha']:
         session['lang'] = lang
-        flash(get_translations(lang).get('Language changed successfully', 'Language changed successfully'))
+        translations = get_translations(lang)
+        flash(translations.get('language_changed', 'Language changed successfully'))
     else:
-        flash(get_translations(session.get('lang', 'en')).get('Invalid language selected', 'Invalid language selected'))
+        flash('Invalid language selected')
     return redirect(request.referrer or url_for('index'))
 
 @app.route('/general_dashboard')
