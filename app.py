@@ -18,8 +18,11 @@ app = Flask(__name__)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY') or 'your-secret-key'  # Warning: Set FLASK_SECRET_KEY in production
 
 # Configure filesystem-based sessions
-session_dir = os.environ.get('SESSION_DIR', 'data/sessions')
-os.makedirs(session_dir, exist_ok=True)
+session_dir = os.environ.get('SESSION_DIR', 'data/sessions')  # Default to data/sessions locally
+if os.environ.get('RENDER'):  # Detect Render environment
+    session_dir = '/opt/render/project/src/data/sessions'
+os.makedirs(os.path.dirname(session_dir) or '.', exist_ok=True)  # Create parent directory (data/)
+os.makedirs(session_dir, exist_ok=True)  # Create sessions directory
 app.config['SESSION_FILE_DIR'] = session_dir
 app.config['SESSION_TYPE'] = 'filesystem'
 
