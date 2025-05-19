@@ -13,14 +13,12 @@ from functools import wraps
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'your-secret-key')
+
 # Set session directory
 session_dir = os.environ.get('SESSION_DIR', 'data/sessions')
 os.makedirs(session_dir, exist_ok=True)
 app.config['SESSION_FILE_DIR'] = session_dir
 app.config['SESSION_TYPE'] = 'filesystem'
-
-# Ensure session directory exists
-os.makedirs(app.config['SESSION_DIR'], exist_ok=True)
 
 # Translation context processor
 @app.context_processor
