@@ -2,7 +2,7 @@ from flask import Blueprint, request, session, redirect, url_for, render_templat
 from flask_wtf import FlaskForm
 from wtforms import StringField, FloatField, SelectField, SubmitField
 from wtforms.validators import DataRequired, NumberRange
-from json_store import JsonStorageManager
+from json_store import JsonStorage
 from mailersend_email import send_email
 from translations import t
 from datetime import datetime
@@ -13,7 +13,7 @@ import uuid
 logging.basicConfig(filename='data/storage.txt', level=logging.DEBUG)
 
 bill_bp = Blueprint('bill', __name__)
-bill_storage = JsonStorageManager('data/bills.json')
+bill_storage = JsonStorage('data/bills.json')
 
 # Form for bill creation and editing
 class BillForm(FlaskForm):
@@ -28,7 +28,6 @@ class BillForm(FlaskForm):
 @bill_bp.route('/form', methods=['GET', 'POST'])
 def form():
     """Handle bill creation form."""
-    # Ensure session ID
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
     form = BillForm()
