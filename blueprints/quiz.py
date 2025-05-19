@@ -2,7 +2,7 @@ from flask import Blueprint, request, session, redirect, url_for, render_templat
 from flask_wtf import FlaskForm
 from wtforms import StringField, SelectField, SubmitField
 from wtforms.validators import Email, Optional
-from json_store import JsonStorageManager
+from json_store import JsonStorage
 from mailersend_email import send_email
 import logging
 import uuid
@@ -11,7 +11,7 @@ import uuid
 logging.basicConfig(filename='data/storage.txt', level=logging.DEBUG)
 
 quiz_bp = Blueprint('quiz', __name__)
-quiz_storage = JsonStorageManager('data/quiz_data.json')
+quiz_storage = JsonStorage('data/quiz_data.json')
 
 # Form for quiz step 3
 class QuizStep3Form(FlaskForm):
