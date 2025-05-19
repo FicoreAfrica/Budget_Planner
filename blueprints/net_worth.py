@@ -2,7 +2,7 @@ from flask import Blueprint, request, session, redirect, url_for, render_templat
 from json_store import JsonStorageManager
 from sendgrid_email import send_email
 
-net_worth_bp = Blueprint('net_worth', __name__, template_folder='templates/net_worth')
+net_worth_bp = Blueprint('net_worth', __name__)
 net_worth_storage = JsonStorageManager('data/networth.json')
 
 @net_worth_bp.route('/step1', methods=['GET', 'POST'])
@@ -10,7 +10,7 @@ def step1():
     if request.method == 'POST':
         session['net_worth_step1'] = request.form.to_dict()
         return redirect(url_for('net_worth.step2'))
-    return render_template('net_worth/net_worth_step1.html')
+    return render_template('net_worth_step1.html')
 
 @net_worth_bp.route('/step2', methods=['GET', 'POST'])
 def step2():
@@ -43,7 +43,7 @@ def step2():
                 send_email(
                     to_email=email,
                     subject="Net Worth Report",
-                    template_name="net_worth/net_worth_email.html",
+                    template_name="net_worth_email.html",
                     data=record["data"],
                     lang=session.get('lang', 'en')
                 )
@@ -52,9 +52,9 @@ def step2():
         except ValueError:
             flash("Invalid numeric input.")
             return redirect(url_for('net_worth.step2'))
-    return render_template('net_worth/net_worth_step2.html')
+    return render_template('net_worth_step2.html')
 
 @net_worth_bp.route('/dashboard')
 def dashboard():
     user_data = net_worth_storage.filter_by_session(session.sid)
-    return render_template('net_worth/net_worth_dashboard.html', data=user_data[-1]["data"] if user_data else {})
+    return render_template('net_worth_dashboard.html', data=user_data[-1]["data"] if user_data else {})
