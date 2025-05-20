@@ -37,12 +37,12 @@
         }
         return gk_fileData[filename] || "";
         }
-        </script>{% extends "base.html" %}
+        </script>{% extends 'base.html' %}
+{% block title %}{{ t('Dashboard') }}{% endblock %}
 {% block content %}
 <div class="container mt-5">
     <div class="gradient-bg mb-4">
-        <h1>{{ t('Bill Planner') }}</h1>
-        <p>{{ t('Your bill summary and upcoming payments.') }}</p>
+        <h1>{{ t('Dashboard') }}</h1>
     </div>
     {% with messages = get_flashed_messages() %}
         {% if messages %}
@@ -53,53 +53,105 @@
             </div>
         {% endif %}
     {% endwith %}
-    <div class="card mb-4">
+    {% if error %}
+        <div class="alert alert-warning">{{ error }}</div>
+    {% endif %}
+    {% for alert in spending_alerts %}
+        <div class="alert alert-warning">{{ alert }}</div>
+    {% endfor %}
+    <div class="card shadow mb-4">
         <div class="card-body">
-            <h2>{{ t('Bill Summary') }}</h2>
-            <p>{{ t('Total Bills') }}: ₦{{ data.total_amount | format_number }}</p>
-            <p>{{ t('Paid Bills') }}: ₦{{ data.paid_amount | format_number }}</p>
-            <p>{{ t('Unpaid Bills') }}: ₦{{ data.unpaid_amount | format_number }}</p>
-            <p>{{ t('Upcoming Due Bills') }}: {{ data.upcoming_count }}</p>
+            <div class="stat">
+                <strong>{{ t('Paid Bills') }}:</strong> {{ paid_count }} (₦{{ total_paid | format_number }})
+            </div>
+            <div class="stat">
+                <strong>{{ t('Unpaid Bills') }}:</strong> {{ unpaid_count }} (₦{{ total_unpaid | format_number }})
+            </div>
+            <div class="stat">
+                <strong>{{ t('Overdue Bills') }}:</strong> 
+                <span class="overdue-alert">{{ overdue_count }} (₦{{ total_overdue | format_number }})</span>
+            </div>
+            <div class="stat">
+                <strong>{{ t('Total Bills') }}:</strong> ₦{{ total_bills | format_number }}
+            </div>
         </div>
     </div>
-    <canvas id="billChart" class="mb-4"></canvas>
-    <div class="card mb-4">
+    <div class="card shadow mb-4">
         <div class="card-body">
-            <h3>{{ t('Recommendations') }}</h3>
-            <ul>
-                {% if data.unpaid_amount > 0 %}
-                    <li>{{ t('Prioritize paying unpaid bills to avoid penalties.') }}</li>
-                {% endif %}
-                {% if data.upcoming_count > 0 %}
-                    <li>{{ t('Set reminders for upcoming due bills.') }}</li>
-                {% else %}
-                    <li>{{ t('Add new bills to stay organized.') }}</li>
-                {% endif %}
-            </ul>
+            <h3>{{ t('Spending by Category') }}</h3>
+            <canvas id="categoryChart"></canvas>
         </div>
     </div>
-    <div class="d-flex justify-content-between">
-        <a href="{{ url_for('bill.form') }}" class="btn btn-secondary">{{ t('Add New Bill') }}</a>
-        <a href="{{ url_for('bill.view_edit') }}" class="btn gradient-btn">{{ t('View Bills') }}</a>
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <h3>{{ t('Bills Due') }}</h3>
+            <p>{{ t('Today') }}: {{ due_today|length }}</p>
+            <p>{{ t('This Week') }}: {{ due_week|length }}</p>
+            <p>{{ t('This Month') }}: {{ due_month|length }}</p>
+            <div id="calendar"></div>
+        </div>
     </div>
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <h3>{{ t('Upcoming Bills') }}</h3>
+            {% if upcoming_bills %}
+                <ul>
+                    {% for bill in upcoming_bills %}
+                        <li>{{ bill.Description }} (₦{{ bill.Amount | format_number }}) - {{ t('Due') }} {{ bill.DueDate }}</li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>{{ t('No upcoming bills') }}</p>
+            {% endif %}
+        </div>
+    </div>
+    <div class="card shadow mb-4">
+        <div class="card-body tips">
+            <h3>{{ t('Tips for Managing Bills') }}</h3>
+            {% for tip in tips %}
+                <p>{{ tip }}</p>
+            {% endfor %}
+        </div>
+    </div>
+    <a href="{{ url_for('bill.view_edit') }}" class="btn gradient-btn">{{ t('View and Edit Bills') }}</a>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script>
-    const ctx = document.getElementById('billChart').getContext('2d');
+    document.addEventListener('DOMContentLoaded', function() {
+        var calendarEl = document.getElementById('calendar');
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            events: [
+                {% for bill in bills %}
+                    {
+                        title: '{{ bill.Description }} (₦{{ bill.Amount | format_number }})',
+                        start: '{{ bill.DueDate }}',
+                        backgroundColor: '{{ '#2E7D32' if bill.Status == 'Paid' else '#dc3545' }}',
+                        borderColor: '{{ '#2E7D32' if bill.Status == 'Paid' else '#dc3545' }}'
+                    },
+                {% endfor %}
+            ],
+            eventDidMount: function(info) {
+                info.el.setAttribute('title', info.event.title);
+            }
+        });
+        calendar.render();
+    });
+
+    const ctx = document.getElementById('categoryChart').getContext('2d');
     new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: ['{{ t("Paid") }}', '{{ t("Unpaid") }}', '{{ t("Upcoming") }}'],
+            labels: [{% for cat in categories %}'{{ t(cat|capitalize) }}',{% endfor %}],
             datasets: [{
-                label: '{{ t("Bill Amounts") }}',
-                data: [{{ data.paid_amount / 1000 }}, {{ data.unpaid_amount / 1000 }}, {{ data.upcoming_amount / 1000 }}],
-                backgroundColor: ['#2E7D32', '#0288D1', '#dc3545']
+                label: '{{ t('Amount') }} (₦)',
+                data: [{% for cat, amt in categories.items() %}{{ amt }},{% endfor %}],
+                backgroundColor: ['#1E7F71', '#2E7D32', '#0288D1', '#dc3545']
             }]
         },
         options: {
-            scales: {
-                y: { beginAtZero: true }
-            },
+            scales: { y: { beginAtZero: true } },
             animation: false
         }
     });

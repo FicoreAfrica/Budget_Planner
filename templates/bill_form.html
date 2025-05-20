@@ -37,12 +37,13 @@
         }
         return gk_fileData[filename] || "";
         }
-        </script>{% extends "base.html" %}
+        </script>{% extends 'base.html' %}
+{% block title %}{{ t('Bill Planner') }}{% endblock %}
 {% block content %}
 <div class="container mt-5">
     <div class="gradient-bg mb-4">
         <h1>{{ t('Bill Planner') }}</h1>
-        <p>{{ t('Add a new bill to track your expenses.') }}</p>
+        <p>{{ t('Financial growth passport for Africa') }}</p>
     </div>
     {% with messages = get_flashed_messages() %}
         {% if messages %}
@@ -53,49 +54,25 @@
             </div>
         {% endif %}
     {% endwith %}
-    <form method="POST" action="{{ url_for('bill.form') }}">
-        <div class="mb-3">
-            <label class="form-label">{{ t('Bill Name') }}</label>
-            <input type="text" name="bill_name" class="form-control" required>
-            <div class="form-text">{{ t('E.g., Electricity, Rent, School Fees.') }}</div>
+    <div class="card shadow">
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('bill.form') }}">
+                {{ form.hidden_tag() }}
+                <div class="mb-3">
+                    <label class="form-label">{{ t('Enter your name') }}</label>
+                    {{ form.name(class="form-control", placeholder=t('Enter your name')) }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">{{ t('Enter your email') }}</label>
+                    {{ form.email(class="form-control", placeholder=t('Enter your email')) }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">{{ t('Choose your language') }}</label>
+                    {{ form.language(class="form-select") }}
+                </div>
+                <button type="submit" class="btn gradient-btn">{{ t('Next') }}</button>
+            </form>
         </div>
-        <div class="mb-3">
-            <label class="form-label">{{ t('Amount') }}</label>
-            <input type="number" name="amount" class="form-control" min="0" max="10000000000" required>
-            <div class="form-text">{{ t('Enter the bill amount in Naira.') }}</div>
-        </div>
-        <div class="mb-3">
-            <label class="form-label">{{ t('Due Date') }}</label>
-            <input type="date" name="due_date" class="form-control" required>
-            <div class="form-text">{{ t('Select the bill due date.') }}</div>
-        </div>
-        <div class="mb-3">
-            <label class="form-label">{{ t('Category') }}</label>
-            <select name="category" class="form-select" required>
-                <option value="">{{ t('Select a category') }}</option>
-                <option value="Utilities">{{ t('Utilities') }}</option>
-                <option value="Housing">{{ t('Housing') }}</option>
-                <option value="Education">{{ t('Education') }}</option>
-                <option value="Transport">{{ t('Transport') }}</option>
-                <option value="Other">{{ t('Other') }}</option>
-            </select>
-            <div class="form-text">{{ t('Choose the bill category.') }}</div>
-        </div>
-        <div class="mb-3 form-check">
-            <input type="checkbox" name="send_reminder" class="form-check-input">
-            <label class="form-check-label">{{ t('Send email reminder before due date.') }}</label>
-        </div>
-        <div class="d-flex justify-content-between">
-            <a href="{{ url_for('general_dashboard') }}" class="btn btn-secondary">{{ t('Back') }}</a>
-            <button type="submit" class="btn gradient-btn">{{ t('Add Bill') }}</button>
-        </div>
-    </form>
-<script>
-    document.querySelector('input[name="amount"]').addEventListener('input', function() {
-        if (this.value > 10000000000) {
-            this.value = 10000000000;
-            alert('{{ t("Amount cannot exceed ₦10 billion.") }}');
-        }
-    });
-</script>
+    </div>
+</div>
 {% endblock %}
