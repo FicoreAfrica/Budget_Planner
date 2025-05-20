@@ -17,12 +17,6 @@ body {
     font-weight: bold;
 }
 
-/* Tools Grid (index.html) */
-.tools-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 30px;
-}
 .tool-card .card {
     background-color: #E3F2FD;
 }
