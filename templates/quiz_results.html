@@ -37,8 +37,7 @@
         }
         return gk_fileData[filename] || "";
         }
-        </script>```html
-{% extends "base.html" %}
+        </script>{% extends "base.html" %}
 {% block content %}
 <div class="container mt-5">
     <div class="gradient-bg mb-4">
@@ -89,7 +88,7 @@
         </div>
     </div>
     <div class="d-flex justify-content-between">
-        <a href="{{ url_for('quiz_step1') }}" class="btn btn-secondary">{{ t('Retake Quiz') }}</a>
+        <a href="{{ url_for('quiz.step1') }}" class="btn btn-secondary">{{ t('Retake Quiz') }}</a>
         <a href="{{ url_for('general_dashboard') }}" class="btn gradient-btn">{{ t('Go to Dashboard') }}</a>
     </div>
 </div>
@@ -115,4 +114,3 @@
     });
 </script>
 {% endblock %}
-```
