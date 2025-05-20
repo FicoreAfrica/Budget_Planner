@@ -21,29 +21,29 @@
             <form method="POST" action="{{ url_for('quiz.step1') }}">
                 {{ form.csrf_token }}
                 <div class="mb-3">
-                    <label class="form-label">{{ trans['Do you track your expenses regularly?'] }}</label>
+                    <label class="form-label">{{ trans['track_expenses'] }}</label>
                     {{ form.track_expenses(class="form-select") }}
-                    <div class="form-text">{{ trans['E.g., using a notebook, app, or mental notes.'] }}</div>
+                    <div class="form-text">{{ trans['Tracking: Recording all money spent daily.'] }}</div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">{{ trans['Do you spend on non-essential items like fashion or gadgets?'] }}</label>
+                    <label class="form-label">{{ trans['spend_non_essentials'] }}</label>
                     {{ form.spend_non_essentials(class="form-select") }}
-                    <div class="form-text">{{ trans['E.g., buying new clothes or electronics.'] }}</div>
+                    <div class="form-text">{{ trans['Non-essentials: Items or activities not critical to daily needs.'] }}</div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">{{ trans['Do you save a portion of your income regularly?'] }}</label>
+                    <label class="form-label">{{ trans['save_regularly'] }}</label>
                     {{ form.save_regularly(class="form-select") }}
-                    <div class="form-text">{{ trans['E.g., saving in a bank or cooperative.'] }}</div>
+                    <div class="form-text">{{ trans['Saving: Setting aside money for future use.'] }}</div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">{{ trans['Do you plan your expenses before spending?'] }}</label>
+                    <label class="form-label">{{ trans['plan_expenses'] }}</label>
                     {{ form.plan_expenses(class="form-select") }}
-                    <div class="form-text">{{ trans['E.g., making a budget for market or bills.'] }}</div>
+                    <div class="form-text">{{ trans['Planning: Deciding what to buy before spending.'] }}</div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">{{ trans['Do you make impulse purchases?'] }}</label>
+                    <label class="form-label">{{ trans['impulse_purchases'] }}</label>
                     {{ form.impulse_purchases(class="form-select") }}
-                    <div class="form-text">{{ trans['E.g., buying items on a whim at the market.'] }}</div>
+                    <div class="form-text">{{ trans['Impulse buying: Purchasing without planning.'] }}</div>
                 </div>
                 <button type="submit" class="btn btn-primary">{{ trans['Continue to Next Questions'] }}</button>
             </form>
