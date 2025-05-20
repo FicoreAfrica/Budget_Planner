@@ -133,13 +133,16 @@ def logout():
 # Error Handlers
 @app.errorhandler(404)
 def page_not_found(e):
+    """Handle 404 errors."""
     t = trans('t')
+    logger.error(f"404 Error: {str(e)}")
     return render_template('404.html', error=t.get('Page Not Found', 'Page Not Found'), t=t), 404
 
 @app.errorhandler(500)
 def internal_server_error(e):
-    logging.exception(f"500 Error: {str(e)}")
+    """Handle 500 errors."""
     t = trans('t')
+    logger.error(f"500 Error: {str(e)}", exc_info=True)
     return render_template('500.html', error=t.get('Internal Server Error', 'Internal Server Error'), t=t), 500
 
 # Register Blueprints
