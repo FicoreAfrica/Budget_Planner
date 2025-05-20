@@ -4,7 +4,7 @@ from wtforms import StringField, FloatField, SelectField, SubmitField
 from wtforms.validators import DataRequired, NumberRange
 from json_store import JsonStorage
 from mailersend_email import send_email
-from ..translations import trans
+from translations import trans  # Changed to absolute import
 from datetime import datetime
 import logging
 import uuid
