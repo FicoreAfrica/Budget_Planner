@@ -1260,8 +1260,14 @@ def get_translations(language='en'):
     return translations.get(language, translations['en'])
 
 def trans(key, lang=None):
-    """Retrieve a translated string for the given key."""
+    """Retrieve a translated string for the given key, supporting both t and trans usage."""
     if lang is None:
         lang = session.get('lang', 'en')
+    
+    # If key is a dictionary (like t expects), return the translation dictionary
+    if isinstance(key, str) and key in ['t', 'trans']:
+        return get_translations(lang)
+    
+    # Otherwise, perform key-based lookup for trans
     translations = get_translations(lang)
     return translations.get(key, key)
