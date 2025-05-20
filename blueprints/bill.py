@@ -23,6 +23,7 @@ class BillForm(FlaskForm):
     category = SelectField('Category', choices=[('utility', 'Utility'), ('rent', 'Rent'), ('other', 'Other')])
     email = StringField('Email')
     send_email = SelectField('Send Email', choices=[('on', 'Yes'), ('off', 'No')])
+    status = SelectField('Status', choices=[('unpaid', 'Unpaid'), ('paid', 'Paid')], default='unpaid')
     submit = SubmitField('Submit')
 
 @bill_bp.route('/form', methods=['GET', 'POST'])
@@ -34,7 +35,6 @@ def form():
     if request.method == 'POST' and form.validate_on_submit():
         try:
             data = form.data
-            # Validate due date format
             try:
                 datetime.strptime(data['due_date'], '%Y-%m-%d')
             except ValueError:
@@ -47,7 +47,7 @@ def form():
                     "amount": data['amount'],
                     "due_date": data['due_date'],
                     "category": data['category'],
-                    "status": "unpaid"
+                    "status": data['status']
                 }
             }
             bill_storage.append(record, user_email=data['email'], session_id=session['sid'])
@@ -111,7 +111,7 @@ def view_edit():
                                 "amount": data['amount'],
                                 "due_date": data['due_date'],
                                 "category": data['category'],
-                                "status": request.form.get('status', 'unpaid')
+                                "status": data['status']
                             }
                         }
                         if bill_storage.update_by_id(bill_id, updated_record):
@@ -137,23 +137,23 @@ def view_edit():
                     flash(t("Error deleting bill.") or "Error deleting bill.")
                     return redirect(url_for('bill.view_edit'))
                 
-            elif action == "mark_paid":
+            elif action == "toggle_status":
                 try:
                     record = bill_storage.get_by_id(bill_id)
                     if record:
-                        record["data"]["status"] = "paid"
+                        record["data"]["status"] = "paid" if record["data"]["status"] == "unpaid" else "unpaid"
                         if bill_storage.update_by_id(bill_id, record):
-                            flash(t("Bill marked as paid.") or "Bill marked as paid.")
+                            flash(t("Bill status toggled successfully.") or "Bill status toggled successfully.")
                         else:
-                            flash(t("Failed to mark bill as paid.") or "Failed to mark bill as paid.")
-                            logging.error(f"Failed to mark paid bill ID {bill_id}")
+                            flash(t("Failed to toggle bill status.") or "Failed to toggle bill status.")
+                            logging.error(f"Failed to toggle status for bill ID {bill_id}")
                     else:
                         flash(t("Bill not found.") or "Bill not found.")
                         logging.error(f"Bill ID {bill_id} not found")
                     return redirect(url_for('bill.view_edit'))
                 except Exception as e:
-                    logging.exception(f"Error in bill.view_edit (mark_paid): {str(e)}")
-                    flash(t("Error marking bill as paid.") or "Error marking bill as paid.")
+                    logging.exception(f"Error in bill.view_edit (toggle_status): {str(e)}")
+                    flash(t("Error toggling bill status.") or "Error toggling bill status.")
                     return redirect(url_for('bill.view_edit'))
         
         return render_template('view_edit_bills.html', bills=bills, form=BillForm())
