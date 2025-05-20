@@ -9,6 +9,7 @@ body {
 .logo-container {
     text-align: center;
     padding: 20px 0;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1); /* Light shadow under header */
 }
 .logo-centered {
     max-width: 150px; /* Default size */
@@ -31,7 +32,7 @@ body {
 .hero {
     background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), linear-gradient(135deg, #0288D1, #2E7D32);
     color: white;
-    padding: 20px;
+    padding: 24px 16px; /* Updated padding for desktop per Pal's suggestion */
     margin-top: 60px;
 }
 .hero h2 {
@@ -140,7 +141,7 @@ body {
     .recommended-learning,
     .why-section,
     .about-section {
-        padding: 16px;
+        padding: 24px 16px; /* Updated padding for mobile per Pal's suggestion */
         margin-bottom: 16px;
     }
 
@@ -153,9 +154,9 @@ body {
         margin: 10px auto;
         display: block; /* Center buttons */
     }
-}
 
-/* Add light shadow under header */
-.logo-container {
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    /* Add more spacing below the last button */
+    .btn-primary:last-child {
+        margin-bottom: 32px; /* Per Pal's suggestion */
+    }
 }
