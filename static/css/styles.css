@@ -1,71 +1,189 @@
-/* General */
+/* General Styles */
 body {
-    font-family: Arial, sans-serif;
-    background-color: #f8f9fa;
-    color: #666;
+    font-family: 'Arial', sans-serif;
+    background-color: #f9f9f9;
+    color: #333;
+    line-height: 1.6;
 }
 
-/* Hero (index.html) */
+/* Navigation Bar */
+.navbar {
+    background-color: #1b8e5a;
+    padding: 1rem;
+}
+.navbar-brand, .nav-link {
+    color: #ffffff !important;
+    font-weight: 600;
+    transition: color 0.3s ease;
+}
+.nav-link:hover {
+    color: #e0f7e9 !important;
+}
+.dropdown-menu {
+    background-color: #ffffff;
+    border: 1px solid #1b8e5a;
+}
+.dropdown-item {
+    color: #333;
+}
+.dropdown-item:hover {
+    background-color: #e0f7e9;
+    color: #1b8e5a;
+}
+
+/* Hero Section (index.html) */
 .hero {
-    background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), linear-gradient(135deg, #0288D1, #2E7D32);
-    color: white;
-    padding: 20px;
-    margin-top: 60px;
+    background-color: #1b8e5a;
+    color: #ffffff;
+    padding: 3rem 1.5rem;
+    text-align: center;
+    margin-top: 4rem;
 }
 .hero h2 {
     font-size: 2.5rem;
-    font-weight: bold;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+}
+@media (min-width: 768px) {
+    .hero h2 {
+        font-size: 3.5rem;
+    }
 }
 
+/* Button Styles */
+.btn-primary {
+    background-color: #1b8e5a;
+    border-color: #1b8e5a;
+    color: #ffffff;
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    transition: background-color 0.3s ease;
+}
+.btn-primary:hover {
+    background-color: #167a4c;
+    border-color: #167a4c;
+}
+.btn-secondary {
+    background-color: transparent;
+    border: 2px solid #1b8e5a;
+    color: #1b8e5a;
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+.btn-secondary:hover {
+    background-color: #e0f7e9;
+    color: #1b8e5a;
+}
+
+/* Tool Cards (index.html) */
 .tool-card .card {
-    background-color: #E3F2FD;
+    background-color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.tool-card .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
 }
 
-/* Testimonials (index.html) */
+/* Testimonials Section (index.html) */
+.testimonial {
+    background-color: #f1f1f1;
+    padding: 2rem;
+    border-radius: 10px;
+}
 .testimonial .quote {
-    color: #0288D1;
+    color: #1b8e5a;
     font-size: 1.5rem;
-    margin-right: 5px;
+    margin-right: 0.5rem;
 }
 .testimonial .name {
-    color: #0288D1;
-    font-weight: bold;
+    color: #1b8e5a;
+    font-weight: 600;
 }
 
-/* Tips (bill_dashboard.html) */
+/* Tips Section (bill_dashboard.html) */
 .tips {
-    background: #e8f4f8;
-    padding: 10px;
-    border-radius: 5px;
+    background-color: #f1f1f1;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 /* Bill Dashboard (bill_dashboard.html) */
 .overdue-alert {
-    font-weight: bold;
+    font-weight: 600;
     color: #dc3545;
 }
 
 /* View/Edit Bills (view_edit_bills.html) */
 .status-paid {
-    color: green;
+    color: #1b8e5a;
+    font-weight: 600;
 }
 .status-unpaid {
-    color: red;
+    color: #dc3545;
+    font-weight: 600;
 }
 
 /* Why Section (index.html) */
 .why-list li {
     display: flex;
     align-items: center;
-    margin-bottom: 15px;
+    margin-bottom: 1rem;
 }
 .why-list li i {
-    color: #0288D1;
-    margin-right: 10px;
+    color: #1b8e5a;
+    margin-right: 0.75rem;
 }
 
 /* About Section (index.html) */
 .about-section {
-    background: white;
-    padding: 30px 20px;
+    background-color: #ffffff;
+    padding: 2.5rem 1.5rem;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* Footer */
+.footer {
+    background-color: #f9f9f9;
+    color: #333;
+}
+.footer a {
+    color: #1b8e5a;
+    text-decoration: none;
+}
+.footer a:hover {
+    color: #167a4c;
+    text-decoration: underline;
+}
+.social-icons a {
+    color: #1b8e5a;
+    margin: 0 0.5rem;
+    font-size: 1.5rem;
+}
+.social-icons a:hover {
+    color: #167a4c;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 576px) {
+    .navbar-brand img {
+        max-width: 120px;
+    }
+    .btn-primary, .btn-secondary {
+        padding: 0.5rem 1rem;
+    }
+    .footer-buttons .btn {
+        display: block;
+        margin: 0.5rem auto;
+        width: 100%;
+        max-width: 200px;
+    }
 }
