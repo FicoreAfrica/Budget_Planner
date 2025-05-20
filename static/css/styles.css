@@ -16,13 +16,15 @@ body {
 
 /* Section Headers Dark Green */
 .hero h2,
-.testimonial h2,
-.recommended-learning h2,
+.tools-section h2,
 .why-section h2,
+.testimonials-section h3,
+.recommended-learning h3,
 .about-section h2 {
     color: #2E7D32; /* Dark green */
     font-size: 2.5rem;
     font-weight: bold;
+    text-align: center; /* Ensure centering for consistency */
 }
 
 /* Hero (index.html) - Keep toolkit text white */
@@ -32,8 +34,8 @@ body {
     padding: 20px;
     margin-top: 60px;
 }
-.hero .toolkit-text {
-    color: white !important;
+.hero h2 {
+    color: white !important; /* Ensure toolkit text is white */
 }
 
 /* Tool Card (index.html) */
@@ -42,7 +44,7 @@ body {
 }
 
 /* Testimonials (index.html) */
-.testimonial {
+.testimonials-section {
     background-color: #E3F2FD; /* Light blue background */
     border: 2px solid #343a40; /* Dark border */
     padding: 20px;
