@@ -15,27 +15,15 @@ try:
 except ImportError as e:
     logging.warning(f"Translations import failed: {str(e)}")
     def t(key, lang=None):
-        return key  # Fallback: return the key untranslated
+        return key
     def get_translations(lang):
-        return {}  # Fallback: empty translations
+        return {}
 from json_store import JsonStorage
 from functools import wraps
 
-# Import Blueprints
-try:
-    from blueprints.bill import bill_bp
-    from blueprints.quiz import quiz_bp
-    from blueprints.financial_health import financial_health_bp
-    from blueprints.budget import budget_bp
-    from blueprints.net_worth import net_worth_bp
-    from blueprints.emergency_fund import emergency_fund_bp
-except ImportError as e:
-    logging.exception(f"Error importing Blueprints: {str(e)}")
-    raise
-
 # Initialize Flask app
 app = Flask(__name__)
-app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'your-secret-key')  # Warning: Set FLASK_SECRET_KEY in production
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'your-secret-key')
 
 # Configure filesystem-based sessions
 session_dir = os.environ.get('SESSION_DIR', 'data/sessions')
@@ -61,6 +49,14 @@ storage_managers = {
     'net_worth': JsonStorage('data/networth.json'),
     'emergency_fund': JsonStorage('data/emergency_fund.json')
 }
+
+# Template filter for number formatting
+@app.template_filter('format_number')
+def format_number(value):
+    try:
+        return f"{float(value):,.2f}" if isinstance(value, (int, float)) else str(value)
+    except (ValueError, TypeError):
+        return str(value)
 
 # Session required decorator
 def session_required(f):
