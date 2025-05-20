@@ -4,7 +4,7 @@ from wtforms import StringField, SelectField, SubmitField
 from wtforms.validators import Email, Optional
 from json_store import JsonStorage
 from mailersend_email import send_email
-from ..translations import trans
+from translations import trans
 import logging
 import uuid
 
