@@ -24,19 +24,24 @@ body {
 .about-section h2 {
     color: #2E7D32; /* Dark green */
     font-size: 2.5rem;
-    font-weight: bold;
+    font-weight: 600; /* Slightly reduced from bold (700) for elegance */
     text-align: center; /* Ensure centering for consistency */
 }
 
-/* Hero (index.html) - Keep toolkit text white */
+/* Hero (index.html) - Spacious layout with white toolkit text */
 .hero {
     background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), linear-gradient(135deg, #0288D1, #2E7D32);
     color: white;
-    padding: 24px 16px; /* Updated padding for desktop per Pal's suggestion */
+    padding: 40px 16px; /* Increased vertical padding for spaciousness */
     margin-top: 60px;
+    text-align: center;
 }
 .hero h2 {
     color: white !important; /* Ensure toolkit text is white */
+    margin-bottom: 1.5rem; /* Space between headline and subtext */
+}
+.hero p {
+    margin-bottom: 2rem; /* Space between subtext and buttons */
 }
 
 /* Tool Card (index.html) */
@@ -48,8 +53,11 @@ body {
 .testimonials-section {
     background-color: #E3F2FD; /* Light blue background */
     border: 2px solid #343a40; /* Dark border */
-    padding: 20px;
     border-radius: 5px;
+}
+.testimonial {
+    color: #333; /* Darker body text for better contrast */
+    padding: 1.2rem 1rem; /* Responsive padding for mobile */
 }
 .testimonial .quote {
     color: #0288D1;
@@ -57,7 +65,7 @@ body {
     margin-right: 5px;
 }
 .testimonial .name {
-    color: #0288D1;
+    color: #0288D1; /* Consistent highlight color for names */
     font-weight: bold;
 }
 
@@ -141,7 +149,7 @@ body {
     .recommended-learning,
     .why-section,
     .about-section {
-        padding: 24px 16px; /* Updated padding for mobile per Pal's suggestion */
+        padding: 40px 16px; /* Increased vertical padding for mobile */
         margin-bottom: 16px;
     }
 
@@ -153,10 +161,25 @@ body {
         width: 90%;
         margin: 10px auto;
         display: block; /* Center buttons */
+        background: linear-gradient(135deg, #2E7D32, #0288D1); /* Gradient to match screenshot */
+        border: none;
     }
 
     /* Add more spacing below the last button */
     .btn-primary:last-child {
-        margin-bottom: 32px; /* Per Pal's suggestion */
+        margin-bottom: 40px; /* Increased to 40px for spaciousness */
+    }
+
+    /* Add spacing between testimonials on mobile */
+    .testimonial + .testimonial {
+        margin-top: 1.5rem; /* Vertical space between testimonials */
+    }
+}
+
+/* Desktop Button Hover Effect */
+@media (min-width: 769px) {
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #1B5E20, #01579B); /* Darker gradient on hover */
+        transition: background 0.3s ease;
     }
 }
