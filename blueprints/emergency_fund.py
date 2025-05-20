@@ -4,7 +4,7 @@ from wtforms import StringField, FloatField, SelectField, SubmitField
 from wtforms.validators import DataRequired, NumberRange, Optional, Email
 from json_store import JsonStorage
 from mailersend_email import send_email
-from translations import t
+from ..translations import trans
 import logging
 import uuid
 
@@ -34,15 +34,16 @@ def step1():
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
     form = Step1Form()
-    if request.method == 'POST' and form.validate_on_submit():
+    t = trans('t')
+    if request.method == 'POST' and *form.validate_on_submit():
         try:
             session['emergency_fund_step1'] = form.data
             return redirect(url_for('emergency_fund.step2'))
         except Exception as e:
             logging.exception(f"Error in emergency_fund.step1: {str(e)}")
-            flash(t("Error processing step 1.") or "Error processing step 1.")
+            flash(trans("Error processing step 1."))
             return redirect(url_for('emergency_fund.step1'))
-    return render_template('emergency_fund_step1.html', form=form)
+    return render_template('emergency_fund_step1.html', form=form, t=t)
 
 @emergency_fund_bp.route('/step2', methods=['GET', 'POST'])
 def step2():
@@ -50,6 +51,7 @@ def step2():
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
     form = Step2Form()
+    t = trans('t')
     if request.method == 'POST' and form.validate_on_submit():
         try:
             data = form.data
@@ -75,29 +77,30 @@ def step2():
             if send_email_flag and email:
                 send_email(
                     to_email=email,
-                    subject="Emergency Fund Plan",
+                    subject=trans("Emergency Fund Plan"),
                     template_name="emergency_fund_email.html",
                     data=record["data"],
                     lang=session.get('lang', 'en')
                 )
             session.pop('emergency_fund_step1', None)
-            flash(t("Emergency fund plan completed.") or "Emergency fund plan completed.")
+            flash(trans("Emergency fund plan completed."))
             return redirect(url_for('emergency_fund.dashboard'))
         except Exception as e:
             logging.exception(f"Error in emergency_fund.step2: {str(e)}")
-            flash(t("Error processing emergency fund plan.") or "Error processing emergency fund plan.")
+            flash(trans("Error processing emergency fund plan."))
             return redirect(url_for('emergency_fund.step2'))
-    return render_template('emergency_fund_step2.html', form=form)
+    return render_template('emergency_fund_step2.html', form=form, t=t)
 
 @emergency_fund_bp.route('/dashboard')
 def dashboard():
     """Display emergency fund dashboard."""
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
+    t = trans('t')
     try:
         user_data = emergency_fund_storage.filter_by_session(session['sid'])
-        return render_template('emergency_fund_dashboard.html', data=user_data[-1]["data"] if user_data else {})
+        return render_template('emergency_fund_dashboard.html', data=user_data[-1]["data"] if user_data else {}, t=t)
     except Exception as e:
         logging.exception(f"Error in emergency_fund.dashboard: {str(e)}")
-        flash(t("Error loading dashboard.") or "Error loading dashboard.")
-        return render_template('emergency_fund_dashboard.html', data={})
+        flash(trans("Error loading dashboard."))
+        return render_template('emergency_fund_dashboard.html', data={}, t=t)
