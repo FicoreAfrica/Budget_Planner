@@ -5,6 +5,12 @@ from datetime import datetime
 from flask import Flask, render_template, request, session, redirect, url_for, flash
 from flask_session import Session
 from flask_wtf.csrf import CSRFProtect
+from financial_health import financial_health_bp  # Import the financial_health Blueprint
+from budget import budget_bp  # Assuming budget_bp is defined in budget.py
+from quiz import quiz_bp  # Assuming quiz_bp is defined in quiz.py
+from bill import bill_bp  # Assuming bill_bp is defined in bill.py
+from net_worth import net_worth_bp  # Assuming net_worth_bp is defined in net_worth.py
+from emergency_fund import emergency_fund_bp  # Assuming emergency_fund_bp is defined in emergency_fund.py
 try:
     from python_dotenv import load_dotenv
     load_dotenv()
