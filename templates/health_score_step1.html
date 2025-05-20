@@ -1,10 +1,10 @@
 {% extends "base.html" %}
-{% block title %}{{ trans['Financial Health Score'] }}{% endblock %}
+{% block title %}{{ trans('Financial Health Score') }}{% endblock %}
 {% block content %}
 <div class="container">
     <div class="navbar mb-4">
-        <h1>{{ trans['Financial Health Score'] }}</h1>
-        <p>{{ trans['Complete the health score form with Ficore Africa to calculate your personalized financial health score.'] }}</p>
+        <h1>{{ trans('Financial Health Score') }}</h1>
+        <p>{{ trans('Complete the health score form with Ficore Africa to calculate your personalized financial health score.') }}</p>
     </div>
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -21,30 +21,30 @@
             <form method="POST" action="{{ url_for('financial_health.step1') }}">
                 {{ form.csrf_token }}
                 <div class="mb-3">
-                    <label class="form-label">{{ trans['First Name'] }}</label>
-                    {{ form.first_name(class="form-control", placeholder=trans['Enter your first name']) }}
-                    <div class="form-text">{{ trans['Enter your first name as it appears on official documents.'] }}</div>
+                    <label class="form-label">{{ trans('First Name') }}</label>
+                    {{ form.first_name(class="form-control", placeholder=trans('Enter your first name')) }}
+                    <div class="form-text">{{ trans('Enter your first name as it appears on official documents.') }}</div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">{{ trans['Email'] }}</label>
-                    {{ form.email(class="form-control", placeholder=trans['Enter an active email']) }}
-                    <div class="form-text">{{ trans['Use an active email address you check regularly for updates.'] }}</div>
+                    <label class="form-label">{{ trans('Email') }}</label>
+                    {{ form.email(class="form-control", placeholder=trans('Enter an active email')) }}
+                    <div class="form-text">{{ trans('Use an active email address you check regularly for updates.') }}</div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">{{ trans['Business Name or Income Source'] }}</label>
-                    {{ form.business_name(class="form-control", placeholder=trans['Enter business or income source']) }}
-                    <div class="form-text">{{ trans['Enter the name of your business or primary income source (e.g., farming, trading).'] }}</div>
+                    <label class="form-label">{{ trans('Business Name or Income Source') }}</label>
+                    {{ form.business_name(class="form-control", placeholder=trans('Enter business or income source')) }}
+                    <div class="form-text">{{ trans('Enter the name of your business or primary income source (e.g., farming, trading).') }}</div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">{{ trans['User Type'] }}</label>
+                    <label class="form-label">{{ trans('User Type') }}</label>
                     {{ form.user_type(class="form-select") }}
-                    <div class="form-text">{{ trans['Are you an individual or a business owner?'] }}</div>
+                    <div class="form-text">{{ trans('Are you an individual or a business owner?') }}</div>
                 </div>
                 <div class="mb-3 form-check">
                     {{ form.send_email(class="form-check-input") }}
-                    <label class="form-check-label">{{ trans['Send my financial health score to my email.'] }}</label>
+                    <label class="form-check-label">{{ trans('Send my financial health score to my email.') }}</label>
                 </div>
-                <button type="submit" class="btn btn-primary">{{ trans['Continue to Income'] }}</button>
+                <button type="submit" class="btn btn-primary">{{ trans('Continue to Income') }}</button>
             </form>
         </div>
     </div>

@@ -1,13 +1,13 @@
 {% extends "base.html" %}
-{% block title %}{{ trans['Net Worth Calculator'] }}{% endblock %}
+{% block title %}{{ trans('Net Worth Calculator') }}{% endblock %}
 {% block extra_head %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 {% endblock %}
 {% block content %}
 <div class="container">
     <div class="navbar mb-4">
-        <h1>{{ trans['Net Worth Calculator'] }}</h1>
-        <p>{{ trans['Your net worth summary.'] }}</p>
+        <h1>{{ trans('Net Worth Calculator') }}</h1>
+        <p>{{ trans('Your net worth summary.') }}</p>
     </div>
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -21,33 +21,33 @@
     {% endwith %}
     <div class="card mb-4">
         <div class="card-body">
-            <h2>{{ trans['Net Worth'] }}: ₦{{ data.net_worth | format_number }}</h2>
-            <p>{{ trans['Total Assets'] }}: ₦{{ data.total_assets | format_number }}</p>
-            <p>{{ trans['Total Liabilities'] }}: ₦{{ data.total_liabilities | format_number }}</p>
-            <p>{{ trans['Cash and Savings'] }}: ₦{{ data.cash | format_number }}</p>
-            <p>{{ trans['Investments'] }}: ₦{{ data.investments | format_number }}</p>
-            <p>{{ trans['Property'] }}: ₦{{ data.property | format_number }}</p>
-            <p>{{ trans['Loans'] }}: ₦{{ data.loans | format_number }}</p>
-            <p>{{ trans['Credit Card Debt'] }}: ₦{{ data.credit_cards | format_number }}</p>
+            <h2>{{ trans('Net Worth') }}: ₦{{ data.net_worth | format_number }}</h2>
+            <p>{{ trans('Total Assets') }}: ₦{{ data.total_assets | format_number }}</p>
+            <p>{{ trans('Total Liabilities') }}: ₦{{ data.total_liabilities | format_number }}</p>
+            <p>{{ trans('Cash and Savings') }}: ₦{{ data.cash | format_number }}</p>
+            <p>{{ trans('Investments') }}: ₦{{ data.investments | format_number }}</p>
+            <p>{{ trans('Property') }}: ₦{{ data.property | format_number }}</p>
+            <p>{{ trans('Loans') }}: ₦{{ data.loans | format_number }}</p>
+            <p>{{ trans('Credit Card Debt') }}: ₦{{ data.credit_cards | format_number }}</p>
         </div>
     </div>
     <canvas id="netWorthChart" class="mb-4"></canvas>
     <div class="card mb-4">
         <div class="card-body">
-            <h3>{{ trans['Recommendations'] }}</h3>
+            <h3>{{ trans('Recommendations') }}</h3>
             <ul>
                 {% if data.net_worth < 0 %}
-                    <li>{{ trans['Focus on reducing liabilities to improve your net worth.'] }}</li>
+                    <li>{{ trans('Focus on reducing liabilities to improve your net worth.') }}</li>
                 {% else %}
-                    <li>{{ trans['Consider investing assets to grow your wealth.'] }}</li>
+                    <li>{{ trans('Consider investing assets to grow your wealth.') }}</li>
                 {% endif %}
-                <li>{{ trans['Review your net worth annually to track progress.'] }}</li>
+                <li>{{ trans('Review your net worth annually to track progress.') }}</li>
             </ul>
         </div>
     </div>
     <div class="d-flex justify-content-between">
-        <a href="{{ url_for('net_worth.step1') }}" class="btn btn-secondary">{{ trans['Recalculate'] }}</a>
-        <a href="{{ url_for('general_dashboard') }}" class="btn btn-primary">{{ trans['Go to Dashboard'] }}</a>
+        <a href="{{ url_for('net_worth.step1') }}" class="btn btn-secondary">{{ trans('Recalculate') }}</a>
+        <a href="{{ url_for('general_dashboard') }}" class="btn btn-primary">{{ trans('Go to Dashboard') }}</a>
     </div>
 </div>
 <script>
@@ -56,9 +56,9 @@
         new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: ['{{ trans["Assets"] }}', '{{ trans["Liabilities"] }}', '{{ trans["Net Worth"] }}'],
+                labels: ['{{ trans("Assets") }}', '{{ trans("Liabilities") }}', '{{ trans("Net Worth") }}'],
                 datasets: [{
-                    label: '{{ trans["Net Worth Metrics"] }}',
+                    label: '{{ trans("Net Worth Metrics") }}',
                     data: [{{ (data.total_assets / 1000) | format_number }}, {{ (data.total_liabilities / 1000) | format_number }}, {{ (data.net_worth / 1000) | format_number }}],
                     backgroundColor: ['#2E7D32', '#dc3545', '#0288D1']
                 }]

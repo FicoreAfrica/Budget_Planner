@@ -1,10 +1,10 @@
 {% extends "base.html" %}
-{% block title %}{{ trans['Financial Personality Quiz'] }}{% endblock %}
+{% block title %}{{ trans('Financial Personality Quiz') }}{% endblock %}
 {% block content %}
 <div class="container">
     <div class="navbar mb-4">
-        <h1>{{ trans['Financial Personality Quiz'] }}</h1>
-        <p>{{ trans['Answer these additional questions to complete the quiz.'] }}</p>
+        <h1>{{ trans('Financial Personality Quiz') }}</h1>
+        <p>{{ trans('Answer these additional questions to complete the quiz.') }}</p>
     </div>
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -21,33 +21,33 @@
             <form method="POST" action="{{ url_for('quiz.step2') }}">
                 {{ form.csrf_token }}
                 <div class="mb-3">
-                    <label class="form-label">{{ trans['Do you use budgeting tools or apps?'] }}</label>
+                    <label class="form-label">{{ trans('Do you use budgeting tools or apps?') }}</label>
                     {{ form.use_budgeting_tools(class="form-select") }}
-                    <div class="form-text">{{ trans['E.g., apps like PiggyVest or spreadsheets.'] }}</div>
+                    <div class="form-text">{{ trans('E.g., apps like PiggyVest or spreadsheets.') }}</div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">{{ trans['Do you invest your money?'] }}</label>
+                    <label class="form-label">{{ trans('Do you invest your money?') }}</label>
                     {{ form.invest_money(class="form-select") }}
-                    <div class="form-text">{{ trans['E.g., stocks, real estate, or farming.'] }}</div>
+                    <div class="form-text">{{ trans('E.g., stocks, real estate, or farming.') }}</div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">{{ trans['Do you have an emergency fund?'] }}</label>
+                    <label class="form-label">{{ trans('Do you have an emergency fund?') }}</label>
                     {{ form.emergency_fund(class="form-select") }}
-                    <div class="form-text">{{ trans['E.g., savings for unexpected expenses.'] }}</div>
+                    <div class="form-text">{{ trans('E.g., savings for unexpected expenses.') }}</div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">{{ trans['Do you set financial goals?'] }}</label>
+                    <label class="form-label">{{ trans('Do you set financial goals?') }}</label>
                     {{ form.set_financial_goals(class="form-select") }}
-                    <div class="form-text">{{ trans['E.g., saving for a house or business.'] }}</div>
+                    <div class="form-text">{{ trans('E.g., saving for a house or business.') }}</div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">{{ trans['Do you seek financial advice?'] }}</label>
+                    <label class="form-label">{{ trans('Do you seek financial advice?') }}</label>
                     {{ form.seek_financial_advice(class="form-select") }}
-                    <div class="form-text">{{ trans['E.g., from advisors or family.'] }}</div>
+                    <div class="form-text">{{ trans('E.g., from advisors or family.') }}</div>
                 </div>
                 <div class="d-flex justify-content-between">
-                    <a href="{{ url_for('quiz.step1') }}" class="btn btn-secondary">{{ trans['Back'] }}</a>
-                    <button type="submit" class="btn btn-primary">{{ trans['Continue to Email'] }}</button>
+                    <a href="{{ url_for('quiz.step1') }}" class="btn btn-secondary">{{ trans('Back') }}</a>
+                    <button type="submit" class="btn btn-primary">{{ trans('Continue to Email') }}</button>
                 </div>
             </form>
         </div>

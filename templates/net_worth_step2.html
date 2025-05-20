@@ -1,10 +1,10 @@
 {% extends "base.html" %}
-{% block title %}{{ trans['Net Worth Calculator'] }}{% endblock %}
+{% block title %}{{ trans('Net Worth Calculator') }}{% endblock %}
 {% block content %}
 <div class="container">
     <div class="navbar mb-4">
-        <h1>{{ trans['Net Worth Calculator'] }}</h1>
-        <p>{{ trans['Enter your liabilities and email preferences.'] }}</p>
+        <h1>{{ trans('Net Worth Calculator') }}</h1>
+        <p>{{ trans('Enter your liabilities and email preferences.') }}</p>
     </div>
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -21,27 +21,27 @@
             <form method="POST" action="{{ url_for('net_worth.step2') }}">
                 {{ form.csrf_token }}
                 <div class="mb-3">
-                    <label class="form-label">{{ trans['Loans'] }}</label>
-                    {{ form.loans(class="form-control", placeholder=trans['Enter loan amount']) }}
-                    <div class="form-text">{{ trans['Total amount owed on loans.'] }}</div>
+                    <label class="form-label">{{ trans('Loans') }}</label>
+                    {{ form.loans(class="form-control", placeholder=trans('Enter loan amount')) }}
+                    <div class="form-text">{{ trans('Total amount owed on loans.') }}</div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">{{ trans['Credit Card Debt'] }}</label>
-                    {{ form.credit_cards(class="form-control", placeholder=trans['Enter credit card debt']) }}
-                    <div class="form-text">{{ trans['Total amount owed on credit cards.'] }}</div>
+                    <label class="form-label">{{ trans('Credit Card Debt') }}</label>
+                    {{ form.credit_cards(class="form-control", placeholder=trans('Enter credit card debt')) }}
+                    <div class="form-text">{{ trans('Total amount owed on credit cards.') }}</div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">{{ trans['Email'] }}</label>
-                    {{ form.email(class="form-control", placeholder=trans['Enter an active email']) }}
-                    <div class="form-text">{{ trans['Use an active email address you check regularly for updates.'] }}</div>
+                    <label class="form-label">{{ trans('Email') }}</label>
+                    {{ form.email(class="form-control", placeholder=trans('Enter an active email')) }}
+                    <div class="form-text">{{ trans('Use an active email address you check regularly for updates.') }}</div>
                 </div>
                 <div class="mb-3 form-check">
                     {{ form.send_email(class="form-check-input") }}
-                    <label class="form-check-label">{{ trans['Send net worth report to my email.'] }}</label>
+                    <label class="form-check-label">{{ trans('Send net worth report to my email.') }}</label>
                 </div>
                 <div class="d-flex justify-content-between">
-                    <a href="{{ url_for('net_worth.step1') }}" class="btn btn-secondary">{{ trans['Back'] }}</a>
-                    <button type="submit" class="btn btn-primary">{{ trans['Calculate Net Worth'] }}</button>
+                    <a href="{{ url_for('net_worth.step1') }}" class="btn btn-secondary">{{ trans('Back') }}</a>
+                    <button type="submit" class="btn btn-primary">{{ trans('Calculate Net Worth') }}</button>
                 </div>
             </form>
         </div>
@@ -54,7 +54,7 @@
         input.addEventListener('input', () => {
             if (input.value > 10000000000) {
                 input.value = 10000000000;
-                alert('{{ trans["Input cannot exceed ₦10 billion."] }}');
+                alert('{{ trans("Input cannot exceed ₦10 billion.") }}');
             }
         });
     });

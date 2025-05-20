@@ -41,8 +41,8 @@
 {% block content %}
 <div class="container mt-5">
     <div class="gradient-bg mb-4">
-        <h1>{{ t('Financial Personality Quiz') }}</h1>
-        <p>{{ t('Your financial personality results.') }}</p>
+        <h1>{{ trans('Financial Personality Quiz') }}</h1>
+        <p>{{ trans('Your financial personality results.') }}</p>
     </div>
     {% with messages = get_flashed_messages() %}
         {% if messages %}
@@ -55,19 +55,19 @@
     {% endwith %}
     <div class="card mb-4">
         <div class="card-body">
-            <h2>{{ t('Your Personality') }}: {{ t(data.personality) }}</h2>
-            <p>{{ t('Score') }}: {{ data.score }} / 10</p>
+            <h2>{{ trans('Your Personality') }}: {{ trans(data.personality) }}</h2>
+            <p>{{ trans('Score') }}: {{ data.score }} / 10</p>
             <p>
                 {% if data.personality == 'Planner' %}
-                    {{ t('You are disciplined and plan your finances carefully.') }}
+                    {{ trans('You are disciplined and plan your finances carefully.') }}
                 {% elif data.personality == 'Saver' %}
-                    {{ t('You prioritize saving and are cautious with spending.') }}
+                    {{ trans('You prioritize saving and are cautious with spending.') }}
                 {% elif data.personality == 'Minimalist' %}
-                    {{ t('You keep spending simple and avoid unnecessary expenses.') }}
+                    {{ trans('You keep spending simple and avoid unnecessary expenses.') }}
                 {% elif data.personality == 'Spender' %}
-                    {{ t('You enjoy spending and may need to focus on saving.') }}
+                    {{ trans('You enjoy spending and may need to focus on saving.') }}
                 {% else %}
-                    {{ t('You may avoid financial planning and could benefit from structure.') }}
+                    {{ trans('You may avoid financial planning and could benefit from structure.') }}
                 {% endif %}
             </p>
         </div>
@@ -75,21 +75,21 @@
     <canvas id="quizChart" class="mb-4"></canvas>
     <div class="card mb-4">
         <div class="card-body">
-            <h3>{{ t('Recommendations') }}</h3>
+            <h3>{{ trans('Recommendations') }}</h3>
             <ul>
                 {% if data.personality in ['Spender', 'Avoider'] %}
-                    <li>{{ t('Try using a budgeting app to track your expenses.') }}</li>
+                    <li>{{ trans('Try using a budgeting app to track your expenses.') }}</li>
                 {% endif %}
                 {% if data.personality != 'Saver' %}
-                    <li>{{ t('Set up an emergency fund for unexpected expenses.') }}</li>
+                    <li>{{ trans('Set up an emergency fund for unexpected expenses.') }}</li>
                 {% endif %}
-                <li>{{ t('Review your financial goals monthly to stay on track.') }}</li>
+                <li>{{ trans('Review your financial goals monthly to stay on track.') }}</li>
             </ul>
         </div>
     </div>
     <div class="d-flex justify-content-between">
-        <a href="{{ url_for('quiz.step1') }}" class="btn btn-secondary">{{ t('Retake Quiz') }}</a>
-        <a href="{{ url_for('general_dashboard') }}" class="btn gradient-btn">{{ t('Go to Dashboard') }}</a>
+        <a href="{{ url_for('quiz.step1') }}" class="btn btn-secondary">{{ trans('Retake Quiz') }}</a>
+        <a href="{{ url_for('general_dashboard') }}" class="btn gradient-btn">{{ trans('Go to Dashboard') }}</a>
     </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
@@ -98,9 +98,9 @@
     new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: ['{{ t("Score") }}', '{{ t("Max Score") }}'],
+            labels: ['{{ trans('Score') }}', '{{ trans('Max Score') }}'],
             datasets: [{
-                label: '{{ t("Quiz Results") }}',
+                label: '{{ trans('Quiz Results') }}',
                 data: [{{ data.score }}, 10],
                 backgroundColor: ['#2E7D32', '#0288D1']
             }]

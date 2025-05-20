@@ -1,10 +1,10 @@
 {% extends "base.html" %}
-{% block title %}{{ trans['Financial Personality Quiz'] }}{% endblock %}
+{% block title %}{{ trans('Financial Personality Quiz') }}{% endblock %}
 {% block content %}
 <div class="container">
     <div class="navbar mb-4">
-        <h1>{{ trans['Financial Personality Quiz'] }}</h1>
-        <p>{{ trans['Answer these questions to discover your financial personality.'] }}</p>
+        <h1>{{ trans('Financial Personality Quiz') }}</h1>
+        <p>{{ trans('Answer these questions to discover your financial personality.') }}</p>
     </div>
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -21,31 +21,31 @@
             <form method="POST" action="{{ url_for('quiz.step1') }}">
                 {{ form.csrf_token }}
                 <div class="mb-3">
-                    <label class="form-label">{{ trans['track_expenses'] }}</label>
+                    <label class="form-label">{{ trans('track_expenses') }}</label>
                     {{ form.track_expenses(class="form-select") }}
-                    <div class="form-text">{{ trans['Tracking: Recording all money spent daily.'] }}</div>
+                    <div class="form-text">{{ trans('Tracking: Recording all money spent daily.') }}</div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">{{ trans['spend_non_essentials'] }}</label>
+                    <label class="form-label">{{ trans('spend_non_essentials') }}</label>
                     {{ form.spend_non_essentials(class="form-select") }}
-                    <div class="form-text">{{ trans['Non-essentials: Items or activities not critical to daily needs.'] }}</div>
+                    <div class="form-text">{{ trans('Non-essentials: Items or activities not critical to daily needs.') }}</div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">{{ trans['save_regularly'] }}</label>
+                    <label class="form-label">{{ trans('save_regularly') }}</label>
                     {{ form.save_regularly(class="form-select") }}
-                    <div class="form-text">{{ trans['Saving: Setting aside money for future use.'] }}</div>
+                    <div class="form-text">{{ trans('Saving: Setting aside money for future use.') }}</div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">{{ trans['plan_expenses'] }}</label>
+                    <label class="form-label">{{ trans('plan_expenses') }}</label>
                     {{ form.plan_expenses(class="form-select") }}
-                    <div class="form-text">{{ trans['Planning: Deciding what to buy before spending.'] }}</div>
+                    <div class="form-text">{{ trans('Planning: Deciding what to buy before spending.') }}</div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">{{ trans['impulse_purchases'] }}</label>
+                    <label class="form-label">{{ trans('impulse_purchases') }}</label>
                     {{ form.impulse_purchases(class="form-select") }}
-                    <div class="form-text">{{ trans['Impulse buying: Purchasing without planning.'] }}</div>
+                    <div class="form-text">{{ trans('Impulse buying: Purchasing without planning.') }}</div>
                 </div>
-                <button type="submit" class="btn btn-primary">{{ trans['Continue to Next Questions'] }}</button>
+                <button type="submit" class="btn btn-primary">{{ trans('Continue to Next Questions') }}</button>
             </form>
         </div>
     </div>

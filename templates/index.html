@@ -1,108 +1,108 @@
 {% extends 'base.html' %}
-{% block title %}{{ trans['Home'] }}{% endblock %}
+{% block title %}{{ trans('Home') }}{% endblock %}
 {% block content %}
 <div class="container">
     <section class="hero text-center my-5">
         <div class="navbar mb-4">
-            <h2>{{ trans['Your All-in-One Toolkit for Personal & SME Financial Health Across Africa'] }}</h2>
+            <h2>{{ trans('Your All-in-One Toolkit for Personal & SME Financial Health Across Africa') }}</h2>
         </div>
-        <p>{{ trans['Use Ficore to Track your income, net worth, budgets, and bills, to grow your money with confidence.'] }}</p>
-        <a href="{{ url_for('financial_health.step1') }}" class="btn btn-primary">{{ trans['Where to Start? Get Your Free Health Score'] }}</a>
-        <a href="#tools-section" class="btn btn-primary mt-3">{{ trans['Explore Ficore Tools'] }}</a>
+        <p>{{ trans('Use Ficore to Track your income, net worth, budgets, and bills, to grow your money with confidence.') }}</p>
+        <a href="{{ url_for('financial_health.step1') }}" class="btn btn-primary">{{ trans('Where to Start? Get Your Free Health Score') }}</a>
+        <a href="#tools-section" class="btn btn-primary mt-3">{{ trans('Explore Ficore Tools') }}</a>
     </section>
     <section class="tools-section my-5" id="tools-section">
-        <h2 class="text-center">{{ trans['Choose a Tool'] }}</h2>
+        <h2 class="text-center">{{ trans('Choose a Tool') }}</h2>
         <div class="tools-grid row">
             <div class="col-md-4 mb-4">
                 <div class="card h-100">
                     <div class="card-body">
-                        <h3 class="card-title">{{ trans['Financial Health Score'] }}</h3>
-                        <p class="card-text">{{ trans['Evaluates income, expenses, and debt for a health score'] }}</p>
-                        <a href="{{ url_for('financial_health.step1') }}" class="btn btn-primary" aria-label="{{ trans['Start Financial Health Score Assessment'] }}">{{ trans['Start'] }}</a>
+                        <h3 class="card-title">{{ trans('Financial Health Score') }}</h3>
+                        <p class="card-text">{{ trans('Evaluates income, expenses, and debt for a health score') }}</p>
+                        <a href="{{ url_for('financial_health.step1') }}" class="btn btn-primary" aria-label="{{ trans('Start Financial Health Score Assessment') }}">{{ trans('Start') }}</a>
                     </div>
                 </div>
             </div>
             <div class="col-md-4 mb-4">
                 <div class="card h-100">
                     <div class="card-body">
-                        <h3 class="card-title">{{ trans['Budget Planner'] }}</h3>
-                        <p class="card-text">{{ trans['Allocate income across expense categories'] }}</p>
-                        <a href="{{ url_for('budget.step1') }}" class="btn btn-primary" aria-label="{{ trans['Start Monthly Budget Planner'] }}">{{ trans['Start'] }}</a>
+                        <h3 class="card-title">{{ trans('Budget Planner') }}</h3>
+                        <p class="card-text">{{ trans('Allocate income across expense categories') }}</p>
+                        <a href="{{ url_for('budget.step1') }}" class="btn btn-primary" aria-label="{{ trans('Start Monthly Budget Planner') }}">{{ trans('Start') }}</a>
                     </div>
                 </div>
             </div>
             <div class="col-md-4 mb-4">
                 <div class="card h-100">
                     <div class="card-body">
-                        <h3 class="card-title">{{ trans['Personality Quiz'] }}</h3>
-                        <p class="card-text">{{ trans['Answer questions to assess financial literacy'] }}</p>
-                        <a href="{{ url_for('quiz.step1') }}" class="btn btn-primary" aria-label="{{ trans['Start Personality Quiz'] }}">{{ trans['Start'] }}</a>
+                        <h3 class="card-title">{{ trans('Personality Quiz') }}</h3>
+                        <p class="card-text">{{ trans('Answer questions to assess financial literacy') }}</p>
+                        <a href="{{ url_for('quiz.step1') }}" class="btn btn-primary" aria-label="{{ trans('Start Personality Quiz') }}">{{ trans('Start') }}</a>
                     </div>
                 </div>
             </div>
             <div class="col-md-4 mb-4">
                 <div class="card h-100">
                     <div class="card-body">
-                        <h3 class="card-title">{{ trans['Bill Planner'] }}</h3>
-                        <p class="card-text">{{ trans['Manage and mark bills as paid'] }}</p>
-                        <a href="{{ url_for('bill.form') }}" class="btn btn-primary" aria-label="{{ trans['Start Bill Planner'] }}">{{ trans['Start'] }}</a>
+                        <h3 class="card-title">{{ trans('Bill Planner') }}</h3>
+                        <p class="card-text">{{ trans('Manage and mark bills as paid') }}</p>
+                        <a href="{{ url_for('bill.form') }}" class="btn btn-primary" aria-label="{{ trans('Start Bill Planner') }}">{{ trans('Start') }}</a>
                     </div>
                 </div>
             </div>
             <div class="col-md-4 mb-4">
                 <div class="card h-100">
                     <div class="card-body">
-                        <h3 class="card-title">{{ trans['Net Worth Calculator'] }}</h3>
-                        <p class="card-text">{{ trans['Net worth is assets minus liabilities'] }}</p>
-                        <a href="{{ url_for('net_worth.step1') }}" class="btn btn-primary" aria-label="{{ trans['Start Net Worth Calculator'] }}">{{ trans['Start'] }}</a>
+                        <h3 class="card-title">{{ trans('Net Worth Calculator') }}</h3>
+                        <p class="card-text">{{ trans('Net worth is assets minus liabilities') }}</p>
+                        <a href="{{ url_for('net_worth.step1') }}" class="btn btn-primary" aria-label="{{ trans('Start Net Worth Calculator') }}">{{ trans('Start') }}</a>
                     </div>
                 </div>
             </div>
             <div class="col-md-4 mb-4">
                 <div class="card h-100">
                     <div class="card-body">
-                        <h3 class="card-title">{{ trans['Emergency Fund Calculator'] }}</h3>
-                        <p class="card-text">{{ trans['Aims to cover 3-6 months of expenses for financial security'] }}</p>
-                        <a href="{{ url_for('emergency_fund.step1') }}" class="btn btn-primary" aria-label="{{ trans['Start Emergency Fund Calculator'] }}">{{ trans['Start'] }}</a>
+                        <h3 class="card-title">{{ trans('Emergency Fund Calculator') }}</h3>
+                        <p class="card-text">{{ trans('Aims to cover 3-6 months of expenses for financial security') }}</p>
+                        <a href="{{ url_for('emergency_fund.step1') }}" class="btn btn-primary" aria-label="{{ trans('Start Emergency Fund Calculator') }}">{{ trans('Start') }}</a>
                     </div>
                 </div>
             </div>
         </div>
         <div class="testimonials-section my-5">
-            <h3 class="text-center"><i class="fas fa-quote-left"></i> {{ trans['What people are saying about Us'] }}</h3>
+            <h3 class="text-center"><i class="fas fa-quote-left"></i> {{ trans('What people are saying about Us') }}</h3>
             <div class="row">
                 <div class="col-md-4">
                     <div class="testimonial text-center">
-                        <span class="quote">“</span> {{ trans['I explored the features earlier today and was impressed... I thought it was only for SMEs, but even individuals can benefit. The learning section is on another level.'] }} — <span class="name">Maisarata Uqubatu</span>
+                        <span class="quote">“</span> {{ trans('I explored the features earlier today and was impressed... I thought it was only for SMEs, but even individuals can benefit. The learning section is on another level.') }} — <span class="name">Maisarata Uqubatu</span>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="testimonial text-center">
-                        <span class="quote">“</span> 🔥 Ficore 🔥🔥🔥🔥🔥 — <span class="name">Abubakar Abdulkadir</span>, {{ trans['Software Engineer for Sustainable Solutions'] }}
+                        <span class="quote">“</span> 🔥 Ficore 🔥🔥🔥🔥🔥 — <span class="name">Abubakar Abdulkadir</span>, {{ trans('Software Engineer for Sustainable Solutions') }}
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="testimonial text-center">
-                        <span class="quote">“</span> {{ trans['I’ve been following the Ficore project and I’m impressed. It’s clear there’s potential, and I’m curious to know more—especially if there’s a customer support channel included. I’d love to contribute if needed!'] }} — <span class="name">Aminu Sani Usman</span>
+                        <span class="quote">“</span> {{ trans('I’ve been following the Ficore project and I’m impressed. It’s clear there’s potential, and I’m curious to know more—especially if there’s a customer support channel included. I’d love to contribute if needed!') }} — <span class="name">Aminu Sani Usman</span>
                     </div>
                 </div>
             </div>
         </div>
         <div class="recommended-learning my-5">
-            <h3 class="text-center"><i class="fas fa-book"></i> {{ trans['Recommended Learning'] }}</h3>
-            <p class="text-center">{{ trans['Learn more about budgeting!'] }}</p>
+            <h3 class="text-center"><i class="fas fa-book"></i> {{ trans('Recommended Learning') }}</h3>
+            <p class="text-center">{{ trans('Learn more about budgeting!') }}</p>
         </div>
     </section>
     <section class="why-section my-5">
-        <h2 class="text-center">{{ trans['Why Ficore Africa?'] }}</h2>
+        <h2 class="text-center">{{ trans('Why Ficore Africa?') }}</h2>
         <ul class="why-list list-unstyled">
-            <li><i class="fas fa-check-circle"></i> {{ trans['Localized for Africa with support for Naira and regional financial contexts'] }}</li>
-            <li><i class="fas fa-check-circle"></i> {{ trans['Empowers financial literacy with easy-to-use tools'] }}</li>
-            <li><i class="fas fa-check-circle"></i> {{ trans['Provides actionable insights for better financial decisions'] }}</li>
+            <li><i class="fas fa-check-circle"></i> {{ trans('Localized for Africa with support for Naira and regional financial contexts') }}</li>
+            <li><i class="fas fa-check-circle"></i> {{ trans('Empowers financial literacy with easy-to-use tools') }}</li>
+            <li><i class="fas fa-check-circle"></i> {{ trans('Provides actionable insights for better financial decisions') }}</li>
         </ul>
     </section>
     <section class="about-section text-center my-5">
-        <p>{{ trans['About Ficore Africa: Empowering financial growth across Africa since 2025'] }}</p>
+        <p>{{ trans('About Ficore Africa: Empowering financial growth across Africa since 2025') }}</p>
     </section>
 </div>
 {% endblock %}

@@ -40,7 +40,7 @@
         </script><!DOCTYPE html>
 <html>
 <head>
-    <title>{{ t('Financial Personality Quiz') }}</title>
+    <title>{{ trans('Financial Personality Quiz') }}</title>
     <style>
         body { font-family: Arial, sans-serif; color: #333; }
         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
@@ -53,41 +53,41 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>{{ t('Financial Personality Quiz') }}</h1>
+            <h1>{{ trans('Financial Personality Quiz') }}</h1>
         </div>
         <div class="content">
-            <p>{{ t('Dear User') }},</p>
-            <p>{{ t('Here is your Financial Personality Quiz summary.') }}</p>
-            <h2>{{ t('Your Personality') }}: {{ t(data.personality) }}</h2>
-            <p>{{ t('Score') }}: {{ data.score }} / 10</p>
+            <p>{{ trans('Dear User') }},</p>
+            <p>{{ trans('Here is your Financial Personality Quiz summary.') }}</p>
+            <h2>{{ trans('Your Personality') }}: {{ trans(data.personality) }}</h2>
+            <p>{{ trans('Score') }}: {{ data.score }} / 10</p>
             <p>
                 {% if data.personality == 'Planner' %}
-                    {{ t('You are disciplined and plan your finances carefully.') }}
+                    {{ trans('You are disciplined and plan your finances carefully.') }}
                 {% elif data.personality == 'Saver' %}
-                    {{ t('You prioritize saving and are cautious with spending.') }}
+                    {{ trans('You prioritize saving and are cautious with spending.') }}
                 {% elif data.personality == 'Minimalist' %}
-                    {{ t('You keep spending simple and avoid unnecessary expenses.') }}
+                    {{ trans('You keep spending simple and avoid unnecessary expenses.') }}
                 {% elif data.personality == 'Spender' %}
-                    {{ t('You enjoy spending and may need to focus on saving.') }}
+                    {{ trans('You enjoy spending and may need to focus on saving.') }}
                 {% else %}
-                    {{ t('You may avoid financial planning and could benefit from structure.') }}
+                    {{ trans('You may avoid financial planning and could benefit from structure.') }}
                 {% endif %}
             </p>
-            <h3>{{ t('Recommendations') }}</h3>
+            <h3>{{ trans('Recommendations') }}</h3>
             <ul>
                 {% if data.personality in ['Spender', 'Avoider'] %}
-                    <li>{{ t('Try using a budgeting app to track your expenses.') }}</li>
+                    <li>{{ trans('Try using a budgeting app to track your expenses.') }}</li>
                 {% endif %}
                 {% if data.personality != 'Saver' %}
-                    <li>{{ t('Set up an emergency fund for unexpected expenses.') }}</li>
+                    <li>{{ trans('Set up an emergency fund for unexpected expenses.') }}</li>
                 {% endif %}
-                <li>{{ t('Review your financial goals monthly to stay on track.') }}</li>
+                <li>{{ trans('Review your financial goals monthly to stay on track.') }}</li>
             </ul>
-            <p><a href="{{ url_for('quiz.step1', _external=True) }}" class="gradient-btn">{{ t('Retake Quiz') }}</a></p>
-            <p>{{ t('Thank you for choosing Ficore Africa!') }}</p>
+            <p><a href="{{ url_for('quiz.step1', _external=True) }}" class="gradient-btn">{{ trans('Retake Quiz') }}</a></p>
+            <p>{{ trans('Thank you for choosing Ficore Africa!') }}</p>
         </div>
         <div class="footer">
-            <p>{{ t('Powered by Ficore Africa') }}</p>
+            <p>{{ trans('Powered by Ficore Africa') }}</p>
         </div>
     </div>
 </body>
