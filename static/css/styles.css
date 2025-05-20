@@ -6,23 +6,27 @@ body {
 }
 
 /* Logo Centering */
-.navbar-logo {
-    display: block;
-    margin: 0 auto;
-    max-width: 150px; /* Adjust as needed */
+.logo-container {
+    text-align: center;
+    padding: 20px 0;
+}
+.logo-centered {
+    max-width: 150px; /* Matches original navbar logo size */
 }
 
-/* Section Headers Gradient */
+/* Section Headers Shining Gradient */
 .hero h2,
 .testimonial h2,
 .recommended-learning h2,
 .why-section h2,
 .about-section h2 {
-    background: linear-gradient(135deg, #2E7D32, #0288D1);
+    background: linear-gradient(135deg, #00FF00, #00B7EB);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     font-size: 2.5rem;
     font-weight: bold;
+    text-shadow: 0 0 5px rgba(0, 183, 235, 0.5); /* Subtle shine effect */
+    color: #00B7EB; /* Fallback for browsers not supporting gradient text */
 }
 
 /* Hero (index.html) */
@@ -40,7 +44,7 @@ body {
 
 /* Testimonials (index.html) */
 .testimonial {
-    background-color: #6c757d; /* Dark gray background */
+    background-color: #E3F2FD; /* Light blue background */
     border: 2px solid #343a40; /* Dark border */
     padding: 20px;
     border-radius: 5px;
@@ -57,7 +61,7 @@ body {
 
 /* Recommended Learning (index.html) */
 .recommended-learning {
-    background-color: #6c757d; /* Dark gray background */
+    background-color: #E3F2FD; /* Light blue background */
     border: 2px solid #343a40; /* Dark border */
     padding: 20px;
     border-radius: 5px;
@@ -86,7 +90,7 @@ body {
 
 /* Why Section (index.html) */
 .why-section {
-    background-color: #6c757d; /* Dark gray background */
+    background-color: #E3F2FD; /* Light blue background */
     border: 2px solid #343a40; /* Dark border */
     padding: 20px;
     border-radius: 5px;
@@ -103,7 +107,7 @@ body {
 
 /* About Section (index.html) */
 .about-section {
-    background: #6c757d; /* Dark gray background */
+    background: #E3F2FD; /* Light blue background */
     border: 2px solid #343a40; /* Dark border */
     padding: 30px 20px;
     border-radius: 5px;
