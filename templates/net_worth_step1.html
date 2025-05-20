@@ -1,74 +1,55 @@
-<script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
-
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
-                var filteredData = jsonData.filter(row => row.some(filledCell));
-
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
-                var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                );
-                // Fallback
-                if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
-                }
-
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
-            }
-        }
-        return gk_fileData[filename] || "";
-        }
-        </script>{% extends "base.html" %}
+{% extends "base.html" %}
+{% block title %}{{ trans['Net Worth Calculator'] }}{% endblock %}
 {% block content %}
-<div class="container mt-5">
-    <div class="gradient-bg mb-4">
-        <h1>{{ t('Net Worth Calculator') }}</h1>
-        <p>{{ t('Calculate your net worth with Ficore Africa.') }}</p>
+<div class="container">
+    <div class="navbar mb-4">
+        <h1>{{ trans['Net Worth Calculator'] }}</h1>
+        <p>{{ trans['Calculate your net worth with Ficore Africa.'] }}</p>
     </div>
-    {% with messages = get_flashed_messages() %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-            <div class="alert alert-danger">
-                {% for message in messages %}
-                    {{ message }}<br>
-                {% endfor %}
-            </div>
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
         {% endif %}
     {% endwith %}
-    <form method="POST" action="{{ url_for('net_worth.step1') }}">
-        <div class="mb-3">
-            <label class="form-label">{{ t('First Name') }}</label>
-            <input type="text" name="first_name" class="form-control" required>
-            <div class="form-text">{{ t('Enter your first name.') }}</div>
+    <div class="card">
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('net_worth.step1') }}">
+                {{ form.csrf_token }}
+                <div class="mb-3">
+                    <label class="form-label">{{ trans['Cash and Savings'] }}</label>
+                    {{ form.cash(class="form-control", placeholder=trans['Enter cash amount']) }}
+                    <div class="form-text">{{ trans['Total in bank accounts, cash, or savings.'] }}</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">{{ trans['Investments'] }}</label>
+                    {{ form.investments(class="form-control", placeholder=trans['Enter investments value']) }}
+                    <div class="form-text">{{ trans['Value of stocks, bonds, or other investments.'] }}</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">{{ trans['Property'] }}</label>
+                    {{ form.property(class="form-control", placeholder=trans['Enter property value']) }}
+                    <div class="form-text">{{ trans['Value of real estate or land you own.'] }}</div>
+                </div>
+                <button type="submit" class="btn btn-primary">{{ trans['Continue to Liabilities'] }}</button>
+            </form>
         </div>
-        <div class="mb-3">
-            <label class="form-label">{{ t('Email') }}</label>
-            <input type="email" name="email" class="form-control" required>
-            <div class="form-text">{{ t('Use an active email address.') }}</div>
-        </div>
-        <div class="mb-3 form-check">
-            <input type="checkbox" name="send_email" class="form-check-input">
-            <label class="form-check-label">{{ t('Send net worth report to my email.') }}</label>
-        </div>
-        <button type="submit" class="btn gradient-btn">{{ t('Continue to Assets') }}</button>
-    </form>
+    </div>
 </div>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+    document.querySelectorAll('input[type="number"]').forEach(input => {
+        input.addEventListener('input', () => {
+            if (input.value > 10000000000) {
+                input.value = 10000000000;
+                alert('{{ trans["Input cannot exceed ₦10 billion."] }}');
+            }
+        });
+    });
+</script>
 {% endblock %}
