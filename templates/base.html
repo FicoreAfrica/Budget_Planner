@@ -54,7 +54,7 @@
                         <a class="nav-link" href="{{ url_for('logout') }}">{{ trans['Logout'] }}</a>
                     </li>
                     <li class="nav-item">
-                        <form action="{{ url_for('index') }}" method="GET" class="d-flex">
+                        <form action="{{ url_for('index') }}" method="GET" class="d-flex align-items-center">
                             <select name="language" onchange="this.form.submit()" aria-label="{{ trans['Choose your language'] }}">
                                 <option value="en" {% if session.language == 'en' %}selected{% endif %}>{{ trans['English'] }}</option>
                                 <option value="ha" {% if session.language == 'ha' %}selected{% endif %}>{{ trans['Hausa'] }}</option>
@@ -70,7 +70,7 @@
     <main class="main-content">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-                <div class="container mt-3">
+                <div class="container mt-4">
                     {% for category, message in messages %}
                         <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
                             {{ message }}
@@ -86,18 +86,18 @@
     <!-- Footer -->
     <footer class="footer mt-5 py-4">
         <div class="container text-center">
-            <p>{{ trans['About Ficore Africa'] }}: {{ trans['Empowering financial growth across Africa since 2025'] }}</p>
+            <p class="text-white">{{ trans['About Ficore Africa'] }}: {{ trans['Empowering financial growth across Africa since 2025'] }}</p>
             <div class="social-icons mb-3">
                 <a href="{{ LINKEDIN_URL }}" target="_blank" aria-label="{{ trans['Connect on LinkedIn'] }}"><i class="fab fa-linkedin"></i></a>
                 <a href="{{ TWITTER_URL }}" target="_blank" aria-label="{{ trans['Follow on Twitter'] }}"><i class="fab fa-x-twitter"></i></a>
                 <a href="{{ FACEBOOK_URL }}" target="_blank" aria-label="{{ trans['Follow on Facebook'] }}"><i class="fab fa-facebook"></i></a>
             </div>
             <div class="footer-buttons">
-                <a href="mailto:ficoreafrica@gmail.com" class="btn btn-secondary mx-1"><i class="fas fa-envelope"></i> {{ trans['Contact Us'] }}</a>
-                <a href="{{ FEEDBACK_FORM_URL }}" target="_blank" class="btn btn-secondary mx-1"><i class="fas fa-comment"></i> {{ trans['Provide Feedback'] }}</a>
-                <a href="{{ WAITLIST_FORM_URL }}" target="_blank" class="btn btn-secondary mx-1"><i class="fas fa-users"></i> {{ trans['Join Waitlist'] }}</a>
-                <a href="{{ CONSULTANCY_FORM_URL }}" target="_blank" class="btn btn-secondary mx-1"><i class="fas fa-briefcase"></i> {{ trans['Book Consultancy'] }}</a>
-                <a href="{{ url_for('logout') }}" class="btn btn-secondary mx-1"><i class="fas fa-sign-out-alt"></i> {{ trans['Logout'] }}</a>
+                <a href="mailto:ficoreafrica@gmail.com" class="btn btn-alt-cta mx-1"><i class="fas fa-envelope"></i> {{ trans['Contact Us'] }}</a>
+                <a href="{{ FEEDBACK_FORM_URL }}" target="_blank" class="btn btn-alt-cta mx-1"><i class="fas fa-comment"></i> {{ trans['Provide Feedback'] }}</a>
+                <a href="{{ WAITLIST_FORM_URL }}" target="_blank" class="btn btn-alt-cta mx-1"><i class="fas fa-users"></i> {{ trans['Join Waitlist'] }}</a>
+                <a href="{{ CONSULTANCY_FORM_URL }}" target="_blank" class="btn btn-alt-cta mx-1"><i class="fas fa-briefcase"></i> {{ trans['Book Consultancy'] }}</a>
+                <a href="{{ url_for('logout') }}" class="btn btn-alt-cta mx-1"><i class="fas fa-sign-out-alt"></i> {{ trans['Logout'] }}</a>
             </div>
         </div>
     </footer>
