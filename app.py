@@ -123,6 +123,13 @@ def general_dashboard():
     t = trans('t')  # Get translation dictionary
     return render_template('general_dashboard.html', data=data, t=t)
 
+@app.route('/logout')
+def logout():
+    """Clear session and redirect to homepage."""
+    session.clear()
+    flash(trans('You have been logged out'))
+    return redirect(url_for('index'))
+
 # Error Handlers
 @app.errorhandler(404)
 def page_not_found(e):
