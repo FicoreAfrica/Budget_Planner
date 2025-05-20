@@ -1,6 +1,6 @@
 from flask import Blueprint, request, session, redirect, url_for, render_template, flash
 from flask_wtf import FlaskForm
-from wtforms import StringField, FloatField, SelectField, SubmitField
+from wtforms import StringField, FloatField, BooleanField, SubmitField
 from wtforms.validators import DataRequired, NumberRange, Optional, Email
 from json_store import JsonStorage
 from mailersend_email import send_email
@@ -25,7 +25,7 @@ class Step2Form(FlaskForm):
     loans = FloatField('Loans', validators=[DataRequired(), NumberRange(min=0)])
     credit_cards = FloatField('Credit Cards', validators=[DataRequired(), NumberRange(min=0)])
     email = StringField('Email', validators=[Optional(), Email()])
-    send_email = SelectField('Send Email', choices=[('on', 'Yes'), ('off', 'No')])
+    send_email = BooleanField('Send Email')
     submit = SubmitField('Submit')
 
 @net_worth_bp.route('/step1', methods=['GET', 'POST'])
@@ -40,7 +40,7 @@ def step1():
             return redirect(url_for('net_worth.step2'))
         except Exception as e:
             logging.exception(f"Error in net_worth.step1: {str(e)}")
-            flash(t("Error processing step 1.") or "Error processing step 1.")
+            flash(t("Error processing step 1.") or "Error processing step 1.", "danger")
             return redirect(url_for('net_worth.step1'))
     return render_template('net_worth_step1.html', form=form)
 
@@ -71,11 +71,13 @@ def step2():
                     "property": step1_data.get('property', 0),
                     "loans": data.get('loans', 0),
                     "credit_cards": data.get('credit_cards', 0),
+                    "total_assets": assets,
+                    "total_liabilities": liabilities,
                     "net_worth": net_worth
                 }
             }
             email = data.get('email')
-            send_email_flag = data.get('send_email') == 'on'
+            send_email_flag = data.get('send_email', False)
             net_worth_storage.append(record, user_email=email, session_id=session['sid'])
             if send_email_flag and email:
                 send_email(
@@ -86,11 +88,11 @@ def step2():
                     lang=session.get('lang', 'en')
                 )
             session.pop('net_worth_step1', None)
-            flash(t("Net worth calculation completed.") or "Net worth calculation completed.")
+            flash(t("Net worth calculation completed.") or "Net worth calculation completed.", "success")
             return redirect(url_for('net_worth.dashboard'))
         except Exception as e:
             logging.exception(f"Error in net_worth.step2: {str(e)}")
-            flash(t("Error processing net worth.") or "Error processing net worth.")
+            flash(t("Error processing net worth.") or "Error processing net worth.", "danger")
             return redirect(url_for('net_worth.step2'))
     return render_template('net_worth_step2.html', form=form)
 
@@ -104,5 +106,5 @@ def dashboard():
         return render_template('net_worth_dashboard.html', data=user_data[-1]["data"] if user_data else {})
     except Exception as e:
         logging.exception(f"Error in net_worth.dashboard: {str(e)}")
-        flash(t("Error loading dashboard.") or "Error loading dashboard.")
+        flash(t("Error loading dashboard.") or "Error loading dashboard.", "danger")
         return render_template('net_worth_dashboard.html', data={})
