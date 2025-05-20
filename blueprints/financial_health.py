@@ -1,9 +1,10 @@
 from flask import Blueprint, request, session, redirect, url_for, render_template, flash
 from flask_wtf import FlaskForm
-from wtforms import StringField, FloatField, SelectField, SubmitField
+from wtforms import StringField, FloatField, SelectField, BooleanField, SubmitField
 from wtforms.validators import DataRequired, NumberRange, Optional, Email
 from json_store import JsonStorage
 from mailersend_email import send_email
+from translations import t
 import logging
 import uuid
 
@@ -19,7 +20,7 @@ class Step1Form(FlaskForm):
     email = StringField('Email', validators=[Optional(), Email()])
     business_name = StringField('Business Name', validators=[Optional()])
     user_type = SelectField('User Type', choices=[('individual', 'Individual'), ('business', 'Business')])
-    send_email = SelectField('Send Email', choices=[('on', 'Yes'), ('off', 'No')])
+    send_email = BooleanField('Send Email')
     submit = SubmitField('Next')
 
 class Step2Form(FlaskForm):
@@ -44,7 +45,7 @@ def step1():
             return redirect(url_for('financial_health.step2'))
         except Exception as e:
             logging.exception(f"Error in financial_health.step1: {str(e)}")
-            flash("Error processing step 1.")
+            flash(t("Error processing step 1.") or "Error processing step 1.", "danger")
             return redirect(url_for('financial_health.step1'))
     return render_template('health_score_step1.html', form=form)
 
@@ -60,7 +61,7 @@ def step2():
             return redirect(url_for('financial_health.step3'))
         except Exception as e:
             logging.exception(f"Error in financial_health.step2: {str(e)}")
-            flash("Invalid numeric input for income or expenses.")
+            flash(t("Invalid numeric input for income or expenses.") or "Invalid numeric input for income or expenses.", "danger")
             return redirect(url_for('financial_health.step2'))
     return render_template('health_score_step2.html', form=form)
 
@@ -100,7 +101,7 @@ def step3():
                 }
             }
             email = step1_data.get('email')
-            send_email_flag = step1_data.get('send_email') == 'on'
+            send_email_flag = step1_data.get('send_email', False)
             financial_health_storage.append(record, user_email=email, session_id=session['sid'])
             if send_email_flag and email:
                 send_email(
@@ -112,11 +113,11 @@ def step3():
                 )
             session.pop('health_step1', None)
             session.pop('health_step2', None)
-            flash("Financial health assessment completed.")
+            flash(t("Financial health assessment completed.") or "Financial health assessment completed.", "success")
             return redirect(url_for('financial_health.dashboard'))
         except Exception as e:
             logging.exception(f"Error in financial_health.step3: {str(e)}")
-            flash("Error processing financial health assessment.")
+            flash(t("Error processing financial health assessment.") or "Error processing financial health assessment.", "danger")
             return redirect(url_for('financial_health.step3'))
     return render_template('health_score_step3.html', form=form)
 
@@ -130,5 +131,5 @@ def dashboard():
         return render_template('health_score_dashboard.html', data=user_data[-1]["data"] if user_data else {})
     except Exception as e:
         logging.exception(f"Error in financial_health.dashboard: {str(e)}")
-        flash("Error loading dashboard.")
+        flash(t("Error loading dashboard.") or "Error loading dashboard.", "danger")
         return render_template('health_score_dashboard.html', data={})
