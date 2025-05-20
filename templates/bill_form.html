@@ -1,37 +1,43 @@
 {% extends 'base.html' %}
-{% block title %}{{ t('Bill Planner') }}{% endblock %}
+{% block title %}{{ trans['Bill Planner'] }}{% endblock %}
 {% block content %}
-<div class="container mt-5">
-    <div class="gradient-bg mb-4">
-        <h1>{{ t('Bill Planner') }}</h1>
-        <p>{{ t('Financial growth passport for Africa') }}</p>
+<div class="container">
+    <div class="navbar mb-4">
+        <h1>{{ trans['Add New Bill'] }}</h1>
     </div>
-    {% with messages = get_flashed_messages() %}
-        {% if messages %}
-            <div class="alert alert-danger">
-                {% for message in messages %}
-                    {{ message }}<br>
-                {% endfor %}
-            </div>
-        {% endif %}
-    {% endwith %}
-    <div class="card shadow">
+    <div class="card">
         <div class="card-body">
             <form method="POST" action="{{ url_for('bill.form') }}">
-                {{ form.hidden_tag() }}
+                {{ form.csrf_token }}
                 <div class="mb-3">
-                    <label class="form-label">{{ t('Enter your name') }}</label>
-                    {{ form.name(class="form-control", placeholder=t('Enter your name')) }}
+                    <label for="bill_name" class="form-label">{{ trans['Bill Name'] }}</label>
+                    {{ form.bill_name(class="form-control", placeholder=trans['Enter bill name']) }}
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">{{ t('Enter your email') }}</label>
-                    {{ form.email(class="form-control", placeholder=t('Enter your email')) }}
+                    <label for="amount" class="form-label">{{ trans['Amount'] }}</label>
+                    {{ form.amount(class="form-control", placeholder=trans['Enter amount']) }}
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">{{ t('Choose your language') }}</label>
-                    {{ form.language(class="form-select") }}
+                    <label for="due_date" class="form-label">{{ trans['Due Date (YYYY-MM-DD)'] }}</label>
+                    {{ form.due_date(class="form-control", placeholder="YYYY-MM-DD") }}
                 </div>
-                <button type="submit" class="btn gradient-btn">{{ t('Next') }}</button>
+                <div class="mb-3">
+                    <label for="category" class="form-label">{{ trans['Category'] }}</label>
+                    {{ form.category(class="form-control") }}
+                </div>
+                <div class="mb-3">
+                    <label for="email" class="form-label">{{ trans['Email'] }}</label>
+                    {{ form.email(class="form-control", placeholder=trans['Enter email']) }}
+                </div>
+                <div class="mb-3">
+                    <label for="send_email" class="form-label">{{ trans['Send Email'] }}</label>
+                    {{ form.send_email(class="form-control") }}
+                </div>
+                <div class="mb-3">
+                    <label for="status" class="form-label">{{ trans['Status'] }}</label>
+                    {{ form.status(class="form-control") }}
+                </div>
+                <button type="submit" class="btn btn-primary">{{ trans['Submit'] }}</button>
             </form>
         </div>
     </div>
