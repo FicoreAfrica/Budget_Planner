@@ -1,105 +1,73 @@
-<script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
-
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
-                var filteredData = jsonData.filter(row => row.some(filledCell));
-
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
-                var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                );
-                // Fallback
-                if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
-                }
-
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
-            }
-        }
-        return gk_fileData[filename] || "";
-        }
-        </script>```html
 {% extends "base.html" %}
+{% block title %}{{ trans['Budget Planner'] }}{% endblock %}
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+{% endblock %}
 {% block content %}
-<div class="container mt-5">
-    <div class="gradient-bg mb-4">
-        <h1>{{ t('Budget Planner') }}</h1>
-        <p>{{ t('Your personalized budget summary.') }}</p>
+<div class="container">
+    <div class="navbar mb-4">
+        <h1>{{ trans['Budget Planner'] }}</h1>
+        <p>{{ trans['Your personalized budget summary.'] }}</p>
     </div>
-    {% with messages = get_flashed_messages() %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-            <div class="alert alert-danger">
-                {% for message in messages %}
-                    {{ message }}<br>
-                {% endfor %}
-            </div>
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
         {% endif %}
     {% endwith %}
     <div class="card mb-4">
         <div class="card-body">
-            <h2>{{ t('Budget Summary') }}</h2>
-            <p>{{ t('Monthly Income') }}: ₦{{ data.income | format_number }}</p>
-            <p>{{ t('Total Expenses') }}: ₦{{ data.expenses | format_number }}</p>
-            <p>{{ t('Savings Goal') }}: ₦{{ data.savings_goal | format_number }}</p>
-            <p>{{ t('Surplus/Deficit') }}: ₦{{ data.surplus_deficit | format_number }}</p>
+            <h2>{{ trans['Budget Summary'] }}</h2>
+            <p>{{ trans['Monthly Income'] }}: ₦{{ data.income | format_number }}</p>
+            <p>{{ trans['Total Expenses'] }}: ₦{{ data.expenses | format_number }}</p>
+            <p>{{ trans['Savings Goal'] }}: ₦{{ data.savings_goal | format_number }}</p>
+            <p>{{ trans['Surplus/Deficit'] }}: ₦{{ data.surplus_deficit | format_number }}</p>
         </div>
     </div>
     <canvas id="budgetChart" class="mb-4"></canvas>
     <div class="card mb-4">
         <div class="card-body">
-            <h3>{{ t('Recommendations') }}</h3>
+            <h3>{{ trans['Recommendations'] }}</h3>
             <ul>
                 {% if data.surplus_deficit < 0 %}
-                    <li>{{ t('Reduce expenses or increase income to meet your savings goal.') }}</li>
+                    <li>{{ trans['Reduce expenses or increase income to meet your savings goal.'] }}</li>
                 {% else %}
-                    <li>{{ t('Consider investing your surplus for long-term growth.') }}</li>
+                    <li>{{ trans['Consider investing your surplus for long-term growth.'] }}</li>
                 {% endif %}
                 {% if data.savings_goal == 0 %}
-                    <li>{{ t('Set a savings goal to build financial security.') }}</li>
+                    <li>{{ trans['Set a savings goal to build financial security.'] }}</li>
                 {% endif %}
             </ul>
         </div>
     </div>
     <div class="d-flex justify-content-between">
-        <a href="{{ url_for('budget_step1') }}" class="btn btn-secondary">{{ t('Recalculate') }}</a>
-        <a href="{{ url_for('general_dashboard') }}" class="btn gradient-btn">{{ t('Go to Dashboard') }}</a>
+        <a href="{{ url_for('budget.step1') }}" class="btn btn-secondary">{{ trans['Recalculate'] }}</a>
+        <a href="{{ url_for('general_dashboard') }}" class="btn btn-primary">{{ trans['Go to Dashboard'] }}</a>
     </div>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script>
-    const ctx = document.getElementById('budgetChart').getContext('2d');
-    new Chart(ctx, {
-        type: 'pie',
-        data: {
-            labels: ['{{ t("Expenses") }}', '{{ t("Savings Goal") }}', '{{ t("Surplus/Deficit") }}'],
-            datasets: [{
-                data: [{{ data.expenses }}, {{ data.savings_goal }}, {{ data.surplus_deficit | abs }}],
-                backgroundColor: ['#2E7D32', '#0288D1', '#dc3545']
-            }]
-        },
-        options: {
-            animation: false
-        }
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('budgetChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: ['{{ trans["Expenses"] }}', '{{ trans["Savings Goal"] }}', '{{ trans["Surplus/Deficit"] }}'],
+                datasets: [{
+                    data: [{{ data.expenses | format_number }}, {{ data.savings_goal | format_number }}, {{ data.surplus_deficit | abs | format_number }}],
+                    backgroundColor: ['#2E7D32', '#0288D1', '#dc3545']
+                }]
+            },
+            options: {
+                animation: false
+            }
+        });
     });
 </script>
 {% endblock %}
-```
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+{% endblock %}
