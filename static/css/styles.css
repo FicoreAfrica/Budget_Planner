@@ -11,15 +11,15 @@ body {
     padding: 20px 0;
 }
 .logo-centered {
-    max-width: 150px; /* Matches original navbar logo size */
+    max-width: 150px; /* Default size */
 }
 
 /* Section Headers Dark Green */
 .hero h2,
 .tools-section h2,
 .why-section h2,
-.testimonials-section h3,
-.recommended-learning h3,
+.testimonials-section h2,
+.recommended-learning h2,
 .about-section h2 {
     color: #2E7D32; /* Dark green */
     font-size: 2.5rem;
@@ -112,4 +112,50 @@ body {
     border: 2px solid #343a40; /* Dark border */
     padding: 30px 20px;
     border-radius: 5px;
+}
+
+/* Mobile Optimizations */
+@media (max-width: 768px) {
+    /* Ensure logo is centered and resized */
+    .logo-centered {
+        max-width: 140px; /* Smaller logo on mobile */
+    }
+
+    /* Reduce header font size on mobile */
+    .hero h2,
+    .tools-section h2,
+    .why-section h2,
+    .testimonials-section h2,
+    .recommended-learning h2,
+    .about-section h2 {
+        font-size: 1.5rem;
+        line-height: 1.6;
+        padding: 10px;
+    }
+
+    /* Improve section padding */
+    .hero,
+    .tools-section,
+    .testimonials-section,
+    .recommended-learning,
+    .why-section,
+    .about-section {
+        padding: 16px;
+        margin-bottom: 16px;
+    }
+
+    /* Consistent CTA buttons */
+    .btn-primary {
+        padding: 12px 20px;
+        font-size: 1rem;
+        border-radius: 8px;
+        width: 90%;
+        margin: 10px auto;
+        display: block; /* Center buttons */
+    }
+}
+
+/* Add light shadow under header */
+.logo-container {
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
