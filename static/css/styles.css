@@ -5,6 +5,26 @@ body {
     color: #666;
 }
 
+/* Logo Centering */
+.navbar-logo {
+    display: block;
+    margin: 0 auto;
+    max-width: 150px; /* Adjust as needed */
+}
+
+/* Section Headers Gradient */
+.hero h2,
+.testimonial h2,
+.recommended-learning h2,
+.why-section h2,
+.about-section h2 {
+    background: linear-gradient(135deg, #2E7D32, #0288D1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-size: 2.5rem;
+    font-weight: bold;
+}
+
 /* Hero (index.html) */
 .hero {
     background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), linear-gradient(135deg, #0288D1, #2E7D32);
@@ -12,16 +32,19 @@ body {
     padding: 20px;
     margin-top: 60px;
 }
-.hero h2 {
-    font-size: 2.5rem;
-    font-weight: bold;
-}
 
+/* Tool Card (index.html) */
 .tool-card .card {
     background-color: #E3F2FD;
 }
 
 /* Testimonials (index.html) */
+.testimonial {
+    background-color: #6c757d; /* Dark gray background */
+    border: 2px solid #343a40; /* Dark border */
+    padding: 20px;
+    border-radius: 5px;
+}
 .testimonial .quote {
     color: #0288D1;
     font-size: 1.5rem;
@@ -30,6 +53,14 @@ body {
 .testimonial .name {
     color: #0288D1;
     font-weight: bold;
+}
+
+/* Recommended Learning (index.html) */
+.recommended-learning {
+    background-color: #6c757d; /* Dark gray background */
+    border: 2px solid #343a40; /* Dark border */
+    padding: 20px;
+    border-radius: 5px;
 }
 
 /* Tips (bill_dashboard.html) */
@@ -54,6 +85,12 @@ body {
 }
 
 /* Why Section (index.html) */
+.why-section {
+    background-color: #6c757d; /* Dark gray background */
+    border: 2px solid #343a40; /* Dark border */
+    padding: 20px;
+    border-radius: 5px;
+}
 .why-list li {
     display: flex;
     align-items: center;
@@ -66,6 +103,8 @@ body {
 
 /* About Section (index.html) */
 .about-section {
-    background: white;
+    background: #6c757d; /* Dark gray background */
+    border: 2px solid #343a40; /* Dark border */
     padding: 30px 20px;
+    border-radius: 5px;
 }
