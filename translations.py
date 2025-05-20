@@ -1259,7 +1259,7 @@ def get_translations(language='en'):
     }
     return translations.get(language, translations['en'])
 
-def t(key, lang=None):
+def trans(key, lang=None):
     """Retrieve a translated string for the given key."""
     if lang is None:
         lang = session.get('lang', 'en')
