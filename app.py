@@ -5,27 +5,31 @@ from datetime import datetime
 from flask import Flask, render_template, request, session, redirect, url_for, flash
 from flask_session import Session
 from flask_wtf.csrf import CSRFProtect
-from financial_health import financial_health_bp  # Import the financial_health Blueprint
-from budget import budget_bp  # Assuming budget_bp is defined in budget.py
-from quiz import quiz_bp  # Assuming quiz_bp is defined in quiz.py
-from bill import bill_bp  # Assuming bill_bp is defined in bill.py
-from net_worth import net_worth_bp  # Assuming net_worth_bp is defined in net_worth.py
-from emergency_fund import emergency_fund_bp  # Assuming emergency_fund_bp is defined in emergency_fund.py
+from blueprints.financial_health import financial_health_bp  # Fixed import
+from blueprints.budget import budget_bp  # Fixed import
+from blueprints.quiz import quiz_bp  # Fixed import
+from blueprints.bill import bill_bp  # Fixed import
+from blueprints.net_worth import net_worth_bp  # Fixed import
+from blueprints.emergency_fund import emergency_fund_bp  # Fixed import
 try:
     from python_dotenv import load_dotenv
     load_dotenv()
 except ImportError:
     logging.warning("python_dotenv not found, using os.environ directly")
 try:
-    from translations import get_translations, t
+    from translations import trans, get_translations
 except ImportError as e:
     logging.warning(f"Translations import failed: {str(e)}")
-    def t(key, lang=None):
+    def trans(key, lang=None):
         return key
     def get_translations(lang):
         return {}
 from json_store import JsonStorage
 from functools import wraps
+
+# Debug: Log directory contents
+print("Current directory:", os.getcwd())
+print("Directory contents:", os.listdir('.'))
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -76,9 +80,9 @@ def session_required(f):
 # Translation and context processor
 @app.context_processor
 def inject_translations():
-    def context_t(key):
-        return t(key)
-    return dict(t=context_t, current_year=datetime.now().year)
+    def context_trans(key):
+        return trans(key)
+    return dict(trans=context_trans, current_year=datetime.now().year)
 
 # General Routes
 @app.route('/')
@@ -87,15 +91,16 @@ def index():
         session['sid'] = str(uuid.uuid4())
     if 'lang' not in session:
         session['lang'] = 'en'
-    return render_template('index.html')
+    t = trans('t')  # Get translation dictionary for templates
+    return render_template('index.html', t=t)
 
 @app.route('/set_language/<lang>')
 def set_language(lang):
     if lang in ['en', 'ha']:
         session['lang'] = lang
-        flash(t('Language changed successfully'))
+        flash(trans('Language changed successfully'))
     else:
-        flash(t('Invalid language'))
+        flash(trans('Invalid language'))
     return redirect(request.referrer or url_for('index'))
 
 @app.route('/general_dashboard')
@@ -115,17 +120,20 @@ def general_dashboard():
                 'score': None, 'surplus_deficit': None, 'personality': None,
                 'bills': [], 'net_worth': None, 'savings_gap': None
             }
-    return render_template('general_dashboard.html', data=data)
+    t = trans('t')  # Get translation dictionary
+    return render_template('general_dashboard.html', data=data, t=t)
 
 # Error Handlers
 @app.errorhandler(404)
 def page_not_found(e):
-    return render_template('404.html', error=t('Page Not Found')), 404
+    t = trans('t')
+    return render_template('404.html', error=t.get('Page Not Found', 'Page Not Found'), t=t), 404
 
 @app.errorhandler(500)
 def internal_server_error(e):
     logging.exception(f"500 Error: {str(e)}")
-    return render_template('500.html', error=t('Internal Server Error')), 500
+    t = trans('t')
+    return render_template('500.html', error=t.get('Internal Server Error', 'Internal Server Error'), t=t), 500
 
 # Register Blueprints
 app.register_blueprint(financial_health_bp, url_prefix='/financial_health')
