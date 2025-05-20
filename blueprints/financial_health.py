@@ -4,7 +4,7 @@ from wtforms import StringField, FloatField, SelectField, BooleanField, SubmitFi
 from wtforms.validators import DataRequired, NumberRange, Optional, Email
 from json_store import JsonStorage
 from mailersend_email import send_email
-from translations import t
+from ..translations import trans
 import logging
 import uuid
 
@@ -39,15 +39,16 @@ def step1():
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
     form = Step1Form()
+    t = trans('t')
     if request.method == 'POST' and form.validate_on_submit():
         try:
             session['health_step1'] = form.data
             return redirect(url_for('financial_health.step2'))
         except Exception as e:
             logging.exception(f"Error in financial_health.step1: {str(e)}")
-            flash(t("Error processing step 1.") or "Error processing step 1.", "danger")
+            flash(trans("Error processing step 1."), "danger")
             return redirect(url_for('financial_health.step1'))
-    return render_template('health_score_step1.html', form=form)
+    return render_template('health_score_step1.html', form=form, t=t)
 
 @financial_health_bp.route('/step2', methods=['GET', 'POST'])
 def step2():
@@ -55,15 +56,16 @@ def step2():
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
     form = Step2Form()
+    t = trans('t')
     if request.method == 'POST' and form.validate_on_submit():
         try:
             session['health_step2'] = form.data
             return redirect(url_for('financial_health.step3'))
         except Exception as e:
             logging.exception(f"Error in financial_health.step2: {str(e)}")
-            flash(t("Invalid numeric input for income or expenses.") or "Invalid numeric input for income or expenses.", "danger")
+            flash(trans("Invalid numeric input for income or expenses."), "danger")
             return redirect(url_for('financial_health.step2'))
-    return render_template('health_score_step2.html', form=form)
+    return render_template('health_score_step2.html', form=form, t=t)
 
 @financial_health_bp.route('/step3', methods=['GET', 'POST'])
 def step3():
@@ -71,6 +73,7 @@ def step3():
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
     form = Step3Form()
+    t = trans('t')
     if request.method == 'POST' and form.validate_on_submit():
         try:
             data = form.data
@@ -106,30 +109,31 @@ def step3():
             if send_email_flag and email:
                 send_email(
                     to_email=email,
-                    subject="Financial Health Report",
+                    subject=trans("Financial Health Report"),
                     template_name="health_score_email.html",
                     data=record["data"],
                     lang=session.get('lang', 'en')
                 )
             session.pop('health_step1', None)
             session.pop('health_step2', None)
-            flash(t("Financial health assessment completed.") or "Financial health assessment completed.", "success")
+            flash(trans("Financial health assessment completed."), "success")
             return redirect(url_for('financial_health.dashboard'))
         except Exception as e:
             logging.exception(f"Error in financial_health.step3: {str(e)}")
-            flash(t("Error processing financial health assessment.") or "Error processing financial health assessment.", "danger")
+            flash(trans("Error processing financial health assessment."), "danger")
             return redirect(url_for('financial_health.step3'))
-    return render_template('health_score_step3.html', form=form)
+    return render_template('health_score_step3.html', form=form, t=t)
 
 @financial_health_bp.route('/dashboard')
 def dashboard():
     """Display financial health dashboard."""
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
+    t = trans('t')
     try:
         user_data = financial_health_storage.filter_by_session(session['sid'])
-        return render_template('health_score_dashboard.html', data=user_data[-1]["data"] if user_data else {})
+        return render_template('health_score_dashboard.html', data=user_data[-1]["data"] if user_data else {}, t=t)
     except Exception as e:
         logging.exception(f"Error in financial_health.dashboard: {str(e)}")
-        flash(t("Error loading dashboard.") or "Error loading dashboard.", "danger")
-        return render_template('health_score_dashboard.html', data={})
+        flash(trans("Error loading dashboard."), "danger")
+        return render_template('health_score_dashboard.html', data={}, t=t)
