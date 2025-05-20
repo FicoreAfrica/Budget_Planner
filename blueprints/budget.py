@@ -46,6 +46,7 @@ def step1():
     if request.method == 'POST' and form.validate_on_submit():
         try:
             session['budget_step1'] = form.data
+            logging.debug(f"Budget step1 form data: {form.data}")
             return redirect(url_for('budget.step2'))
         except Exception as e:
             logging.exception(f"Error in budget.step1: {str(e)}")
@@ -63,6 +64,7 @@ def step2():
     if request.method == 'POST' and form.validate_on_submit():
         try:
             session['budget_step2'] = form.data
+            logging.debug(f"Budget step2 form data: {form.data}")
             return redirect(url_for('budget.step3'))
         except Exception as e:
             logging.exception(f"Error in budget.step2: {str(e)}")
@@ -80,6 +82,7 @@ def step3():
     if request.method == 'POST' and form.validate_on_submit():
         try:
             session['budget_step3'] = form.data
+            logging.debug(f"Budget step3 form data: {form.data}")
             return redirect(url_for('budget.step4'))
         except Exception as e:
             logging.exception(f"Error in budget.step3: {str(e)}")
