@@ -1,140 +1,106 @@
-<script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
-
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
-                var filteredData = jsonData.filter(row => row.some(filledCell));
-
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
-                var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                );
-                // Fallback
-                if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
-                }
-
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
-            }
-        }
-        return gk_fileData[filename] || "";
-        }
-        </script>{% extends "base.html" %}
+{% extends "base.html" %}
+{% block title %}{{ trans['Financial Dashboard'] }}{% endblock %}
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+{% endblock %}
 {% block content %}
-<div class="container mt-5">
-    <div class="gradient-bg mb-4">
-        <h1>{{ t('Financial Dashboard') }}</h1>
-        <p>{{ t('Your comprehensive financial overview with Ficore Africa.') }}</p>
+<div class="container">
+    <div class="navbar mb-4">
+        <h1>{{ trans['Financial Dashboard'] }}</h1>
+        <p>{{ trans['Your comprehensive financial overview with Ficore Africa.'] }}</p>
     </div>
-    {% with messages = get_flashed_messages() %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-            <div class="alert alert-danger">
-                {% for message in messages %}
-                    {{ message }}<br>
-                {% endfor %}
-            </div>
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
         {% endif %}
     {% endwith %}
     <div class="row">
         <div class="col-md-6 mb-4">
             <div class="card">
                 <div class="card-body">
-                    <h3>{{ t('Financial Health Score') }}</h3>
+                    <h3>{{ trans['Financial Health Score'] }}</h3>
                     {% if data.financial_health %}
-                        <p>{{ t('Score') }}: {{ data.financial_health.score }} / 100</p>
-                        <p>{{ t('Status') }}: {{ t(data.financial_health.status) }}</p>
+                        <p>{{ trans['Score'] }}: {{ data.financial_health.score | format_number }} / 100</p>
+                        <p>{{ trans['Status'] }}: {{ trans[data.financial_health.status] }}</p>
                     {% else %}
-                        <p>{{ t('Not yet calculated.') }}</p>
+                        <p>{{ trans['Not yet calculated.'] }}</p>
                     {% endif %}
-                    <a href="{{ url_for('financial_health.step1') }}" class="btn gradient-btn">{{ t('Go to Financial Health') }}</a>
+                    <a href="{{ url_for('financial_health.step1') }}" class="btn btn-primary">{{ trans['Go to Financial Health'] }}</a>
                 </div>
             </div>
         </div>
         <div class="col-md-6 mb-4">
             <div class="card">
                 <div class="card-body">
-                    <h3>{{ t('Budget Planner') }}</h3>
+                    <h3>{{ trans['Budget Planner'] }}</h3>
                     {% if data.budget %}
-                        <p>{{ t('Surplus/Deficit') }}: ₦{{ data.budget.surplus_deficit | format_number }}</p>
-                        <p>{{ t('Savings Goal') }}: ₦{{ data.budget.savings_goal | format_number }}</p>
+                        <p>{{ trans['Surplus/Deficit'] }}: ₦{{ data.budget.surplus_deficit | format_number }}</p>
+                        <p>{{ trans['Savings Goal'] }}: ₦{{ data.budget.savings_goal | format_number }}</p>
                     {% else %}
-                        <p>{{ t('Not yet calculated.') }}</p>
+                        <p>{{ trans['Not yet calculated.'] }}</p>
                     {% endif %}
-                    <a href="{{ url_for('budget.step1') }}" class="btn gradient-btn">{{ t('Go to Budget Planner') }}</a>
+                    <a href="{{ url_for('budget.step1') }}" class="btn btn-primary">{{ trans['Go to Budget Planner'] }}</a>
                 </div>
             </div>
         </div>
         <div class="col-md-6 mb-4">
             <div class="card">
                 <div class="card-body">
-                    <h3>{{ t('Financial Personality Quiz') }}</h3>
+                    <h3>{{ trans['Financial Personality Quiz'] }}</h3>
                     {% if data.quiz %}
-                        <p>{{ t('Personality') }}: {{ t(data.quiz.personality) }}</p>
-                        <p>{{ t('Score') }}: {{ data.quiz.score }} / 10</p>
+                        <p>{{ trans['Personality'] }}: {{ trans[data.quiz.personality] }}</p>
+                        <p>{{ trans['Score'] }}: {{ data.quiz.score | format_number }} / 10</p>
                     {% else %}
-                        <p>{{ t('Not yet completed.') }}</p>
+                        <p>{{ trans['Not yet completed.'] }}</p>
                     {% endif %}
-                    <a href="{{ url_for('quiz.step1') }}" class="btn gradient-btn">{{ t('Go to Personality Quiz') }}</a>
+                    <a href="{{ url_for('quiz.step1') }}" class="btn btn-primary">{{ trans['Go to Personality Quiz'] }}</a>
                 </div>
             </div>
         </div>
         <div class="col-md-6 mb-4">
             <div class="card">
                 <div class="card-body">
-                    <h3>{{ t('Bill Planner') }}</h3>
+                    <h3>{{ trans['Bill Planner'] }}</h3>
                     {% if data.bills %}
-                        <p>{{ t('Total Bills') }}: ₦{{ data.bills.total_amount | format_number }}</p>
-                        <p>{{ t('Unpaid Bills') }}: ₦{{ data.bills.unpaid_amount | format_number }}</p>
+                        <p>{{ trans['Total Bills'] }}: ₦{{ data.bills.total_amount | format_number }}</p>
+                        <p>{{ trans['Unpaid Bills'] }}: ₦{{ data.bills.unpaid_amount | format_number }}</p>
                     {% else %}
-                        <p>{{ t('No bills added.') }}</p>
+                        <p>{{ trans['No bills added.'] }}</p>
                     {% endif %}
-                    <a href="{{ url_for('bill.form') }}" class="btn gradient-btn">{{ t('Go to Bill Planner') }}</a>
+                    <a href="{{ url_for('bill.form') }}" class="btn btn-primary">{{ trans['Go to Bill Planner'] }}</a>
                 </div>
             </div>
         </div>
         <div class="col-md-6 mb-4">
             <div class="card">
                 <div class="card-body">
-                    <h3>{{ t('Net Worth Calculator') }}</h3>
+                    <h3>{{ trans['Net Worth Calculator'] }}</h3>
                     {% if data.net_worth %}
-                        <p>{{ t('Net Worth') }}: ₦{{ data.net_worth.net_worth | format_number }}</p>
-                        <p>{{ t('Total Assets') }}: ₦{{ data.net_worth.total_assets | format_number }}</p>
+                        <p>{{ trans['Net Worth'] }}: ₦{{ data.net_worth.net_worth | format_number }}</p>
+                        <p>{{ trans['Total Assets'] }}: ₦{{ data.net_worth.total_assets | format_number }}</p>
                     {% else %}
-                        <p>{{ t('Not yet calculated.') }}</p>
+                        <p>{{ trans['Not yet calculated.'] }}</p>
                     {% endif %}
-                    <a href="{{ url_for('net_worth.step1') }}" class="btn gradient-btn">{{ t('Go to Net Worth') }}</a>
+                    <a href="{{ url_for('net_worth.step1') }}" class="btn btn-primary">{{ trans['Go to Net Worth'] }}</a>
                 </div>
             </div>
         </div>
         <div class="col-md-6 mb-4">
             <div class="card">
                 <div class="card-body">
-                    <h3>{{ t('Emergency Fund Calculator') }}</h3>
+                    <h3>{{ trans['Emergency Fund Calculator'] }}</h3>
                     {% if data.emergency_fund %}
-                        <p>{{ t('Recommended Fund') }}: ₦{{ data.emergency_fund.recommended_fund | format_number }}</p>
-                        <p>{{ t('Savings Gap') }}: ₦{{ data.emergency_fund.savings_gap | format_number }}</p>
+                        <p>{{ trans['Recommended Fund'] }}: ₦{{ data.emergency_fund.recommended_fund | format_number }}</p>
+                        <p>{{ trans['Savings Gap'] }}: ₦{{ data.emergency_fund.savings_gap | format_number }}</p>
                     {% else %}
-                        <p>{{ t('Not yet calculated.') }}</p>
+                        <p>{{ trans['Not yet calculated.'] }}</p>
                     {% endif %}
-                    <a href="{{ url_for('emergency_fund.step1') }}" class="btn gradient-btn">{{ t('Go to Emergency Fund') }}</a>
+                    <a href="{{ url_for('emergency_fund.step1') }}" class="btn btn-primary">{{ trans['Go to Emergency Fund'] }}</a>
                 </div>
             </div>
         </div>
@@ -142,49 +108,53 @@
     <canvas id="overviewChart" class="mb-4"></canvas>
     <div class="card mb-4">
         <div class="card-body">
-            <h3>{{ t('Financial Recommendations') }}</h3>
+            <h3>{{ trans['Financial Recommendations'] }}</h3>
             <ul>
                 {% if data.financial_health and data.financial_health.score < 70 %}
-                    <li>{{ t('Improve your financial health by reviewing your budget.') }}</li>
+                    <li>{{ trans['Improve your financial health by reviewing your budget.'] }}</li>
                 {% endif %}
                 {% if data.bills and data.bills.unpaid_amount > 0 %}
-                    <li>{{ t('Pay outstanding bills to avoid penalties.') }}</li>
+                    <li>{{ trans['Pay outstanding bills to avoid penalties.'] }}</li>
                 {% endif %}
                 {% if data.emergency_fund and data.emergency_fund.savings_gap > 0 %}
-                    <li>{{ t('Increase savings to meet your emergency fund needs.') }}</li>
+                    <li>{{ trans['Increase savings to meet your emergency fund needs.'] }}</li>
                 {% endif %}
-                <li>{{ t('Regularly update your financial data for accurate insights.') }}</li>
+                <li>{{ trans['Regularly update your financial data for accurate insights.'] }}</li>
             </ul>
         </div>
     </div>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script>
-    const ctx = document.getElementById('overviewChart').getContext('2d');
-    new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: [
-                '{{ t("Financial Health") }}',
-                '{{ t("Net Worth") }}',
-                '{{ t("Emergency Fund Gap") }}'
-            ],
-            datasets: [{
-                label: '{{ t("Financial Metrics") }}',
-                data: [
-                    {{ data.financial_health.score if data.financial_health else 0 }},
-                    {{ data.net_worth.net_worth / 1000000 if data.net_worth else 0 }},
-                    {{ data.emergency_fund.savings_gap / 1000000 if data.emergency_fund else 0 }}
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('overviewChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: [
+                    '{{ trans["Financial Health"] }}',
+                    '{{ trans["Net Worth"] }}',
+                    '{{ trans["Emergency Fund Gap"] }}'
                 ],
-                backgroundColor: ['#2E7D32', '#0288D1', '#dc3545']
-            }]
-        },
-        options: {
-            scales: {
-                y: { beginAtZero: true }
+                datasets: [{
+                    label: '{{ trans["Financial Metrics"] }}',
+                    data: [
+                        {{ (data.financial_health.score | format_number) if data.financial_health else 0 }},
+                        {{ (data.net_worth.net_worth / 1000000 | format_number) if data.net_worth else 0 }},
+                        {{ (data.emergency_fund.savings_gap / 1000000 | format_number) if data.emergency_fund else 0 }}
+                    ],
+                    backgroundColor: ['#2E7D32', '#0288D1', '#dc3545']
+                }]
             },
-            animation: false
-        }
+            options: {
+                scales: {
+                    y: { beginAtZero: true }
+                },
+                animation: false
+            }
+        });
     });
 </script>
+{% endblock %}
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 {% endblock %}
