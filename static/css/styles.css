@@ -29,12 +29,15 @@ body {
     color: #00B7EB; /* Fallback for browsers not supporting gradient text */
 }
 
-/* Hero (index.html) */
+/* Hero (index.html) - Keep toolkit text white */
 .hero {
     background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), linear-gradient(135deg, #0288D1, #2E7D32);
     color: white;
     padding: 20px;
     margin-top: 60px;
+}
+.hero .toolkit-text { /* Assuming this class for the toolkit text */
+    color: white !important;
 }
 
 /* Tool Card (index.html) */
