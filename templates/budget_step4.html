@@ -1,74 +1,45 @@
-<script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
-
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
-                var filteredData = jsonData.filter(row => row.some(filledCell));
-
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
-                var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                );
-                // Fallback
-                if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
-                }
-
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
-            }
-        }
-        return gk_fileData[filename] || "";
-        }
-        </script>{% extends "base.html" %}
+{% extends "base.html" %}
+{% block title %}{{ trans['Budget Planner'] }}{% endblock %}
 {% block content %}
-<div class="container mt-5">
-    <div class="gradient-bg mb-4">
-        <h1>{{ t('Budget Planner') }}</h1>
-        <p>{{ t('Set your monthly savings goal.') }}</p>
+<div class="container">
+    <div class="navbar mb-4">
+        <h1>{{ trans['Budget Planner'] }}</h1>
+        <p>{{ trans['Set your monthly savings goal.'] }}</p>
     </div>
-    {% with messages = get_flashed_messages() %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-            <div class="alert alert-danger">
-                {% for message in messages %}
-                    {{ message }}<br>
-                {% endfor %}
-            </div>
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
         {% endif %}
     {% endwith %}
-    <form method="POST" action="{{ url_for('budget.step4') }}">
-        <div class="mb-3">
-            <label class="form-label">{{ t('Monthly Savings Goal') }}</label>
-            <input type="number" name="savings_goal" class="form-control" min="0" max="10000000000" required>
-            <div class="form-text">{{ t('Amount you aim to save each month.') }}</div>
+    <div class="card">
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('budget.step4') }}">
+                {{ form.csrf_token }}
+                <div class="mb-3">
+                    <label class="form-label">{{ trans['Monthly Savings Goal'] }}</label>
+                    {{ form.savings_goal(class="form-control", placeholder=trans['Enter savings goal']) }}
+                    <div class="form-text">{{ trans['Amount you aim to save each month.'] }}</div>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('budget.step3') }}" class="btn btn-secondary">{{ trans['Back'] }}</a>
+                    <button type="submit" class="btn btn-primary">{{ trans['Calculate Budget'] }}</button>
+                </div>
+            </form>
         </div>
-        <div class="d-flex justify-content-between">
-            <a href="{{ url_for('budget.step3') }}" class="btn btn-secondary">{{ t('Back') }}</a>
-            <button type="submit" class="btn gradient-btn">{{ t('Calculate Budget') }}</button>
-        </div>
-    </form>
+    </div>
+</div>
+{% endblock %}
+{% block extra_scripts %}
 <script>
     document.querySelector('input[name="savings_goal"]').addEventListener('input', function() {
         if (this.value > 10000000000) {
             this.value = 10000000000;
-            alert('{{ t("Input cannot exceed ₦10 billion.") }}');
+            alert('{{ trans["Input cannot exceed ₦10 billion."] }}');
         }
     });
 </script>
