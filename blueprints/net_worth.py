@@ -4,7 +4,7 @@ from wtforms import StringField, FloatField, BooleanField, SubmitField
 from wtforms.validators import DataRequired, NumberRange, Optional, Email
 from json_store import JsonStorage
 from mailersend_email import send_email
-from translations import t
+from ..translations import trans
 import logging
 import uuid
 
@@ -34,15 +34,16 @@ def step1():
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
     form = Step1Form()
+    t = trans('t')
     if request.method == 'POST' and form.validate_on_submit():
         try:
             session['net_worth_step1'] = form.data
             return redirect(url_for('net_worth.step2'))
         except Exception as e:
             logging.exception(f"Error in net_worth.step1: {str(e)}")
-            flash(t("Error processing step 1.") or "Error processing step 1.", "danger")
+            flash(trans("Error processing step 1."), "danger")
             return redirect(url_for('net_worth.step1'))
-    return render_template('net_worth_step1.html', form=form)
+    return render_template('net_worth_step1.html', form=form, t=t)
 
 @net_worth_bp.route('/step2', methods=['GET', 'POST'])
 def step2():
@@ -50,6 +51,7 @@ def step2():
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
     form = Step2Form()
+    t = trans('t')
     if request.method == 'POST' and form.validate_on_submit():
         try:
             data = form.data
@@ -82,29 +84,30 @@ def step2():
             if send_email_flag and email:
                 send_email(
                     to_email=email,
-                    subject="Net Worth Summary",
+                    subject=trans("Net Worth Summary"),
                     template_name="net_worth_email.html",
                     data=record["data"],
                     lang=session.get('lang', 'en')
                 )
             session.pop('net_worth_step1', None)
-            flash(t("Net worth calculation completed.") or "Net worth calculation completed.", "success")
+            flash(trans("Net worth calculation completed."), "success")
             return redirect(url_for('net_worth.dashboard'))
         except Exception as e:
             logging.exception(f"Error in net_worth.step2: {str(e)}")
-            flash(t("Error processing net worth.") or "Error processing net worth.", "danger")
+            flash(trans("Error processing net worth."), "danger")
             return redirect(url_for('net_worth.step2'))
-    return render_template('net_worth_step2.html', form=form)
+    return render_template('net_worth_step2.html', form=form, t=t)
 
 @net_worth_bp.route('/dashboard')
 def dashboard():
     """Display net worth dashboard."""
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
+    t = trans('t')
     try:
         user_data = net_worth_storage.filter_by_session(session['sid'])
-        return render_template('net_worth_dashboard.html', data=user_data[-1]["data"] if user_data else {})
+        return render_template('net_worth_dashboard.html', data=user_data[-1]["data"] if user_data else {}, t=t)
     except Exception as e:
         logging.exception(f"Error in net_worth.dashboard: {str(e)}")
-        flash(t("Error loading dashboard.") or "Error loading dashboard.", "danger")
-        return render_template('net_worth_dashboard.html', data={})
+        flash(trans("Error loading dashboard."), "danger")
+        return render_template('net_worth_dashboard.html', data={}, t=t)
