@@ -1,19 +1,55 @@
-<!DOCTYPE html>
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
 <html lang="{{ session.get('lang', 'en') }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ t('Ficore Africa') }} - {% block title %}{% endblock %}</title>
-    <!-- Bootstrap 5.3 CSS for responsive styling -->
+    <title>{{ t('Ficore Africa') }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Custom styles with gradient green-to-blue theme -->
-    <link href="{{ url_for('static', filename='css/styles.css') }}" rel="stylesheet">
-    <!-- Font Awesome for icons -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </head>
 <body>
-    <!-- Navbar with gradient background and language-aware translations -->
-    <nav class="navbar navbar-expand-lg navbar-dark gradient-bg" aria-label="Main navigation">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
             <a class="navbar-brand" href="{{ url_for('index') }}">{{ t('Ficore Africa') }}</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -21,30 +57,27 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
-                    <!-- Tools dropdown -->
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <a class="nav-link dropdown-toggle" href="#" id="toolsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             {{ t('Tools') }}
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="toolsDropdown">
                             <li><a class="dropdown-item" href="{{ url_for('financial_health.step1') }}">{{ t('Financial Health Score') }}</a></li>
                             <li><a class="dropdown-item" href="{{ url_for('budget.step1') }}">{{ t('Budget Planner') }}</a></li>
                             <li><a class="dropdown-item" href="{{ url_for('quiz.step1') }}">{{ t('Financial Personality Quiz') }}</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('bill.form') }}">{{ t('Bill Planner') }}</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('bill.dashboard') }}">{{ t('Bill Planner') }}</a></li>
                             <li><a class="dropdown-item" href="{{ url_for('net_worth.step1') }}">{{ t('Net Worth Calculator') }}</a></li>
                             <li><a class="dropdown-item" href="{{ url_for('emergency_fund.step1') }}">{{ t('Emergency Fund Calculator') }}</a></li>
                         </ul>
                     </li>
-                    <!-- General Dashboard link -->
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('general_dashboard') }}">{{ t('General Dashboard') }}</a>
                     </li>
-                    <!-- Language dropdown -->
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <a class="nav-link dropdown-toggle" href="#" id="langDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             {{ t('Language') }}
                         </a>
-                        <ul class="dropdown-menu" aria-labelledby="languageDropdown">
+                        <ul class="dropdown-menu" aria-labelledby="langDropdown">
                             <li><a class="dropdown-item" href="{{ url_for('set_language', lang='en') }}">English</a></li>
                             <li><a class="dropdown-item" href="{{ url_for('set_language', lang='ha') }}">Hausa</a></li>
                         </ul>
@@ -53,11 +86,9 @@
             </div>
         </div>
     </nav>
-
-    <!-- Main content area with flash messages -->
-    <div class="container mt-4">
+    <div class="container mt-3">
         {% for message in get_flashed_messages() %}
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <div class="alert alert-info alert-dismissible fade show" role="alert">
                 {{ message }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
@@ -65,15 +96,9 @@
         {% block content %}
         {% endblock %}
     </div>
-
-    <!-- Footer with gradient background -->
-    <footer class="text-center py-3 gradient-bg">
-        <p>{{ t('Powered by Ficore Africa') }} © {{ current_year }}</p>
+    <footer class="bg-dark text-white text-center py-3 mt-5">
+        {{ t('Powered by Ficore Africa') }} © {{ current_year }}
     </footer>
-
-    <!-- Bootstrap JS for interactive components -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Canvas-confetti for celebratory animations (verify usage in interactivity.js) -->
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>
 </html>
