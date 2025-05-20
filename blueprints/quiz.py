@@ -4,6 +4,7 @@ from wtforms import StringField, SelectField, SubmitField
 from wtforms.validators import Email, Optional
 from json_store import JsonStorage
 from mailersend_email import send_email
+from ..translations import trans
 import logging
 import uuid
 
@@ -24,30 +25,32 @@ def step1():
     """Handle quiz step 1 form."""
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
+    t = trans('t')
     if request.method == 'POST':
         try:
             session['quiz_step1'] = request.form.to_dict()
             return redirect(url_for('quiz.step2'))
         except Exception as e:
             logging.exception(f"Error in quiz.step1: {str(e)}")
-            flash("Error processing step 1.")
+            flash(trans("Error processing step 1."))
             return redirect(url_for('quiz.step1'))
-    return render_template('quiz_step1.html')
+    return render_template('quiz_step1.html', t=t)
 
 @quiz_bp.route('/step2', methods=['GET', 'POST'])
 def step2():
     """Handle quiz step 2 form."""
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
+    t = trans('t')
     if request.method == 'POST':
         try:
             session['quiz_step2'] = request.form.to_dict()
             return redirect(url_for('quiz.step3'))
         except Exception as e:
             logging.exception(f"Error in quiz.step2: {str(e)}")
-            flash("Error processing step 2.")
+            flash(trans("Error processing step 2."))
             return redirect(url_for('quiz.step2'))
-    return render_template('quiz_step2.html')
+    return render_template('quiz_step2.html', t=t)
 
 @quiz_bp.route('/step3', methods=['GET', 'POST'])
 def step3():
@@ -55,6 +58,7 @@ def step3():
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
     form = QuizStep3Form()
+    t = trans('t')
     if request.method == 'POST' and form.validate_on_submit():
         try:
             email = form.email.data
@@ -73,30 +77,31 @@ def step3():
             if send_email_flag and email:
                 send_email(
                     to_email=email,
-                    subject="Financial Personality Quiz Results",
+                    subject=trans("Financial Personality Quiz Results"),
                     template_name="quiz_email.html",
                     data={"personality": personality, "score": score},
                     lang=session.get('lang', 'en')
                 )
             session.pop('quiz_step1', None)
             session.pop('quiz_step2', None)
-            flash("Quiz completed successfully.")
+            flash(trans("Quiz completed successfully."))
             return redirect(url_for('quiz.results'))
         except Exception as e:
             logging.exception(f"Error in quiz.step3: {str(e)}")
-            flash("Error processing quiz results.")
+            flash(trans("Error processing quiz results."))
             return redirect(url_for('quiz.step3'))
-    return render_template('quiz_step3.html', form=form)
+    return render_template('quiz_step3.html', form=form, t=t)
 
 @quiz_bp.route('/results')
 def results():
     """Display quiz results."""
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
+    t = trans('t')
     try:
         user_data = quiz_storage.filter_by_session(session['sid'])
-        return render_template('quiz_results.html', data=user_data[-1] if user_data else {})
+        return render_template('quiz_results.html', data=user_data[-1] if user_data else {}, t=t)
     except Exception as e:
         logging.exception(f"Error in quiz.results: {str(e)}")
-        flash("Error loading quiz results.")
-        return render_template('quiz_results.html', data={})
+        flash(trans("Error loading quiz results."))
+        return render_template('quiz_results.html', data={}, t=t)
