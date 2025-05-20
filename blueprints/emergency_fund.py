@@ -35,7 +35,7 @@ def step1():
         session['sid'] = str(uuid.uuid4())
     form = Step1Form()
     t = trans('t')
-    if request.method == 'POST' and *form.validate_on_submit():
+    if request.method == 'POST' and form.validate_on_submit():
         try:
             session['emergency_fund_step1'] = form.data
             return redirect(url_for('emergency_fund.step2'))
