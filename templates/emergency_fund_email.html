@@ -37,48 +37,31 @@
         }
         return gk_fileData[filename] || "";
         }
-        </script>```html
-<!DOCTYPE html>
-<html>
+        </script><!DOCTYPE html>
+<html lang="en">
 <head>
-    <title>{{ t('Emergency Fund Report Subject') }}</title>
-    <style>
-        body { font-family: Arial, sans-serif; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background: linear-gradient(90deg, #2E7D32, #0288D1); color: white; padding: 10px; text-align: center; }
-        .content { padding: 20px; border: 1px solid #ddd; }
-        .footer { text-align: center; font-size: 12px; color: #777; }
-        .gradient-btn { background: linear-gradient(90deg, #2E7D32, #0288D1); color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ t('Emergency Fund Calculator') }}</title>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>{{ t('Emergency Fund Calculator') }}</h1>
-        </div>
-        <div class="content">
-            <p>{{ t('Dear') }} {{ data.first_name or 'User' }},</p>
-            <p>{{ t('Here is your Emergency Fund summary.') }}</p>
-            <h2>{{ t('Recommended Fund') }}: ₦{{ data.recommended_fund | format_number }}</h2>
-            <p>{{ t('Monthly Expenses') }}: ₦{{ data.expenses | format_number }}</p>
-            <p>{{ t('Current Savings') }}: ₦{{ data.current_savings | format_number }}</p>
-            <p>{{ t('Savings Gap') }}: ₦{{ data.savings_gap | format_number }}</p>
-            <h3>{{ t('Recommendations') }}</h3>
-            <ul>
-                {% if data.savings_gap > 0 %}
-                    <li>{{ t('Increase savings to close the emergency fund gap.') }}</li>
-                {% else %}
-                    <li>{{ t('Maintain or grow your emergency fund for stability.') }}</li>
-                {% endif %}
-                <li>{{ t('Aim for 3-6 months of expenses in your fund.') }}</li>
-            </ul>
-            <p><a href="{{ url_for('emergency_fund_step1', _external=True) }}" class="gradient-btn">{{ t('Recalculate Emergency Fund') }}</a></p>
-            <p>{{ t('Thank you for choosing Ficore Africa!') }}</p>
-        </div>
-        <div class="footer">
-            <p>{{ t('Powered by Ficore Africa') }}</p>
-        </div>
-    </div>
+    <h1>{{ t('Dear') }} {{ data.first_name or 'User' }},</h1>
+    <p>{{ t('Here is your Emergency Fund summary.') }}</p>
+    <p>{{ t('Recommended Fund') }}: ₦{{ data.recommended_fund | format_number }}</p>
+    <p>{{ t('Monthly Expenses') }}: ₦{{ data.expenses | format_number }}</p>
+    <p>{{ t('Current Savings') }}: ₦{{ data.current_savings | format_number }}</p>
+    <p>{{ t('Savings Gap') }}: ₦{{ data.savings_gap | format_number }}</p>
+    <h2>{{ t('Recommendations') }}</h2>
+    <ul>
+        {% if data.savings_gap > 0 %}
+            <li>{{ t('Increase savings to close the emergency fund gap.') }}</li>
+        {% else %}
+            <li>{{ t('Maintain or grow your emergency fund for stability.') }}</li>
+        {% endif %}
+        <li>{{ t('Aim for 3-6 months of expenses in your fund.') }}</li>
+    </ul>
+    <p><a href="{{ url_for('emergency_fund.step1') }}">{{ t('Recalculate Emergency Fund') }}</a></p>
+    <p>{{ t('Thank you for choosing Ficore Africa!') }}</p>
+    <footer>{{ t('Powered by Ficore Africa') }}</footer>
 </body>
 </html>
-```

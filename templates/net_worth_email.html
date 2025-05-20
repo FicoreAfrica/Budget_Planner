@@ -37,8 +37,7 @@
         }
         return gk_fileData[filename] || "";
         }
-        </script>```html
-<!DOCTYPE html>
+        </script><!DOCTYPE html>
 <html>
 <head>
     <title>{{ t('Net Worth Report Subject') }}</title>
@@ -71,7 +70,7 @@
                 {% endif %}
                 <li>{{ t('Review your net worth annually to track progress.') }}</li>
             </ul>
-            <p><a href="{{ url_for('net_worth_step1', _external=True) }}" class="gradient-btn">{{ t('Recalculate Net Worth') }}</a></p>
+            <p><a href="{{ url_for('net_worth.step1', _external=True) }}" class="gradient-btn">{{ t('Recalculate Net Worth') }}</a></p>
             <p>{{ t('Thank you for choosing Ficore Africa!') }}</p>
         </div>
         <div class="footer">
@@ -80,4 +79,3 @@
     </div>
 </body>
 </html>
-```

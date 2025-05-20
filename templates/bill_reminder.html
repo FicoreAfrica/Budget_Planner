@@ -37,41 +37,24 @@
         }
         return gk_fileData[filename] || "";
         }
-        </script>```html
-<!DOCTYPE html>
-<html>
+        </script><!DOCTYPE html>
+<html lang="en">
 <head>
-    <title>{{ t('Bill Reminder Subject') }}</title>
-    <style>
-        body { font-family: Arial, sans-serif; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background: linear-gradient(90deg, #2E7D32, #0288D1); color: white; padding: 10px; text-align: center; }
-        .content { padding: 20px; border: 1px solid #ddd; }
-        .footer { text-align: center; font-size: 12px; color: #777; }
-        .gradient-btn { background: linear-gradient(90deg, #2E7D32, #0288D1); color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ t('Bill Reminder') }}</title>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>{{ t('Bill Reminder') }}</h1>
-        </div>
-        <div class="content">
-            <p>{{ t('Dear User') }},</p>
-            <p>{{ t('This is a reminder for your upcoming bill.') }}</p>
-            <h2>{{ t('Bill Details') }}</h2>
-            <p>{{ t('Bill Name') }}: {{ data.bill_name }}</p>
-            <p>{{ t('Amount') }}: ₦{{ data.amount | format_number }}</p>
-            <p>{{ t('Due Date') }}: {{ data.due_date }}</p>
-            <p>{{ t('Category') }}: {{ t(data.category) }}</p>
-            <p>{{ t('Please ensure payment is made before the due date.') }}</p>
-            <p><a href="{{ url_for('view_edit_bills', _external=True) }}" class="gradient-btn">{{ t('View All Bills') }}</a></p>
-            <p>{{ t('Thank you for choosing Ficore Africa!') }}</p>
-        </div>
-        <div class="footer">
-            <p>{{ t('Powered by Ficore Africa') }}</p>
-        </div>
-    </div>
+    <h1>{{ t('Dear User') }},</h1>
+    <p>{{ t('This is a reminder for your upcoming bill.') }}</p>
+    <h2>{{ t('Bill Details') }}</h2>
+    <p>{{ t('Bill Name') }}: {{ data.bill_name }}</p>
+    <p>{{ t('Amount') }}: ₦{{ data.amount | format_number }}</p>
+    <p>{{ t('Due Date') }}: {{ data.due_date }}</p>
+    <p>{{ t('Category') }}: {{ t(data.category) }}</p>
+    <p>{{ t('Please ensure payment is made before the due date.') }}</p>
+    <p><a href="{{ url_for('bill.view_edit') }}">{{ t('View All Bills') }}</a></p>
+    <p>{{ t('Thank you for choosing Ficore Africa!') }}</p>
+    <footer>{{ t('Powered by Ficore Africa') }}</footer>
 </body>
 </html>
-```

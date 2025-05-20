@@ -37,8 +37,7 @@
         }
         return gk_fileData[filename] || "";
         }
-        </script>```html
-{% extends "base.html" %}
+        </script>{% extends "base.html" %}
 {% block content %}
 <div class="container mt-5">
     <div class="gradient-bg mb-4">
@@ -54,7 +53,7 @@
             </div>
         {% endif %}
     {% endwith %}
-    <form method="POST" action="{{ url_for('emergency_fund_step1') }}">
+    <form method="POST" action="{{ url_for('emergency_fund.step1') }}">
         <div class="mb-3">
             <label class="form-label">{{ t('First Name') }}</label>
             <input type="text" name="first_name" class="form-control" required>
@@ -73,4 +72,3 @@
     </form>
 </div>
 {% endblock %}
-```
