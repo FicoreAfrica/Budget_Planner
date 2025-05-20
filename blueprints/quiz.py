@@ -14,6 +14,15 @@ logging.basicConfig(filename='data/storage.txt', level=logging.DEBUG)
 quiz_bp = Blueprint('quiz', __name__)
 quiz_storage = JsonStorage('data/quiz_data.json')
 
+# Form for quiz step 1
+class QuizStep1Form(FlaskForm):
+    track_expenses = SelectField('Track Expenses', choices=[('always', 'Always'), ('often', 'Often'), ('sometimes', 'Sometimes'), ('never', 'Never')], validators=[Optional()])
+    spend_non_essentials = SelectField('Spend Non-Essentials', choices=[('always', 'Always'), ('often', 'Often'), ('sometimes', 'Sometimes'), ('never', 'Never')], validators=[Optional()])
+    save_regularly = SelectField('Save Regularly', choices=[('always', 'Always'), ('often', 'Often'), ('sometimes', 'Sometimes'), ('never', 'Never')], validators=[Optional()])
+    plan_expenses = SelectField('Plan Expenses', choices=[('always', 'Always'), ('often', 'Often'), ('sometimes', 'Sometimes'), ('never', 'Never')], validators=[Optional()])
+    impulse_purchases = SelectField('Impulse Purchases', choices=[('always', 'Always'), ('often', 'Often'), ('sometimes', 'Sometimes'), ('never', 'Never')], validators=[Optional()])
+    submit = SubmitField('Continue')
+
 # Form for quiz step 3
 class QuizStep3Form(FlaskForm):
     email = StringField('Email', validators=[Optional(), Email()])
@@ -25,16 +34,17 @@ def step1():
     """Handle quiz step 1 form."""
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
+    form = QuizStep1Form()
     t = trans('t')
-    if request.method == 'POST':
+    if request.method == 'POST' and form.validate_on_submit():
         try:
-            session['quiz_step1'] = request.form.to_dict()
+            session['quiz_step1'] = form.data
             return redirect(url_for('quiz.step2'))
         except Exception as e:
             logging.exception(f"Error in quiz.step1: {str(e)}")
             flash(trans("Error processing step 1."))
             return redirect(url_for('quiz.step1'))
-    return render_template('quiz_step1.html', t=t)
+    return render_template('quiz_step1.html', form=form, t=t)
 
 @quiz_bp.route('/step2', methods=['GET', 'POST'])
 def step2():
