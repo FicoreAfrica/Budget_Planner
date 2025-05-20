@@ -1,3 +1,4 @@
+import logging
 from flask import session
 # translations.py
 # Contains translation strings for Ficore Africa Flask app in English and Hausa
