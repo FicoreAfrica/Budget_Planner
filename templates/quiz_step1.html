@@ -1,109 +1,53 @@
-<script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
-
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
-                var filteredData = jsonData.filter(row => row.some(filledCell));
-
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
-                var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                );
-                // Fallback
-                if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
-                }
-
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
-            }
-        }
-        return gk_fileData[filename] || "";
-        }
-        </script>{% extends "base.html" %}
+{% extends "base.html" %}
+{% block title %}{{ trans['Financial Personality Quiz'] }}{% endblock %}
 {% block content %}
-<div class="container mt-5">
-    <div class="gradient-bg mb-4">
-        <h1>{{ t('Financial Personality Quiz') }}</h1>
-        <p>{{ t('Answer these questions to discover your financial personality.') }}</p>
+<div class="container">
+    <div class="navbar mb-4">
+        <h1>{{ trans['Financial Personality Quiz'] }}</h1>
+        <p>{{ trans['Answer these questions to discover your financial personality.'] }}</p>
     </div>
-    {% with messages = get_flashed_messages() %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-            <div class="alert alert-danger">
-                {% for message in messages %}
-                    {{ message }}<br>
-                {% endfor %}
-            </div>
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
         {% endif %}
     {% endwith %}
-    <form method="POST" action="{{ url_for('quiz.step1') }}">
-        <div class="mb-3">
-            <label class="form-label">{{ t('Do you track your expenses regularly?') }}</label>
-            <select name="track_expenses" class="form-select" required>
-                <option value="">{{ t('Select an option') }}</option>
-                <option value="always">{{ t('Always') }}</option>
-                <option value="sometimes">{{ t('Sometimes') }}</option>
-                <option value="never">{{ t('Never') }}</option>
-            </select>
-            <div class="form-text">{{ t('E.g., using a notebook, app, or mental notes.') }}</div>
+    <div class="card">
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('quiz.step1') }}">
+                {{ form.csrf_token }}
+                <div class="mb-3">
+                    <label class="form-label">{{ trans['Do you track your expenses regularly?'] }}</label>
+                    {{ form.track_expenses(class="form-select") }}
+                    <div class="form-text">{{ trans['E.g., using a notebook, app, or mental notes.'] }}</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">{{ trans['Do you spend on non-essential items like fashion or gadgets?'] }}</label>
+                    {{ form.spend_non_essentials(class="form-select") }}
+                    <div class="form-text">{{ trans['E.g., buying new clothes or electronics.'] }}</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">{{ trans['Do you save a portion of your income regularly?'] }}</label>
+                    {{ form.save_regularly(class="form-select") }}
+                    <div class="form-text">{{ trans['E.g., saving in a bank or cooperative.'] }}</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">{{ trans['Do you plan your expenses before spending?'] }}</label>
+                    {{ form.plan_expenses(class="form-select") }}
+                    <div class="form-text">{{ trans['E.g., making a budget for market or bills.'] }}</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">{{ trans['Do you make impulse purchases?'] }}</label>
+                    {{ form.impulse_purchases(class="form-select") }}
+                    <div class="form-text">{{ trans['E.g., buying items on a whim at the market.'] }}</div>
+                </div>
+                <button type="submit" class="btn btn-primary">{{ trans['Continue to Next Questions'] }}</button>
+            </form>
         </div>
-        <div class="mb-3">
-            <label class="form-label">{{ t('Do you spend on non-essential items like fashion or gadgets?') }}</label>
-            <select name="spend_non_essentials" class="form-select" required>
-                <option value="">{{ t('Select an option') }}</option>
-                <option value="often">{{ t('Often') }}</option>
-                <option value="sometimes">{{ t('Sometimes') }}</option>
-                <option value="rarely">{{ t('Rarely') }}</option>
-            </select>
-            <div class="form-text">{{ t('E.g., buying new clothes or electronics.') }}</div>
-        </div>
-        <div class="mb-3">
-            <label class="form-label">{{ t('Do you save a portion of your income regularly?') }}</label>
-            <select name="save_regularly" class="form-select" required>
-                <option value="">{{ t('Select an option') }}</option>
-                <option value="yes">{{ t('Yes') }}</option>
-                <option value="no">{{ t('No') }}</option>
-            </select>
-            <div class="form-text">{{ t('E.g., saving in a bank or cooperative.') }}</div>
-        </div>
-        <div class="mb-3">
-            <label class="form-label">{{ t('Do you plan your expenses before spending?') }}</label>
-            <select name="plan_expenses" class="form-select" required>
-                <option value="">{{ t('Select an option') }}</option>
-                <option value="always">{{ t('Always') }}</option>
-                <option value="sometimes">{{ t('Sometimes') }}</option>
-                <option value="never">{{ t('Never') }}</option>
-            </select>
-            <div class="form-text">{{ t('E.g., making a budget for market or bills.') }}</div>
-        </div>
-        <div class="mb-3">
-            <label class="form-label">{{ t('Do you make impulse purchases?') }}</label>
-            <select name="impulse_purchases" class="form-select" required>
-                <option value="">{{ t('Select an option') }}</option>
-                <option value="often">{{ t('Often') }}</option>
-                <option value="sometimes">{{ t('Sometimes') }}</option>
-                <option value="rarely">{{ t('Rarely') }}</option>
-            </select>
-            <div class="form-text">{{ t('E.g., buying items on a whim at the market.') }}</div>
-        </div>
-        <button type="submit" class="btn gradient-btn">{{ t('Continue to Next Questions') }}</button>
-    </form>
+    </div>
 </div>
 {% endblock %}
