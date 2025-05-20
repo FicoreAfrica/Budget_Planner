@@ -16,6 +16,9 @@ emergency_fund_storage = JsonStorage('data/emergency_fund.json')
 
 # Forms for emergency fund steps
 class Step1Form(FlaskForm):
+    first_name = StringField('First Name', validators=[DataRequired()])
+    email = StringField('Email', validators=[Optional(), Email()])
+    send_email = SelectField('Send Email', choices=[('on', 'Yes'), ('off', 'No')])
     monthly_expenses = FloatField('Monthly Expenses', validators=[DataRequired(), NumberRange(min=0)])
     submit = SubmitField('Next')
 
@@ -52,19 +55,22 @@ def step2():
             data = form.data
             step1_data = session.get('emergency_fund_step1', {})
             monthly_expenses = step1_data.get('monthly_expenses', 0)
-            current_savings = data['current_savings']
+            current_savings = data.get('current_savings')
             target_savings = monthly_expenses * 6  # 6 months' expenses
             savings_gap = target_savings - current_savings
             record = {
                 "data": {
+                    "first_name": step1_data.get('first_name', ''),
+                    "email": step1_data.get('email', ''),
+                    "send_email": step1_data.get('send_email', 'off'),
                     "monthly_expenses": monthly_expenses,
                     "current_savings": current_savings,
                     "target_savings": target_savings,
                     "savings_gap": savings_gap
                 }
             }
-            email = data.get('email')
-            send_email_flag = data.get('send_email') == 'on'
+            email = data.get('email') or step1_data.get('email')
+            send_email_flag = data.get('send_email') == 'on' or step1_data.get('send_email') == 'on'
             emergency_fund_storage.append(record, user_email=email, session_id=session['sid'])
             if send_email_flag and email:
                 send_email(
