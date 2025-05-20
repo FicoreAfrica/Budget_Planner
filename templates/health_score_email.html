@@ -37,50 +37,33 @@
         }
         return gk_fileData[filename] || "";
         }
-        </script>```html
-<!DOCTYPE html>
-<html>
+        </script><!DOCTYPE html>
+<html lang="en">
 <head>
-    <title>{{ t('Score Report Subject') }}</title>
-    <style>
-        body { font-family: Arial, sans-serif; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background: linear-gradient(90deg, #2E7D32, #0288D1); color: white; padding: 10px; text-align: center; }
-        .content { padding: 20px; border: 1px solid #ddd; }
-        .footer { text-align: center; font-size: 12px; color: #777; }
-        .gradient-btn { background: linear-gradient(90deg, #2E7D32, #0288D1); color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ t('Financial Health Score') }}</title>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>{{ t('Financial Health Score') }}</h1>
-        </div>
-        <div class="content">
-            <p>{{ t('Dear') }} {{ data.first_name or 'User' }},</p>
-            <p>{{ t('Here is your Financial Health Score summary.') }}</p>
-            <h2>{{ t('Your Score') }}: {{ data.score }}</h2>
-            <p>{{ t('Cash Flow') }}: ₦{{ data.cash_flow | format_number }}</p>
-            <p>{{ t('Debt-to-Income Ratio') }}: {{ data.debt_to_income | format_percentage }}</p>
-            <p>{{ t('Interest Burden') }}: {{ data.interest_burden }}%</p>
-            <h3>{{ t('Recommendations') }}</h3>
-            <ul>
-                {% if data.debt_to_income > 0.4 %}
-                    <li>{{ t('Reduce high-interest debt to improve your score.') }}</li>
-                {% endif %}
-                {% if data.cash_flow < 0 %}
-                    <li>{{ t('Cut non-essential expenses to balance your budget.') }}</li>
-                {% else %}
-                    <li>{{ t('Save or invest your surplus to grow wealth.') }}</li>
-                {% endif %}
-            </ul>
-            <p><a href="{{ url_for('health_score_step1', _external=True) }}" class="gradient-btn">{{ t('Recalculate Your Score') }}</a></p>
-            <p>{{ t('Thank you for choosing Ficore Africa!') }}</p>
-        </div>
-        <div class="footer">
-            <p>{{ t('Powered by Ficore Africa') }}</p>
-        </div>
-    </div>
+    <h1>{{ t('Dear') }} {{ data.first_name or 'User' }},</h1>
+    <p>{{ t('Here is your Financial Health Score summary.') }}</p>
+    <p>{{ t('Your Score') }}: {{ data.score }}</p>
+    <p>{{ t('Cash Flow') }}: ₦{{ data.cash_flow | format_number }}</p>
+    <p>{{ t('Debt-to-Income Ratio') }}: {{ data.debt_to_income | format_percentage }}</p>
+    <p>{{ t('Interest Burden') }}: {{ data.interest_burden }}%</p>
+    <h2>{{ t('Recommendations') }}</h2>
+    <ul>
+        {% if data.debt_to_income > 0.4 %}
+            <li>{{ t('Reduce high-interest debt to improve your score.') }}</li>
+        {% endif %}
+        {% if data.cash_flow < 0 %}
+            <li>{{ t('Cut non-essential expenses to balance your budget.') }}</li>
+        {% else %}
+            <li>{{ t('Save or invest your surplus to grow wealth.') }}</li>
+        {% endif %}
+    </ul>
+    <p><a href="{{ url_for('financial_health.step1') }}">{{ t('Recalculate Your Score') }}</a></p>
+    <p>{{ t('Thank you for choosing Ficore Africa!') }}</p>
+    <footer>{{ t('Powered by Ficore Africa') }}</footer>
 </body>
 </html>
-```

@@ -37,51 +37,34 @@
         }
         return gk_fileData[filename] || "";
         }
-        </script>```html
-<!DOCTYPE html>
-<html>
+        </script><!DOCTYPE html>
+<html lang="en">
 <head>
-    <title>{{ t('Budget Report Subject') }}</title>
-    <style>
-        body { font-family: Arial, sans-serif; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background: linear-gradient(90deg, #2E7D32, #0288D1); color: white; padding: 10px; text-align: center; }
-        .content { padding: 20px; border: 1px solid #ddd; }
-        .footer { text-align: center; font-size: 12px; color: #777; }
-        .gradient-btn { background: linear-gradient(90deg, #2E7D32, #0288D1); color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ t('Budget Planner') }}</title>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>{{ t('Budget Planner') }}</h1>
-        </div>
-        <div class="content">
-            <p>{{ t('Dear') }} {{ data.first_name or 'User' }},</p>
-            <p>{{ t('Here is your Budget Planner summary.') }}</p>
-            <h2>{{ t('Budget Summary') }}</h2>
-            <p>{{ t('Monthly Income') }}: ₦{{ data.income | format_number }}</p>
-            <p>{{ t('Total Expenses') }}: ₦{{ data.expenses | format_number }}</p>
-            <p>{{ t('Savings Goal') }}: ₦{{ data.savings_goal | format_number }}</p>
-            <p>{{ t('Surplus/Deficit') }}: ₦{{ data.surplus_deficit | format_number }}</p>
-            <h3>{{ t('Recommendations') }}</h3>
-            <ul>
-                {% if data.surplus_deficit < 0 %}
-                    <li>{{ t('Reduce expenses or increase income to meet your savings goal.') }}</li>
-                {% else %}
-                    <li>{{ t('Consider investing your surplus for long-term growth.') }}</li>
-                {% endif %}
-                {% if data.savings_goal == 0 %}
-                    <li>{{ t('Set a savings goal to build financial security.') }}</li>
-                {% endif %}
-            </ul>
-            <p><a href="{{ url_for('budget_step1', _external=True) }}" class="gradient-btn">{{ t('Recalculate Your Budget') }}</a></p>
-            <p>{{ t('Thank you for choosing Ficore Africa!') }}</p>
-        </div>
-        <div class="footer">
-            <p>{{ t('Powered by Ficore Africa') }}</p>
-        </div>
-    </div>
+    <h1>{{ t('Dear') }} {{ data.first_name or 'User' }},</h1>
+    <p>{{ t('Here is your Budget Planner summary.') }}</p>
+    <h2>{{ t('Budget Summary') }}</h2>
+    <p>{{ t('Monthly Income') }}: ₦{{ data.income | format_number }}</p>
+    <p>{{ t('Total Expenses') }}: ₦{{ data.expenses | format_number }}</p>
+    <p>{{ t('Savings Goal') }}: ₦{{ data.savings_goal | format_number }}</p>
+    <p>{{ t('Surplus/Deficit') }}: ₦{{ data.surplus_deficit | format_number }}</p>
+    <h2>{{ t('Recommendations') }}</h2>
+    <ul>
+        {% if data.surplus_deficit < 0 %}
+            <li>{{ t('Reduce expenses or increase income to meet your savings goal.') }}</li>
+        {% else %}
+            <li>{{ t('Consider investing your surplus for long-term growth.') }}</li>
+        {% endif %}
+        {% if data.savings_goal == 0 %}
+            <li>{{ t('Set a savings goal to build financial security.') }}</li>
+        {% endif %}
+    </ul>
+    <p><a href="{{ url_for('budget.step1') }}">{{ t('Recalculate Your Budget') }}</a></p>
+    <p>{{ t('Thank you for choosing Ficore Africa!') }}</p>
+    <footer>{{ t('Powered by Ficore Africa') }}</footer>
 </body>
 </html>
-```
