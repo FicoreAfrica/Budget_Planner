@@ -16,12 +16,48 @@
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/apple-touch-icon.png') }}">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='img/favicon-32x32.png') }}">
     <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='img/favicon-16x16.png') }}">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f8f9fa;
+            color: #666;
+        }
+        .navbar {
+            background: linear-gradient(90deg, #0288D1, #2E7D32);
+            animation: gradientShift 5s ease infinite;
+        }
+        .navbar-brand, .nav-link {
+            color: #FFFFFF !important;
+            font-weight: bold;
+        }
+        .btn-primary {
+            background: linear-gradient(90deg, #0288D1, #2E7D32);
+            border: none;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(90deg, #0277BD, #27632A);
+        }
+        .card {
+            border-radius: 15px;
+            border: none;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        footer a:hover {
+            color: #01579B !important;
+            text-decoration: underline !important;
+        }
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+    </style>
     {% block extra_head %}{% endblock %}
 </head>
 <body>
     <!-- Navigation Bar -->
     <nav class="navbar navbar-expand-lg">
-        <div class="container">
+        <div class="container-fluid">
             <a class="navbar-brand" href="{{ url_for('index') }}"><img src="{{ url_for('static', filename='img/ficore_logo.png') }}" alt="Ficore Africa Logo" style="max-width: 150px;"></a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -54,7 +90,7 @@
                         <a class="nav-link" href="{{ url_for('logout') }}">{{ trans['Logout'] }}</a>
                     </li>
                     <li class="nav-item">
-                        <form action="{{ url_for('index') }}" method="GET" class="d-flex align-items-center">
+                        <form action="{{ url_for('index') }}" method="GET" class="d-flex">
                             <select name="language" onchange="this.form.submit()" aria-label="{{ trans['Choose your language'] }}">
                                 <option value="en" {% if session.language == 'en' %}selected{% endif %}>{{ trans['English'] }}</option>
                                 <option value="ha" {% if session.language == 'ha' %}selected{% endif %}>{{ trans['Hausa'] }}</option>
@@ -67,10 +103,10 @@
     </nav>
 
     <!-- Main Content -->
-    <main class="main-content">
+    <div class="content">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-                <div class="container mt-4">
+                <div class="container mt-3">
                     {% for category, message in messages %}
                         <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
                             {{ message }}
@@ -81,23 +117,23 @@
             {% endif %}
         {% endwith %}
         {% block content %}{% endblock %}
-    </main>
+    </div>
 
     <!-- Footer -->
-    <footer class="footer mt-5 py-4">
+    <footer class="footer mt-5">
         <div class="container text-center">
-            <p class="text-white">{{ trans['About Ficore Africa'] }}: {{ trans['Empowering financial growth across Africa since 2025'] }}</p>
-            <div class="social-icons mb-3">
+            <p>{{ trans['About Ficore Africa'] }}: {{ trans['Empowering financial growth across Africa since 2025'] }}</p>
+            <div class="social-icons">
                 <a href="{{ LINKEDIN_URL }}" target="_blank" aria-label="{{ trans['Connect on LinkedIn'] }}"><i class="fab fa-linkedin"></i></a>
                 <a href="{{ TWITTER_URL }}" target="_blank" aria-label="{{ trans['Follow on Twitter'] }}"><i class="fab fa-x-twitter"></i></a>
                 <a href="{{ FACEBOOK_URL }}" target="_blank" aria-label="{{ trans['Follow on Facebook'] }}"><i class="fab fa-facebook"></i></a>
             </div>
-            <div class="footer-buttons">
-                <a href="mailto:ficoreafrica@gmail.com" class="btn btn-alt-cta mx-1"><i class="fas fa-envelope"></i> {{ trans['Contact Us'] }}</a>
-                <a href="{{ FEEDBACK_FORM_URL }}" target="_blank" class="btn btn-alt-cta mx-1"><i class="fas fa-comment"></i> {{ trans['Provide Feedback'] }}</a>
-                <a href="{{ WAITLIST_FORM_URL }}" target="_blank" class="btn btn-alt-cta mx-1"><i class="fas fa-users"></i> {{ trans['Join Waitlist'] }}</a>
-                <a href="{{ CONSULTANCY_FORM_URL }}" target="_blank" class="btn btn-alt-cta mx-1"><i class="fas fa-briefcase"></i> {{ trans['Book Consultancy'] }}</a>
-                <a href="{{ url_for('logout') }}" class="btn btn-alt-cta mx-1"><i class="fas fa-sign-out-alt"></i> {{ trans['Logout'] }}</a>
+            <div class="footer-buttons mt-3">
+                <a href="mailto:ficoreafrica@gmail.com"><i class="fas fa-envelope"></i> {{ trans['Contact Us'] }}</a>
+                <a href="{{ FEEDBACK_FORM_URL }}" target="_blank"><i class="fas fa-comment"></i> {{ trans['Provide Feedback'] }}</a>
+                <a href="{{ WAITLIST_FORM_URL }}" target="_blank"><i class="fas fa-users"></i> {{ trans['Join Waitlist'] }}</a>
+                <a href="{{ CONSULTANCY_FORM_URL }}" target="_blank"><i class="fas fa-briefcase"></i> {{ trans['Book Consultancy'] }}</a>
+                <a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> {{ trans['Logout'] }}</a>
             </div>
         </div>
     </footer>
