@@ -1257,17 +1257,23 @@ def get_translations(language='en'):
             'Get your emergency fund plan sent to your inbox (optional)': 'Samu shirin asusun gaggawanka da aka aika zuwa akwatin saƙonka (na zaɓi)',
         }
     }
-    return translations.get(language, translations['en'])
+    # Log the language being used
+    logging.debug(f"Fetching translations for language: {language}")
+    # Return translations for the specified language, default to English if not found
+    translation_dict = translations.get(language, translations['en'])
+    logging.debug(f"Returning translation dictionary with {len(translation_dict)} keys")
+    return translation_dict
 
-def trans(key, lang=None):
-    """Retrieve a translated string for the given key, supporting both t and trans usage."""
-    if lang is None:
-        lang = session.get('lang', 'en')
-    
-    # If key is a dictionary (like t expects), return the translation dictionary
-    if isinstance(key, str) and key in ['t', 'trans']:
-        return get_translations(lang)
-    
-    # Otherwise, perform key-based lookup for trans
+def trans(key):
+    # Get the language from the session, default to English
+    lang = session.get('lang', 'en')
+    logging.debug(f"Session language: {lang}")
+    # Ensure the language is valid, otherwise default to English
+    if lang not in ['en', 'ha']:
+        logging.warning(f"Invalid language '{lang}' detected, defaulting to English")
+        lang = 'en'
+        session['lang'] = lang  # Update session to prevent repeated issues
     translations = get_translations(lang)
-    return translations.get(key, key)
+    if key == 't':
+        return translations
+    return translations.get(key, key)  # Fallback to the key itself if not found
