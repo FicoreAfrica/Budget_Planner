@@ -1,78 +1,110 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
+{% block title %}{{ t('View and Edit Bills') }}{% endblock %}
 {% block content %}
 <div class="container mt-5">
     <div class="gradient-bg mb-4">
-        <h1>{{ t('Bill Planner') }}</h1>
-        <p>{{ t('View and edit your bills on the calendar.') }}</p>
+        <h1>{{ t('View and Edit Bills') }}</h1>
     </div>
-    {% with messages = get_flashed_messages() %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-            <div class="alert alert-danger">
-                {% for message in messages %}
-                    {{ message }}<br>
-                {% endfor %}
-            </div>
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
         {% endif %}
     {% endwith %}
-    <div id="calendar" class="mb-4"></div>
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <div class="mb-3">
+                <label class="form-label">{{ t('Select Category') }}</label>
+                <select class="form-select" onchange="window.location.href='{{ url_for('bill.view_edit') }}?category='+this.value">
+                    <option value="all" {% if category == 'all' %}selected{% endif %}>{{ t('All') }}</option>
+                    <option value="utilities" {% if category == 'utilities' %}selected{% endif %}>{{ t('Utilities') }}</option>
+                    <option value="rent" {% if category == 'rent' %}selected{% endif %}>{{ t('Rent') }}</option>
+                    <option value="subscription" {% if category == 'subscription' %}selected{% endif %}>{{ t('Subscription') }}</option>
+                    <option value="other" {% if category == 'other' %}selected{% endif %}>{{ t('Other') }}</option>
+                </select>
+            </div>
+            {% if bills %}
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>{{ t('Description') }}</th>
+                            <th>{{ t('Amount') }}</th>
+                            <th>{{ t('Due Date') }}</th>
+                            <th>{{ t('Status') }}</th>
+                            <th>{{ t('Edit') }}</th>
+                            <th>{{ t('Delete') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for bill in bills %}
+                            <tr>
+                                <td>{{ bill.Description }}</td>
+                                <td>₦{{ bill.Amount | format_number }}</td>
+                                <td>{{ t('Due') }} {{ bill.DueDate }}</td>
+                                <td>
+                                    <a href="{{ url_for('bill.toggle_status', record_id=bill.RecordID) }}"
+                                       class="status-{{ 'paid' if bill.Status == 'Paid' else 'unpaid' }}">
+                                        {{ t(bill.Status) }}
+                                    </a>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('bill.view_edit', record_id=bill.RecordID, category=category) }}"
+                                       class="btn gradient-btn btn-sm">{{ t('Edit') }}</a>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('bill.delete', record_id=bill.RecordID) }}"
+                                       class="btn btn-danger btn-sm"
+                                       onclick="return confirm('{{ t('Confirm Delete') }}');">{{ t('Delete') }}</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
+        </div>
+    </div>
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <h3>{{ t('Add New Bill') }}</h3>
+            <form method="POST" action="{{ url_for('bill.view_edit', category=category) }}">
+                {{ form.hidden_tag() }}
+                <div class="mb-3">
+                    <label class="form-label">{{ t('What is this bill for?') }}</label>
+                    {{ form.description(class="form-control") }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">{{ t('How much is the bill? (₦)') }}</label>
+                    {{ form.amount(class="form-control") }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">{{ t('When is this bill due?') }}</label>
+                    {{ form.due_date(class="form-control") }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">{{ t('Category') }}</label>
+                    {{ form.category(class="form-select") }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">{{ t('How often does this bill occur?') }}</label>
+                    {{ form.recurrence(class="form-select") }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">{{ t('Send me reminders') }}</label>
+                    {{ form.reminders(class="form-select", multiple="multiple") }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">{{ t('Status') }}</label>
+                    {{ form.status(class="form-select") }}
+                </div>
+                {{ form.record_id(class="form-control", type="hidden") }}
+                <button type="submit" class="btn gradient-btn">{{ t('Save Bill') }}</button>
+            </form>
+        </div>
+    </div>
     <div class="d-flex justify-content-between">
-        <a href="{{ url_for('bill.dashboard') }}" class="btn btn-secondary">{{ t('Back to Dashboard') }}</a>
-        <a href="{{ url_for('bill.form') }}" class="btn gradient-btn">{{ t('Add New Bill') }}</a>
+        <a href="{{ url_for('bill.form') }}" class="btn btn-secondary">{{ t('Back') }}</a>
+        <a href="{{ url_for('bill.dashboard') }}" class="btn gradient-btn">{{ t('Go to Dashboard') }}</a>
     </div>
 </div>
-<link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const calendarEl = document.getElementById('calendar');
-        const calendar = new FullCalendar.Calendar(calendarEl, {
-            initialView: 'dayGridMonth',
-            events: [
-                {% for bill in data.bills %}
-                {
-                    id: '{{ bill.id }}',
-                    title: '{{ bill.name }} (₦{{ bill.amount | format_number }})',
-                    start: '{{ bill.due_date }}',
-                    backgroundColor: '{{ '#2E7D32' if bill.status == 'paid' else '#dc3545' }}',
-                    extendedProps: {
-                        status: '{{ bill.status }}',
-                        amount: {{ bill.amount }},
-                        category: '{{ bill.category }}'
-                    }
-                }{% if not loop.last %},{% endif %}
-                {% endfor %}
-            ],
-            eventClick: function(info) {
-                const bill = info.event;
-                const status = bill.extendedProps.status === 'paid' ? '{{ t("Paid") }}' : '{{ t("Unpaid") }}';
-                if (confirm(`{{ t('Bill') }}: ${bill.title}\n{{ t('Status') }}: ${status}\n{{ t('Category') }}: ${bill.extendedProps.category}\n{{ t('Toggle status?') }}`)) {
-                    fetch('{{ url_for('bill.toggle_status') }}', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ bill_id: bill.id })
-                    }).then(response => {
-                        if (response.ok) {
-                            bill.setProp('backgroundColor', bill.extendedProps.status === 'paid' ? '#dc3545' : '#2E7D32');
-                            bill.setExtendedProp('status', bill.extendedProps.status === 'paid' ? 'unpaid' : 'paid');
-                        }
-                    });
-                }
-            },
-            eventRightClick: function(info) {
-                if (confirm('{{ t("Delete this bill?") }}')) {
-                    fetch('{{ url_for('bill.delete') }}', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ bill_id: info.event.id })
-                    }).then(response => {
-                        if (response.ok) {
-                            info.event.remove();
-                        }
-                    });
-                }
-            }
-        });
-        calendar.render();
-    });
-</script>
 {% endblock %}
