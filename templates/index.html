@@ -16,7 +16,7 @@
                     <div class="card-body">
                         <h3 class="card-title">{{ t('Financial Health Score') }}</h3>
                         <p class="card-text">{{ t('Evaluates income, expenses, and debt for a health score') }}</p>
-                        <a href="{{ url_for('financial_health_step1') }}" class="btn gradient-btn" aria-label="{{ t('Start Financial Health Score Assessment') }}">{{ t('Start') }}</a>
+                        <a href="{{ url_for('financial_health.step1') }}" class="btn gradient-btn" aria-label="{{ t('Start Financial Health Score Assessment') }}">{{ t('Start') }}</a>
                     </div>
                 </div>
             </div>
@@ -25,7 +25,7 @@
                     <div class="card-body">
                         <h3 class="card-title">{{ t('Budget Planner') }}</h3>
                         <p class="card-text">{{ t('Allocate income across expense categories') }}</p>
-                        <a href="{{ url_for('budget_step1') }}" class="btn gradient-btn" aria-label="{{ t('Start Monthly Budget Planner') }}">{{ t('Start') }}</a>
+                        <a href="{{ url_for('budget.step1') }}" class="btn gradient-btn" aria-label="{{ t('Start Monthly Budget Planner') }}">{{ t('Start') }}</a>
                     </div>
                 </div>
             </div>
@@ -34,7 +34,7 @@
                     <div class="card-body">
                         <h3 class="card-title">{{ t('Financial Personality Quiz') }}</h3>
                         <p class="card-text">{{ t('Answer questions to assess financial literacy') }}</p>
-                        <a href="{{ url_for('quiz_step1') }}" class="btn gradient-btn" aria-label="{{ t('Start Personality Quiz') }}">{{ t('Start') }}</a>
+                        <a href="{{ url_for('quiz.step1') }}" class="btn gradient-btn" aria-label="{{ t('Start Personality Quiz') }}">{{ t('Start') }}</a>
                     </div>
                 </div>
             </div>
@@ -43,7 +43,7 @@
                     <div class="card-body">
                         <h3 class="card-title">{{ t('Bill Planner') }}</h3>
                         <p class="card-text">{{ t('Manage and mark bills as paid') }}</p>
-                        <a href="{{ url_for('bill_form') }}" class="btn gradient-btn" aria-label="{{ t('Start Bill Planner') }}">{{ t('Start') }}</a>
+                        <a href="{{ url_for('bill.form') }}" class="btn gradient-btn" aria-label="{{ t('Start Bill Planner') }}">{{ t('Start') }}</a>
                     </div>
                 </div>
             </div>
@@ -52,7 +52,7 @@
                     <div class="card-body">
                         <h3 class="card-title">{{ t('Net Worth Calculator') }}</h3>
                         <p class="card-text">{{ t('Net worth is assets minus liabilities') }}</p>
-                        <a href="{{ url_for('net_worth_step1') }}" class="btn gradient-btn" aria-label="{{ t('Start Net Worth Calculator') }}">{{ t('Start') }}</a>
+                        <a href="{{ url_for('net_worth.step1') }}" class="btn gradient-btn" aria-label="{{ t('Start Net Worth Calculator') }}">{{ t('Start') }}</a>
                     </div>
                 </div>
             </div>
@@ -61,7 +61,7 @@
                     <div class="card-body">
                         <h3 class="card-title">{{ t('Emergency Fund Calculator') }}</h3>
                         <p class="card-text">{{ t('Aims to cover 3-6 months of expenses for financial security') }}</p>
-                        <a href="{{ url_for('emergency_fund_step1') }}" class="btn gradient-btn" aria-label="{{ t('Start Emergency Fund Calculator') }}">{{ t('Start') }}</a>
+                        <a href="{{ url_for('emergency_fund.step1') }}" class="btn gradient-btn" aria-label="{{ t('Start Emergency Fund Calculator') }}">{{ t('Start') }}</a>
                     </div>
                 </div>
             </div>
@@ -71,17 +71,17 @@
             <div class="row">
                 <div class="col-md-4">
                     <div class="testimonial text-center">
-                        <span class="quote">“</span><span class="initials">MU</span> {{ t('Testimonial 1') | safe }}
+                        <span class="quote">“</span> I explored the features earlier today and was impressed... I thought it was only for SMEs, but even individuals can benefit. The learning section is on another level. — <span class="name">Maisarata Uqubatu</span>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="testimonial text-center">
-                        <span class="quote">“</span><span class="initials">AA</span> {{ t('Testimonial 2') | safe }}
+                        <span class="quote">“</span> 🔥 Ficore 🔥🔥🔥🔥🔥 — <span class="name">Abubakar Abdulkadir</span>, Software Engineer for Sustainable Solutions
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="testimonial text-center">
-                        <span class="quote">“</span><span class="initials">ASU</span> {{ t('Testimonial 3') | safe }}
+                        <span class="quote">“</span> I’ve been following the Ficore project and I’m impressed. It’s clear there’s potential, and I’m curious to know more—especially if there’s a customer support channel included. I’d love to contribute if needed! — <span class="name">Aminu Sani Usman</span>
                     </div>
                 </div>
             </div>
