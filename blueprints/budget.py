@@ -4,7 +4,7 @@ from wtforms import StringField, FloatField, SelectField, SubmitField
 from wtforms.validators import DataRequired, NumberRange, Optional, Email
 from json_store import JsonStorage
 from mailersend_email import send_email
-from translations import t
+from ..translations import trans
 import logging
 import uuid
 
@@ -42,15 +42,16 @@ def step1():
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
     form = Step1Form()
+    t = trans('t')
     if request.method == 'POST' and form.validate_on_submit():
         try:
             session['budget_step1'] = form.data
             return redirect(url_for('budget.step2'))
         except Exception as e:
             logging.exception(f"Error in budget.step1: {str(e)}")
-            flash(t("Error processing step 1.") or "Error processing step 1.")
+            flash(trans("Error processing step 1."))
             return redirect(url_for('budget.step1'))
-    return render_template('budget_step1.html', form=form)
+    return render_template('budget_step1.html', form=form, t=t)
 
 @budget_bp.route('/step2', methods=['GET', 'POST'])
 def step2():
@@ -58,15 +59,16 @@ def step2():
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
     form = Step2Form()
+    t = trans('t')
     if request.method == 'POST' and form.validate_on_submit():
         try:
             session['budget_step2'] = form.data
             return redirect(url_for('budget.step3'))
         except Exception as e:
             logging.exception(f"Error in budget.step2: {str(e)}")
-            flash(t("Invalid numeric input for income.") or "Invalid numeric input for income.")
+            flash(trans("Invalid numeric input for income."))
             return redirect(url_for('budget.step2'))
-    return render_template('budget_step2.html', form=form)
+    return render_template('budget_step2.html', form=form, t=t)
 
 @budget_bp.route('/step3', methods=['GET', 'POST'])
 def step3():
@@ -74,15 +76,16 @@ def step3():
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
     form = Step3Form()
+    t = trans('t')
     if request.method == 'POST' and form.validate_on_submit():
         try:
             session['budget_step3'] = form.data
             return redirect(url_for('budget.step4'))
         except Exception as e:
             logging.exception(f"Error in budget.step3: {str(e)}")
-            flash(t("Invalid numeric input for expenses.") or "Invalid numeric input for expenses.")
+            flash(trans("Invalid numeric input for expenses."))
             return redirect(url_for('budget.step3'))
-    return render_template('budget_step3.html', form=form)
+    return render_template('budget_step3.html', form=form, t=t)
 
 @budget_bp.route('/step4', methods=['GET', 'POST'])
 def step4():
@@ -90,6 +93,7 @@ def step4():
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
     form = Step4Form()
+    t = trans('t')
     if request.method == 'POST' and form.validate_on_submit():
         try:
             data = form.data
@@ -125,7 +129,7 @@ def step4():
             if send_email_flag and email:
                 send_email(
                     to_email=email,
-                    subject="Budget Plan Summary",
+                    subject=trans("Budget Plan Summary"),
                     template_name="budget_email.html",
                     data=record["data"],
                     lang=session.get('lang', 'en')
@@ -133,23 +137,24 @@ def step4():
             session.pop('budget_step1', None)
             session.pop('budget_step2', None)
             session.pop('budget_step3', None)
-            flash(t("Budget plan completed.") or "Budget plan completed.")
+            flash(trans("Budget plan completed."))
             return redirect(url_for('budget.dashboard'))
         except Exception as e:
             logging.exception(f"Error in budget.step4: {str(e)}")
-            flash(t("Error processing budget plan.") or "Error processing budget plan.")
+            flash(trans("Error processing budget plan."))
             return redirect(url_for('budget.step4'))
-    return render_template('budget_step4.html', form=form)
+    return render_template('budget_step4.html', form=form, t=t)
 
 @budget_bp.route('/dashboard')
 def dashboard():
     """Display budget dashboard."""
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
+    t = trans('t')
     try:
         user_data = budget_storage.filter_by_session(session['sid'])
-        return render_template('budget_dashboard.html', data=user_data[-1]["data"] if user_data else {})
+        return render_template('budget_dashboard.html', data=user_data[-1]["data"] if user_data else {}, t=t)
     except Exception as e:
         logging.exception(f"Error in budget.dashboard: {str(e)}")
-        flash(t("Error loading dashboard.") or "Error loading dashboard.")
-        return render_template('budget_dashboard.html', data={})
+        flash(trans("Error loading dashboard."))
+        return render_template('budget_dashboard.html', data={}, t=t)
