@@ -1,10 +1,10 @@
 {% extends "base.html" %}
-{% block title %}{{ trans['Budget Planner'] }}{% endblock %}
+{% block title %}{{ t.Budget_Planner | default('Budget Planner') }}{% endblock %}
 {% block content %}
 <div class="container">
     <div class="navbar mb-4">
-        <h1>{{ trans['Budget Planner'] }}</h1>
-        <p>{{ trans['Start planning your budget with Ficore Africa.'] }}</p>
+        <h1>{{ t.Budget_Planner | default('Budget Planner') }}</h1>
+        <p>{{ t['Use Ficore to Track your income, net worth, budgets, and bills, to grow your money with confidence.'] | default('Use Ficore to Track your income, net worth, budgets, and bills, to grow your money with confidence.') }}</p>
     </div>
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -21,21 +21,21 @@
             <form method="POST" action="{{ url_for('budget.step1') }}">
                 {{ form.csrf_token }}
                 <div class="mb-3">
-                    <label class="form-label">{{ trans['Name'] }}</label>
-                    {{ form.name(class="form-control", placeholder=trans['Enter your name']) }}
-                    <div class="form-text">{{ trans['Enter your name.'] }}</div>
+                    <label class="form-label">{{ t.First_Name | default('First Name') }}</label>
+                    {{ form.name(class="form-control", placeholder=t['Enter your first name'] | default('Enter your first name')) }}
+                    <div class="form-text">{{ t['Enter your first name for your report.'] | default('Enter your first name for your report.') }}</div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">{{ trans['Email'] }}</label>
-                    {{ form.email(class="form-control", placeholder=trans['Enter an active email']) }}
-                    <div class="form-text">{{ trans['Use an active email address.'] }}</div>
+                    <label class="form-label">{{ t.Email | default('Email') }}</label>
+                    {{ form.email(class="form-control", placeholder=t['Enter your email'] | default('Enter your email')) }}
+                    <div class="form-text">{{ t['Get your budget report by email.'] | default('Get your budget report by email.') }}</div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">{{ trans['Send Email'] }}</label>
+                    <label class="form-label">{{ t.Send_Email | default('Send Email') }}</label>
                     {{ form.send_email(class="form-select") }}
-                    <div class="form-text">{{ trans['Select whether to receive a budget report via email.'] }}</div>
+                    <div class="form-text">{{ t.Auto_Email | default('Auto Email') }}</div>
                 </div>
-                <button type="submit" class="btn btn-primary">{{ trans['Continue to Income'] }}</button>
+                <button type="submit" class="btn btn-primary">{{ t.Continue_to_Income | default('Continue to Income') }}</button>
             </form>
         </div>
     </div>
