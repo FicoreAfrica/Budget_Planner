@@ -21,18 +21,19 @@
             <form method="POST" action="{{ url_for('budget.step1') }}">
                 {{ form.csrf_token }}
                 <div class="mb-3">
-                    <label class="form-label">{{ trans['First Name'] }}</label>
-                    {{ form.first_name(class="form-control", placeholder=trans['Enter your first name']) }}
-                    <div class="form-text">{{ trans['Enter your first name.'] }}</div>
+                    <label class="form-label">{{ trans['Name'] }}</label>
+                    {{ form.name(class="form-control", placeholder=trans['Enter your name']) }}
+                    <div class="form-text">{{ trans['Enter your name.'] }}</div>
                 </div>
                 <div class="mb-3">
                     <label class="form-label">{{ trans['Email'] }}</label>
                     {{ form.email(class="form-control", placeholder=trans['Enter an active email']) }}
                     <div class="form-text">{{ trans['Use an active email address.'] }}</div>
                 </div>
-                <div class="mb-3 form-check">
-                    {{ form.send_email(class="form-check-input") }}
-                    <label class="form-check-label">{{ trans['Send budget report to my email.'] }}</label>
+                <div class="mb-3">
+                    <label class="form-label">{{ trans['Send Email'] }}</label>
+                    {{ form.send_email(class="form-select") }}
+                    <div class="form-text">{{ trans['Select whether to receive a budget report via email.'] }}</div>
                 </div>
                 <button type="submit" class="btn btn-primary">{{ trans['Continue to Income'] }}</button>
             </form>
