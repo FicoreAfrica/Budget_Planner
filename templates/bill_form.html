@@ -11,38 +11,36 @@
                 {{ form.csrf_token }}
                 <div class="mb-3">
                     <label for="bill_name" class="form-label">{{ trans('Bill Name') }}</label>
-                    {{ form.bill_name(class="form-control", placeholder=trans('Enter bill name')) }}
+                    {{ form.bill_name(class="form-control", placeholder=trans('e.g., NEPA, Transport, Water, Clothing'), **{'data-bs-toggle': 'tooltip', 'title': trans('Enter the name of the bill or expense, e.g., NEPA, Transport, Water, Clothing')}) }}
                     <div class="invalid-feedback">{{ trans('Bill name is required') }}</div>
                 </div>
                 <div class="mb-3">
                     <label for="amount" class="form-label">{{ trans('Amount') }}</label>
-                    {{ form.amount(class="form-control", placeholder=trans('Enter amount in ₦')) }}
+                    {{ form.amount(class="form-control", placeholder=trans('Enter amount in ₦'), **{'data-bs-toggle': 'tooltip', 'title': trans('Enter the amount in Naira')}) }}
                     <div class="invalid-feedback">{{ trans('Valid amount is required') }}</div>
                 </div>
                 <div class="mb-3">
                     <label for="due_date" class="form-label">{{ trans('Due Date') }}</label>
-                    {{ form.due_date(class="form-control", placeholder="YYYY-MM-DD") }}
+                    {{ form.due_date(class="form-control", placeholder="YYYY-MM-DD", **{'data-bs-toggle': 'tooltip', 'title': trans('Enter the due date in YYYY-MM-DD format')}) }}
                     <div class="invalid-feedback">{{ trans('Valid due date is required') }}</div>
                 </div>
                 <div class="mb-3">
                     <label for="category" class="form-label">{{ trans('Category') }}</label>
-                    {{ form.category(class="form-control") }}
+                    {{ form.category(class="form-control", **{'data-bs-toggle': 'tooltip', 'title': trans('Select the category of the bill or expense')}) }}
                     <div class="invalid-feedback">{{ trans('Category is required') }}</div>
                 </div>
                 <div class="mb-3">
                     <label for="email" class="form-label">{{ trans('Email') }}</label>
-                    {{ form.email(class="form-control", placeholder=trans('Enter email for reminders')) }}
+                    {{ form.email(class="form-control", placeholder=trans('Enter email for reminders'), **{'data-bs-toggle': 'tooltip', 'title': trans('Enter your email to receive reminders')}) }}
                     <div class="invalid-feedback">{{ trans('Valid email is required') }}</div>
                 </div>
-                <div class="mb-3">
-                    <div class="form-check">
-                        {{ form.send_email(class="form-check-input") }}
-                        <label class="form-check-label" for="send_email">{{ trans('Send email reminders') }}</label>
-                    </div>
+                <div class="mb-3 form-check">
+                    {{ form.send_email(class="form-check-input", **{'data-bs-toggle': 'tooltip', 'title': trans('Check this to receive email reminders for this bill')}) }}
+                    <label class="form-check-label" for="send_email">{{ trans('Send email reminders') }}</label>
                 </div>
                 <div class="mb-3">
                     <label for="status" class="form-label">{{ trans('Status') }}</label>
-                    {{ form.status(class="form-control") }}
+                    {{ form.status(class="form-control", **{'data-bs-toggle': 'tooltip', 'title': trans('Select the current status of the bill')}) }}
                     <div class="invalid-feedback">{{ trans('Status is required') }}</div>
                 </div>
                 <button type="submit" class="btn btn-primary">{{ trans('Save Bill') }}</button>
