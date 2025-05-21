@@ -1,13 +1,14 @@
 {% extends "base.html" %}
-{% block title %}{{ trans['Financial Health Score'] }}{% endblock %}
+{% block title %}{{ trans('t').Financial_Health_Dashboard | default('Financial Health Dashboard') }}{% endblock %}
 {% block extra_head %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 {% endblock %}
 {% block content %}
 <div class="container">
     <div class="navbar mb-4">
-        <h1>{{ trans['Financial Health Score'] }}</h1>
-        <p>{{ trans['Your personalized financial health score and insights.'] }}</p>
+        <h1>{{ trans('t').Financial_Health_Dashboard | default('Financial Health Dashboard') }}</h1>
+        <p>{{ trans('t').Your_personalized_financial_health_score | default('Your personalized financial health score') }}</p>
     </div>
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -19,74 +20,126 @@
             {% endfor %}
         {% endif %}
     {% endwith %}
-    <div class="card mb-4">
-        <div class="card-body">
-            <h2>{{ trans['Your Score'] }}: {{ data.score | format_number }}</h2>
-            <p>{{ trans['Status'] }}: {{ trans[data.status] }}</p>
-            <p>{{ trans['Monthly Income'] }}: ₦{{ data.income | format_number }}</p>
-            <p>{{ trans['Monthly Expenses'] }}: ₦{{ data.expenses | format_number }}</p>
-            <p>{{ trans['Total Debt'] }}: ₦{{ data.debt | format_number }}</p>
-            <p>{{ trans['Debt-to-Income Ratio'] }}: {{ data.debt_to_income | format_number }}%</p>
-            <p>{{ trans['Savings Rate'] }}: {{ data.savings_rate | format_number }}%</p>
-            <p>{{ trans['Interest Rate'] }}: {{ data.interest_rate | format_number }}%</p>
+    {% if latest_record %}
+        <div class="card mb-4">
+            <div class="card-body">
+                <h2>{{ trans('t').Hello | default('Hello') }} {{ latest_record.first_name or 'User' }}, {{ trans('t').Your_Score | default('Your Score') }}: {{ latest_record.score | format_number }}</h2>
+                <p><strong>{{ trans('t').Status | default('Status') }}:</strong> {{ trans('t')[latest_record.status] | default(latest_record.status) }}</p>
+                <p><strong>{{ trans('t').Monthly_Income | default('Monthly Income') }}:</strong> ₦{{ latest_record.income | format_number }}</p>
+                <p><strong>{{ trans('t').Monthly_Expenses | default('Monthly Expenses') }}:</strong> ₦{{ latest_record.expenses | format_number }}</p>
+                <p><strong>{{ trans('t').Total_Debt | default('Total Debt') }}:</strong> ₦{{ latest_record.debt | format_number }}</p>
+                <p><strong>{{ trans('t').Average_Interest_Rate | default('Average Interest Rate') }}:</strong> {{ latest_record.interest_rate | format_number }}%</p>
+                <p><strong>{{ trans('t').Debt_to_Income_Ratio | default('Debt-to-Income Ratio') }}:</strong> {{ latest_record.debt_to_income | format_number }}%</p>
+                <p><strong>{{ trans('t').Savings_Rate | default('Savings Rate') }}:</strong> {{ latest_record.savings_rate | format_number }}%</p>
+                <p><strong>{{ trans('t').Interest_Burden | default('Interest Burden') }}:</strong> {{ latest_record.interest_burden | format_number }}%</p>
+                <p><strong>{{ trans('t').Created_At | default('Created At') }}:</strong> {{ latest_record.created_at }}</p>
+            </div>
         </div>
-    </div>
-    <canvas id="scoreChart" class="mb-4"></canvas>
-    <div class="card mb-4">
-        <div class="card-body">
-            <h3>{{ trans['Badges'] }}</h3>
-            {% if data.score >= 80 %}
-                <span class="badge bg-success"><i class="fas fa-trophy"></i> {{ trans['Excellent Score'] }}</span>
-            {% elif data.score >= 60 %}
-                <span class="badge bg-primary"><i class="fas fa-star"></i> {{ trans['Good Score'] }}</span>
-            {% else %}
-                <p>{{ trans['No badges earned yet.'] }}</p>
-            {% endif %}
+        <div class="card mb-4">
+            <div class="card-body">
+                <h3>{{ trans('t').Financial_Metrics | default('Financial Metrics') }}</h3>
+                <canvas id="scoreChart"></canvas>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const ctx = document.getElementById('scoreChart').getContext('2d');
+                        new Chart(ctx, {
+                            type: 'bar',
+                            data: {
+                                labels: [
+                                    '{{ trans('t').Score | default('Score') }}',
+                                    '{{ trans('t').Debt_to_Income | default('Debt-to-Income') }}',
+                                    '{{ trans('t').Savings_Rate | default('Savings Rate') }}',
+                                    '{{ trans('t').Interest_Burden | default('Interest Burden') }}'
+                                ],
+                                datasets: [{
+                                    label: '{{ trans('t').Metrics | default('Metrics') }}',
+                                    data: [
+                                        {{ latest_record.score | format_number }},
+                                        {{ latest_record.debt_to_income | format_number }},
+                                        {{ latest_record.savings_rate | format_number }},
+                                        {{ latest_record.interest_burden | format_number }}
+                                    ],
+                                    backgroundColor: ['#1E7F71', '#dc3545', '#0288D1', '#FBC02D']
+                                }]
+                            },
+                            options: {
+                                scales: { y: { beginAtZero: true, max: 100 } },
+                                animation: false
+                            }
+                        });
+                    });
+                </script>
+            </div>
         </div>
-    </div>
-    <div class="card mb-4">
-        <div class="card-body">
-            <h3>{{ trans['Recommendations'] }}</h3>
-            <ul>
-                {% if data.debt_to_income > 40 %}
-                    <li>{{ trans['Reduce high-interest debt to improve your score.'] }}</li>
-                {% endif %}
-                {% if data.savings_rate < 0 %}
-                    <li>{{ trans['Cut non-essential expenses to balance your budget.'] }}</li>
+        <div class="card mb-4">
+            <div class="card-body">
+                <h3>{{ trans('t').Badges | default('Badges') }}</h3>
+                {% if latest_record.badges %}
+                    {% for badge in latest_record.badges %}
+                        <span class="badge bg-{{ 'success' if badge == 'Financial Star' else 'primary' if badge == 'Savings Pro' else 'info' if badge == 'Debt Manager' else 'warning' }} mb-2">
+                            <i class="fas fa-{{ 'trophy' if badge == 'Financial Star' else 'star' if badge == 'Savings Pro' else 'check-circle' if badge == 'Debt Manager' else 'hand-holding-usd' }}"></i>
+                            {{ trans('t')[badge] | default(badge) }}
+                        </span>
+                    {% endfor %}
                 {% else %}
-                    <li>{{ trans['Save or invest your surplus to grow wealth.'] }}</li>
+                    <p>{{ trans('t').No_badges_earned_yet | default('No badges earned yet') }}</p>
                 {% endif %}
-            </ul>
+            </div>
         </div>
-    </div>
-    <div class="d-flex justify-content-between">
-        <a href="{{ url_for('financial_health.step1') }}" class="btn btn-secondary">{{ trans['Recalculate'] }}</a>
-        <a href="{{ url_for('general_dashboard') }}" class="btn btn-primary">{{ trans['Go to Dashboard'] }}</a>
-    </div>
+        <div class="card mb-4">
+            <div class="card-body">
+                <h3>{{ trans('t').Insights | default('Insights') }}</h3>
+                {% for insight in insights %}
+                    <p>{{ insight }}</p>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="card mb-4">
+            <div class="card-body">
+                <h3>{{ trans('t').Tips_for_Improving_Score | default('Tips for Improving Score') }}</h3>
+                {% for tip in tips %}
+                    <p>{{ tip }}</p>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="card mb-4">
+            <div class="card-body">
+                <h3>{{ trans('t').Call_to_Actions | default('Call to Actions') }}</h3>
+                <a href="{{ url_for('financial_health.step1') }}" class="btn btn-primary">{{ trans('t').Recalculate_Score | default('Recalculate Score') }}</a>
+                <a href="{{ url_for('budget.step1') }}" class="btn btn-secondary">{{ trans('t').Create_Budget | default('Create Budget') }}</a>
+                <a href="#" class="btn btn-secondary">{{ trans('t').Explore_Savings_Options | default('Explore Savings Options') }}</a>
+            </div>
+        </div>
+        <div class="card mb-4">
+            <div class="card-body">
+                <h3>{{ trans('t').Previous_Assessments | default('Previous Assessments') }}</h3>
+                {% if records %}
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>{{ trans('t').Date | default('Date') }}</th>
+                                <th>{{ trans('t').Score | default('Score') }}</th>
+                                <th>{{ trans('t').Status | default('Status') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for record_id, record in records %}
+                                <tr>
+                                    <td>{{ record.created_at }}</td>
+                                    <td>{{ record.score | format_number }}</td>
+                                    <td>{{ trans('t')[record.status] | default(record.status) }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p>{{ trans('t').No_previous_assessments | default('No previous assessments') }}</p>
+                {% endif %}
+            </div>
+        </div>
+    {% else %}
+        <p>{{ trans('t').No_financial_health_data_available | default('No financial health data available') }}</p>
+        <a href="{{ url_for('financial_health.step1') }}" class="btn btn-primary">{{ trans('t').Start_Assessment | default('Start Assessment') }}</a>
+    {% endif %}
 </div>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const ctx = document.getElementById('scoreChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: ['{{ trans["Score"] }}', '{{ trans["Debt-to-Income"] }}', '{{ trans["Savings Rate"] }}'],
-                datasets: [{
-                    label: '{{ trans["Financial Metrics"] }}',
-                    data: [{{ data.score | format_number }}, {{ data.debt_to_income | format_number }}, {{ data.savings_rate | format_number }}],
-                    backgroundColor: ['#2E7D32', '#dc3545', '#0288D1']
-                }]
-            },
-            options: {
-                scales: {
-                    y: { beginAtZero: true }
-                },
-                animation: false
-            }
-        });
-    });
-</script>
-{% endblock %}
-{% block extra_scripts %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 {% endblock %}
