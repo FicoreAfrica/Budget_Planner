@@ -1,10 +1,10 @@
-{% extends 'base.html' %}
-{% block title %}{{ trans['Emergency Fund Calculator'] }}{% endblock %}
+{% extends "base.html" %}
+{% block title %}{{ trans('t').Emergency_Fund_Calculator | default('Emergency Fund Calculator') }}{% endblock %}
 {% block content %}
 <div class="container">
     <div class="navbar mb-4">
-        <h1>{{ trans['Emergency Fund Calculator'] }}</h1>
-        <p>{{ trans['Plan your emergency fund with Ficore Africa.'] }}</p>
+        <h1>{{ trans('t').Emergency_Fund_Calculator | default('Emergency Fund Calculator') }}</h1>
+        <p>{{ trans('t').Plan_your_emergency_fund_with_Ficore_Africa | default('Plan your emergency fund with Ficore Africa') }}</p>
     </div>
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -21,25 +21,34 @@
             <form method="POST" action="{{ url_for('emergency_fund.step1') }}">
                 {{ form.csrf_token }}
                 <div class="mb-3">
-                    <label for="first_name" class="form-label">{{ trans['First Name'] }}</label>
-                    {{ form.first_name(class="form-control", placeholder=trans['Enter your first name']) }}
+                    <label class="form-label">{{ trans('t').First_Name | default('First Name') }}</label>
+                    {{ form.first_name(class="form-control", placeholder=trans('t')['e.g., Khadijah, Amina, Maryam'] | default('e.g., Khadijah, Amina, Maryam'), **{'data-bs-toggle': 'tooltip', 'title': trans('t').Enter_your_first_name | default('Enter your first name')}) }}
+                    <div class="invalid-feedback">{{ trans('t').First_name_is_required | default('First name is required') }}</div>
                 </div>
                 <div class="mb-3">
-                    <label for="email" class="form-label">{{ trans['Email'] }}</label>
-                    {{ form.email(class="form-control", placeholder=trans['Enter your email']) }}
+                    <label class="form-label">{{ trans('t').Email | default('Email') }}</label>
+                    {{ form.email(class="form-control", placeholder=trans('t')['e.g., khadijah@example.com'] | default('e.g., khadijah@example.com'), **{'data-bs-toggle': 'tooltip', 'title': trans('t').Enter_your_email_to_receive_fund_summary | default('Enter your email to receive fund summary')}) }}
+                    <div class="invalid-feedback">{{ trans('t').Valid_email_is_required | default('Valid email is required') }}</div>
+                </div>
+                <div class="mb-3 form-check">
+                    {{ form.send_email(class="form-check-input", **{'data-bs-toggle': 'tooltip', 'title': trans('t').Check_to_receive_email_summary | default('Check to receive email summary')}) }}
+                    <label class="form-check-label" for="send_email">{{ trans('t').Send_Email | default('Send Email') }}</label>
                 </div>
                 <div class="mb-3">
-                    <label for="send_email" class="form-label">{{ trans['Send Email'] }}</label>
-                    {{ form.send_email(class="form-control") }}
+                    <label class="form-label">{{ trans('t').Monthly_Expenses | default('Monthly Expenses') }}</label>
+                    {{ form.monthly_expenses(class="form-control", placeholder=trans('t')['e.g., 50,000'] | default('e.g., 50,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('t').Expenses_like_food_transport_data | default('Expenses like food, transport, data subscriptions')}) }}
+                    <div class="invalid-feedback">{{ trans('t').Monthly_expenses_are_required | default('Monthly expenses are required') }}</div>
                 </div>
-                <div class="mb-3">
-                    <label for="monthly_expenses" class="form-label">{{ trans['Monthly Expenses'] }}</label>
-                    {{ form.monthly_expenses(class="form-control", placeholder=trans['Enter monthly expenses']) }}
-                    <div class="form-text">{{ trans['Total money you spend each month on essentials.'] }}</div>
-                </div>
-                <button type="submit" class="btn btn-primary">{{ trans['Continue to Finances'] }}</button>
+                <button type="submit" class="btn btn-primary">{{ trans('t').Continue_to_Savings | default('Continue to Savings') }}</button>
             </form>
         </div>
     </div>
 </div>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+    document.querySelector('form').addEventListener('submit', function() {
+        document.querySelectorAll('.form-control').forEach(input => input.classList.add('was-validated'));
+    });
+</script>
 {% endblock %}
