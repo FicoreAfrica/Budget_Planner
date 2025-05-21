@@ -1,10 +1,10 @@
 {% extends "base.html" %}
-{% block title %}{{ trans('Financial Health Score') }}{% endblock %}
+{% block title %}{{ trans('t').Financial_Health_Score | default('Financial Health Score') }}{% endblock %}
 {% block content %}
 <div class="container">
     <div class="navbar mb-4">
-        <h1>{{ trans('Financial Health Score') }}</h1>
-        <p>{{ trans('Complete the health score form with Ficore Africa to calculate your personalized financial health score.') }}</p>
+        <h1>{{ trans('t').Financial_Health_Score | default('Financial Health Score') }}</h1>
+        <p>{{ trans('t').Enter_your_personal_information | default('Enter your personal information') }}</p>
     </div>
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -21,32 +21,34 @@
             <form method="POST" action="{{ url_for('financial_health.step1') }}">
                 {{ form.csrf_token }}
                 <div class="mb-3">
-                    <label class="form-label">{{ trans('First Name') }}</label>
-                    {{ form.first_name(class="form-control", placeholder=trans('Enter your first name')) }}
-                    <div class="form-text">{{ trans('Enter your first name as it appears on official documents.') }}</div>
+                    <label class="form-label">{{ trans('t').First_Name | default('First Name') }}</label>
+                    {{ form.first_name(class="form-control", placeholder=trans('t')['e.g., Ahmad, Kamal, Musa'] | default('e.g., Ahmad, Kamal, Musa'), **{'data-bs-toggle': 'tooltip', 'title': trans('t').Enter_your_first_name | default('Enter your first name')}) }}
+                    <div class="invalid-feedback">{{ trans('t').First_name_is_required | default('First name is required') }}</div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">{{ trans('Email') }}</label>
-                    {{ form.email(class="form-control", placeholder=trans('Enter an active email')) }}
-                    <div class="form-text">{{ trans('Use an active email address you check regularly for updates.') }}</div>
+                    <label class="form-label">{{ trans('t').Email | default('Email') }}</label>
+                    {{ form.email(class="form-control", placeholder=trans('t')['e.g., ahmad@example.com'] | default('e.g., ahmad@example.com'), **{'data-bs-toggle': 'tooltip', 'title': trans('t').Enter_your_email_to_receive_health_score | default('Enter your email to receive health score')}) }}
+                    <div class="invalid-feedback">{{ trans('t').Valid_email_is_required | default('Valid email is required') }}</div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">{{ trans('Business Name or Income Source') }}</label>
-                    {{ form.business_name(class="form-control", placeholder=trans('Enter business or income source')) }}
-                    <div class="form-text">{{ trans('Enter the name of your business or primary income source (e.g., farming, trading).') }}</div>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">{{ trans('User Type') }}</label>
-                    {{ form.user_type(class="form-select") }}
-                    <div class="form-text">{{ trans('Are you an individual or a business owner?') }}</div>
+                    <label class="form-label">{{ trans('t').User_Type | default('User Type') }}</label>
+                    {{ form.user_type(class="form-select", **{'data-bs-toggle': 'tooltip', 'title': trans('t').Select_individual_or_business | default('Select individual or business')}) }}
+                    <div class="form-text">{{ trans('t').Are_you_an_individual_or_business | default('Are you an individual or business?') }}</div>
                 </div>
                 <div class="mb-3 form-check">
-                    {{ form.send_email(class="form-check-input") }}
-                    <label class="form-check-label">{{ trans('Send my financial health score to my email.') }}</label>
+                    {{ form.send_email(class="form-check-input", **{'data-bs-toggle': 'tooltip', 'title': trans('t').Check_to_receive_email_summary | default('Check to receive email summary')}) }}
+                    <label class="form-check-label" for="send_email">{{ trans('t').Send_Email | default('Send Email') }}</label>
                 </div>
-                <button type="submit" class="btn btn-primary">{{ trans('Continue to Income') }}</button>
+                <button type="submit" class="btn btn-primary">{{ trans('t').Continue_to_Income | default('Continue to Income') }}</button>
             </form>
         </div>
     </div>
 </div>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+    document.querySelector('form').addEventListener('submit', function() {
+        document.querySelectorAll('.form-control').forEach(input => input.classList.add('was-validated'));
+    });
+</script>
 {% endblock %}
