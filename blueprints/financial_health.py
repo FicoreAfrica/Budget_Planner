@@ -301,13 +301,14 @@ def dashboard():
         # Retrieve user-specific records with fallback
         try:
             user_data = financial_health_storage.filter_by_session(session['sid'])
+            if not isinstance(user_data, list):
+                raise ValueError("Invalid user data format from storage")
         except Exception as storage_error:
             log.error(f"Failed to retrieve user data: {str(storage_error)}")
             user_data = []
         records = []
         for record in user_data:
             try:
-                # Clean numeric fields
                 data = record.get("data", {})
                 for key in ['income', 'expenses', 'debt', 'interest_rate', 'score', 'debt_to_income', 'savings_rate', 'interest_burden']:
                     if key in data and isinstance(data[key], str):
@@ -321,11 +322,13 @@ def dashboard():
                 log.warning(f"Skipping invalid record: {str(record_error)}")
                 continue
         latest_record = records[-1][1] if records else {}
-        log.debug(f"Retrieved user records: {len(records)}")
+        log.debug(f"Retrieved user records: {records}")
 
         # Retrieve all records for comparison with fallback
         try:
             all_records = financial_health_storage.get_all()
+            if not isinstance(all_records, list):
+                raise ValueError("Invalid all records format from storage")
         except Exception as storage_error:
             log.error(f"Failed to retrieve all records: {str(storage_error)}")
             all_records = []
@@ -348,9 +351,9 @@ def dashboard():
         log.debug(f"Total users: {total_users}")
 
         # Calculate rank and average score
-        rank = total_users
+        rank = total_users if total_users > 0 else 1
         average_score = 0
-        if cleaned_records and latest_record:
+        if cleaned_records and latest_record.get('score', 0) > 0:
             try:
                 sorted_records = sorted(
                     cleaned_records,
@@ -362,12 +365,12 @@ def dashboard():
                     if record["data"].get("score", 0) <= user_score and record.get("session_id") == session['sid']:
                         rank = i
                         break
-                scores = [record["data"].get("score", 0) for record in cleaned_records]
-                average_score = sum(scores) / total_users if total_users > 0 else 0
+                scores = [record["data"].get("score", 0) for record in cleaned_records if record["data"].get("score", 0) > 0]
+                average_score = sum(scores) / len(scores) if scores else 0
                 log.debug(f"User rank: {rank}, Average score: {average_score}")
             except Exception as calc_error:
                 log.error(f"Error calculating rank or average score: {str(calc_error)}")
-                rank = 0
+                rank = total_users
                 average_score = 0
 
         # Generate insights and tips
