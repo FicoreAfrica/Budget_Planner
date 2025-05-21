@@ -56,7 +56,8 @@ def step1():
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
     form = Step1Form()
-    t = trans('t')
+    t_dict = trans('t')  # Get the translation dictionary
+    t = lambda key: t_dict.get(key, key)  # Create a callable to lookup translations
     log.info(f"Starting step1 for session {session['sid']}")
     try:
         if request.method == 'POST':
@@ -79,7 +80,8 @@ def step2():
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
     form = Step2Form()
-    t = trans('t')
+    t_dict = trans('t')  # Get the translation dictionary
+    t = lambda key: t_dict.get(key, key)  # Create a callable to lookup translations
     log.info(f"Starting step2 for session {session['sid']}")
     try:
         if request.method == 'POST':
@@ -102,7 +104,8 @@ def step3():
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
     form = Step3Form()
-    t = trans('t')
+    t_dict = trans('t')  # Get the translation dictionary
+    t = lambda key: t_dict.get(key, key)  # Create a callable to lookup translations
     log.info(f"Starting step3 for session {session['sid']}")
     try:
         if request.method == 'POST':
@@ -245,7 +248,8 @@ def dashboard():
     """Display financial health dashboard."""
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
-    t = trans('t')
+    t_dict = trans('t')  # Get the translation dictionary
+    t = lambda key: t_dict.get(key, key)  # Create a callable to lookup translations
     log.info(f"Starting dashboard for session {session['sid']}")
     try:
         user_data = financial_health_storage.filter_by_session(session['sid'])
