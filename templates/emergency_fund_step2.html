@@ -1,10 +1,10 @@
-{% extends 'base.html' %}
-{% block title %}{{ trans['Emergency Fund Calculator'] }}{% endblock %}
+{% extends "base.html" %}
+{% block title %}{{ trans('t').Emergency_Fund_Calculator | default('Emergency Fund Calculator') }}{% endblock %}
 {% block content %}
 <div class="container">
     <div class="navbar mb-4">
-        <h1>{{ trans['Emergency Fund Calculator'] }}</h1>
-        <p>{{ trans['Enter your financial details.'] }}</p>
+        <h1>{{ trans('t').Emergency_Fund_Calculator | default('Emergency Fund Calculator') }}</h1>
+        <p>{{ trans('t').Enter_your_current_savings | default('Enter your current savings') }}</p>
     </div>
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -21,21 +21,13 @@
             <form method="POST" action="{{ url_for('emergency_fund.step2') }}">
                 {{ form.csrf_token }}
                 <div class="mb-3">
-                    <label for="current_savings" class="form-label">{{ trans['Current Savings'] }}</label>
-                    {{ form.current_savings(class="form-control", placeholder=trans['Enter current savings']) }}
-                    <div class="form-text">{{ trans['Total amount you have saved for emergencies.'] }}</div>
-                </div>
-                <div class="mb-3">
-                    <label for="email" class="form-label">{{ trans['Email'] }}</label>
-                    {{ form.email(class="form-control", placeholder=trans['Enter your email']) }}
-                </div>
-                <div class="mb-3">
-                    <label for="send_email" class="form-label">{{ trans['Send Email'] }}</label>
-                    {{ form.send_email(class="form-control") }}
+                    <label class="form-label">{{ trans('t').Current_Savings | default('Current Savings') }}</label>
+                    {{ form.current_savings(class="form-control", placeholder=trans('t')['e.g., 100,000'] | default('e.g., 100,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('t').Savings_in_bank_ajo_esusu_adashe | default('Savings in bank accounts, Ajo/Esusu/Adashe, or apps like PiggyVest')}) }}
+                    <div class="invalid-feedback">{{ trans('t').Current_savings_are_required | default('Current savings are required') }}</div>
                 </div>
                 <div class="d-flex justify-content-between">
-                    <a href="{{ url_for('emergency_fund.step1') }}" class="btn btn-secondary">{{ trans['Back'] }}</a>
-                    <button type="submit" class="btn btn-primary">{{ trans['Calculate Emergency Fund'] }}</button>
+                    <a href="{{ url_for('emergency_fund.step1') }}" class="btn btn-secondary">{{ trans('t').Back | default('Back') }}</a>
+                    <button type="submit" class="btn btn-primary">{{ trans('t').Calculate_Emergency_Fund | default('Calculate Emergency Fund') }}</button>
                 </div>
             </form>
         </div>
@@ -44,11 +36,14 @@
 {% endblock %}
 {% block extra_scripts %}
 <script>
+    document.querySelector('form').addEventListener('submit', function() {
+        document.querySelectorAll('.form-control').forEach(input => input.classList.add('was-validated'));
+    });
     document.querySelectorAll('input[type="number"]').forEach(input => {
         input.addEventListener('input', () => {
             if (input.value > 10000000000) {
                 input.value = 10000000000;
-                alert('{{ trans["Input cannot exceed ₦10 billion."] }}');
+                alert('{{ trans("t").Input_cannot_exceed_10_billion | default("Input cannot exceed ₦10 billion") }}');
             }
         });
     });
