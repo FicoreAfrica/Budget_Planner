@@ -20,12 +20,6 @@
             {% endfor %}
         {% endif %}
     {% endwith %}
-    {% if error %}
-        <div class="alert alert-warning">{{ error }}</div>
-    {% endif %}
-    {% for alert in spending_alerts %}
-        <div class="alert alert-warning">{{ alert }}</div>
-    {% endfor %}
     <div class="card mb-4">
         <div class="card-body">
             <div class="stat">
@@ -45,7 +39,7 @@
     </div>
     <div class="card mb-4">
         <div class="card-body">
-            <h3>{{ trans('Spending by Category'] }}</h3>
+            <h3>{{ trans('Spending by Category') }}</h3>
             <canvas id="categoryChart"></canvas>
             <script>
                 document.addEventListener('DOMContentLoaded', function() {
@@ -53,22 +47,18 @@
                     new Chart(ctx, {
                         type: 'bar',
                         data: {
-                            labels: [{% for cat in categories %}"{{ trans[cat|capitalize] }}",{% endfor %}],
+                            labels: [{% for cat in categories %}"{{ trans[cat] }}",{% endfor %}],
                             datasets: [{
                                 label: '{{ trans('Amount') }} (₦)',
                                 data: [{% for cat, amt in categories.items() %}{{ amt | format_number }},{% endfor %}],
-                                backgroundColor: ['#1E7F71', '#2E7D32', '#0288D1', '#dc3545'],
-                                borderColor: ['#1E7F71', '#2E7D32', '#0288D1', '#dc3545'],
+                                backgroundColor: ['#1E7F71', '#2E7D32', '#0288D1', '#dc3545', '#FBC02D', '#D81B60', '#7B1FA2', '#FF5722', '#795548', '#607D8B'],
+                                borderColor: ['#1E7F71', '#2E7D32', '#0288D1', '#dc3545', '#FBC02D', '#D81B60', '#7B1FA2', '#FF5722', '#795548', '#607D8B'],
                                 borderWidth: 1
                             }]
                         },
                         options: {
-                            scales: {
-                                y: { beginAtZero: true }
-                            },
-                            plugins: {
-                                legend: { display: true }
-                            }
+                            scales: { y: { beginAtZero: true } },
+                            plugins: { legend: { display: true } }
                         }
                     });
                 });
