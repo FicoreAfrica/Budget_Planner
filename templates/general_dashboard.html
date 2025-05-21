@@ -1,125 +1,132 @@
 {% extends "base.html" %}
-{% block title %}{{ trans('Financial Dashboard') }}{% endblock %}
+{% block title %}{{ trans('t').Financial_Dashboard | default('Financial Dashboard') }}{% endblock %}
 {% block extra_head %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 {% endblock %}
 {% block content %}
 <div class="container">
-    <div class="navbar mb-4">
-        <h1>{{ trans('Financial Dashboard') }}</h1>
-        <p>{{ trans('Your comprehensive financial overview with Ficore Africa.') }}</p>
-    </div>
+    <section class="dashboard-header text-center my-5">
+        <h1>{{ trans('t').Financial_Dashboard | default('Financial Dashboard') }}</h1>
+        <p>{{ trans('t').Comprehensive_Financial_Overview | default('Your comprehensive financial overview with Ficore Africa.') }}</p>
+    </section>
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            {% endfor %}
+            <div class="alert-container mt-3">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            </div>
         {% endif %}
     {% endwith %}
     <div class="row">
         <div class="col-md-6 mb-4">
-            <div class="card">
+            <div class="card h-100">
                 <div class="card-body">
-                    <h3>{{ trans('Financial Health Score') }}</h3>
-                    {% if data.financial_health %}
-                        <p>{{ trans('Score') }}: {{ data.financial_health.score | format_number }} / 100</p>
-                        <p>{{ trans('Status') }}: {{ trans(data.financial_health.status) }}</p>
+                    <h3>{{ trans('t').Financial_Health_Score | default('Financial Health Score') }}</h3>
+                    {% if data.financial_health.score %}
+                        <p>{{ trans('t').Score | default('Score') }}: {{ data.financial_health.score | format_number }} / 100</p>
+                        <p>{{ trans('t').Status | default('Status') }}: {{ trans('t').get(data.financial_health.status, data.financial_health.status) }}</p>
                     {% else %}
-                        <p>{{ trans('Not yet calculated.') }}</p>
+                        <p>{{ trans('t').Not_Yet_Calculated | default('Not yet calculated.') }}</p>
                     {% endif %}
-                    <a href="{{ url_for('financial_health.step1') }}" class="btn btn-primary">{{ trans('Go to Financial Health') }}</a>
+                    <a href="{{ url_for('financial_health.step1') }}" class="btn btn-primary">{{ trans('t').Go_to_Financial_Health | default('Go to Financial Health') }}</a>
                 </div>
             </div>
         </div>
         <div class="col-md-6 mb-4">
-            <div class="card">
+            <div class="card h-100">
                 <div class="card-body">
-                    <h3>{{ trans('Budget Planner') }}</h3>
-                    {% if data.budget %}
-                        <p>{{ trans('Surplus/Deficit') }}: ₦{{ data.budget.surplus_deficit | format_number }}</p>
-                        <p>{{ trans('Savings Goal') }}: ₦{{ data.budget.savings_goal | format_number }}</p>
+                    <h3>{{ trans('t').Budget_Planner | default('Budget Planner') }}</h3>
+                    {% if data.budget.surplus_deficit %}
+                        <p>{{ trans('t').Surplus_Deficit | default('Surplus/Deficit') }}: ₦{{ data.budget.surplus_deficit | format_number }}</p>
+                        <p>{{ trans('t').Savings_Goal | default('Savings Goal') }}: ₦{{ data.budget.savings_goal | format_number }}</p>
                     {% else %}
-                        <p>{{ trans('Not yet calculated.') }}</p>
+                        <p>{{ trans('t').Not_Yet_Calculated | default('Not yet calculated.') }}</p>
                     {% endif %}
-                    <a href="{{ url_for('budget.step1') }}" class="btn btn-primary">{{ trans('Go to Budget Planner') }}</a>
+                    <a href="{{ url_for('budget.step1') }}" class="btn btn-primary">{{ trans('t').Go_to_Budget_Planner | default('Go to Budget Planner') }}</a>
                 </div>
             </div>
         </div>
         <div class="col-md-6 mb-4">
-            <div class="card">
+            <div class="card h-100">
                 <div class="card-body">
-                    <h3>{{ trans('Financial Personality Quiz') }}</h3>
-                    {% if data.quiz %}
-                        <p>{{ trans('Personality') }}: {{ trans(data.quiz.personality) }}</p>
-                        <p>{{ trans('Score') }}: {{ data.quiz.score | format_number }} / 10</p>
+                    <h3>{{ trans('t').Personality_Quiz | default('Personality Quiz') }}</h3>
+                    {% if data.quiz.personality %}
+                        <p>{{ trans('t').Personality | default('Personality') }}: {{ trans('t').get(data.quiz.personality, data.quiz.personality) }}</p>
+                        <p>{{ trans('t').Score | default('Score') }}: {{ data.quiz.score | format_number }} / 10</p>
                     {% else %}
-                        <p>{{ trans('Not yet completed.') }}</p>
+                        <p>{{ trans('t').Not_Yet_Completed | default('Not yet completed.') }}</p>
                     {% endif %}
-                    <a href="{{ url_for('quiz.step1') }}" class="btn btn-primary">{{ trans('Go to Personality Quiz') }}</a>
+                    <a href="{{ url_for('quiz.step1') }}" class="btn btn-primary">{{ trans('t').Go_to_Personality_Quiz | default('Go to Personality Quiz') }}</a>
                 </div>
             </div>
         </div>
         <div class="col-md-6 mb-4">
-            <div class="card">
+            <div class="card h-100">
                 <div class="card-body">
-                    <h3>{{ trans('Bill Planner') }}</h3>
-                    {% if data.bills %}
-                        <p>{{ trans('Total Bills') }}: ₦{{ data.bills.total_amount | format_number }}</p>
-                        <p>{{ trans('Unpaid Bills') }}: ₦{{ data.bills.unpaid_amount | format_number }}</p>
+                    <h3>{{ trans('t').Bill_Planner | default('Bill Planner') }}</h3>
+                    {% if data.bills.bills %}
+                        <p>{{ trans('t').Total_Bills | default('Total Bills') }}: ₦{{ data.bills.total_amount | format_number }}</p>
+                        <p>{{ trans('t').Unpaid_Bills | default('Unpaid Bills') }}: ₦{{ data.bills.unpaid_amount | format_number }}</p>
                     {% else %}
-                        <p>{{ trans('No bills added.') }}</p>
+                        <p>{{ trans('t').No_Bills_Added | default('No bills added.') }}</p>
                     {% endif %}
-                    <a href="{{ url_for('bill.form') }}" class="btn btn-primary">{{ trans('Go to Bill Planner') }}</a>
+                    <a href="{{ url_for('bill.form') }}" class="btn btn-primary">{{ trans('t').Go_to_Bill_Planner | default('Go to Bill Planner') }}</a>
                 </div>
             </div>
         </div>
         <div class="col-md-6 mb-4">
-            <div class="card">
+            <div class="card h-100">
                 <div class="card-body">
-                    <h3>{{ trans('Net Worth Calculator') }}</h3>
-                    {% if data.net_worth %}
-                        <p>{{ trans('Net Worth') }}: ₦{{ data.net_worth.net_worth | format_number }}</p>
-                        <p>{{ trans('Total Assets') }}: ₦{{ data.net_worth.total_assets | format_number }}</p>
+                    <h3>{{ trans('t').Net_Worth_Calculator | default('Net Worth Calculator') }}</h3>
+                    {% if data.net_worth.net_worth %}
+                        <p>{{ trans('t').Net_Worth | default('Net Worth') }}: ₦{{ data.net_worth.net_worth | format_number }}</p>
+                        <p>{{ trans('t').Total_Assets | default('Total Assets') }}: ₦{{ data.net_worth.total_assets | format_number }}</p>
                     {% else %}
-                        <p>{{ trans('Not yet calculated.') }}</p>
+                        <p>{{ trans('t').Not_Yet_Calculated | default('Not yet calculated.') }}</p>
                     {% endif %}
-                    <a href="{{ url_for('net_worth.step1') }}" class="btn btn-primary">{{ trans('Go to Net Worth') }}</a>
+                    <a href="{{ url_for('net_worth.step1') }}" class="btn btn-primary">{{ trans('t').Go_to_Net_Worth | default('Go to Net Worth') }}</a>
                 </div>
             </div>
         </div>
         <div class="col-md-6 mb-4">
-            <div class="card">
+            <div class="card h-100">
                 <div class="card-body">
-                    <h3>{{ trans('Emergency Fund Calculator') }}</h3>
-                    {% if data.emergency_fund %}
-                        <p>{{ trans('Recommended Fund') }}: ₦{{ data.emergency_fund.recommended_fund | format_number }}</p>
-                        <p>{{ trans('Savings Gap') }}: ₦{{ data.emergency_fund.savings_gap | format_number }}</p>
+                    <h3>{{ trans('t').Emergency_Fund_Calculator | default('Emergency Fund Calculator') }}</h3>
+                    {% if data.emergency_fund.recommended_fund %}
+                        <p>{{ trans('t').Recommended_Fund | default('Recommended Fund') }}: ₦{{ data.emergency_fund.recommended_fund | format_number }}</p>
+                        <p>{{ trans('t').Savings_Gap | default('Savings Gap') }}: ₦{{ data.emergency_fund.savings_gap | format_number }}</p>
                     {% else %}
-                        <p>{{ trans('Not yet calculated.') }}</p>
+                        <p>{{ trans('t').Not_Yet_Calculated | default('Not yet calculated.') }}</p>
                     {% endif %}
-                    <a href="{{ url_for('emergency_fund.step1') }}" class="btn btn-primary">{{ trans('Go to Emergency Fund') }}</a>
+                    <a href="{{ url_for('emergency_fund.step1') }}" class="btn btn-primary">{{ trans('t').Go_to_Emergency_Fund | default('Go to Emergency Fund') }}</a>
                 </div>
             </div>
         </div>
     </div>
-    <canvas id="overviewChart" class="mb-4"></canvas>
     <div class="card mb-4">
         <div class="card-body">
-            <h3>{{ trans('Financial Recommendations') }}</h3>
+            <h3>{{ trans('t').Financial_Metrics_Overview | default('Financial Metrics Overview') }}</h3>
+            <canvas id="overviewChart" aria-label="{{ trans('t').Financial_Metrics_Chart | default('Financial Metrics Chart') }}"></canvas>
+        </div>
+    </div>
+    <div class="card mb-4">
+        <div class="card-body">
+            <h3>{{ trans('t').Financial_Recommendations | default('Financial Recommendations') }}</h3>
             <ul>
-                {% if data.financial_health and data.financial_health.score < 70 %}
-                    <li>{{ trans('Improve your financial health by reviewing your budget.') }}</li>
+                {% if data.financial_health.score and data.financial_health.score < 70 %}
+                    <li>{{ trans('t').Improve_Financial_Health | default('Improve your financial health by reviewing your budget.') }}</li>
                 {% endif %}
-                {% if data.bills and data.bills.unpaid_amount > 0 %}
-                    <li>{{ trans('Pay outstanding bills to avoid penalties.') }}</li>
+                {% if data.bills.bills and data.bills.unpaid_amount > 0 %}
+                    <li>{{ trans('t').Pay_Outstanding_Bills | default('Pay outstanding bills to avoid penalties.') }}</li>
                 {% endif %}
-                {% if data.emergency_fund and data.emergency_fund.savings_gap > 0 %}
-                    <li>{{ trans('Increase savings to meet your emergency fund needs.') }}</li>
+                {% if data.emergency_fund.savings_gap and data.emergency_fund.savings_gap > 0 %}
+                    <li>{{ trans('t').Increase_Savings | default('Increase savings to meet your emergency fund needs.') }}</li>
                 {% endif %}
-                <li>{{ trans('Regularly update your financial data for accurate insights.') }}</li>
+                <li>{{ trans('t').Regularly_Update_Data | default('Regularly update your financial data for accurate insights.') }}</li>
             </ul>
         </div>
     </div>
@@ -131,30 +138,52 @@
             type: 'bar',
             data: {
                 labels: [
-                    "{{ trans('Financial Health') }}",
-                    "{{ trans('Net Worth') }}",
-                    "{{ trans('Emergency Fund Gap') }}"
+                    "{{ trans('t').Financial_Health | default('Financial Health') }}",
+                    "{{ trans('t').Net_Worth | default('Net Worth') }} (₦M)",
+                    "{{ trans('t').Emergency_Fund_Gap | default('Emergency Fund Gap') }} (₦M)"
                 ],
                 datasets: [{
-                    label: "{{ trans('Financial Metrics') }}",
+                    label: "{{ trans('t').Financial_Metrics | default('Financial Metrics') }}",
                     data: [
-                        {{ data.financial_health.score if data.financial_health else 0 }},
-                        {{ (data.net_worth.net_worth / 1000000) if data.net_worth else 0 }},
-                        {{ (data.emergency_fund.savings_gap / 1000000) if data.emergency_fund else 0 }}
+                        {{ data.financial_health.score if data.financial_health.score else 0 }},
+                        {{ (data.net_worth.net_worth / 1000000) if data.net_worth.net_worth else 0 }},
+                        {{ (data.emergency_fund.savings_gap / 1000000) if data.emergency_fund.savings_gap else 0 }}
                     ],
-                    backgroundColor: ['#2E7D32', '#0288D1', '#dc3545']
+                    backgroundColor: ['#2E7D32', '#0288D1', '#dc3545'],
+                    borderColor: ['#1B5E20', '#01579B', '#bd2130'],
+                    borderWidth: 1
                 }]
             },
             options: {
                 scales: {
-                    y: { beginAtZero: true }
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: "{{ trans('t').Value | default('Value') }}"
+                        }
+                    }
                 },
-                animation: false
+                plugins: {
+                    legend: { display: true },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                let value = context.parsed.y;
+                                if (context.dataIndex > 0) {
+                                    return `${label}: ₦${(value * 1000000).toLocaleString('en-NG')}`;
+                                }
+                                return `${label}: ${value}`;
+                            }
+                        }
+                    }
+                },
+                animation: false,
+                responsive: true,
+                maintainAspectRatio: false
             }
         });
     });
 </script>
-{% endblock %}
-{% block extra_scripts %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 {% endblock %}
