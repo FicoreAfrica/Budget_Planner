@@ -9,10 +9,10 @@ body {
 .logo-container {
     text-align: center;
     padding: 20px 0;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1); /* Light shadow under header */
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
 .logo-centered {
-    max-width: 150px; /* Default size */
+    max-width: 150px;
 }
 
 /* Section Headers Dark Green */
@@ -22,26 +22,26 @@ body {
 .testimonials-section h2,
 .recommended-learning h2,
 .about-section h2 {
-    color: #2E7D32; /* Dark green */
+    color: #2E7D32;
     font-size: 2.5rem;
-    font-weight: 600; /* Slightly reduced from bold (700) for elegance */
-    text-align: center; /* Ensure centering for consistency */
+    font-weight: 600;
+    text-align: center;
 }
 
-/* Hero (index.html) - Spacious layout with white toolkit text */
+/* Hero (index.html) */
 .hero {
     background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), linear-gradient(135deg, #0288D1, #2E7D32);
     color: white;
-    padding: 40px 16px; /* Increased vertical padding for spaciousness */
+    padding: 40px 16px;
     margin-top: 60px;
     text-align: center;
 }
 .hero h2 {
-    color: white !important; /* Ensure toolkit text is white */
-    margin-bottom: 1.5rem; /* Space between headline and subtext */
+    color: white !important;
+    margin-bottom: 1.5rem;
 }
 .hero p {
-    margin-bottom: 2rem; /* Space between subtext and buttons */
+    margin-bottom: 2rem;
 }
 
 /* Tool Card (index.html) */
@@ -51,13 +51,13 @@ body {
 
 /* Testimonials (index.html) */
 .testimonials-section {
-    background-color: #E3F2FD; /* Light blue background */
-    border: 2px solid #343a40; /* Dark border */
+    background-color: #E3F2FD;
+    border: 2px solid #343a40;
     border-radius: 5px;
 }
 .testimonial {
-    color: #333; /* Darker body text for better contrast */
-    padding: 1.2rem 1rem; /* Responsive padding for mobile */
+    color: #333;
+    padding: 1.2rem 1rem;
 }
 .testimonial .quote {
     color: #0288D1;
@@ -65,14 +65,14 @@ body {
     margin-right: 5px;
 }
 .testimonial .name {
-    color: #0288D1; /* Consistent highlight color for names */
+    color: #0288D1;
     font-weight: bold;
 }
 
 /* Recommended Learning (index.html) */
 .recommended-learning {
-    background-color: #E3F2FD; /* Light blue background */
-    border: 2px solid #343a40; /* Dark border */
+    background-color: #E3F2FD;
+    border: 2px solid #343a40;
     padding: 20px;
     border-radius: 5px;
 }
@@ -100,8 +100,8 @@ body {
 
 /* Why Section (index.html) */
 .why-section {
-    background-color: #E3F2FD; /* Light blue background */
-    border: 2px solid #343a40; /* Dark border */
+    background-color: #E3F2FD;
+    border: 2px solid #343a40;
     padding: 20px;
     border-radius: 5px;
 }
@@ -117,20 +117,29 @@ body {
 
 /* About Section (index.html) */
 .about-section {
-    background: #E3F2FD; /* Light blue background */
-    border: 2px solid #343a40; /* Dark border */
+    background: #E3F2FD;
+    border: 2px solid #343a40;
     padding: 30px 20px;
     border-radius: 5px;
 }
 
+/* Footer Social Icons */
+.social-icons a {
+    color: white !important;
+    margin: 0 10px;
+    font-size: 1rem;
+    text-decoration: none;
+}
+.social-icons a:hover {
+    color: #E3F2FD !important;
+    text-decoration: underline;
+}
+
 /* Mobile Optimizations */
 @media (max-width: 768px) {
-    /* Ensure logo is centered and resized */
     .logo-centered {
-        max-width: 140px; /* Smaller logo on mobile */
+        max-width: 140px;
     }
-
-    /* Reduce header font size on mobile */
     .hero h2,
     .tools-section h2,
     .why-section h2,
@@ -141,45 +150,41 @@ body {
         line-height: 1.6;
         padding: 10px;
     }
-
-    /* Improve section padding */
     .hero,
     .tools-section,
     .testimonials-section,
     .recommended-learning,
     .why-section,
     .about-section {
-        padding: 40px 16px; /* Increased vertical padding for mobile */
+        padding: 40px 16px;
         margin-bottom: 16px;
     }
-
-    /* Consistent CTA buttons */
     .btn-primary {
         padding: 12px 20px;
         font-size: 1rem;
         border-radius: 8px;
         width: 90%;
         margin: 10px auto;
-        display: block; /* Center buttons */
-        background: linear-gradient(135deg, #2E7D32, #0288D1); /* Gradient to match screenshot */
+        display: block;
+        background: linear-gradient(135deg, #2E7D32, #0288D1);
         border: none;
     }
-
-    /* Add more spacing below the last button */
     .btn-primary:last-child {
-        margin-bottom: 40px; /* Increased to 40px for spaciousness */
+        margin-bottom: 40px;
     }
-
-    /* Add spacing between testimonials on mobile */
     .testimonial + .testimonial {
-        margin-top: 1.5rem; /* Vertical space between testimonials */
+        margin-top: 1.5rem;
+    }
+    .social-icons a {
+        font-size: 0.9rem;
+        margin: 0 5px;
     }
 }
 
 /* Desktop Button Hover Effect */
 @media (min-width: 769px) {
     .btn-primary:hover {
-        background: linear-gradient(135deg, #1B5E20, #01579B); /* Darker gradient on hover */
+        background: linear-gradient(135deg, #1B5E20, #01579B);
         transition: background 0.3s ease;
     }
 }
