@@ -28,12 +28,12 @@ from json_store import JsonStorage
 from functools import wraps
 import traceback
 
-# Configure logging with session context
+# Configure basic logging without session context
 logger = logging.getLogger('ficore_app')
 logger.setLevel(logging.DEBUG)
 
-# Formatter with timestamp and session ID
-formatter = logging.Formatter('%(asctime)s - %(name)s - SessionID: %(session_id)s - %(levelname)s - %(message)s')
+# Formatter with timestamp
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 # File handler with fallback
 try:
@@ -51,20 +51,12 @@ console_handler.setLevel(logging.DEBUG)
 console_handler.setFormatter(formatter)
 logger.addHandler(console_handler)
 
-# LoggerAdapter for session context
+# LoggerAdapter for session context (to be applied in request context)
 class SessionAdapter(logging.LoggerAdapter):
     def process(self, msg, kwargs):
         kwargs['extra'] = kwargs.get('extra', {})
         kwargs['extra']['session_id'] = session.get('sid', 'unknown')
         return msg, kwargs
-
-log = SessionAdapter(logger, {})
-
-# Debug: Log directory contents
-log.info(f"Current directory: {os.getcwd()}")
-log.info(f"Directory contents: {os.listdir('.')}")
-if not os.path.exists('data/storage.txt'):
-    log.warning("storage.txt not found in data directory")
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -77,9 +69,9 @@ if os.environ.get('RENDER'):
 try:
     os.makedirs(os.path.dirname(session_dir) or '.', exist_ok=True)
     os.makedirs(session_dir, exist_ok=True)
-    log.info(f"Session directory set to: {session_dir}")
+    logger.info(f"Session directory set to: {session_dir}")
 except Exception as e:
-    log.error(f"Failed to create session directory {session_dir}: {str(e)}", exc_info=True)
+    logger.error(f"Failed to create session directory {session_dir}: {str(e)}", exc_info=True)
     session_dir = 'data/sessions'  # Fallback to local directory
 app.config['SESSION_FILE_DIR'] = session_dir
 app.config['SESSION_TYPE'] = 'filesystem'
@@ -103,7 +95,7 @@ def format_number(value):
     try:
         return f"{float(value):,.2f}" if isinstance(value, (int, float)) else str(value)
     except (ValueError, TypeError) as e:
-        log.warning(f"Error formatting number {value}: {str(e)}")
+        logger.warning(f"Error formatting number {value}: {str(e)}")
         return str(value)
 
 # Session required decorator
@@ -112,9 +104,18 @@ def session_required(f):
     def decorated_function(*args, **kwargs):
         if 'sid' not in session:
             session['sid'] = str(uuid.uuid4())
-            log.info(f"New session initialized: {session['sid']}")
         return f(*args, **kwargs)
     return decorated_function
+
+# Before request handler to log directory contents
+@app.before_request
+def log_directory():
+    global log
+    log = SessionAdapter(logger, {})
+    log.info(f"Current directory: {os.getcwd()}")
+    log.info(f"Directory contents: {os.listdir('.')}")
+    if not os.path.exists('data/storage.txt'):
+        log.warning("storage.txt not found in data directory")
 
 # Translation and context processor
 @app.context_processor
@@ -136,12 +137,12 @@ def inject_translations():
 # General Routes
 @app.route('/')
 def index():
-    log.info("Serving index page")
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
     if 'lang' not in session:
         session['lang'] = 'en'
     t = trans('t')
+    log.info("Serving index page")
     return render_template('index.html', t=t)
 
 @app.route('/set_language/<lang>')
