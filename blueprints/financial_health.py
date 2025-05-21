@@ -183,7 +183,7 @@ def step3():
             try:
                 debt_to_income = (debt / income * 100)
                 savings_rate = ((income - expenses) / income * 100)
-                interest_burden = interest_rate if debt > 0 else 0
+                interest_burden = (interest_rate * debt / 100) if debt > 0 else 0
             except ZeroDivisionError as zde:
                 log.error(f"ZeroDivisionError during metric calculation: {str(zde)}")
                 flash(t("Calculation error: Income cannot be zero."), "danger")
@@ -219,8 +219,6 @@ def step3():
 
             # Store record
             record = {
-                "id": str(uuid.uuid4()),
-                "session_id": session['sid'],
                 "data": {
                     "first_name": step1_data.get('first_name', ''),
                     "email": step1_data.get('email', ''),
@@ -239,10 +237,11 @@ def step3():
                 }
             }
             log.info("Saving financial health record")
-            try:
-                financial_health_storage.append(record, user_email=step1_data.get('email'), session_id=session['sid'])
-            except Exception as storage_error:
-                log.error(f"Failed to save record to storage: {str(storage_error)}")
+            record_id = financial_health_storage.append(record, user_email=step1_data.get('email'), session_id=session['sid'])
+            if record_id:
+                log.info(f"Successfully saved record {record_id} for session {session['sid']}")
+            else:
+                log.error(f"Failed to save record for session {session['sid']}")
                 flash(t("Error saving financial health data. Please try again."), "danger")
                 return render_template('health_score_step3.html', form=form, t=t), 500
 
@@ -288,7 +287,7 @@ def step3():
         log.exception(f"Unexpected error in step3: {str(e)}")
         flash(t("Unexpected error during financial health assessment. Please try again."), "danger")
         return render_template('health_score_step3.html', form=form, t=t), 500
-
+        
 @financial_health_bp.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
     """Display financial health dashboard with comparison to others."""
