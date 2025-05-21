@@ -236,8 +236,9 @@ def step3():
                     "created_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 }
             }
-            session['health_record'] = record
-            log.info(f"Saved financial health record to session for session {session['sid']}")
+            session['health_record'] = record  # Ensure direct assignment
+            log.info(f"Saved financial health record to session for session {session['sid']}: {record}")
+            log.debug(f"Session contents after save: {dict(session)}")
 
             # Send email if requested
             email = step1_data.get('email')
@@ -292,9 +293,16 @@ def dashboard():
     log.info(f"Starting dashboard for session {session['sid']}")
     try:
         # Retrieve user-specific record from session with fallback
-        latest_record = session.get('health_record', {}).get('data', {})
-        records = [(str(uuid.uuid4()), latest_record)] if latest_record else []
-        log.debug(f"Retrieved user records from session: {records}")
+        health_record = session.get('health_record', {})
+        log.debug(f"Session health_record: {health_record}")
+        if not health_record or 'data' not in health_record:
+            log.warning("No valid health record found in session")
+            latest_record = {}
+            records = []
+        else:
+            latest_record = health_record['data']
+            records = [(str(uuid.uuid4()), latest_record)]
+            log.debug(f"Retrieved user records from session: {records}")
 
         # Retrieve all records for comparison (fallback to empty list since storage is unreliable)
         all_records = []
