@@ -1,10 +1,10 @@
 from flask import Blueprint, request, session, redirect, url_for, render_template, flash
 from flask_wtf import FlaskForm
-from wtforms import StringField, FloatField, SelectField, SubmitField
+from wtforms import StringField, FloatField, SelectField, BooleanField, SubmitField
 from wtforms.validators import DataRequired, NumberRange
 from json_store import JsonStorage
 from mailersend_email import send_email
-from translations import trans  # Changed to absolute import
+from translations import trans
 from datetime import datetime
 import logging
 import uuid
@@ -15,14 +15,25 @@ logging.basicConfig(filename='data/storage.txt', level=logging.DEBUG)
 bill_bp = Blueprint('bill', __name__)
 bill_storage = JsonStorage('data/bills.json')
 
-# Form for bill creation and editing
+# Form for bill creation and editing with extended categories
 class BillForm(FlaskForm):
     bill_name = StringField('Bill Name', validators=[DataRequired()])
     amount = FloatField('Amount', validators=[DataRequired(), NumberRange(min=0, max=10000000000)])
     due_date = StringField('Due Date (YYYY-MM-DD)', validators=[DataRequired()])
-    category = SelectField('Category', choices=[('utility', 'Utility'), ('rent', 'Rent'), ('other', 'Other')])
+    category = SelectField('Category', choices=[
+        ('utility', 'Utility'),
+        ('rent', 'Rent'),
+        ('food', 'Food'),
+        ('transport', 'Transport'),
+        ('clothing', 'Clothing'),
+        ('education', 'Education'),
+        ('healthcare', 'Healthcare'),
+        ('entertainment', 'Entertainment'),
+        ('savings', 'Savings/Investments'),
+        ('other', 'Other')
+    ])
     email = StringField('Email')
-    send_email = SelectField('Send Email', choices=[('on', 'Yes'), ('off', 'No')])
+    send_email = BooleanField('Send Email Reminders')
     status = SelectField('Status', choices=[('unpaid', 'Unpaid'), ('paid', 'Paid')], default='unpaid')
     submit = SubmitField('Submit')
 
@@ -32,7 +43,7 @@ def form():
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
     form = BillForm()
-    t = trans('t')  # Get translation dictionary
+    t = trans('t')
     if request.method == 'POST' and form.validate_on_submit():
         try:
             data = form.data
@@ -52,7 +63,7 @@ def form():
                 }
             }
             bill_storage.append(record, user_email=data['email'], session_id=session['sid'])
-            if data['send_email'] == 'on' and data['email']:
+            if data['send_email'] and data['email']:
                 send_email(
                     to_email=data['email'],
                     subject=trans("Bill Reminder"),
@@ -66,11 +77,16 @@ def form():
             logging.exception(f"Error in bill.form: {str(e)}")
             flash(trans("An error occurred while adding the bill."))
             return redirect(url_for('bill.form'))
-    return render_template('bill_form.html', form=form, t=t)
+    try:
+        return render_template('bill_form.html', form=form, t=t)
+    except Exception as e:
+        logging.exception(f"Template rendering error in bill.form: {str(e)}")
+        flash(trans("Error loading the bill form."))
+        return redirect(url_for('index'))
 
 @bill_bp.route('/dashboard')
 def dashboard():
-    """Display user's bills."""
+    """Display user's bills with enhanced details."""
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
     t = trans('t')
@@ -81,7 +97,12 @@ def dashboard():
     except Exception as e:
         logging.exception(f"Error in bill.dashboard: {str(e)}")
         flash(trans("Error loading dashboard."))
-        return render_template('bill_dashboard.html', bills=[], t=t)
+        try:
+            return render_template('bill_dashboard.html', bills=[], t=t)
+        except Exception as render_e:
+            logging.exception(f"Template rendering error in bill.dashboard: {str(render_e)}")
+            flash(trans("Error loading the dashboard template."))
+            return redirect(url_for('index'))
 
 @bill_bp.route('/view_edit', methods=['GET', 'POST'])
 def view_edit():
@@ -159,8 +180,18 @@ def view_edit():
                     flash(trans("Error toggling bill status."))
                     return redirect(url_for('bill.view_edit'))
         
-        return render_template('view_edit_bills.html', bills=bills, form=BillForm(), t=t)
+        try:
+            return render_template('view_edit_bills.html', bills=bills, form=BillForm(), t=t)
+        except Exception as render_e:
+            logging.exception(f"Template rendering error in bill.view_edit: {str(render_e)}")
+            flash(trans("Error loading the view/edit page."))
+            return redirect(url_for('bill.dashboard'))
     except Exception as e:
         logging.exception(f"Error in bill.view_edit: {str(e)}")
         flash(trans("Error loading bills."))
-        return render_template('view_edit_bills.html', bills=[], form=BillForm(), t=t)
+        try:
+            return render_template('view_edit_bills.html', bills=[], form=BillForm(), t=t)
+        except Exception as render_e:
+            logging.exception(f"Template rendering error in bill.view_edit: {str(render_e)}")
+            flash(trans("Error loading the view/edit template."))
+            return redirect(url_for('index'))
