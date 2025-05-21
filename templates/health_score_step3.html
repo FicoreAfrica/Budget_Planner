@@ -1,5 +1,77 @@
 {% extends "base.html" %}
 {% block title %}{{ trans('t').Financial_Health_Score | default('Financial Health Score') }}{% endblock %}
+{% block extra_head %}
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #E3F2FD, #F5F7FA);
+        }
+        .container {
+            max-width: 600px;
+            margin: 2rem auto;
+        }
+        .navbar {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .navbar h1 {
+            color: #0288D1;
+            font-weight: 600;
+        }
+        .navbar p {
+            color: #333;
+        }
+        .card {
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+            border: 2px solid #0288D1;
+        }
+        .card-body {
+            padding: 2rem;
+        }
+        .form-label {
+            font-weight: 600;
+            color: #2E7D32;
+        }
+        .form-control {
+            border-radius: 8px;
+            border: 1px solid #0288D1;
+            padding: 0.75rem;
+        }
+        .form-control:focus {
+            border-color: #2E7D32;
+            box-shadow: 0 0 0 0.2rem rgba(46, 125, 50, 0.25);
+        }
+        .invalid-feedback {
+            color: #D81B60;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #2E7D32, #0288D1);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #1B5E20, #01579B);
+        }
+        .btn-secondary {
+            background: linear-gradient(135deg, #B0BEC5, #78909C);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+        .btn-secondary:hover {
+            background: linear-gradient(135deg, #90A4AE, #607D8B);
+        }
+        @media (max-width: 600px) {
+            .card-body { padding: 1.5rem; }
+            .btn-primary, .btn-secondary { font-size: 0.9rem; padding: 0.5rem 1rem; }
+        }
+    </style>
+{% endblock %}
 {% block content %}
 <div class="container">
     <div class="navbar mb-4">
@@ -22,12 +94,12 @@
                 {{ form.csrf_token }}
                 <div class="mb-3">
                     <label class="form-label">{{ trans('t').Total_Debt | default('Total Debt') }}</label>
-                    {{ form.debt(class="form-control", placeholder=trans('t')['e.g., 200,000'] | default('e.g., 200,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('t').Borrowings_from_banks_friends_colleagues | default('Borrowings from banks, friends, colleagues')}) }}
+                    {{ form.debt(class="form-control number-input", placeholder=trans('t')['e.g., 200,000'] | default('e.g., 200,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('t').Borrowings_from_banks_friends_colleagues | default('Borrowings from banks, friends, colleagues'), 'type': 'text'}) }}
                     <div class="invalid-feedback">{{ trans('t').Debt_must_be_positive | default('Debt must be positive') }}</div>
                 </div>
                 <div class="mb-3">
                     <label class="form-label">{{ trans('t').Average_Interest_Rate | default('Average Interest Rate') }}</label>
-                    {{ form.interest_rate(class="form-control", placeholder=trans('t')['e.g., 5'] | default('e.g., 5'), **{'data-bs-toggle': 'tooltip', 'title': trans('t').Average_interest_rate_on_debts | default('Average interest rate on debts (% per year)')}) }}
+                    {{ form.interest_rate(class="form-control number-input", placeholder=trans('t')['e.g., 5'] | default('e.g., 5'), **{'data-bs-toggle': 'tooltip', 'title': trans('t').Average_interest_rate_on_debts | default('Average interest rate on debts (% per year)'), 'type': 'text'}) }}
                     <div class="invalid-feedback">{{ trans('t').Interest_rate_must_be_positive | default('Interest rate must be positive') }}</div>
                 </div>
                 <div class="d-flex justify-content-between">
@@ -41,14 +113,66 @@
 {% endblock %}
 {% block extra_scripts %}
 <script>
-    document.querySelectorAll('input[type="number"]').forEach(input => {
-        input.addEventListener('input', () => {
-            let value = input.value.replace(/,/g, '');
-            if (input.name === 'debt' && value > 10000000000) {
-                input.value = '10,000,000,000';
+    document.querySelectorAll('.number-input').forEach(input => {
+        // Format number with commas or decimals
+        const formatNumber = (value, isInterestRate = false) => {
+            const cleanValue = value.replace(/[^0-9.]/g, ''); // Allow digits and decimal
+            if (!cleanValue) return '';
+            const num = parseFloat(cleanValue);
+            if (isNaN(num)) return '';
+            if (isInterestRate) {
+                // For interest_rate, allow decimals without commas for whole numbers
+                return num.toLocaleString('en-NG', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+            }
+            return num.toLocaleString('en-NG', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        };
+
+        // Handle input event
+        input.addEventListener('input', (e) => {
+            const cursorPosition = e.target.selectionStart;
+            const oldValue = e.target.value;
+            let cleanValue = e.target.value.replace(/[^0-9.]/g, '');
+            const isInterestRate = input.name === 'interest_rate';
+
+            // Prevent multiple decimals
+            const decimalCount = cleanValue.split('.').length - 1;
+            if (decimalCount > 1) {
+                cleanValue = cleanValue.replace(/\.(?=.*\.)/g, '');
+            }
+
+            // Check for max value (10 billion for debt)
+            const numValue = parseFloat(cleanValue) || 0;
+            if (!isInterestRate && numValue > 10000000000) {
+                cleanValue = '10000000000';
                 alert('{{ trans('t').Input_cannot_exceed_10_billion | default('Input cannot exceed ₦10 billion') }}');
-            } else if (value && input.name === 'debt') {
-                input.value = parseFloat(value).toLocaleString('en-NG');
+            }
+
+            // Format and adjust cursor
+            const formatted = formatNumber(cleanValue, isInterestRate);
+            input.value = formatted;
+
+            // Adjust cursor position
+            const newLength = formatted.length;
+            const oldLength = oldValue.length;
+            const cursorOffset = newLength - oldLength;
+            const newCursorPosition = cursorPosition + cursorOffset;
+            input.setSelectionRange(newCursorPosition, newCursorPosition);
+        });
+
+        // Handle paste event
+        input.addEventListener('paste', (e) => {
+            e.preventDefault();
+            const pasted = (e.clipboardData || window.clipboardData).getData('text');
+            const cleanValue = pasted.replace(/[^0-9.]/g, '');
+            const isInterestRate = input.name === 'interest_rate';
+            input.value = formatNumber(cleanValue, isInterestRate);
+        });
+
+        // Ensure valid input on blur
+        input.addEventListener('blur', () => {
+            if (input.value) {
+                const isInterestRate = input.name === 'interest_rate';
+                input.value = formatNumber(input.value, isInterestRate);
             }
         });
     });
