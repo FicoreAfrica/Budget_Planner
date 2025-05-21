@@ -1,119 +1,141 @@
 {% extends 'base.html' %}
 {% block title %}{{ trans('View and Edit Bills') }}{% endblock %}
 {% block content %}
-<div class="container">
+  <div class="container">
     <div class="navbar mb-4">
-        <h1>{{ trans('View and Edit Bills') }}</h1>
+      <h1>{{ trans('View and Edit Bills') }}</h1>
     </div>
     {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            {% endfor %}
-        {% endif %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
     {% endwith %}
     <div class="card mb-4">
-        <div class="card-body">
-            <div class="mb-3">
-                <label class="form-label">{{ trans('Select Category') }}</label>
-                <select class="form-select" onchange="window.location.href='{{ url_for('bill.view_edit') }}?category='+this.value">
-                    <option value="all" {% if category == 'all' %}selected{% endif %}>{{ trans('All') }}</option>
-                    <option value="utility" {% if category == 'utility' %}selected{% endif %}>{{ trans('Utility') }}</option>
-                    <option value="rent" {% if category == 'rent' %}selected{% endif %}>{{ trans('Rent') }}</option>
-                    <option value="food" {% if category == 'food' %}selected{% endif %}>{{ trans('Food') }}</option>
-                    <option value="transport" {% if category == 'transport' %}selected{% endif %}>{{ trans('Transport') }}</option>
-                    <option value="clothing" {% if category == 'clothing' %}selected{% endif %}>{{ trans('Clothing') }}</option>
-                    <option value="education" {% if category == 'education' %}selected{% endif %}>{{ trans('Education') }}</option>
-                    <option value="healthcare" {% if category == 'healthcare' %}selected{% endif %}>{{ trans('Healthcare') }}</option>
-                    <option value="entertainment" {% if category == 'entertainment' %}selected{% endif %}>{{ trans('Entertainment') }}</option>
-                    <option value="savings" {% if category == 'savings' %}selected{% endif %}>{{ trans('Savings/Investments') }}</option>
-                    <option value="other" {% if category == 'other' %}selected{% endif %}>{{ trans('Other') }}</option>
-                </select>
-            </div>
-            {% if bills %}
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>{{ trans('Bill Name') }}</th>
-                            <th>{{ trans('Amount') }}</th>
-                            <th>{{ trans('Due Date') }}</th>
-                            <th>{{ trans('Status') }}</th>
-                            <th>{{ trans('Actions') }}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for bill_id, bill in bills %}
-                            <tr>
-                                <td>{{ bill.bill_name }}</td>
-                                <td>₦{{ bill.amount | format_number }}</td>
-                                <td>{{ trans('Due') }} {{ bill.due_date }}</td>
-                                <td>
-                                    <form method="POST" action="{{ url_for('bill.view_edit') }}">
-                                        <input type="hidden" name="bill_id" value="{{ bill_id }}">
-                                        <input type="hidden" name="action" value="toggle_status">
-                                        <button type="submit" class="btn btn-link status-{{ 'paid' if bill.status == 'paid' else 'unpaid' }}">
-                                            {{ trans(bill.status|capitalize) }}
-                                        </button>
-                                    </form>
-                                </td>
-                                <td>
-                                    <form method="POST" action="{{ url_for('bill.view_edit') }}" style="display: inline;">
-                                        <input type="hidden" name="bill_id" value="{{ bill_id }}">
-                                        <input type="hidden" name="action" value="edit">
-                                        <button type="submit" class="btn btn-primary btn-sm">{{ trans('Edit') }}</button>
-                                    </form>
-                                    <form method="POST" action="{{ url_for('bill.view_edit') }}" style="display: inline;">
-                                        <input type="hidden" name="bill_id" value="{{ bill_id }}">
-                                        <input type="hidden" name="action" value="delete">
-                                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('{{ trans('Confirm Delete') }}');">{{ trans('Delete') }}</button>
-                                    </form>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            {% else %}
-                <p>{{ trans('No bills found') }}</p>
-            {% endif %}
+      <div class="card-body">
+        <div class="mb-3">
+          <label class="form-label">{{ trans('Select Category') }}</label>
+          <select class="form-select" onchange="window.location.href='{{ url_for('bill.view_edit') }}?category='+this.value">
+            <option value="all" {% if category == 'all' %}selected{% endif %}>{{ trans('All') }}</option>
+            <option value="utilities" {% if category == 'utilities' %}selected{% endif %}>{{ trans('Utilities') }}</option>
+            <option value="rent" {% if category == 'rent' %}selected{% endif %}>{{ trans('Rent') }}</option>
+            <option value="data_internet" {% if category == 'data_internet' %}selected{% endif %}>{{ trans('Data/Internet') }}</option>
+            <option value="ajo_esusu_adashe" {% if category == 'ajo_esusu_adashe' %}selected{% endif %}>{{ trans('Ajo/Esusu/Adashe') }}</option>
+            <option value="food" {% if category == 'food' %}selected{% endif %}>{{ trans('Food') }}</option>
+            <option value="transport" {% if category == 'transport' %}selected{% endif %}>{{ trans('Transport') }}</option>
+            <option value="clothing" {% if category == 'clothing' %}selected{% endif %}>{{ trans('Clothing') }}</option>
+            <option value="education" {% if category == 'education' %}selected{% endif %}>{{ trans('Education') }}</option>
+            <option value="healthcare" {% if category == 'healthcare' %}selected{% endif %}>{{ trans('Healthcare') }}</option>
+            <option value="entertainment" {% if category == 'entertainment' %}selected{% endif %}>{{ trans('Entertainment') }}</option>
+            <option value="airtime" {% if category == 'airtime' %}selected{% endif %}>{{ trans('Airtime') }}</option>
+            <option value="school_fees" {% if category == 'school_fees' %}selected{% endif %}>{{ trans('School Fees') }}</option>
+            <option value="savings_investments" {% if category == 'savings_investments' %}selected{% endif %}>{{ trans('Savings/Investments') }}</option>
+            <option value="other" {% if category == 'other' %}selected{% endif %}>{{ trans('Other') }}</option>
+          </select>
         </div>
+        {% if bills %}
+          <div class="table-responsive">
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th>{{ trans('Bill Name') }}</th>
+                  <th>{{ trans('Amount') }}</th>
+                  <th>{{ trans('Due Date') }}</th>
+                  <th>{{ trans('Status') }}</th>
+                  <th>{{ trans('Actions') }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for bill_id, bill in bills %}
+                  <tr>
+                    <td>{{ bill.bill_name }}</td>
+                    <td>₦{{ bill.amount | format_number }}</td>
+                    <td>{{ trans('Due') }} {{ bill.due_date }}</td>
+                    <td>
+                      <form method="POST" action="{{ url_for('bill.view_edit') }}">
+                        {{ form.csrf_token }}
+                        <input type="hidden" name="bill_id" value="{{ bill_id }}">
+                        <input type="hidden" name="action" value="toggle_status">
+                        <button type="submit" class="btn btn-link status-{{ bill.status }}">{{ trans(bill.status|capitalize) }}</button>
+                      </form>
+                    </td>
+                    <td>
+                      <form method="POST" action="{{ url_for('bill.view_edit') }}" style="display: inline;">
+                        {{ form.csrf_token }}
+                        <input type="hidden" name="bill_id" value="{{ bill_id }}">
+                        <input type="hidden" name="action" value="edit">
+                        <button type="submit" class="btn btn-primary btn-sm">{{ trans('Edit') }}</button>
+                      </form>
+                      <form method="POST" action="{{ url_for('bill.view_edit') }}" style="display: inline;">
+                        {{ form.csrf_token }}
+                        <input type="hidden" name="bill_id" value="{{ bill_id }}">
+                        <input type="hidden" name="action" value="delete">
+                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('{{ trans('Confirm Delete') }}');">{{ trans('Delete') }}</button>
+                      </form>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <p>{{ trans('No bills found') }}</p>
+        {% endif %}
+      </div>
     </div>
     <div class="card mb-4">
-        <div class="card-body">
-            <h3>{{ trans('Edit Bill') }}</h3>
-            <form method="POST" action="{{ url_for('bill.view_edit') }}">
-                {{ form.csrf_token }}
-                <input type="hidden" name="action" value="edit">
-                <input type="hidden" name="bill_id" value="{{ request.form.bill_id or '' }}">
-                <div class="mb-3">
-                    <label class="form-label">{{ trans('Bill Name') }}</label>
-                    {{ form.bill_name(class="form-control", placeholder=trans('Enter bill name'), value=request.form.bill_name or '') }}
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">{{ trans('Amount') }}</label>
-                    {{ form.amount(class="form-control", placeholder=trans('Enter amount'), value=request.form.amount or '') }}
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">{{ trans('Due Date (YYYY-MM-DD)') }}</label>
-                    {{ form.due_date(class="form-control", placeholder="YYYY-MM-DD", value=request.form.due_date or '') }}
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">{{ trans('Category') }}</label>
-                    {{ form.category(class="form-select") }}
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">{{ trans('Status') }}</label>
-                    {{ form.status(class="form-select") }}
-                </div>
-                <button type="submit" class="btn btn-primary">{{ trans('Save Bill') }}</button>
-            </form>
-        </div>
+      <div class="card-body">
+        <h3>{{ trans('Edit Bill') }}</h3>
+        <form method="POST" action="{{ url_for('bill.view_edit') }}">
+          {{ form.csrf_token }}
+          <input type="hidden" name="action" value="edit">
+          <input type="hidden" name="bill_id" value="{{ request.form.bill_id or '' }}">
+          <div class="mb-3">
+            <label class="form-label">{{ trans('First Name') }}</label>
+            {{ form.first_name(class="form-control", placeholder=trans('e.g., Chukwuma'), value=request.form.first_name or '') }}
+            <div class="invalid-feedback">{{ trans('First name is required') }}</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">{{ trans('Bill Name') }}</label>
+            {{ form.bill_name(class="form-control", placeholder=trans('e.g., NEPA, MTN Data, Ajo Contribution'), value=request.form.bill_name or '') }}
+            <div class="invalid-feedback">{{ trans('Bill name is required') }}</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">{{ trans('Amount') }}</label>
+            {{ form.amount(class="form-control", placeholder=trans('e.g., ₦5000'), value=request.form.amount or '') }}
+            <div class="invalid-feedback">{{ trans('Valid amount is required') }}</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">{{ trans('Due Date (YYYY-MM-DD)') }}</label>
+            {{ form.due_date(class="form-control", placeholder="YYYY-MM-DD", value=request.form.due_date or '') }}
+            <div class="invalid-feedback">{{ trans('Valid due date is required') }}</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">{{ trans('Frequency') }}</label>
+            {{ form.frequency(class="form-select") }}
+            <div class="invalid-feedback">{{ trans('Frequency is required') }}</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">{{ trans('Category') }}</label>
+            {{ form.category(class="form-select") }}
+            <div class="invalid-feedback">{{ trans('Category is required') }}</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">{{ trans('Status') }}</label>
+            {{ form.status(class="form-select") }}
+            <div class="invalid-feedback">{{ trans('Status is required') }}</div>
+          </div>
+          <button type="submit" class="btn btn-primary">{{ trans('Save Bill') }}</button>
+        </form>
+      </div>
     </div>
     <div class="d-flex justify-content-between">
-        <a href="{{ url_for('bill.form') }}" class="btn btn-secondary">{{ trans('Back') }}</a>
-        <a href="{{ url_for('bill.dashboard') }}" class="btn btn-primary">{{ trans('Go to Dashboard') }}</a>
+      <a href="{{ url_for('bill.form') }}" class="btn btn-secondary">{{ trans('Back') }}</a>
+      <a href="{{ url_for('bill.dashboard') }}" class="btn btn-primary">{{ trans('Go to Dashboard') }}</a>
     </div>
-</div>
+  </div>
 {% endblock %}
