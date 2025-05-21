@@ -45,10 +45,50 @@ class Step2Form(FlaskForm):
     expenses = FloatField('Monthly Expenses', validators=[DataRequired(message='Expenses are required'), NumberRange(min=0, max=10000000000, message='Expenses cannot exceed ₦10 billion')])
     submit = SubmitField('Next')
 
+    def validate_income(self, field):
+        if field.data is not None:
+            try:
+                # Remove commas and convert to float
+                cleaned_data = str(field.data).replace(',', '')
+                field.data = float(cleaned_data)
+            except ValueError:
+                log.error(f"Invalid income input: {field.data}")
+                raise ValidationError('Income must be a valid number.')
+
+    def validate_expenses(self, field):
+        if field.data is not None:
+            try:
+                # Remove commas and convert to float
+                cleaned_data = str(field.data).replace(',', '')
+                field.data = float(cleaned_data)
+            except ValueError:
+                log.error(f"Invalid expenses input: {field.data}")
+                raise ValidationError('Expenses must be a valid number.')
+
 class Step3Form(FlaskForm):
     debt = FloatField('Total Debt', validators=[Optional(), NumberRange(min=0, max=10000000000, message='Debt cannot exceed ₦10 billion')])
     interest_rate = FloatField('Average Interest Rate', validators=[Optional(), NumberRange(min=0, message='Interest rate must be positive')])
     submit = SubmitField('Submit')
+
+    def validate_debt(self, field):
+        if field.data is not None:
+            try:
+                # Remove commas and convert to float
+                cleaned_data = str(field.data).replace(',', '')
+                field.data = float(cleaned_data)
+            except ValueError:
+                log.error(f"Invalid debt input: {field.data}")
+                raise ValidationError('Debt must be a valid number.')
+
+    def validate_interest_rate(self, field):
+        if field.data is not None:
+            try:
+                # Remove commas and convert to float
+                cleaned_data = str(field.data).replace(',', '')
+                field.data = float(cleaned_data)
+            except ValueError:
+                log.error(f"Invalid interest rate input: {field.data}")
+                raise ValidationError('Interest rate must be a valid number.')
 
 @financial_health_bp.route('/step1', methods=['GET', 'POST'])
 def step1():
@@ -89,8 +129,12 @@ def step2():
                 log.warning(f"Form validation failed: {form.errors}")
                 flash(t("Please correct the errors in the form."), "danger")
                 return render_template('health_score_step2.html', form=form, t=t)
-            session['health_step2'] = form.data
-            log.debug(f"Step2 form data: {form.data}")
+            session['health_step2'] = {
+                'income': float(form.income.data),
+                'expenses': float(form.expenses.data),
+                'submit': form.submit.data
+            }
+            log.debug(f"Step2 form data: {session['health_step2']}")
             return redirect(url_for('financial_health.step3'))
         return render_template('health_score_step2.html', form=form, t=t)
     except Exception as e:
@@ -115,7 +159,11 @@ def step3():
                 return render_template('health_score_step3.html', form=form, t=t)
 
             # Extract and validate data
-            data = form.data
+            data = {
+                'debt': float(form.debt.data) if form.debt.data is not None else None,
+                'interest_rate': float(form.interest_rate.data) if form.interest_rate.data is not None else None,
+                'submit': form.submit.data
+            }
             step1_data = session.get('health_step1', {})
             step2_data = session.get('health_step2', {})
             log.debug(f"Step1 data: {step1_data}")
@@ -175,6 +223,7 @@ def step3():
             # Store record
             record = {
                 "id": str(uuid.uuid4()),
+                "session_id": session['sid'],
                 "data": {
                     "first_name": step1_data.get('first_name', ''),
                     "email": step1_data.get('email', ''),
@@ -245,17 +294,44 @@ def step3():
 
 @financial_health_bp.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
-    """Display financial health dashboard."""
+    """Display financial health dashboard with comparison to others."""
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
     t_dict = trans('t')  # Get the translation dictionary
     t = lambda key: t_dict.get(key, key)  # Create a callable to lookup translations
     log.info(f"Starting dashboard for session {session['sid']}")
     try:
+        # Retrieve user-specific records
         user_data = financial_health_storage.filter_by_session(session['sid'])
         records = [(record["id"], record["data"]) for record in user_data]
         latest_record = records[-1][1] if records else {}
-        log.debug(f"Retrieved records: {records}")
+        log.debug(f"Retrieved user records: {len(records)}")
+
+        # Retrieve all records for comparison
+        all_records = financial_health_storage.get_all()
+        total_users = len(all_records)
+        log.debug(f"Total users: {total_users}")
+
+        # Calculate rank and average score
+        rank = total_users  # Default to last place if no records
+        average_score = 0
+        if all_records and latest_record:
+            # Sort records by score (descending)
+            sorted_records = sorted(
+                all_records,
+                key=lambda x: x["data"].get("score", 0),
+                reverse=True
+            )
+            # Find user's rank (1-based indexing)
+            user_score = latest_record.get("score", 0)
+            for i, record in enumerate(sorted_records, 1):
+                if record["data"].get("score", 0) <= user_score and record["session_id"] == session['sid']:
+                    rank = i
+                    break
+            # Calculate average score
+            scores = [record["data"].get("score", 0) for record in all_records]
+            average_score = sum(scores) / total_users if total_users > 0 else 0
+            log.debug(f"User rank: {rank}, Average score: {average_score}")
 
         # Generate insights and tips
         insights = []
@@ -274,6 +350,17 @@ def dashboard():
                 insights.append(t("Great savings rate! Explore investment options like Ajo or fixed deposits."))
             if latest_record.get('interest_burden', 0) > 10:
                 insights.append(t("High interest burden. Refinance or pay off high-interest loans."))
+            if total_users >= 5:
+                if rank <= total_users * 0.1:
+                    insights.append(t("You're in the top 10% of users! Keep up the excellent financial habits."))
+                elif rank <= total_users * 0.3:
+                    insights.append(t("You're in the top 30%. Great work, aim for the top 10%!"))
+                else:
+                    insights.append(t("You're below the top 30%. Try our Budgeting Basics course to improve your score."))
+
+        # Handle case with insufficient data for comparison
+        if total_users < 5:
+            insights.append(t("Not enough users for comparison yet. Invite others to join!"))
 
         return render_template(
             'health_score_dashboard.html',
@@ -281,6 +368,9 @@ def dashboard():
             latest_record=latest_record,
             insights=insights,
             tips=tips,
+            rank=rank,
+            total_users=total_users,
+            average_score=average_score,
             t=t
         )
     except Exception as e:
@@ -292,5 +382,8 @@ def dashboard():
             latest_record={},
             insights=[],
             tips=[],
+            rank=0,
+            total_users=0,
+            average_score=0,
             t=t
         ), 500
