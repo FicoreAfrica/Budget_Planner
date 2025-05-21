@@ -90,7 +90,7 @@
     {% endwith %}
     <div class="card">
         <div class="card-body">
-            <form method="POST" action="{{ url_for('financial_health.step3') }}">
+            <form method="POST" action="{{ url_for('financial_health.step3') }}" id="step3Form">
                 {{ form.csrf_token }}
                 <div class="mb-3">
                     <label class="form-label">{{ trans('t').Total_Debt | default('Total Debt') }}</label>
@@ -114,44 +114,30 @@
 {% block extra_scripts %}
 <script>
     document.querySelectorAll('.number-input').forEach(input => {
-        // Format number with commas or decimals
-        const formatNumber = (value, isInterestRate = false) => {
-            const cleanValue = value.replace(/[^0-9.]/g, ''); // Allow digits and decimal
+        const isInterestRate = input.name === 'interest_rate';
+        const formatNumber = (value) => {
+            const cleanValue = value.replace(/[^0-9.]/g, '');
             if (!cleanValue) return '';
             const num = parseFloat(cleanValue);
             if (isNaN(num)) return '';
-            if (isInterestRate) {
-                // For interest_rate, allow decimals without commas for whole numbers
-                return num.toLocaleString('en-NG', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
-            }
-            return num.toLocaleString('en-NG', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+            return num.toLocaleString('en-NG', { minimumFractionDigits: 0, maximumFractionDigits: isInterestRate ? 2 : 0 });
         };
 
-        // Handle input event
         input.addEventListener('input', (e) => {
             const cursorPosition = e.target.selectionStart;
             const oldValue = e.target.value;
             let cleanValue = e.target.value.replace(/[^0-9.]/g, '');
-            const isInterestRate = input.name === 'interest_rate';
-
-            // Prevent multiple decimals
             const decimalCount = cleanValue.split('.').length - 1;
             if (decimalCount > 1) {
                 cleanValue = cleanValue.replace(/\.(?=.*\.)/g, '');
             }
-
-            // Check for max value (10 billion for debt)
             const numValue = parseFloat(cleanValue) || 0;
             if (!isInterestRate && numValue > 10000000000) {
                 cleanValue = '10000000000';
                 alert('{{ trans('t').Input_cannot_exceed_10_billion | default('Input cannot exceed ₦10 billion') }}');
             }
-
-            // Format and adjust cursor
-            const formatted = formatNumber(cleanValue, isInterestRate);
+            const formatted = formatNumber(cleanValue);
             input.value = formatted;
-
-            // Adjust cursor position
             const newLength = formatted.length;
             const oldLength = oldValue.length;
             const cursorOffset = newLength - oldLength;
@@ -159,22 +145,39 @@
             input.setSelectionRange(newCursorPosition, newCursorPosition);
         });
 
-        // Handle paste event
         input.addEventListener('paste', (e) => {
             e.preventDefault();
             const pasted = (e.clipboardData || window.clipboardData).getData('text');
             const cleanValue = pasted.replace(/[^0-9.]/g, '');
-            const isInterestRate = input.name === 'interest_rate';
-            input.value = formatNumber(cleanValue, isInterestRate);
+            input.value = formatNumber(cleanValue);
         });
 
-        // Ensure valid input on blur
         input.addEventListener('blur', () => {
             if (input.value) {
-                const isInterestRate = input.name === 'interest_rate';
-                input.value = formatNumber(input.value, isInterestRate);
+                input.value = formatNumber(input.value);
             }
         });
+    });
+
+    document.getElementById('step3Form').addEventListener('submit', (e) => {
+        const inputs = document.querySelectorAll('.number-input');
+        let valid = true;
+        inputs.forEach(input => {
+            if (input.value) {
+                const value = input.value.replace(/,/g, '');
+                if (isNaN(parseFloat(value))) {
+                    input.classList.add('is-invalid');
+                    valid = false;
+                } else {
+                    input.classList.remove('is-invalid');
+                    input.value = parseFloat(value).toString();
+                }
+            }
+        });
+        if (!valid) {
+            e.preventDefault();
+            alert('{{ trans('t').Please_enter_valid_numbers | default('Please enter valid numbers') }}');
+        }
     });
 </script>
 {% endblock %}
