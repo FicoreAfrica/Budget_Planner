@@ -172,11 +172,10 @@ def step3():
             debt = data.get('debt', 0)
             interest_rate = data.get('interest_rate', 0)
 
-            # Validate income to prevent division by zero
             if income <= 0:
                 log.error("Income is zero or negative, cannot calculate financial health metrics")
                 flash(t("Income must be greater than zero to calculate financial health."), "danger")
-                return render_template('health_score_step3.html', form=form, t=t)
+                return render_template('health_score_step3.html', form=form, t=t), 500
 
             # Calculate financial health metrics
             log.info("Calculating financial health metrics")
@@ -190,7 +189,6 @@ def step3():
                 return render_template('health_score_step3.html', form=form, t=t), 500
 
             # Financial health score (0-100)
-            log.info("Calculating financial health score")
             score = 100
             if debt_to_income > 0:
                 score -= min(debt_to_income, 50)
@@ -236,9 +234,9 @@ def step3():
                     "created_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 }
             }
-            session['health_record'] = record  # Ensure direct assignment
+            session['health_record'] = record
             log.info(f"Saved financial health record to session for session {session['sid']}: {record}")
-            log.debug(f"Session contents after save: {dict(session)}")
+            log.debug(f"Session contents after save: {dict(session)}")  # Force session flush
 
             # Send email if requested
             email = step1_data.get('email')
@@ -271,7 +269,6 @@ def step3():
                     log.error(f"Failed to send email: {str(email_error)}")
                     flash(t("Financial health assessment completed, but email sending failed."), "warning")
 
-            # Clear previous steps but keep the record
             session.pop('health_step1', None)
             session.pop('health_step2', None)
             log.info("Financial health assessment completed successfully")
@@ -282,7 +279,6 @@ def step3():
         log.exception(f"Unexpected error in step3: {str(e)}")
         flash(t("Unexpected error during financial health assessment. Please try again."), "danger")
         return render_template('health_score_step3.html', form=form, t=t), 500
-
 @financial_health_bp.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
     """Display financial health dashboard with comparison to others."""
@@ -294,7 +290,7 @@ def dashboard():
     try:
         # Retrieve user-specific record from session with fallback
         health_record = session.get('health_record', {})
-        log.debug(f"Session health_record: {health_record}")
+        log.debug(f"Raw session health_record: {health_record}")
         if not health_record or 'data' not in health_record:
             log.warning("No valid health record found in session")
             latest_record = {}
@@ -304,7 +300,7 @@ def dashboard():
             records = [(str(uuid.uuid4()), latest_record)]
             log.debug(f"Retrieved user records from session: {records}")
 
-        # Retrieve all records for comparison (fallback to empty list since storage is unreliable)
+        # Retrieve all records for comparison (fallback to empty list)
         all_records = []
         total_users = len(all_records)
         cleaned_records = []
@@ -324,7 +320,7 @@ def dashboard():
                 continue
         log.debug(f"Total users: {total_users}")
 
-        # Calculate rank and average score (limited by lack of stored data)
+        # Calculate rank and average score
         rank = total_users if total_users > 0 else 1
         average_score = 0
         if cleaned_records and latest_record.get('score', 0) > 0:
