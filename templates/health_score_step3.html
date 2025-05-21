@@ -106,6 +106,7 @@
                     <a href="{{ url_for('financial_health.step2') }}" class="btn btn-secondary">{{ trans('t').Back | default('Back') }}</a>
                     <button type="submit" class="btn btn-primary">{{ trans('t').Calculate_Health_Score | default('Calculate Health Score') }}</button>
                 </div>
+                <input type="hidden" id="debugData" name="debugData">
             </form>
         </div>
     </div>
@@ -162,6 +163,7 @@
     document.getElementById('step3Form').addEventListener('submit', (e) => {
         const inputs = document.querySelectorAll('.number-input');
         let valid = true;
+        let debugData = {};
         inputs.forEach(input => {
             if (input.value) {
                 const value = input.value.replace(/,/g, '');
@@ -170,10 +172,15 @@
                     valid = false;
                 } else {
                     input.classList.remove('is-invalid');
-                    input.value = parseFloat(value).toString();
+                    input.value = parseFloat(value).toString(); // Send clean number to server
+                    debugData[input.name] = input.value;
                 }
+            } else {
+                input.value = '0'; // Default to 0 for optional fields
+                debugData[input.name] = '0';
             }
         });
+        document.getElementById('debugData').value = JSON.stringify(debugData);
         if (!valid) {
             e.preventDefault();
             alert('{{ trans('t').Please_enter_valid_numbers | default('Please enter valid numbers') }}');
