@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="{{ session.language | default('en') }}">
+<html lang="{{ session.lang | default('en') }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ trans['Ficore Africa'] }} | {% block title %}{% endblock %}</title>
+    <title>{{ trans('t').Ficore_Africa | default('Ficore Africa') }} | {% block title %}{% endblock %}</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <!-- Font Awesome 6.4 -->
@@ -42,19 +42,34 @@
             border: none;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
-        footer a:hover {
-            color: #01579B !important;
-            text-decoration: underline !important;
-        }
         @keyframes gradientShift {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
+        .header-message {
+            background: linear-gradient(90deg, #0288D1, #2E7D32);
+            color: white;
+            text-align: center;
+            padding: 10px;
+            font-size: 1.2rem;
+            animation: fadeInOut 6s ease-in-out infinite;
+        }
+        @keyframes fadeInOut {
+            0% { opacity: 0; }
+            20% { opacity: 1; }
+            80% { opacity: 1; }
+            100% { opacity: 0; }
+        }
     </style>
     {% block extra_head %}{% endblock %}
 </head>
 <body>
+    <!-- Header Message -->
+    <div class="header-message">
+        {{ trans('t').Welcome_to_Ficore_Africa_Tools_Suite | default('Welcome to Ficore Africa Tools Suite: Use Ficore to Track your income, net worth, budgets, and bills, to grow your money with confidence.') }}
+    </div>
+
     <!-- Navigation Bar -->
     <nav class="navbar navbar-expand-lg">
         <div class="container-fluid">
@@ -65,35 +80,35 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('index') }}">{{ trans['Home'] }}</a>
+                        <a class="nav-link" href="{{ url_for('index') }}">{{ trans('t').Home | default('Home') }}</a>
                     </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="toolsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            {{ trans['Tools'] }}
+                            {{ trans('t').Tools | default('Tools') }}
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="toolsDropdown">
-                            <li><a class="dropdown-item" href="{{ url_for('financial_health.step1') }}">{{ trans['Financial Health Score'] }}</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('budget.step1') }}">{{ trans['Budget Planner'] }}</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('quiz.step1') }}">{{ trans['Personality Quiz'] }}</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('bill.form') }}">{{ trans['Bill Planner'] }}</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('net_worth.step1') }}">{{ trans['Net Worth Calculator'] }}</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('emergency_fund.step1') }}">{{ trans['Emergency Fund Calculator'] }}</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('financial_health.step1') }}">{{ trans('t').Financial_Health_Score | default('Financial Health Score') }}</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('budget.step1') }}">{{ trans('t').Budget_Planner | default('Budget Planner') }}</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('quiz.step1') }}">{{ trans('t').Personality_Quiz | default('Personality Quiz') }}</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('bill.bill_form') }}">{{ trans('t').Bill_Planner | default('Bill Planner') }}</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('net_worth.step1') }}">{{ trans('t').Net_Worth_Calculator | default('Net Worth Calculator') }}</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('emergency_fund.step1') }}">{{ trans('t').Emergency_Fund_Calculator | default('Emergency Fund Calculator') }}</a></li>
                         </ul>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('general_dashboard') }}">{{ trans['General Dashboard'] }}</a>
+                        <a class="nav-link" href="{{ url_for('general_dashboard') }}">{{ trans('t').General_Dashboard | default('General Dashboard') }}</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ FEEDBACK_FORM_URL }}" target="_blank">{{ trans['Feedback'] }}</a>
+                        <a class="nav-link" href="{{ FEEDBACK_FORM_URL }}" target="_blank">{{ trans('t').Feedback | default('Feedback') }}</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('logout') }}">{{ trans['Logout'] }}</a>
+                        <a class="nav-link" href="{{ url_for('logout') }}">{{ trans('t').Logout | default('Logout') }}</a>
                     </li>
                     <li class="nav-item">
-                        <form action="{{ url_for('index') }}" method="GET" class="d-flex">
-                            <select name="language" onchange="this.form.submit()" aria-label="{{ trans['Choose your language'] }}">
-                                <option value="en" {% if session.language == 'en' %}selected{% endif %}>{{ trans['English'] }}</option>
-                                <option value="ha" {% if session.language == 'ha' %}selected{% endif %}>{{ trans['Hausa'] }}</option>
+                        <form action="{{ url_for('set_language') }}" method="GET" class="d-flex">
+                            <select name="lang" onchange="this.form.submit()" aria-label="{{ trans('t').Choose_your_language | default('Choose your language') }}">
+                                <option value="en" {% if session.lang == 'en' %}selected{% endif %}>{{ trans('t').English | default('English') }}</option>
+                                <option value="ha" {% if session.lang == 'ha' %}selected{% endif %}>{{ trans('t').Hausa | default('Hausa') }}</option>
                             </select>
                         </form>
                     </li>
@@ -120,29 +135,36 @@
     </div>
 
     <!-- Footer -->
-    <footer class="footer mt-5">
-        <div class="container text-center">
-            <p>{{ trans['About Ficore Africa'] }}: {{ trans['Empowering financial growth across Africa since 2025'] }}</p>
-            <div class="social-icons">
-                <a href="{{ LINKEDIN_URL }}" target="_blank" aria-label="{{ trans['Connect on LinkedIn'] }}"><i class="fab fa-linkedin"></i></a>
-                <a href="{{ TWITTER_URL }}" target="_blank" aria-label="{{ trans['Follow on Twitter'] }}"><i class="fab fa-x-twitter"></i></a>
-                <a href="{{ FACEBOOK_URL }}" target="_blank" aria-label="{{ trans['Follow on Facebook'] }}"><i class="fab fa-facebook"></i></a>
+    <footer class="footer mt-5" style="background: linear-gradient(90deg, #003087, #004D40); color: white;">
+        <div class="container text-center py-4">
+            <p>{{ trans('t').About_Ficore_Africa | default('About Ficore Africa') }}: {{ trans('t').Empowering_financial_growth_across_Africa_since_2025 | default('Empowering financial growth across Africa since 2025') }}</p>
+            <div class="social-icons d-flex justify-content-center gap-3">
+                <a href="{{ LINKEDIN_URL }}" target="_blank" aria-label="{{ trans('t').Connect_on_LinkedIn | default('Connect on LinkedIn') }}" class="d-flex align-items-center text-white">
+                    <i class="fab fa-linkedin me-1"></i> LinkedIn
+                </a>
+                <a href="{{ TWITTER_URL }}" target="_blank" aria-label="{{ trans('t').Follow_on_Twitter | default('Follow on Twitter') }}" class="d-flex align-items-center text-white">
+                    <i class="fab fa-x-twitter me-1"></i> Twitter
+                </a>
+                <a href="{{ FACEBOOK_URL }}" target="_blank" aria-label="{{ trans('t').Follow_on_Facebook | default('Follow on Facebook') }}" class="d-flex align-items-center text-white">
+                    <i class="fab fa-facebook me-1"></i> Facebook
+                </a>
             </div>
             <div class="footer-buttons mt-3">
-                <a href="/cdn-cgi/l/email-protection#8fe9e6ece0fdeaeee9fde6eceecfe8e2eee6e3a1ece0e2"><i class="fas fa-envelope"></i> {{ trans['Contact Us'] }}</a>
-                <a href="{{ FEEDBACK_FORM_URL }}" target="_blank"><i class="fas fa-comment"></i> {{ trans['Provide Feedback'] }}</a>
-                <a href="{{ WAITLIST_FORM_URL }}" target="_blank"><i class="fas fa-users"></i> {{ trans['Join Waitlist'] }}</a>
-                <a href="{{ CONSULTANCY_FORM_URL }}" target="_blank"><i class="fas fa-briefcase"></i> {{ trans['Book Consultancy'] }}</a>
-                <a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> {{ trans['Logout'] }}</a>
+                <a href="/cdn-cgi/l/email-protection#8fe9e6ece0fdeaeee9fde6eceecfe8e2eee6e3a1ece0e2" class="text-white"><i class="fas fa-envelope"></i> {{ trans('t').Contact_Us | default('Contact Us') }}</a>
+                <a href="{{ FEEDBACK_FORM_URL }}" target="_blank" class="text-white"><i class="fas fa-comment"></i> {{ trans('t').Provide_Feedback | default('Provide Feedback') }}</a>
+                <a href="{{ WAITLIST_FORM_URL }}" target="_blank" class="text-white"><i class="fas fa-users"></i> {{ trans('t').Join_Waitlist | default('Join Waitlist') }}</a>
+                <a href="{{ CONSULTANCY_FORM_URL }}" target="_blank" class="text-white"><i class="fas fa-briefcase"></i> {{ trans('t').Book_Consultancy | default('Book Consultancy') }}</a>
+                <a href="{{ url_for('logout') }}" class="text-white"><i class="fas fa-sign-out-alt"></i> {{ trans('t').Logout | default('Logout') }}</a>
             </div>
         </div>
     </footer>
 
     <!-- Bootstrap JS -->
-    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR/Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR/Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js" integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy" crossorigin="anonymous"></script>
     <!-- Custom JS -->
     <script src="{{ url_for('static', filename='js/interactivity.js') }}"></script>
     {% block extra_scripts %}{% endblock %}
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'942d8ce17aade3c3',t:'MTc0Nzc2MjEwNC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>
