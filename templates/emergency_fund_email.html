@@ -1,67 +1,60 @@
-<script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
-
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
-                var filteredData = jsonData.filter(row => row.some(filledCell));
-
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
-                var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                );
-                // Fallback
-                if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
-                }
-
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
-            }
-        }
-        return gk_fileData[filename] || "";
-        }
-        </script><!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="{{ session.get('lang', 'en') }}">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ t('Emergency Fund Calculator') }}</title>
+    <title>{{ trans('t').Your_Emergency_Fund_Plan | default('Your Emergency Fund Plan') }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; color: #333; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #1E7F71; color: white; padding: 10px; text-align: center; }
+        .content { padding: 20px; border: 1px solid #ddd; }
+        .footer { text-align: center; font-size: 12px; color: #777; padding: 10px; }
+        a { color: #1E7F71; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+    </style>
 </head>
 <body>
-    <h1>{{ t('Dear') }} {{ data.first_name or 'User' }},</h1>
-    <p>{{ t('Here is your Emergency Fund summary.') }}</p>
-    <p>{{ t('Recommended Fund') }}: ₦{{ data.recommended_fund | format_number }}</p>
-    <p>{{ t('Monthly Expenses') }}: ₦{{ data.expenses | format_number }}</p>
-    <p>{{ t('Current Savings') }}: ₦{{ data.current_savings | format_number }}</p>
-    <p>{{ t('Savings Gap') }}: ₦{{ data.savings_gap | format_number }}</p>
-    <h2>{{ t('Recommendations') }}</h2>
-    <ul>
-        {% if data.savings_gap > 0 %}
-            <li>{{ t('Increase savings to close the emergency fund gap.') }}</li>
-        {% else %}
-            <li>{{ t('Maintain or grow your emergency fund for stability.') }}</li>
-        {% endif %}
-        <li>{{ t('Aim for 3-6 months of expenses in your fund.') }}</li>
-    </ul>
-    <p><a href="{{ url_for('emergency_fund.step1') }}">{{ t('Recalculate Emergency Fund') }}</a></p>
-    <p>{{ t('Thank you for choosing Ficore Africa!') }}</p>
-    <footer>{{ t('Powered by Ficore Africa') }}</footer>
+    <div class="container">
+        <div class="header">
+            <h1>{{ trans('t').Emergency_Fund_Calculator | default('Emergency Fund Calculator') }}</h1>
+        </div>
+        <div class="content">
+            <p>{{ trans('t').Dear | default('Dear') }} {{ data.first_name or 'User' }},</p>
+            <p>{{ trans('t').Here_is_your_emergency_fund_summary | default('Here is your emergency fund summary') }}</p>
+            <h2>{{ trans('t').Fund_Summary | default('Fund Summary') }}</h2>
+            <p>{{ trans('t').Created_At | default('Created At') }}: {{ data.created_at }}</p>
+            <p>{{ trans('t').Monthly_Expenses | default('Monthly Expenses') }}: ₦{{ data.monthly_expenses | format_number }}</p>
+            <p>{{ trans('t').Current_Savings | default('Current Savings') }}: ₦{{ data.current_savings | format_number }}</p>
+            <p>{{ trans('t').Target_Savings_3_Months | default('Target Savings (3 Months)') }}: ₦{{ data.target_savings_3m | format_number }}</p>
+            <p>{{ trans('t').Target_Savings_6_Months | default('Target Savings (6 Months)') }}: ₦{{ data.target_savings_6m | format_number }}</p>
+            <p>{{ trans('t').Savings_Gap_3_Months | default('Savings Gap (3 Months)') }}: ₦{{ data.savings_gap_3m | format_number }}</p>
+            <p>{{ trans('t').Savings_Gap_6_Months | default('Savings Gap (6 Months)') }}: ₦{{ data.savings_gap_6m | format_number }}</p>
+            <h3>{{ trans('t').Badges | default('Badges') }}</h3>
+            {% if data.badges %}
+                <ul>
+                    {% for badge in data.badges %}
+                        <li>{{ trans('t')[badge] | default(badge) }}</li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>{{ trans('t').No_badges_earned_yet | default('No badges earned yet') }}</p>
+            {% endif %}
+            <h3>{{ trans('t').Recommendations | default('Recommendations') }}</h3>
+            <ul>
+                {% if data.savings_gap_6m > 0 %}
+                    <li>{{ trans('t').Increase_savings_to_close_6_month_gap | default('Increase savings to close the 6-month emergency fund gap') }}</li>
+                {% else %}
+                    <li>{{ trans('t').Maintain_or_grow_fund | default('Maintain or grow your emergency fund for stability') }}</li>
+                {% endif %}
+                <li>{{ trans('t').Use_apps_like_PiggyVest | default('Use apps like PiggyVest or Cowrywise to automate savings') }}</li>
+                <li>{{ trans('t').Join_Ajo_Esusu_Adashe_groups | default('Join Ajo/Esusu/Adashe groups for disciplined saving habits') }}</li>
+            </ul>
+            <p><a href="{{ data.cta_url }}">{{ trans('t').View_Dashboard | default('View Dashboard') }}</a></p>
+            <p>{{ trans('t').Thank_you_for_using_Ficore_Africa | default('Thank you for using Ficore Africa') }}</p>
+        </div>
+        <div class="footer">
+            <p>{{ trans('t').Powered_by_Ficore_Africa | default('Powered by Ficore Africa') }}</p>
+        </div>
+    </div>
 </body>
 </html>
