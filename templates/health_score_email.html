@@ -1,69 +1,49 @@
-<script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
-
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
-                var filteredData = jsonData.filter(row => row.some(filledCell));
-
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
-                var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                );
-                // Fallback
-                if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
-                }
-
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
-            }
-        }
-        return gk_fileData[filename] || "";
-        }
-        </script><!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="{{ session.get('lang', 'en') }}">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ t('Financial Health Score') }}</title>
+    <title>{{ trans('t').Your_Financial_Health_Report | default('Your Financial Health Report') }}</title>
 </head>
 <body>
-    <h1>{{ t('Dear') }} {{ data.first_name or 'User' }},</h1>
-    <p>{{ t('Here is your Financial Health Score summary.') }}</p>
-    <p>{{ t('Your Score') }}: {{ data.score }}</p>
-    <p>{{ t('Cash Flow') }}: ₦{{ data.cash_flow | format_number }}</p>
-    <p>{{ t('Debt-to-Income Ratio') }}: {{ data.debt_to_income | format_percentage }}</p>
-    <p>{{ t('Interest Burden') }}: {{ data.interest_burden }}%</p>
-    <h2>{{ t('Recommendations') }}</h2>
+    <h1>{{ trans('t').Dear | default('Dear') }} {{ data.first_name or 'User' }},</h1>
+    <p>{{ trans('t').Here_is_your_financial_health_summary | default('Here is your financial health summary') }}</p>
+    <h2>{{ trans('t').Financial_Health_Summary | default('Financial Health Summary') }}</h2>
+    <p>{{ trans('t').Created_At | default('Created At') }}: {{ data.created_at }}</p>
+    <p>{{ trans('t').Your_Score | default('Your Score') }}: {{ data.score | format_number }}</p>
+    <p>{{ trans('t').Status | default('Status') }}: {{ trans('t')[data.status] | default(data.status) }}</p>
+    <p>{{ trans('t').Monthly_Income | default('Monthly Income') }}: ₦{{ data.income | format_number }}</p>
+    <p>{{ trans('t').Monthly_Expenses | default('Monthly Expenses') }}: ₦{{ data.expenses | format_number }}</p>
+    <p>{{ trans('t').Total_Debt | default('Total Debt') }}: ₦{{ data.debt | format_number }}</p>
+    <p>{{ trans('t').Average_Interest_Rate | default('Average Interest Rate') }}: {{ data.interest_rate | format_number }}%</p>
+    <p>{{ trans('t').Debt_to_Income_Ratio | default('Debt-to-Income Ratio') }}: {{ data.debt_to_income | format_number }}%</p>
+    <p>{{ trans('t').Savings_Rate | default('Savings Rate') }}: {{ data.savings_rate | format_number }}%</p>
+    <p>{{ trans('t').Interest_Burden | default('Interest Burden') }}: {{ data.interest_burden | format_number }}%</p>
+    <h2>{{ trans('t').Badges | default('Badges') }}</h2>
+    {% if data.badges %}
+        <ul>
+            {% for badge in data.badges %}
+                <li>{{ trans('t')[badge] | default(badge) }}</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>{{ trans('t').No_badges_earned_yet | default('No badges earned yet') }}</p>
+    {% endif %}
+    <h2>{{ trans('t').Recommendations | default('Recommendations') }}</h2>
     <ul>
-        {% if data.debt_to_income > 0.4 %}
-            <li>{{ t('Reduce high-interest debt to improve your score.') }}</li>
+        {% if data.debt_to_income > 40 %}
+            <li>{{ trans('t').Reduce_high_debt_to_improve_score | default('Reduce high debt to improve your score') }}</li>
         {% endif %}
-        {% if data.cash_flow < 0 %}
-            <li>{{ t('Cut non-essential expenses to balance your budget.') }}</li>
+        {% if data.savings_rate < 0 %}
+            <li>{{ trans('t').Cut_non_essential_expenses | default('Cut non-essential expenses like outings or subscriptions') }}</li>
         {% else %}
-            <li>{{ t('Save or invest your surplus to grow wealth.') }}</li>
+            <li>{{ trans('t').Save_or_invest_surplus | default('Save or invest your surplus in Ajo or fixed deposits') }}</li>
+        {% endif %}
+        {% if data.interest_burden > 10 %}
+            <li>{{ trans('t').Pay_off_high_interest_debts | default('Pay off high-interest debts to reduce burden') }}</li>
         {% endif %}
     </ul>
-    <p><a href="{{ url_for('financial_health.step1') }}">{{ t('Recalculate Your Score') }}</a></p>
-    <p>{{ t('Thank you for choosing Ficore Africa!') }}</p>
-    <footer>{{ t('Powered by Ficore Africa') }}</footer>
+    <p><a href="{{ data.cta_url }}">{{ trans('t').View_Dashboard | default('View Dashboard') }}</a></p>
+    <p>{{ trans('t').Thank_you_for_using_Ficore_Africa | default('Thank you for using Ficore Africa') }}</p>
+    <footer>{{ trans('t').Powered_by_Ficore_Africa | default('Powered by Ficore Africa') }}</footer>
 </body>
 </html>
