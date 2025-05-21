@@ -1,13 +1,14 @@
 {% extends "base.html" %}
-{% block title %}{{ trans['Budget Planner'] }}{% endblock %}
+{% block title %}{{ trans('t').Budget_Dashboard | default('Budget Dashboard') }}{% endblock %}
 {% block extra_head %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 {% endblock %}
 {% block content %}
 <div class="container">
     <div class="navbar mb-4">
-        <h1>{{ trans['Budget Planner'] }}</h1>
-        <p>{{ trans['Your personalized budget summary.'] }}</p>
+        <h1>{{ trans('t').Budget_Dashboard | default('Budget Dashboard') }}</h1>
+        <p>{{ trans('t').Your_budget_summary | default('Your budget summary') }}</p>
     </div>
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -19,55 +20,124 @@
             {% endfor %}
         {% endif %}
     {% endwith %}
-    <div class="card mb-4">
-        <div class="card-body">
-            <h2>{{ trans['Budget Summary'] }}</h2>
-            <p>{{ trans['Monthly Income'] }}: ₦{{ data.income | format_number }}</p>
-            <p>{{ trans['Total Expenses'] }}: ₦{{ data.expenses | format_number }}</p>
-            <p>{{ trans['Savings Goal'] }}: ₦{{ data.savings_goal | format_number }}</p>
-            <p>{{ trans['Surplus/Deficit'] }}: ₦{{ data.surplus_deficit | format_number }}</p>
+    {% if latest_budget %}
+        <div class="card mb-4">
+            <div class="card-body">
+                <h3>{{ trans('t').Budget_Overview | default('Budget Overview') }}</h3>
+                <p><strong>{{ trans('t').Monthly_Income | default('Monthly Income') }}:</strong> ₦{{ latest_budget.income | format_number }}</p>
+                <p><strong>{{ trans('t').Total_Expenses | default('Total Expenses') }}:</strong> ₦{{ latest_budget.expenses | format_number }}</p>
+                <p><strong>{{ trans('t').Savings_Goal | default('Savings Goal') }}:</strong> ₦{{ latest_budget.savings_goal | format_number }}</p>
+                <p><strong>{{ trans('t').Surplus_Deficit | default('Surplus/Deficit') }}:</strong> ₦{{ latest_budget.surplus_deficit | format_number }}</p>
+                <p><strong>{{ trans('t').Created_At | default('Created At') }}:</strong> {{ latest_budget.created_at }}</p>
+            </div>
         </div>
-    </div>
-    <canvas id="budgetChart" class="mb-4"></canvas>
-    <div class="card mb-4">
-        <div class="card-body">
-            <h3>{{ trans['Recommendations'] }}</h3>
-            <ul>
-                {% if data.surplus_deficit < 0 %}
-                    <li>{{ trans['Reduce expenses or increase income to meet your savings goal.'] }}</li>
+        <div class="card mb-4">
+            <div class="card-body">
+                <h3>{{ trans('t').Expense_Breakdown | default('Expense Breakdown') }}</h3>
+                <canvas id="expenseChart"></canvas>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const ctx = document.getElementById('expenseChart').getContext('2d');
+                        new Chart(ctx, {
+                            type: 'pie',
+                            data: {
+                                labels: [
+                                    '{{ trans('t').Housing_Rent | default('Housing/Rent') }}',
+                                    '{{ trans('t').Food | default('Food') }}',
+                                    '{{ trans('t').Transport | default('Transport') }}',
+                                    '{{ trans('t').Dependents_Support | default('Dependents Support') }}',
+                                    '{{ trans('t').Miscellaneous | default('Miscellaneous') }}',
+                                    '{{ trans('t').Others | default('Others') }}'
+                                ],
+                                datasets: [{
+                                    label: '{{ trans('t').Amount | default('Amount') }} (₦)',
+                                    data: [
+                                        {{ latest_budget.housing | format_number }},
+                                        {{ latest_budget.food | format_number }},
+                                        {{ latest_budget.transport | format_number }},
+                                        {{ latest_budget.dependents | format_number }},
+                                        {{ latest_budget.miscellaneous | format_number }},
+                                        {{ latest_budget.others | format_number }}
+                                    ],
+                                    backgroundColor: ['#1E7F71', '#2E7D32', '#0288D1', '#dc3545', '#FBC02D', '#D81B60']
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                plugins: { legend: { position: 'top' } }
+                            }
+                        });
+                    });
+                </script>
+            </div>
+        </div>
+        <div class="card mb-4">
+            <div class="card-body">
+                <h3>{{ trans('t').Budget_Items | default('Budget Items') }}</h3>
+                {% if budgets %}
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>{{ trans('t').Date | default('Date') }}</th>
+                                <th>{{ trans('t').Income | default('Income') }}</th>
+                                <th>{{ trans('t').Expenses | default('Expenses') }}</th>
+                                <th>{{ trans('t').Savings_Goal | default('Savings Goal') }}</th>
+                                <th>{{ trans('t').Surplus_Deficit | default('Surplus/Deficit') }}</th>
+                                <th>{{ trans('t').Actions | default('Actions') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for budget_id, budget in budgets %}
+                                <tr>
+                                    <td>{{ budget.created_at }}</td>
+                                    <td>₦{{ budget.income | format_number }}</td>
+                                    <td>₦{{ budget.expenses | format_number }}</td>
+                                    <td>₦{{ budget.savings_goal | format_number }}</td>
+                                    <td>₦{{ budget.surplus_deficit | format_number }}</td>
+                                    <td>
+                                        <form method="POST" action="{{ url_for('budget.dashboard') }}">
+                                            {{ form.csrf_token }}
+                                            <input type="hidden" name="budget_id" value="{{ budget_id }}">
+                                            <input type="hidden" name="action" value="delete">
+                                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('{{ trans('t').Confirm_Delete | default('Confirm Delete') }}');">{{ trans('t').Delete | default('Delete') }}</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 {% else %}
-                    <li>{{ trans['Consider investing your surplus for long-term growth.'] }}</li>
+                    <p>{{ trans('t').No_budget_items_found | default('No budget items found') }}</p>
                 {% endif %}
-                {% if data.savings_goal == 0 %}
-                    <li>{{ trans['Set a savings goal to build financial security.'] }}</li>
-                {% endif %}
-            </ul>
+            </div>
         </div>
-    </div>
-    <div class="d-flex justify-content-between">
-        <a href="{{ url_for('budget.step1') }}" class="btn btn-secondary">{{ trans['Recalculate'] }}</a>
-        <a href="{{ url_for('general_dashboard') }}" class="btn btn-primary">{{ trans['Go to Dashboard'] }}</a>
-    </div>
+        <div class="card mb-4">
+            <div class="card-body">
+                <h3>{{ trans('t').Insights | default('Insights') }}</h3>
+                {% for insight in insights %}
+                    <p>{{ insight }}</p>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="card mb-4">
+            <div class="card-body">
+                <h3>{{ trans('t').Tips_for_Managing_Budget | default('Tips for Managing Budget') }}</h3>
+                {% for tip in tips %}
+                    <p>{{ tip }}</p>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="card mb-4">
+            <div class="card-body">
+                <h3>{{ trans('t').Call_to_Actions | default('Call to Actions') }}</h3>
+                <a href="{{ url_for('budget.step1') }}" class="btn btn-primary">{{ trans('t').Recalculate_Budget | default('Recalculate Budget') }}</a>
+                <a href="{{ url_for('bill.form') }}" class="btn btn-secondary">{{ trans('t').Manage_Bills | default('Manage Bills') }}</a>
+                <a href="#" class="btn btn-secondary">{{ trans('t').Explore_Investments | default('Explore Investments') }}</a>
+            </div>
+        </div>
+    {% else %}
+        <p>{{ trans('t').No_budget_data_available | default('No budget data available') }}</p>
+        <a href="{{ url_for('budget.step1') }}" class="btn btn-primary">{{ trans('t').Start_Budgeting | default('Start Budgeting') }}</a>
+    {% endif %}
 </div>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const ctx = document.getElementById('budgetChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'pie',
-            data: {
-                labels: ['{{ trans["Expenses"] }}', '{{ trans["Savings Goal"] }}', '{{ trans["Surplus/Deficit"] }}'],
-                datasets: [{
-                    data: [{{ data.expenses | format_number }}, {{ data.savings_goal | format_number }}, {{ data.surplus_deficit | abs | format_number }}],
-                    backgroundColor: ['#2E7D32', '#0288D1', '#dc3545']
-                }]
-            },
-            options: {
-                animation: false
-            }
-        });
-    });
-</script>
-{% endblock %}
-{% block extra_scripts %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 {% endblock %}
