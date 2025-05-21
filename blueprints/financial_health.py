@@ -1,7 +1,7 @@
 from flask import Blueprint, request, session, redirect, url_for, render_template, flash
 from flask_wtf import FlaskForm
 from wtforms import StringField, FloatField, SelectField, BooleanField, SubmitField
-from wtforms.validators import DataRequired, NumberRange, Optional, Email
+from wtforms.validators import DataRequired, NumberRange, Optional, Email, ValidationError
 from json_store import JsonStorage
 from mailersend_email import send_email
 from translations import trans
@@ -48,20 +48,19 @@ class Step2Form(FlaskForm):
     def validate_income(self, field):
         if field.data is not None:
             try:
-                # Remove commas and convert to float
+                # Handle string input with commas
                 cleaned_data = str(field.data).replace(',', '')
                 field.data = float(cleaned_data)
-            except ValueError:
+            except (ValueError, TypeError):
                 log.error(f"Invalid income input: {field.data}")
                 raise ValidationError('Income must be a valid number.')
 
     def validate_expenses(self, field):
         if field.data is not None:
             try:
-                # Remove commas and convert to float
                 cleaned_data = str(field.data).replace(',', '')
                 field.data = float(cleaned_data)
-            except ValueError:
+            except (ValueError, TypeError):
                 log.error(f"Invalid expenses input: {field.data}")
                 raise ValidationError('Expenses must be a valid number.')
 
@@ -73,20 +72,18 @@ class Step3Form(FlaskForm):
     def validate_debt(self, field):
         if field.data is not None:
             try:
-                # Remove commas and convert to float
                 cleaned_data = str(field.data).replace(',', '')
-                field.data = float(cleaned_data)
-            except ValueError:
+                field.data = float(cleaned_data) if cleaned_data else None
+            except (ValueError, TypeError):
                 log.error(f"Invalid debt input: {field.data}")
                 raise ValidationError('Debt must be a valid number.')
 
     def validate_interest_rate(self, field):
         if field.data is not None:
             try:
-                # Remove commas and convert to float
                 cleaned_data = str(field.data).replace(',', '')
-                field.data = float(cleaned_data)
-            except ValueError:
+                field.data = float(cleaned_data) if cleaned_data else None
+            except (ValueError, TypeError):
                 log.error(f"Invalid interest rate input: {field.data}")
                 raise ValidationError('Interest rate must be a valid number.')
 
@@ -96,8 +93,8 @@ def step1():
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
     form = Step1Form()
-    t_dict = trans('t')  # Get the translation dictionary
-    t = lambda key: t_dict.get(key, key)  # Create a callable to lookup translations
+    t_dict = trans('t')
+    t = lambda key: t_dict.get(key, key)
     log.info(f"Starting step1 for session {session['sid']}")
     try:
         if request.method == 'POST':
@@ -120,8 +117,8 @@ def step2():
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
     form = Step2Form()
-    t_dict = trans('t')  # Get the translation dictionary
-    t = lambda key: t_dict.get(key, key)  # Create a callable to lookup translations
+    t_dict = trans('t')
+    t = lambda key: t_dict.get(key, key)
     log.info(f"Starting step2 for session {session['sid']}")
     try:
         if request.method == 'POST':
@@ -148,8 +145,8 @@ def step3():
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
     form = Step3Form()
-    t_dict = trans('t')  # Get the translation dictionary
-    t = lambda key: t_dict.get(key, key)  # Create a callable to lookup translations
+    t_dict = trans('t')
+    t = lambda key: t_dict.get(key, key)
     log.info(f"Starting step3 for session {session['sid']}")
     try:
         if request.method == 'POST':
@@ -160,8 +157,8 @@ def step3():
 
             # Extract and validate data
             data = {
-                'debt': float(form.debt.data) if form.debt.data is not None else None,
-                'interest_rate': float(form.interest_rate.data) if form.interest_rate.data is not None else None,
+                'debt': float(form.debt.data) if form.debt.data is not None else 0,
+                'interest_rate': float(form.interest_rate.data) if form.interest_rate.data is not None else 0,
                 'submit': form.submit.data
             }
             step1_data = session.get('health_step1', {})
@@ -170,10 +167,10 @@ def step3():
             log.debug(f"Step2 data: {step2_data}")
             log.debug(f"Step3 form data: {data}")
 
-            income = step2_data.get('income', 0) or 0
-            expenses = step2_data.get('expenses', 0) or 0
-            debt = data.get('debt', 0) or 0
-            interest_rate = data.get('interest_rate', 0) or 0
+            income = float(step2_data.get('income', 0) or 0)
+            expenses = float(step2_data.get('expenses', 0) or 0)
+            debt = data.get('debt', 0)
+            interest_rate = data.get('interest_rate', 0)
 
             # Validate income to prevent division by zero
             if income <= 0:
@@ -196,12 +193,12 @@ def step3():
             log.info("Calculating financial health score")
             score = 100
             if debt_to_income > 0:
-                score -= min(debt_to_income, 50)  # High debt-to-income reduces score
+                score -= min(debt_to_income, 50)
             if savings_rate < 0:
-                score -= min(abs(savings_rate), 30)  # Negative savings rate penalizes
+                score -= min(abs(savings_rate), 30)
             elif savings_rate > 0:
-                score += min(savings_rate / 2, 20)  # Positive savings boosts score
-            score -= min(interest_burden, 20)  # High interest burden penalizes
+                score += min(savings_rate / 2, 20)
+            score -= min(interest_burden, 20)
             score = max(0, min(100, round(score)))
             log.debug(f"Calculated score: {score}")
 
@@ -297,41 +294,81 @@ def dashboard():
     """Display financial health dashboard with comparison to others."""
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
-    t_dict = trans('t')  # Get the translation dictionary
-    t = lambda key: t_dict.get(key, key)  # Create a callable to lookup translations
+    t_dict = trans('t')
+    t = lambda key: t_dict.get(key, key)
     log.info(f"Starting dashboard for session {session['sid']}")
     try:
-        # Retrieve user-specific records
-        user_data = financial_health_storage.filter_by_session(session['sid'])
-        records = [(record["id"], record["data"]) for record in user_data]
+        # Retrieve user-specific records with fallback
+        try:
+            user_data = financial_health_storage.filter_by_session(session['sid'])
+        except Exception as storage_error:
+            log.error(f"Failed to retrieve user data: {str(storage_error)}")
+            user_data = []
+        records = []
+        for record in user_data:
+            try:
+                # Clean numeric fields
+                data = record.get("data", {})
+                for key in ['income', 'expenses', 'debt', 'interest_rate', 'score', 'debt_to_income', 'savings_rate', 'interest_burden']:
+                    if key in data and isinstance(data[key], str):
+                        try:
+                            data[key] = float(data[key].replace(',', ''))
+                        except (ValueError, TypeError):
+                            log.warning(f"Invalid {key} in record {record.get('id')}: {data[key]}")
+                            data[key] = 0
+                records.append((record.get("id", str(uuid.uuid4())), data))
+            except Exception as record_error:
+                log.warning(f"Skipping invalid record: {str(record_error)}")
+                continue
         latest_record = records[-1][1] if records else {}
         log.debug(f"Retrieved user records: {len(records)}")
 
-        # Retrieve all records for comparison
-        all_records = financial_health_storage.get_all()
+        # Retrieve all records for comparison with fallback
+        try:
+            all_records = financial_health_storage.get_all()
+        except Exception as storage_error:
+            log.error(f"Failed to retrieve all records: {str(storage_error)}")
+            all_records = []
         total_users = len(all_records)
+        cleaned_records = []
+        for record in all_records:
+            try:
+                data = record.get("data", {})
+                for key in ['score', 'income', 'expenses', 'debt', 'interest_rate']:
+                    if key in data and isinstance(data[key], str):
+                        try:
+                            data[key] = float(data[key].replace(',', ''))
+                        except (ValueError, TypeError):
+                            log.warning(f"Invalid {key} in record {record.get('id')}: {data[key]}")
+                            data[key] = 0
+                cleaned_records.append(record)
+            except Exception as record_error:
+                log.warning(f"Skipping invalid record for comparison: {str(record_error)}")
+                continue
         log.debug(f"Total users: {total_users}")
 
         # Calculate rank and average score
-        rank = total_users  # Default to last place if no records
+        rank = total_users
         average_score = 0
-        if all_records and latest_record:
-            # Sort records by score (descending)
-            sorted_records = sorted(
-                all_records,
-                key=lambda x: x["data"].get("score", 0),
-                reverse=True
-            )
-            # Find user's rank (1-based indexing)
-            user_score = latest_record.get("score", 0)
-            for i, record in enumerate(sorted_records, 1):
-                if record["data"].get("score", 0) <= user_score and record["session_id"] == session['sid']:
-                    rank = i
-                    break
-            # Calculate average score
-            scores = [record["data"].get("score", 0) for record in all_records]
-            average_score = sum(scores) / total_users if total_users > 0 else 0
-            log.debug(f"User rank: {rank}, Average score: {average_score}")
+        if cleaned_records and latest_record:
+            try:
+                sorted_records = sorted(
+                    cleaned_records,
+                    key=lambda x: x["data"].get("score", 0),
+                    reverse=True
+                )
+                user_score = latest_record.get("score", 0)
+                for i, record in enumerate(sorted_records, 1):
+                    if record["data"].get("score", 0) <= user_score and record.get("session_id") == session['sid']:
+                        rank = i
+                        break
+                scores = [record["data"].get("score", 0) for record in cleaned_records]
+                average_score = sum(scores) / total_users if total_users > 0 else 0
+                log.debug(f"User rank: {rank}, Average score: {average_score}")
+            except Exception as calc_error:
+                log.error(f"Error calculating rank or average score: {str(calc_error)}")
+                rank = 0
+                average_score = 0
 
         # Generate insights and tips
         insights = []
@@ -342,23 +379,25 @@ def dashboard():
             t("Plan for recurring expenses like food and clothing.")
         ]
         if latest_record:
-            if latest_record.get('debt_to_income', 0) > 40:
-                insights.append(t("High debt-to-income ratio. Consider reducing borrowings from friends or banks."))
-            if latest_record.get('savings_rate', 0) < 0:
-                insights.append(t("Negative savings rate. Cut non-essential expenses like outings or subscriptions."))
-            elif latest_record.get('savings_rate', 0) >= 20:
-                insights.append(t("Great savings rate! Explore investment options like Ajo or fixed deposits."))
-            if latest_record.get('interest_burden', 0) > 10:
-                insights.append(t("High interest burden. Refinance or pay off high-interest loans."))
-            if total_users >= 5:
-                if rank <= total_users * 0.1:
-                    insights.append(t("You're in the top 10% of users! Keep up the excellent financial habits."))
-                elif rank <= total_users * 0.3:
-                    insights.append(t("You're in the top 30%. Great work, aim for the top 10%!"))
-                else:
-                    insights.append(t("You're below the top 30%. Try our Budgeting Basics course to improve your score."))
-
-        # Handle case with insufficient data for comparison
+            try:
+                if latest_record.get('debt_to_income', 0) > 40:
+                    insights.append(t("High debt-to-income ratio. Consider reducing borrowings from friends or banks."))
+                if latest_record.get('savings_rate', 0) < 0:
+                    insights.append(t("Negative savings rate. Cut non-essential expenses like outings or subscriptions."))
+                elif latest_record.get('savings_rate', 0) >= 20:
+                    insights.append(t("Great savings rate! Explore investment options like Ajo or fixed deposits."))
+                if latest_record.get('interest_burden', 0) > 10:
+                    insights.append(t("High interest burden. Refinance or pay off high-interest loans."))
+                if total_users >= 5:
+                    if rank <= total_users * 0.1:
+                        insights.append(t("You're in the top 10% of users! Keep up the excellent financial habits."))
+                    elif rank <= total_users * 0.3:
+                        insights.append(t("You're in the top 30%. Great work, aim for the top 10%!"))
+                    else:
+                        insights.append(t("You're below the top 30%. Try our Budgeting Basics course to improve your score."))
+            except Exception as insight_error:
+                log.error(f"Error generating insights: {str(insight_error)}")
+                insights.append(t("Unable to generate insights due to data issues."))
         if total_users < 5:
             insights.append(t("Not enough users for comparison yet. Invite others to join!"))
 
@@ -374,13 +413,13 @@ def dashboard():
             t=t
         )
     except Exception as e:
-        log.exception(f"Error in dashboard: {str(e)}")
-        flash(t("Error loading dashboard. Please try again."), "danger")
+        log.exception(f"Critical error in dashboard: {str(e)}")
+        flash(t("Error loading dashboard. Please try again or contact support."), "danger")
         return render_template(
             'health_score_dashboard.html',
             records=[],
             latest_record={},
-            insights=[],
+            insights=[t("No data available. Please complete the financial health assessment.")],
             tips=[],
             rank=0,
             total_users=0,
