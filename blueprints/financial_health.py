@@ -8,9 +8,26 @@ from translations import trans
 from datetime import datetime
 import logging
 import uuid
+import traceback
+import os
 
-# Configure logging
-logging.basicConfig(filename='data/storage.txt', level=logging.DEBUG)
+# Configure logging with immediate flush
+logger = logging.getLogger('financial_health')
+logger.setLevel(logging.DEBUG)
+file_handler = logging.FileHandler('data/storage.txt')
+file_handler.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s - %(name)s - SessionID: %(session_id)s - %(levelname)s - %(message)s')
+file_handler.setFormatter(formatter)
+logger.addHandler(file_handler)
+
+# Add session ID to log context
+class SessionAdapter(logging.LoggerAdapter):
+    def process(self, msg, kwargs):
+        kwargs['extra'] = kwargs.get('extra', {})
+        kwargs['extra']['session_id'] = session.get('sid', 'unknown')
+        return msg, kwargs
+
+log = SessionAdapter(logger, {})
 
 financial_health_bp = Blueprint('financial_health', __name__)
 financial_health_storage = JsonStorage('data/financial_health.json')
@@ -40,16 +57,21 @@ def step1():
         session['sid'] = str(uuid.uuid4())
     form = Step1Form()
     t = trans('t')
+    log.info(f"Starting step1 for session {session['sid']}")
     try:
-        if request.method == 'POST' and form.validate_on_submit():
+        if request.method == 'POST':
+            if not form.validate_on_submit():
+                log.warning(f"Form validation failed: {form.errors}")
+                flash(t("Please correct the errors in the form."), "danger")
+                return render_template('health_score_step1.html', form=form, t=t)
             session['health_step1'] = form.data
-            logging.debug(f"Financial health step1 form data: {form.data}")
+            log.debug(f"Step1 form data: {form.data}")
             return redirect(url_for('financial_health.step2'))
         return render_template('health_score_step1.html', form=form, t=t)
     except Exception as e:
-        logging.exception(f"Error in financial_health.step1: {str(e)}")
-        flash(t("Error processing personal information."), "danger")
-        return render_template('health_score_step1.html', form=form, t=t)
+        log.exception(f"Error in step1: {str(e)}")
+        flash(t("Error processing personal information. Please try again."), "danger")
+        return render_template('health_score_step1.html', form=form, t=t), 500
 
 @financial_health_bp.route('/step2', methods=['GET', 'POST'])
 def step2():
@@ -58,16 +80,21 @@ def step2():
         session['sid'] = str(uuid.uuid4())
     form = Step2Form()
     t = trans('t')
+    log.info(f"Starting step2 for session {session['sid']}")
     try:
-        if request.method == 'POST' and form.validate_on_submit():
+        if request.method == 'POST':
+            if not form.validate_on_submit():
+                log.warning(f"Form validation failed: {form.errors}")
+                flash(t("Please correct the errors in the form."), "danger")
+                return render_template('health_score_step2.html', form=form, t=t)
             session['health_step2'] = form.data
-            logging.debug(f"Financial health step2 form data: {form.data}")
+            log.debug(f"Step2 form data: {form.data}")
             return redirect(url_for('financial_health.step3'))
         return render_template('health_score_step2.html', form=form, t=t)
     except Exception as e:
-        logging.exception(f"Error in financial_health.step2: {str(e)}")
+        log.exception(f"Error in step2: {str(e)}")
         flash(t("Invalid numeric input for income or expenses."), "danger")
-        return render_template('health_score_step2.html', form=form, t=t)
+        return render_template('health_score_step2.html', form=form, t=t), 500
 
 @financial_health_bp.route('/step3', methods=['GET', 'POST'])
 def step3():
@@ -76,22 +103,46 @@ def step3():
         session['sid'] = str(uuid.uuid4())
     form = Step3Form()
     t = trans('t')
+    log.info(f"Starting step3 for session {session['sid']}")
     try:
-        if request.method == 'POST' and form.validate_on_submit():
+        if request.method == 'POST':
+            if not form.validate_on_submit():
+                log.warning(f"Form validation failed: {form.errors}")
+                flash(t("Please correct the errors in the form."), "danger")
+                return render_template('health_score_step3.html', form=form, t=t)
+
+            # Extract and validate data
             data = form.data
             step1_data = session.get('health_step1', {})
             step2_data = session.get('health_step2', {})
-            income = step2_data.get('income', 0)
-            expenses = step2_data.get('expenses', 0)
+            log.debug(f"Step1 data: {step1_data}")
+            log.debug(f"Step2 data: {step2_data}")
+            log.debug(f"Step3 form data: {data}")
+
+            income = step2_data.get('income', 0) or 0
+            expenses = step2_data.get('expenses', 0) or 0
             debt = data.get('debt', 0) or 0
             interest_rate = data.get('interest_rate', 0) or 0
 
+            # Validate income to prevent division by zero
+            if income <= 0:
+                log.error("Income is zero or negative, cannot calculate financial health metrics")
+                flash(t("Income must be greater than zero to calculate financial health."), "danger")
+                return render_template('health_score_step3.html', form=form, t=t)
+
             # Calculate financial health metrics
-            debt_to_income = (debt / income * 100) if income > 0 else 0
-            savings_rate = ((income - expenses) / income * 100) if income > 0 else 0
-            interest_burden = interest_rate if debt > 0 else 0
+            log.info("Calculating financial health metrics")
+            try:
+                debt_to_income = (debt / income * 100)
+                savings_rate = ((income - expenses) / income * 100)
+                interest_burden = interest_rate if debt > 0 else 0
+            except ZeroDivisionError as zde:
+                log.error(f"ZeroDivisionError during metric calculation: {str(zde)}")
+                flash(t("Calculation error: Income cannot be zero."), "danger")
+                return render_template('health_score_step3.html', form=form, t=t), 500
 
             # Financial health score (0-100)
+            log.info("Calculating financial health score")
             score = 100
             if debt_to_income > 0:
                 score -= min(debt_to_income, 50)  # High debt-to-income reduces score
@@ -101,6 +152,7 @@ def step3():
                 score += min(savings_rate / 2, 20)  # Positive savings boosts score
             score -= min(interest_burden, 20)  # High interest burden penalizes
             score = max(0, min(100, round(score)))
+            log.debug(f"Calculated score: {score}")
 
             # Status and badges
             status = ("Excellent" if score >= 80 else
@@ -115,6 +167,7 @@ def step3():
                 badges.append("Savings Pro")
             if interest_burden == 0 and debt > 0:
                 badges.append("Interest-Free Borrower")
+            log.debug(f"Status: {status}, Badges: {badges}")
 
             # Store record
             record = {
@@ -136,44 +189,56 @@ def step3():
                     "created_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 }
             }
+            log.info("Saving financial health record")
+            try:
+                financial_health_storage.append(record, user_email=step1_data.get('email'), session_id=session['sid'])
+            except Exception as storage_error:
+                log.error(f"Failed to save record to storage: {str(storage_error)}")
+                flash(t("Error saving financial health data. Please try again."), "danger")
+                return render_template('health_score_step3.html', form=form, t=t), 500
 
-            # Save and send email if requested
+            # Send email if requested
             email = step1_data.get('email')
             send_email_flag = step1_data.get('send_email', False)
-            financial_health_storage.append(record, user_email=email, session_id=session['sid'])
             if send_email_flag and email:
-                send_email(
-                    to_email=email,
-                    subject=t("Your Financial Health Report"),
-                    template_name="health_score_email.html",
-                    data={
-                        "first_name": record["data"]["first_name"],
-                        "score": record["data"]["score"],
-                        "status": record["data"]["status"],
-                        "income": record["data"]["income"],
-                        "expenses": record["data"]["expenses"],
-                        "debt": record["data"]["debt"],
-                        "interest_rate": record["data"]["interest_rate"],
-                        "debt_to_income": record["data"]["debt_to_income"],
-                        "savings_rate": record["data"]["savings_rate"],
-                        "interest_burden": record["data"]["interest_burden"],
-                        "badges": record["data"]["badges"],
-                        "created_at": record["data"]["created_at"],
-                        "cta_url": url_for('financial_health.dashboard', _external=True)
-                    },
-                    lang=session.get('lang', 'en')
-                )
+                log.info(f"Sending email to {email}")
+                try:
+                    send_email(
+                        to_email=email,
+                        subject=t("Your Financial Health Report"),
+                        template_name="health_score_email.html",
+                        data={
+                            "first_name": record["data"]["first_name"],
+                            "score": record["data"]["score"],
+                            "status": record["data"]["status"],
+                            "income": record["data"]["income"],
+                            "expenses": record["data"]["expenses"],
+                            "debt": record["data"]["debt"],
+                            "interest_rate": record["data"]["interest_rate"],
+                            "debt_to_income": record["data"]["debt_to_income"],
+                            "savings_rate": record["data"]["savings_rate"],
+                            "interest_burden": record["data"]["interest_burden"],
+                            "badges": record["data"]["badges"],
+                            "created_at": record["data"]["created_at"],
+                            "cta_url": url_for('financial_health.dashboard', _external=True)
+                        },
+                        lang=session.get('lang', 'en')
+                    )
+                except Exception as email_error:
+                    log.error(f"Failed to send email: {str(email_error)}")
+                    flash(t("Financial health assessment completed, but email sending failed."), "warning")
 
             # Clear session
             session.pop('health_step1', None)
             session.pop('health_step2', None)
+            log.info("Financial health assessment completed successfully")
             flash(t("Financial health assessment completed successfully."), "success")
             return redirect(url_for('financial_health.dashboard'))
         return render_template('health_score_step3.html', form=form, t=t)
     except Exception as e:
-        logging.exception(f"Error in financial_health.step3: {str(e)}")
-        flash(t("Error processing financial health assessment."), "danger")
-        return render_template('health_score_step3.html', form=form, t=t)
+        log.exception(f"Unexpected error in step3: {str(e)}")
+        flash(t("Unexpected error during financial health assessment. Please try again."), "danger")
+        return render_template('health_score_step3.html', form=form, t=t), 500
 
 @financial_health_bp.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
@@ -181,10 +246,12 @@ def dashboard():
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
     t = trans('t')
+    log.info(f"Starting dashboard for session {session['sid']}")
     try:
         user_data = financial_health_storage.filter_by_session(session['sid'])
         records = [(record["id"], record["data"]) for record in user_data]
         latest_record = records[-1][1] if records else {}
+        log.debug(f"Retrieved records: {records}")
 
         # Generate insights and tips
         insights = []
@@ -213,8 +280,8 @@ def dashboard():
             t=t
         )
     except Exception as e:
-        logging.exception(f"Error in financial_health.dashboard: {str(e)}")
-        flash(t("Error loading dashboard."), "danger")
+        log.exception(f"Error in dashboard: {str(e)}")
+        flash(t("Error loading dashboard. Please try again."), "danger")
         return render_template(
             'health_score_dashboard.html',
             records=[],
@@ -222,4 +289,4 @@ def dashboard():
             insights=[],
             tips=[],
             t=t
-        )
+        ), 500
