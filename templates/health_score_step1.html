@@ -1,5 +1,70 @@
 {% extends "base.html" %}
 {% block title %}{{ trans('t').Financial_Health_Score | default('Financial Health Score') }}{% endblock %}
+{% block extra_head %}
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #E3F2FD, #F5F7FA);
+        }
+        .container {
+            max-width: 600px;
+            margin: 2rem auto;
+        }
+        .navbar {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .navbar h1 {
+            color: #0288D1;
+            font-weight: 600;
+        }
+        .navbar p {
+            color: #333;
+        }
+        .card {
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+            border: 2px solid #0288D1;
+        }
+        .card-body {
+            padding: 2rem;
+        }
+        .form-label {
+            font-weight: 600;
+            color: #2E7D32;
+        }
+        .form-control, .form-select {
+            border-radius: 8px;
+            border: 1px solid #0288D1;
+            padding: 0.75rem;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #2E7D32;
+            box-shadow: 0 0 0 0.2rem rgba(46, 125, 50, 0.25);
+        }
+        .invalid-feedback {
+            color: #D81B60;
+        }
+        .form-check-label {
+            color: #333;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #2E7D32, #0288D1);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #1B5E20, #01579B);
+        }
+        @media (max-width: 600px) {
+            .card-body { padding: 1.5rem; }
+            .btn-primary { font-size: 0.9rem; padding: 0.5rem 1rem; }
+        }
+    </style>
+{% endblock %}
 {% block content %}
 <div class="container">
     <div class="navbar mb-4">
@@ -48,7 +113,7 @@
 {% block extra_scripts %}
 <script>
     document.querySelector('form').addEventListener('submit', function() {
-        document.querySelectorAll('.form-control').forEach(input => input.classList.add('was-validated'));
+        document.querySelectorAll('.form-control, .form-select').forEach(input => input.classList.add('was-validated'));
     });
 </script>
 {% endblock %}
