@@ -1,10 +1,14 @@
 {% extends "base.html" %}
-{% block title %}{{ trans('Financial Personality Quiz') }}{% endblock %}
+{% block title %}{{ trans('t').Financial_Personality_Dashboard | default('Financial Personality Dashboard') }}{% endblock %}
+{% block extra_head %}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+{% endblock %}
 {% block content %}
 <div class="container">
     <div class="navbar mb-4">
-        <h1>{{ trans('Financial Personality Quiz') }}</h1>
-        <p>{{ trans('Provide your email to receive your results (optional).') }}</p>
+        <h1>{{ trans('t').Financial_Personality_Dashboard | default('Financial Personality Dashboard') }}</h1>
+        <p>{{ trans('t').Your_financial_personality_results | default('Your financial personality results') }}</p>
     </div>
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -16,25 +20,123 @@
             {% endfor %}
         {% endif %}
     {% endwith %}
-    <div class="card">
-        <div class="card-body">
-            <form method="POST" action="{{ url_for('quiz.step3') }}">
-                {{ form.csrf_token }}
-                <div class="mb-3">
-                    <label class="form-label">{{ trans('Email') }}</label>
-                    {{ form.email(class="form-control", placeholder=trans('Enter an active email')) }}
-                    <div class="form-text">{{ trans('Enter an active email to receive your personality results.') }}</div>
-                </div>
-                <div class="mb-3 form-check">
-                    {{ form.send_email(class="form-check-input") }}
-                    <label class="form-check-label">{{ trans('Send my results to this email.') }}</label>
-                </div>
-                <div class="d-flex justify-content-between">
-                    <a href="{{ url_for('quiz.step2') }}" class="btn btn-secondary">{{ trans('Back') }}</a>
-                    <button type="submit" class="btn btn-primary">{{ trans('See Results') }}</button>
-                </div>
-            </form>
+    {% if latest_record %}
+        <div class="card mb-4">
+            <div class="card-body">
+                <h2>{{ trans('t').Hello | default('Hello') }} {{ latest_record.first_name or 'User' }}, {{ trans('t').Your_Personality | default('Your Personality') }}: {{ trans('t')[latest_record.personality] | default(latest_record.personality) }}</h2>
+                <p><strong>{{ trans('t').Score | default('Score') }}:</strong> {{ latest_record.score }} / 30</p>
+                <p>
+                    {% if latest_record.personality == 'Planner' %}
+                        {{ trans('t').Planner_description | default('You are disciplined and plan your finances carefully, using tools like PiggyVest and setting clear goals.') }}
+                    {% elif latest_record.personality == 'Saver' %}
+                        {{ trans('t').Saver_description | default('You prioritize saving, often using Ajo/Esusu/Adashe, and are cautious with spending.') }}
+                    {% elif latest_record.personality == 'Balanced' %}
+                        {{ trans('t').Balanced_description | default('You balance spending and saving, occasionally planning but open to impulse purchases.') }}
+                    {% elif latest_record.personality == 'Spender' %}
+                        {{ trans('t').Spender_description | default('You enjoy spending and may need to focus on budgeting and saving with apps like Moniepoint.') }}
+                    {% endif %}
+                </p>
+                <p><strong>{{ trans('t').Created_At | default('Created At') }}:</strong> {{ latest_record.created_at }}</p>
+            </div>
         </div>
-    </div>
+        <div class="card mb-4">
+            <div class="card-body">
+                <h3>{{ trans('t').Quiz_Metrics | default('Quiz Metrics') }}</h3>
+                <canvas id="quizChart"></canvas>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const ctx = document.getElementById('quizChart').getContext('2d');
+                        new Chart(ctx, {
+                            type: 'bar',
+                            data: {
+                                labels: [
+                                    '{{ trans('t').Your_Score | default('Your Score') }}',
+                                    '{{ trans('t').Max_Score | default('Max Score') }}'
+                                ],
+                                datasets: [{
+                                    label: '{{ trans('t').Quiz_Results | default('Quiz Results') }}',
+                                    data: [{{ latest_record.score }}, 30],
+                                    backgroundColor: ['#1E7F71', '#0288D1']
+                                }]
+                            },
+                            options: {
+                                scales: { y: { beginAtZero: true, max: 30 } },
+                                animation: false
+                            }
+                        });
+                    });
+                </script>
+            </div>
+        </div>
+        <div class="card mb-4">
+            <div class="card-body">
+                <h3>{{ trans('t').Badges | default('Badges') }}</h3>
+                {% if latest_record.badges %}
+                    {% for badge in latest_record.badges %}
+                        <span class="badge bg-{{ 'success' if badge == 'Financial Guru' else 'primary' if badge == 'Savings Star' else 'info' if badge == 'Debt Dodger' else 'warning' }} mb-2">
+                            <i class="fas fa-{{ 'trophy' if badge == 'Financial Guru' else 'star' if badge == 'Savings Star' else 'check-circle' if badge == 'Debt Dodger' else 'bullseye' }}"></i>
+                            {{ trans('t')[badge] | default(badge) }}
+                        </span>
+                    {% endfor %}
+                {% else %}
+                    <p>{{ trans('t').No_badges_earned_yet | default('No badges earned yet') }}</p>
+                {% endif %}
+            </div>
+        </div>
+        <div class="card mb-4">
+            <div class="card-body">
+                <h3>{{ trans('t').Insights | default('Insights') }}</h3>
+                {% for insight in insights %}
+                    <p>{{ insight }}</p>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="card mb-4">
+            <div class="card-body">
+                <h3>{{ trans('t').Tips_for_Improving_Financial_Habits | default('Tips for Improving Financial Habits') }}</h3>
+                {% for tip in tips %}
+                    <p>{{ tip }}</p>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="card mb-4">
+            <div class="card-body">
+                <h3>{{ trans('t').Call_to_Actions | default('Call to Actions') }}</h3>
+                <a href="{{ url_for('quiz.step1') }}" class="btn btn-primary">{{ trans('t').Retake_Quiz | default('Retake Quiz') }}</a>
+                <a href="{{ url_for('budget.step1') }}" class="btn btn-secondary">{{ trans('t').Create_Budget | default('Create Budget') }}</a>
+                <a href="{{ url_for('net_worth.step1') }}" class="btn btn-secondary">{{ trans('t').Calculate_Net_Worth | default('Calculate Net Worth') }}</a>
+            </div>
+        </div>
+        <div class="card mb-4">
+            <div class="card-body">
+                <h3>{{ trans('t').Previous_Quizzes | default('Previous Quizzes') }}</h3>
+                {% if records %}
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>{{ trans('t').Date | default('Date') }}</th>
+                                <th>{{ trans('t').Personality | default('Personality') }}</th>
+                                <th>{{ trans('t').Score | default('Score') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for record_id, record in records %}
+                                <tr>
+                                    <td>{{ record.created_at }}</td>
+                                    <td>{{ trans('t')[record.personality] | default(record.personality) }}</td>
+                                    <td>{{ record.score }} / 30</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p>{{ trans('t').No_previous_quizzes | default('No previous quizzes') }}</p>
+                {% endif %}
+            </div>
+        </div>
+    {% else %}
+        <p>{{ trans('t').No_quiz_data_available | default('No quiz data available') }}</p>
+        <a href="{{ url_for('quiz.step1') }}" class="btn btn-primary">{{ trans('t').Start_Quiz | default('Start Quiz') }}</a>
+    {% endif %}
 </div>
 {% endblock %}
