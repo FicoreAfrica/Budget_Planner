@@ -1,17 +1,16 @@
 import logging
 import os
 import uuid
-import logging
 from datetime import datetime
 from flask import Flask, render_template, request, session, redirect, url_for, flash
 from flask_session import Session
 from flask_wtf.csrf import CSRFProtect
-from blueprints.financial_health import financial_health_bp  # Fixed import
-from blueprints.budget import budget_bp  # Fixed import
-from blueprints.quiz import quiz_bp  # Fixed import
-from blueprints.bill import bill_bp  # Fixed import
-from blueprints.net_worth import net_worth_bp  # Fixed import
-from blueprints.emergency_fund import emergency_fund_bp  # Fixed import
+from blueprints.financial_health import financial_health_bp
+from blueprints.budget import budget_bp
+from blueprints.quiz import quiz_bp
+from blueprints.bill import bill_bp
+from blueprints.net_worth import net_worth_bp
+from blueprints.emergency_fund import emergency_fund_bp
 try:
     from python_dotenv import load_dotenv
     load_dotenv()
@@ -20,7 +19,7 @@ except ImportError:
 try:
     from translations import trans, get_translations
 except ImportError as e:
-    logging.warning(f"Translations import failed: {str(e)}")
+    logging.error(f"Translations import failed: {str(e)}")
     def trans(key, lang=None):
         return key
     def get_translations(lang):
@@ -92,16 +91,14 @@ def index():
         session['sid'] = str(uuid.uuid4())
     if 'lang' not in session:
         session['lang'] = 'en'
-    t = trans('t')  # Get translation dictionary for templates
+    t = trans('t')
     return render_template('index.html', t=t)
 
 @app.route('/set_language/<lang>')
 def set_language(lang):
-    if lang in ['en', 'ha']:
-        session['lang'] = lang
-        flash(trans('Language changed successfully'))
-    else:
-        flash(trans('Invalid language'))
+    valid_langs = ['en', 'ha']
+    session['lang'] = lang if lang in valid_langs else 'en'
+    flash(trans('Language changed successfully') if lang in valid_langs else trans('Invalid language'))
     return redirect(request.referrer or url_for('index'))
 
 @app.route('/general_dashboard')
@@ -121,12 +118,11 @@ def general_dashboard():
                 'score': None, 'surplus_deficit': None, 'personality': None,
                 'bills': [], 'net_worth': None, 'savings_gap': None
             }
-    t = trans('t')  # Get translation dictionary
+    t = trans('t')
     return render_template('general_dashboard.html', data=data, t=t)
 
 @app.route('/logout')
 def logout():
-    """Clear session and redirect to homepage."""
     session.clear()
     flash(trans('You have been logged out'))
     return redirect(url_for('index'))
@@ -134,15 +130,15 @@ def logout():
 # Error Handlers
 @app.errorhandler(404)
 def page_not_found(e):
-    """Handle 404 errors."""
     t = trans('t')
+    logger = logging.getLogger(__name__)
     logger.error(f"404 Error: {str(e)}")
     return render_template('404.html', error=t.get('Page Not Found', 'Page Not Found'), t=t), 404
 
 @app.errorhandler(500)
 def internal_server_error(e):
-    """Handle 500 errors."""
     t = trans('t')
+    logger = logging.getLogger(__name__)
     logger.error(f"500 Error: {str(e)}", exc_info=True)
     return render_template('500.html', error=t.get('Internal Server Error', 'Internal Server Error'), t=t), 500
 
