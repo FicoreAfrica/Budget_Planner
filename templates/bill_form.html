@@ -1,43 +1,51 @@
 {% extends 'base.html' %}
-{% block title %}{{ trans['Bill Planner'] }}{% endblock %}
+{% block title %}{{ trans('Bill Planner') }}{% endblock %}
 {% block content %}
 <div class="container">
     <div class="navbar mb-4">
-        <h1>{{ trans['Add New Bill'] }}</h1>
+        <h1>{{ trans('Add New Bill') }}</h1>
     </div>
     <div class="card">
         <div class="card-body">
             <form method="POST" action="{{ url_for('bill.form') }}">
                 {{ form.csrf_token }}
                 <div class="mb-3">
-                    <label for="bill_name" class="form-label">{{ trans['Bill Name'] }}</label>
-                    {{ form.bill_name(class="form-control", placeholder=trans['Enter bill name']) }}
+                    <label for="bill_name" class="form-label">{{ trans('Bill Name') }}</label>
+                    {{ form.bill_name(class="form-control", placeholder=trans('Enter bill name')) }}
+                    <div class="invalid-feedback">{{ trans('Bill name is required') }}</div>
                 </div>
                 <div class="mb-3">
-                    <label for="amount" class="form-label">{{ trans['Amount'] }}</label>
-                    {{ form.amount(class="form-control", placeholder=trans['Enter amount']) }}
+                    <label for="amount" class="form-label">{{ trans('Amount') }}</label>
+                    {{ form.amount(class="form-control", placeholder=trans('Enter amount in ₦')) }}
+                    <div class="invalid-feedback">{{ trans('Valid amount is required') }}</div>
                 </div>
                 <div class="mb-3">
-                    <label for="due_date" class="form-label">{{ trans['Due Date (YYYY-MM-DD)'] }}</label>
+                    <label for="due_date" class="form-label">{{ trans('Due Date') }}</label>
                     {{ form.due_date(class="form-control", placeholder="YYYY-MM-DD") }}
+                    <div class="invalid-feedback">{{ trans('Valid due date is required') }}</div>
                 </div>
                 <div class="mb-3">
-                    <label for="category" class="form-label">{{ trans['Category'] }}</label>
+                    <label for="category" class="form-label">{{ trans('Category') }}</label>
                     {{ form.category(class="form-control") }}
+                    <div class="invalid-feedback">{{ trans('Category is required') }}</div>
                 </div>
                 <div class="mb-3">
-                    <label for="email" class="form-label">{{ trans['Email'] }}</label>
-                    {{ form.email(class="form-control", placeholder=trans['Enter email']) }}
+                    <label for="email" class="form-label">{{ trans('Email') }}</label>
+                    {{ form.email(class="form-control", placeholder=trans('Enter email for reminders')) }}
+                    <div class="invalid-feedback">{{ trans('Valid email is required') }}</div>
                 </div>
                 <div class="mb-3">
-                    <label for="send_email" class="form-label">{{ trans['Send Email'] }}</label>
-                    {{ form.send_email(class="form-control") }}
+                    <div class="form-check">
+                        {{ form.send_email(class="form-check-input") }}
+                        <label class="form-check-label" for="send_email">{{ trans('Send email reminders') }}</label>
+                    </div>
                 </div>
                 <div class="mb-3">
-                    <label for="status" class="form-label">{{ trans['Status'] }}</label>
+                    <label for="status" class="form-label">{{ trans('Status') }}</label>
                     {{ form.status(class="form-control") }}
+                    <div class="invalid-feedback">{{ trans('Status is required') }}</div>
                 </div>
-                <button type="submit" class="btn btn-primary">{{ trans['Submit'] }}</button>
+                <button type="submit" class="btn btn-primary">{{ trans('Save Bill') }}</button>
             </form>
         </div>
     </div>
