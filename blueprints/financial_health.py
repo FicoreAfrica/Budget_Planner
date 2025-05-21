@@ -217,7 +217,7 @@ def step3():
                 badges.append("Interest-Free Borrower")
             log.debug(f"Status: {status}, Badges: {badges}")
 
-            # Store record
+            # Store record in session
             record = {
                 "data": {
                     "first_name": step1_data.get('first_name', ''),
@@ -236,14 +236,8 @@ def step3():
                     "created_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 }
             }
-            log.info("Saving financial health record")
-            record_id = financial_health_storage.append(record, user_email=step1_data.get('email'), session_id=session['sid'])
-            if record_id:
-                log.info(f"Successfully saved record {record_id} for session {session['sid']}")
-            else:
-                log.error(f"Failed to save record for session {session['sid']}")
-                flash(t("Error saving financial health data. Please try again."), "danger")
-                return render_template('health_score_step3.html', form=form, t=t), 500
+            session['health_record'] = record
+            log.info(f"Saved financial health record to session for session {session['sid']}")
 
             # Send email if requested
             email = step1_data.get('email')
@@ -276,7 +270,7 @@ def step3():
                     log.error(f"Failed to send email: {str(email_error)}")
                     flash(t("Financial health assessment completed, but email sending failed."), "warning")
 
-            # Clear session
+            # Clear previous steps but keep the record
             session.pop('health_step1', None)
             session.pop('health_step2', None)
             log.info("Financial health assessment completed successfully")
@@ -287,7 +281,7 @@ def step3():
         log.exception(f"Unexpected error in step3: {str(e)}")
         flash(t("Unexpected error during financial health assessment. Please try again."), "danger")
         return render_template('health_score_step3.html', form=form, t=t), 500
-        
+
 @financial_health_bp.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
     """Display financial health dashboard with comparison to others."""
@@ -297,40 +291,13 @@ def dashboard():
     t = lambda key: t_dict.get(key, key)
     log.info(f"Starting dashboard for session {session['sid']}")
     try:
-        # Retrieve user-specific records with fallback
-        try:
-            user_data = financial_health_storage.filter_by_session(session['sid'])
-            if not isinstance(user_data, list):
-                raise ValueError("Invalid user data format from storage")
-        except Exception as storage_error:
-            log.error(f"Failed to retrieve user data: {str(storage_error)}")
-            user_data = []
-        records = []
-        for record in user_data:
-            try:
-                data = record.get("data", {})
-                for key in ['income', 'expenses', 'debt', 'interest_rate', 'score', 'debt_to_income', 'savings_rate', 'interest_burden']:
-                    if key in data and isinstance(data[key], str):
-                        try:
-                            data[key] = float(data[key].replace(',', ''))
-                        except (ValueError, TypeError):
-                            log.warning(f"Invalid {key} in record {record.get('id')}: {data[key]}")
-                            data[key] = 0
-                records.append((record.get("id", str(uuid.uuid4())), data))
-            except Exception as record_error:
-                log.warning(f"Skipping invalid record: {str(record_error)}")
-                continue
-        latest_record = records[-1][1] if records else {}
-        log.debug(f"Retrieved user records: {records}")
+        # Retrieve user-specific record from session with fallback
+        latest_record = session.get('health_record', {}).get('data', {})
+        records = [(str(uuid.uuid4()), latest_record)] if latest_record else []
+        log.debug(f"Retrieved user records from session: {records}")
 
-        # Retrieve all records for comparison with fallback
-        try:
-            all_records = financial_health_storage.get_all()
-            if not isinstance(all_records, list):
-                raise ValueError("Invalid all records format from storage")
-        except Exception as storage_error:
-            log.error(f"Failed to retrieve all records: {str(storage_error)}")
-            all_records = []
+        # Retrieve all records for comparison (fallback to empty list since storage is unreliable)
+        all_records = []
         total_users = len(all_records)
         cleaned_records = []
         for record in all_records:
@@ -349,7 +316,7 @@ def dashboard():
                 continue
         log.debug(f"Total users: {total_users}")
 
-        # Calculate rank and average score
+        # Calculate rank and average score (limited by lack of stored data)
         rank = total_users if total_users > 0 else 1
         average_score = 0
         if cleaned_records and latest_record.get('score', 0) > 0:
