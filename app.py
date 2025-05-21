@@ -82,7 +82,16 @@ def session_required(f):
 def inject_translations():
     def context_trans(key):
         return trans(key)
-    return dict(trans=context_trans, current_year=datetime.now().year)
+    return dict(
+        trans=context_trans,
+        current_year=datetime.now().year,
+        LINKEDIN_URL=os.environ.get('LINKEDIN_URL', '#'),
+        TWITTER_URL=os.environ.get('TWITTER_URL', '#'),
+        FACEBOOK_URL=os.environ.get('FACEBOOK_URL', '#'),
+        FEEDBACK_FORM_URL=os.environ.get('FEEDBACK_FORM_URL', '#'),
+        WAITLIST_FORM_URL=os.environ.get('WAITLIST_FORM_URL', '#'),
+        CONSULTANCY_FORM_URL=os.environ.get('CONSULTANCY_FORM_URL', '#')
+    )
 
 # General Routes
 @app.route('/')
