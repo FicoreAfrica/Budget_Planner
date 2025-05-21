@@ -149,35 +149,48 @@
     {% if latest_record %}
         <div class="card mb-4">
             <div class="card-body">
-                <h2>{{ trans('t').Hello | default('Hello') }} {{ latest_record.first_name or 'User' }}</h2>
+                <h2>{{ trans('t').Hello | default('Hello') }} {{ latest_record.first_name | default('User') }}</h2>
                 <canvas id="scoreGauge" class="score-gauge"></canvas>
                 <p class="metric">
                     <strong>{{ trans('t').Your_Score | default('Your Score') }}:</strong>
-                    <span style="font-size: 1.5rem; color: #2E7D32;">{{ latest_record.score | format_number }}</span>
+                    <span style="font-size: 1.5rem; color: #2E7D32;" id="score">{{ latest_record.score | default(0) }}</span>
                 </p>
                 <p class="metric">
                     <strong>{{ trans('t').Status | default('Status') }}:</strong>
-                    <span class="status-badge bg-{{ 'success' if latest_record.status == 'Good' else 'warning' if latest_record.status == 'Fair' else 'danger' }}">
-                        <i class="fas fa-{{ 'check-circle' if latest_record.status == 'Good' else 'exclamation-circle' if latest_record.status == 'Fair' else 'times-circle' }}"></i>
-                        {{ trans('t')[latest_record.status] | default(latest_record.status) }}
+                    <span class="status-badge bg-{{ 'success' if latest_record.status == 'Excellent' or latest_record.status == 'Good' else 'warning' if latest_record.status == 'Needs Improvement' else 'danger' }}">
+                        <i class="fas fa-{{ 'check-circle' if latest_record.status == 'Excellent' or latest_record.status == 'Good' else 'exclamation-circle' if latest_record.status == 'Needs Improvement' else 'times-circle' }}"></i>
+                        {{ trans('t')[latest_record.status] | default(latest_record.status | default('Unknown')) }}
                     </span>
                 </p>
-                <p class="metric"><strong>{{ trans('t').Monthly_Income | default('Monthly Income') }}:</strong> ₦{{ latest_record.income | format_number }}</p>
-                <p class="metric"><strong>{{ trans('t').Monthly_Expenses | default('Monthly Expenses') }}:</strong> ₦{{ latest_record.expenses | format_number }}</p>
-                <p class="metric"><strong>{{ trans('t').Total_Debt | default('Total Debt') }}:</strong> ₦{{ latest_record.debt | format_number }}</p>
-                <p class="metric"><strong>{{ trans('t').Average_Interest_Rate | default('Average Interest Rate') }}:</strong> {{ latest_record.interest_rate | format_number }}%</p>
-                <p class="metric"><strong>{{ trans('t').Debt_to_Income_Ratio | default('Debt-to-Income Ratio') }}:</strong> {{ latest_record.debt_to_income | format_number }}%</p>
-                <p class="metric"><strong>{{ trans('t').Savings_Rate | default('Savings Rate') }}:</strong> {{ latest_record.savings_rate | format_number }}%</p>
-                <p class="metric"><strong>{{ trans('t').Interest_Burden | default('Interest Burden') }}:</strong> {{ latest_record.interest_burden | format_number }}%</p>
-                <p class="metric"><strong>{{ trans('t').Created_At | default('Created At') }}:</strong> {{ latest_record.created_at }}</p>
+                <p class="metric"><strong>{{ trans('t').Monthly_Income | default('Monthly Income') }}:</strong> ₦<span id="income">{{ latest_record.income | default(0) }}</span></p>
+                <p class="metric"><strong>{{ trans('t').Monthly_Expenses | default('Monthly Expenses') }}:</strong> ₦<span id="expenses">{{ latest_record.expenses | default(0) }}</span></p>
+                <p class="metric"><strong>{{ trans('t').Total_Debt | default('Total Debt') }}:</strong> ₦<span id="debt">{{ latest_record.debt | default(0) }}</span></p>
+                <p class="metric"><strong>{{ trans('t').Average_Interest_Rate | default('Average Interest Rate') }}:</strong> <span id="interest_rate">{{ latest_record.interest_rate | default(0) }}</span>%</p>
+                <p class="metric"><strong>{{ trans('t').Debt_to_Income_Ratio | default('Debt-to-Income Ratio') }}:</strong> <span id="debt_to_income">{{ latest_record.debt_to_income | default(0) }}</span>%</p>
+                <p class="metric"><strong>{{ trans('t').Savings_Rate | default('Savings Rate') }}:</strong> <span id="savings_rate">{{ latest_record.savings_rate | default(0) }}</span>%</p>
+                <p class="metric"><strong>{{ trans('t').Interest_Burden | default('Interest Burden') }}:</strong> <span id="interest_burden">{{ latest_record.interest_burden | default(0) }}</span>%</p>
+                <p class="metric"><strong>{{ trans('t').Created_At | default('Created At') }}:</strong> {{ latest_record.created_at | default('N/A') }}</p>
                 <script>
                     document.addEventListener('DOMContentLoaded', function() {
+                        // Format numbers with commas
+                        const formatNumber = (num, decimals = 0) => {
+                            return num.toLocaleString('en-NG', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+                        };
+                        document.getElementById('score').textContent = formatNumber({{ latest_record.score | default(0) }});
+                        document.getElementById('income').textContent = formatNumber({{ latest_record.income | default(0) }});
+                        document.getElementById('expenses').textContent = formatNumber({{ latest_record.expenses | default(0) }});
+                        document.getElementById('debt').textContent = formatNumber({{ latest_record.debt | default(0) }});
+                        document.getElementById('interest_rate').textContent = formatNumber({{ latest_record.interest_rate | default(0) }}, 2);
+                        document.getElementById('debt_to_income').textContent = formatNumber({{ latest_record.debt_to_income | default(0) }}, 1);
+                        document.getElementById('savings_rate').textContent = formatNumber({{ latest_record.savings_rate | default(0) }}, 1);
+                        document.getElementById('interest_burden').textContent = formatNumber({{ latest_record.interest_burden | default(0) }}, 1);
+
                         const ctx = document.getElementById('scoreGauge').getContext('2d');
                         new Chart(ctx, {
                             type: 'doughnut',
                             data: {
                                 datasets: [{
-                                    data: [{{ latest_record.score | format_number }}, 100 - {{ latest_record.score | format_number }}],
+                                    data: [{{ latest_record.score | default(0) }}, 100 - {{ latest_record.score | default(0) }}],
                                     backgroundColor: ['#2E7D32', '#E0E0E0'],
                                     borderWidth: 0,
                                     circumference: 180,
@@ -191,7 +204,7 @@
                                     tooltip: { enabled: false },
                                     datalabels: {
                                         display: true,
-                                        formatter: () => '{{ latest_record.score | format_number }}',
+                                        formatter: () => formatNumber({{ latest_record.score | default(0) }}),
                                         color: '#2E7D32',
                                         font: { size: 20, weight: 'bold' },
                                         anchor: 'center',
@@ -227,10 +240,10 @@
                                 datasets: [{
                                     label: '{{ trans('t').Metrics | default('Metrics') }}',
                                     data: [
-                                        {{ latest_record.score | format_number }},
-                                        {{ latest_record.debt_to_income | format_number }},
-                                        {{ latest_record.savings_rate | format_number }},
-                                        {{ latest_record.interest_burden | format_number }}
+                                        {{ latest_record.score | default(0) }},
+                                        {{ latest_record.debt_to_income | default(0) }},
+                                        {{ latest_record.savings_rate | default(0) }},
+                                        {{ latest_record.interest_burden | default(0) }}
                                     ],
                                     backgroundColor: ['#2E7D32', '#D81B60', '#0288D1', '#FBC02D'],
                                     borderColor: ['#1B5E20', '#B71C1C', '#01579B', '#F9A825'],
@@ -305,23 +318,27 @@
             </div>
             <div class="card-body">
                 <div class="comparison-box">
-                    <p>
-                        {{ trans('t').Your_Rank | default('Your Rank') }}: #{{ rank }} {{ trans('t').out_of | default('out of') }} {{ total_users }} {{ trans('t').users | default('users') }}
-                    </p>
-                    <p>
-                        {{ trans('t').Youre_ahead_of | default("You're ahead of") }} {{ ((total_users - rank) / total_users * 100) | round(1) }}% {{ trans('t').of_users | default('of users') }}
-                    </p>
-                    <p>
-                        {% if rank <= total_users * 0.1 %}
-                            {{ trans('t').Top_10 | default('You are in the Top 10%!') }}
-                        {% elif rank <= total_users * 0.3 %}
-                            {{ trans('t').Top_30 | default('You are in the Top 30%.') }}
-                        {% elif rank <= total_users * 0.7 %}
-                            {{ trans('t').Middle_Range | default('You are in the Middle Range.') }}
-                        {% else %}
-                            {{ trans('t').Lower_Range | default('You are in the Lower Range.') }}
-                        {% endif %}
-                    </p>
+                    {% if total_users >= 5 %}
+                        <p>
+                            {{ trans('t').Your_Rank | default('Your Rank') }}: #{{ rank | default(0) }} {{ trans('t').out_of | default('out of') }} {{ total_users | default(0) }} {{ trans('t').users | default('users') }}
+                        </p>
+                        <p>
+                            {{ trans('t').Youre_ahead_of | default("You're ahead of") }} {{ ((total_users - rank) / total_users * 100) | round(1) if total_users > 0 else 0 }}% {{ trans('t').of_users | default('of users') }}
+                        </p>
+                        <p>
+                            {% if rank <= total_users * 0.1 %}
+                                {{ trans('t').Top_10 | default('You are in the Top 10%!') }}
+                            {% elif rank <= total_users * 0.3 %}
+                                {{ trans('t').Top_30 | default('You are in the Top 30%.') }}
+                            {% elif rank <= total_users * 0.7 %}
+                                {{ trans('t').Middle_Range | default('You are in the Middle Range.') }}
+                            {% else %}
+                                {{ trans('t').Lower_Range | default('You are in the Lower Range.') }}
+                            {% endif %}
+                        </p>
+                    {% else %}
+                        <p>{{ trans('t').Not_enough_users | default('Not enough users for comparison yet. Invite others to join!') }}</p>
+                    {% endif %}
                 </div>
                 <canvas id="comparisonChart"></canvas>
                 <script>
@@ -336,7 +353,7 @@
                                 ],
                                 datasets: [{
                                     label: '{{ trans('t').Score | default('Score') }}',
-                                    data: [{{ latest_record.score | format_number }}, {{ average_score | round(1) }}],
+                                    data: [{{ latest_record.score | default(0) }}, {{ average_score | default(0) | round(1) }}],
                                     backgroundColor: ['#2E7D32', '#0288D1'],
                                     borderColor: ['#1B5E20', '#01579B'],
                                     borderWidth: 1
@@ -412,9 +429,9 @@
                         <tbody>
                             {% for record_id, record in records %}
                                 <tr>
-                                    <td>{{ record.created_at }}</td>
-                                    <td>{{ record.score | format_number }}</td>
-                                    <td>{{ trans('t')[record.status] | default(record.status) }}</td>
+                                    <td>{{ record.created_at | default('N/A') }}</td>
+                                    <td>{{ record.score | default(0) }}</td>
+                                    <td>{{ trans('t')[record.status] | default(record.status | default('Unknown')) }}</td>
                                 </tr>
                             {% endfor %}
                         </tbody>
