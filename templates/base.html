@@ -105,8 +105,8 @@
                         <a class="nav-link" href="{{ url_for('logout') }}">{{ trans('t').Logout | default('Logout') }}</a>
                     </li>
                     <li class="nav-item">
-                        <form action="{{ url_for('set_language') }}" method="GET" class="d-flex">
-                            <select name="lang" onchange="this.form.submit()" aria-label="{{ trans('t').Choose_your_language | default('Choose your language') }}">
+                        <form id="language-form" method="GET" class="d-flex">
+                            <select name="lang" onchange="this.form.action='/set_language/' + this.value; this.form.submit();" aria-label="{{ trans('t').Choose_your_language | default('Choose your language') }}">
                                 <option value="en" {% if session.lang == 'en' %}selected{% endif %}>{{ trans('t').English | default('English') }}</option>
                                 <option value="ha" {% if session.lang == 'ha' %}selected{% endif %}>{{ trans('t').Hausa | default('Hausa') }}</option>
                             </select>
