@@ -1,127 +1,137 @@
 {% extends 'base.html' %}
 {% block title %}{{ trans('Bill Dashboard') }}{% endblock %}
 {% block extra_head %}
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/main.min.css">
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/main.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/main.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/main.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 {% endblock %}
 {% block content %}
-<div class="container">
+  <div class="container">
     <div class="navbar mb-4">
-        <h1>{{ trans('Bill Dashboard') }}</h1>
+      <h1>{{ trans('Bill Dashboard') }}</h1>
     </div>
     {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            {% endfor %}
-        {% endif %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
     {% endwith %}
     <div class="card mb-4">
-        <div class="card-body">
-            <div class="stat">
-                <strong>{{ trans('Paid Bills') }}:</strong> {{ paid_count | format_number }} (₦{{ total_paid | format_number }})
-            </div>
-            <div class="stat">
-                <strong>{{ trans('Unpaid Bills') }}:</strong> {{ unpaid_count | format_number }} (₦{{ total_unpaid | format_number }})
-            </div>
-            <div class="stat">
-                <strong>{{ trans('Overdue Bills') }}:</strong>
-                <span class="overdue-alert">{{ overdue_count | format_number }} (₦{{ total_overdue | format_number }})</span>
-            </div>
-            <div class="stat">
-                <strong>{{ trans('Total Bills') }}:</strong> ₦{{ total_bills | format_number }}
-            </div>
+      <div class="card-body">
+        <div class="stat">
+          <strong>{{ trans('Paid Bills') }}:</strong> {{ paid_count | format_number }} (₦{{ total_paid | format_number }})
         </div>
+        <div class="stat">
+          <strong>{{ trans('Unpaid Bills') }}:</strong> {{ unpaid_count | format_number }} (₦{{ total_unpaid | format_number }})
+        </div>
+        <div class="stat">
+          <strong>{{ trans('Overdue Bills') }}:</strong>
+          <span class="overdue-alert">{{ overdue_count | format_number }} (₦{{ total_overdue | format_number }})</span>
+        </div>
+        <div class="stat">
+          <strong>{{ trans('Pending Bills') }}:</strong> {{ pending_count | format_number }}
+        </div>
+        <div class="stat">
+          <strong>{{ trans('Total Bills') }}:</strong> ₦{{ total_bills | format_number }}
+        </div>
+      </div>
     </div>
     <div class="card mb-4">
-        <div class="card-body">
-            <h3>{{ trans('Spending by Category') }}</h3>
-            <canvas id="categoryChart"></canvas>
-            <script>
-                document.addEventListener('DOMContentLoaded', function() {
-                    const ctx = document.getElementById('categoryChart').getContext('2d');
-                    new Chart(ctx, {
-                        type: 'bar',
-                        data: {
-                            labels: [{% for cat in categories %}"{{ trans[cat] }}",{% endfor %}],
-                            datasets: [{
-                                label: '{{ trans('Amount') }} (₦)',
-                                data: [{% for cat, amt in categories.items() %}{{ amt | format_number }},{% endfor %}],
-                                backgroundColor: ['#1E7F71', '#2E7D32', '#0288D1', '#dc3545', '#FBC02D', '#D81B60', '#7B1FA2', '#FF5722', '#795548', '#607D8B'],
-                                borderColor: ['#1E7F71', '#2E7D32', '#0288D1', '#dc3545', '#FBC02D', '#D81B60', '#7B1FA2', '#FF5722', '#795548', '#607D8B'],
-                                borderWidth: 1
-                            }]
-                        },
-                        options: {
-                            scales: { y: { beginAtZero: true } },
-                            plugins: { legend: { display: true } }
-                        }
-                    });
-                });
-            </script>
-        </div>
+      <div class="card-body">
+        <h3>{{ trans('Spending by Category') }}</h3>
+        <canvas id="categoryChart"></canvas>
+        <script>
+          document.addEventListener('DOMContentLoaded', function() {
+            const ctx = document.getElementById('categoryChart').getContext('2d');
+            new Chart(ctx, {
+              type: 'bar',
+              data: {
+                labels: [{% for cat in categories %}"{{ trans(cat.replace('_', '/').title()) }}",{% endfor %}],
+                datasets: [{
+                  label: '{{ trans('Amount') }} (₦)',
+                  data: [{% for cat, amt in categories.items() %}{{ amt | format_number }},{% endfor %}],
+                  backgroundColor: ['#1E7F71', '#2E7D32', '#0288D1', '#dc3545', '#FBC02D', '#D81B60', '#7B1FA2', '#FF5722', '#795548', '#607D8B', '#00ACC1', '#8E24AA', '#F06292', '#4CAF50'],
+                  borderColor: ['#1E7F71', '#2E7D32', '#0288D1', '#dc3545', '#FBC02D', '#D81B60', '#7B1FA2', '#FF5722', '#795548', '#607D8B', '#00ACC1', '#8E24AA', '#F06292', '#4CAF50'],
+                  borderWidth: 1
+                }]
+              },
+              options: {
+                scales: { y: { beginAtZero: true } },
+                plugins: { legend: { display: true } }
+              }
+            });
+          });
+        </script>
+      </div>
     </div>
     <div class="card mb-4">
-        <div class="card-body">
-            <h3>{{ trans('Bills Due') }}</h3>
-            <p>{{ trans('Today') }}: {{ due_today|length | format_number }}</p>
-            <p>{{ trans('This Week') }}: {{ due_week|length | format_number }}</p>
-            <p>{{ trans('This Month') }}: {{ due_month|length | format_number }}</p>
-            <div id="calendar"></div>
-            <script>
-                document.addEventListener('DOMContentLoaded', function() {
-                    var calendarEl = document.getElementById('calendar');
-                    var calendar = new FullCalendar.Calendar(calendarEl, {
-                        initialView: 'dayGridMonth',
-                        events: [
-                            {% for bill in bills %}
-                                {
-                                    title: '{{ bill.bill_name }} (₦{{ bill.amount | format_number }})',
-                                    start: '{{ bill.due_date }}',
-                                    backgroundColor: '{{ '#2E7D32' if bill.status == 'paid' else '#dc3545' }}',
-                                    borderColor: '{{ '#2E7D32' if bill.status == 'paid' else '#dc3545' }}'
-                                },
-                            {% endfor %}
-                        ],
-                        eventDidMount: function(info) {
-                            info.el.setAttribute('title', info.event.title);
-                        }
-                    });
-                    calendar.render();
-                });
-            </script>
-        </div>
+      <div class="card-body">
+        <h3>{{ trans('Bills Due') }}</h3>
+        <p>{{ trans('Today') }}: {{ due_today|length | format_number }}</p>
+        <p>{{ trans('This Week') }}: {{ due_week|length | format_number }}</p>
+        <p>{{ trans('This Month') }}: {{ due_month|length | format_number }}</p>
+        <div id="calendar"></div>
+        <script>
+          document.addEventListener('DOMContentLoaded', function() {
+            var calendarEl = document.getElementById('calendar');
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+              initialView: 'dayGridMonth',
+              events: [
+                {% for bill in bills %}
+                  {
+                    title: '{{ bill.bill_name }} (₦{{ bill.amount | format_number }})',
+                    start: '{{ bill.due_date }}',
+                    backgroundColor: '{{ '#2E7D32' if bill.status == 'paid' else '#dc3545' if bill.status == 'overdue' else '#FBC02D' }}',
+                    borderColor: '{{ '#2E7D32' if bill.status == 'paid' else '#dc3545' if bill.status == 'overdue' else '#FBC02D' }}'
+                  },
+                {% endfor %}
+              ],
+              eventDidMount: function(info) {
+                info.el.setAttribute('title', info.event.title);
+              }
+            });
+            calendar.render();
+          });
+        </script>
+      </div>
     </div>
     <div class="card mb-4">
-        <div class="card-body">
-            <h3>{{ trans('Upcoming Bills') }}</h3>
-            {% if upcoming_bills %}
-                <ul>
-                    {% for bill in upcoming_bills %}
-                        <li>{{ bill.bill_name }} (₦{{ bill.amount | format_number }}) - {{ trans('Due') }} {{ bill.due_date }}</li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p>{{ trans('No upcoming bills') }}</p>
-            {% endif %}
-        </div>
+      <div class="card-body">
+        <h3>{{ trans('Upcoming Bills') }}</h3>
+        {% if upcoming_bills %}
+          <ul>
+            {% for bill in upcoming_bills %}
+              <li>{{ bill.bill_name }} (₦{{ bill.amount | format_number }}) - {{ trans('Due') }} {{ bill.due_date }} <a href="{{ url_for('bill.view_edit') }}" class="btn btn-sm btn-primary">{{ trans('Pay Now') }}</a></li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p>{{ trans('No upcoming bills') }}</p>
+        {% endif %}
+      </div>
     </div>
     <div class="card mb-4 tips">
-        <div class="card-body">
-            <h3>{{ trans('Tips for Managing Bills') }}</h3>
-            {% for tip in tips %}
-                <p>{{ tip }}</p>
-            {% endfor %}
-        </div>
+      <div class="card-body">
+        <h3>{{ trans('Tips for Managing Bills') }}</h3>
+        {% for tip in tips %}
+          <p>{{ tip }}</p>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="card mb-4">
+      <div class="card-body">
+        <h3>{{ trans('Feedback') }}</h3>
+        <p>{{ trans('Please provide feedback on your experience') }}</p>
+        <a href="#" class="btn btn-secondary">{{ trans('Feedback Form') }}</a>
+      </div>
     </div>
     <a href="{{ url_for('bill.view_edit') }}" class="btn btn-primary">{{ trans('View and Edit Bills') }}</a>
-</div>
+  </div>
 {% endblock %}
 {% block extra_scripts %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/main.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/main.min.js"></script>
 {% endblock %}
