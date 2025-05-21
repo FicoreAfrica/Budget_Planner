@@ -2,7 +2,7 @@ import logging
 import os
 import uuid
 from datetime import datetime
-from flask import Flask, render_template, request, session, redirect, url_for, flash
+from flask import Flask, render_template, request, session, redirect, url_for, flash, send_from_directory
 from flask_session import Session
 from flask_wtf.csrf import CSRFProtect
 from blueprints.financial_health import financial_health_bp
@@ -109,6 +109,12 @@ def set_language(lang):
     session['lang'] = lang if lang in valid_langs else 'en'
     flash(trans('Language changed successfully') if lang in valid_langs else trans('Invalid language'))
     return redirect(request.referrer or url_for('index'))
+
+@app.route('/favicon.ico')
+def favicon():
+    logger = logging.getLogger(__name__)
+    logger.debug("Serving favicon.ico")
+    return send_from_directory(os.path.join(app.root_path, 'static', 'img'), 'favicon-32x32.png', mimetype='image/png')
 
 @app.route('/general_dashboard')
 @session_required
