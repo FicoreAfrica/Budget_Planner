@@ -28,12 +28,12 @@ from json_store import JsonStorage
 from functools import wraps
 import traceback
 
-# Configure basic logging without session context
+# Configure basic logging
 logger = logging.getLogger('ficore_app')
 logger.setLevel(logging.DEBUG)
 
 # Formatter with timestamp
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s [session: %(session_id)s]')
 
 # File handler with fallback
 try:
@@ -51,7 +51,7 @@ console_handler.setLevel(logging.DEBUG)
 console_handler.setFormatter(formatter)
 logger.addHandler(console_handler)
 
-# LoggerAdapter for session context (to be applied in request context)
+# LoggerAdapter for session context
 class SessionAdapter(logging.LoggerAdapter):
     def process(self, msg, kwargs):
         kwargs['extra'] = kwargs.get('extra', {})
@@ -60,22 +60,28 @@ class SessionAdapter(logging.LoggerAdapter):
 
 # Initialize Flask app
 app = Flask(__name__)
-app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'your-secret-key')
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'your-secret-key')  # Replace with a secure key in production
 
 # Configure filesystem-based sessions
 session_dir = os.environ.get('SESSION_DIR', 'data/sessions')
 if os.environ.get('RENDER'):
     session_dir = '/opt/render/project/src/data/sessions'
 try:
-    os.makedirs(os.path.dirname(session_dir) or '.', exist_ok=True)
     os.makedirs(session_dir, exist_ok=True)
-    logger.info(f"Session directory set to: {session_dir}")
+    # Verify directory is writable
+    test_file = os.path.join(session_dir, '.test_write')
+    with open(test_file, 'w') as f:
+        f.write('test')
+    os.remove(test_file)
+    logger.info(f"Session directory set to: {session_dir} and is writable")
 except Exception as e:
-    logger.error(f"Failed to create session directory {session_dir}: {str(e)}", exc_info=True)
+    logger.error(f"Failed to create or verify session directory {session_dir}: {str(e)}", exc_info=True)
     session_dir = 'data/sessions'  # Fallback to local directory
 app.config['SESSION_FILE_DIR'] = session_dir
 app.config['SESSION_TYPE'] = 'filesystem'
 app.config['SESSION_PERMANENT'] = False
+app.config['SESSION_USE_SIGNER'] = True  # Enable session data signing for security
+app.config['SESSION_SERIALIZER'] = 'json'  # Explicitly use JSON serializer for complex data
 Session(app)
 CSRFProtect(app)
 
@@ -107,7 +113,7 @@ def session_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# Before request handler to log directory contents
+# Before request handler to log directory contents and set logger
 @app.before_request
 def log_directory():
     global log
