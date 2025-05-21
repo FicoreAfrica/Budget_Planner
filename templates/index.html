@@ -45,7 +45,7 @@
                     <div class="card-body">
                         <h3 class="card-title">{{ trans('t').Bill_Planner | default('Bill Planner') }}</h3>
                         <p class="card-text">{{ trans('t').Manage_and_mark_bills | default('Manage and mark bills as paid') }}</p>
-                        <a href="{{ url_for('bill.bill_form') }}" class="btn btn-primary" aria-label="{{ trans('t').Start_Bill_Planner | default('Start Bill Planner') }}">{{ trans('t').Start | default('Start') }}</a>
+                        <a href="{{ url_for('bill.form') }}" class="btn btn-primary" aria-label="{{ trans('t').Start_Bill_Planner | default('Start Bill Planner') }}">{{ trans('t').Start | default('Start') }}</a>
                     </div>
                 </div>
             </div>
