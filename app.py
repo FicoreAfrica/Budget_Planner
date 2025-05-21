@@ -26,10 +26,45 @@ except ImportError as e:
         return {}
 from json_store import JsonStorage
 from functools import wraps
+import traceback
+
+# Configure logging with session context
+logger = logging.getLogger('ficore_app')
+logger.setLevel(logging.DEBUG)
+
+# Formatter with timestamp and session ID
+formatter = logging.Formatter('%(asctime)s - %(name)s - SessionID: %(session_id)s - %(levelname)s - %(message)s')
+
+# File handler with fallback
+try:
+    os.makedirs('data', exist_ok=True)
+    file_handler = logging.FileHandler('data/storage.txt')
+    file_handler.setLevel(logging.DEBUG)
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
+except Exception as e:
+    logger.warning(f"Failed to set up file logging: {str(e)}")
+
+# Console handler for Render compatibility
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.DEBUG)
+console_handler.setFormatter(formatter)
+logger.addHandler(console_handler)
+
+# LoggerAdapter for session context
+class SessionAdapter(logging.LoggerAdapter):
+    def process(self, msg, kwargs):
+        kwargs['extra'] = kwargs.get('extra', {})
+        kwargs['extra']['session_id'] = session.get('sid', 'unknown')
+        return msg, kwargs
+
+log = SessionAdapter(logger, {})
 
 # Debug: Log directory contents
-print("Current directory:", os.getcwd())
-print("Directory contents:", os.listdir('.'))
+log.info(f"Current directory: {os.getcwd()}")
+log.info(f"Directory contents: {os.listdir('.')}")
+if not os.path.exists('data/storage.txt'):
+    log.warning("storage.txt not found in data directory")
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -39,16 +74,18 @@ app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'your-secret-key')
 session_dir = os.environ.get('SESSION_DIR', 'data/sessions')
 if os.environ.get('RENDER'):
     session_dir = '/opt/render/project/src/data/sessions'
-os.makedirs(os.path.dirname(session_dir) or '.', exist_ok=True)
-os.makedirs(session_dir, exist_ok=True)
+try:
+    os.makedirs(os.path.dirname(session_dir) or '.', exist_ok=True)
+    os.makedirs(session_dir, exist_ok=True)
+    log.info(f"Session directory set to: {session_dir}")
+except Exception as e:
+    log.error(f"Failed to create session directory {session_dir}: {str(e)}", exc_info=True)
+    session_dir = 'data/sessions'  # Fallback to local directory
 app.config['SESSION_FILE_DIR'] = session_dir
 app.config['SESSION_TYPE'] = 'filesystem'
 app.config['SESSION_PERMANENT'] = False
 Session(app)
 CSRFProtect(app)
-
-# Configure logging
-logging.basicConfig(filename='data/storage.txt', level=logging.DEBUG)
 
 # Initialize JsonStorage for each tool
 storage_managers = {
@@ -65,7 +102,8 @@ storage_managers = {
 def format_number(value):
     try:
         return f"{float(value):,.2f}" if isinstance(value, (int, float)) else str(value)
-    except (ValueError, TypeError):
+    except (ValueError, TypeError) as e:
+        log.warning(f"Error formatting number {value}: {str(e)}")
         return str(value)
 
 # Session required decorator
@@ -74,6 +112,7 @@ def session_required(f):
     def decorated_function(*args, **kwargs):
         if 'sid' not in session:
             session['sid'] = str(uuid.uuid4())
+            log.info(f"New session initialized: {session['sid']}")
         return f(*args, **kwargs)
     return decorated_function
 
@@ -82,6 +121,7 @@ def session_required(f):
 def inject_translations():
     def context_trans(key):
         return trans(key)
+    log.debug("Injecting translations and context variables")
     return dict(
         trans=context_trans,
         current_year=datetime.now().year,
@@ -96,6 +136,7 @@ def inject_translations():
 # General Routes
 @app.route('/')
 def index():
+    log.info("Serving index page")
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
     if 'lang' not in session:
@@ -107,18 +148,19 @@ def index():
 def set_language(lang):
     valid_langs = ['en', 'ha']
     session['lang'] = lang if lang in valid_langs else 'en'
+    log.info(f"Language set to {session['lang']}")
     flash(trans('Language changed successfully') if lang in valid_langs else trans('Invalid language'))
     return redirect(request.referrer or url_for('index'))
 
 @app.route('/favicon.ico')
 def favicon():
-    logger = logging.getLogger(__name__)
-    logger.debug("Serving favicon.ico")
+    log.debug("Serving favicon.ico")
     return send_from_directory(os.path.join(app.root_path, 'static', 'img'), 'favicon-32x32.png', mimetype='image/png')
 
 @app.route('/general_dashboard')
 @session_required
 def general_dashboard():
+    log.info("Serving general_dashboard")
     data = {}
     for tool, storage in storage_managers.items():
         try:
@@ -127,8 +169,9 @@ def general_dashboard():
                 'score': None, 'surplus_deficit': None, 'personality': None,
                 'bills': [], 'net_worth': None, 'savings_gap': None
             }
+            log.debug(f"Data for {tool}: {data[tool]}")
         except Exception as e:
-            logging.exception(f"Error fetching data for {tool}: {str(e)}")
+            log.error(f"Error fetching data for {tool}: {str(e)}", exc_info=True)
             data[tool] = {
                 'score': None, 'surplus_deficit': None, 'personality': None,
                 'bills': [], 'net_worth': None, 'savings_gap': None
@@ -138,6 +181,7 @@ def general_dashboard():
 
 @app.route('/logout')
 def logout():
+    log.info("Logging out user")
     session.clear()
     flash(trans('You have been logged out'))
     return redirect(url_for('index'))
@@ -146,15 +190,13 @@ def logout():
 @app.errorhandler(404)
 def page_not_found(e):
     t = trans('t')
-    logger = logging.getLogger(__name__)
-    logger.error(f"404 Error: {str(e)}")
+    log.error(f"404 Error: {str(e)}", exc_info=True)
     return render_template('404.html', error=t.get('Page Not Found', 'Page Not Found'), t=t), 404
 
 @app.errorhandler(500)
 def internal_server_error(e):
     t = trans('t')
-    logger = logging.getLogger(__name__)
-    logger.error(f"500 Error: {str(e)}", exc_info=True)
+    log.error(f"500 Error: {str(e)}", exc_info=True)
     return render_template('500.html', error=t.get('Internal Server Error', 'Internal Server Error'), t=t), 500
 
 # Register Blueprints
