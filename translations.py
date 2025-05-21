@@ -13,6 +13,7 @@ def get_translations(language='en'):
             'Invalid due date format. Use YYYY-MM-DD.': 'Invalid due date format. Use YYYY-MM-DD.',
             'Bill Payment Reminder': 'Bill Payment Reminder',
             'Bill status toggled successfully.': 'Bill status toggled successfully.',
+            'Welcome_to_Ficore_Africa_Tools_Suite': 'Welcome_to_Ficore_Africa_Tools_Suite',
             'Failed to toggle bill status.': 'Failed to toggle bill status.',
             'Bill not found.': 'Bill not found.',
             'Error toggling bill status.': 'Error toggling bill status.',
@@ -2040,6 +2041,7 @@ def get_translations(language='en'):
             'No_previous_calculations': 'Babu ƙididdigar da ta gabata',
             'No_fund_data_available': 'Babu bayanan asusu a yanzu',
             'Start_Calculator': 'Fara Ƙididdigewa',
+            'Welcome_to_Ficore_Africa_Tools_Suite': 'Barka da Zuwa Shafin Ficore Africa',
             # Error Messages
             'Error_processing_personal_information': 'Kuskure wajen sarrafa bayanan sirri',
             'Error_processing_emergency_fund_plan': 'Kuskure wajen sarrafa tsarin asusun gaggawa',
