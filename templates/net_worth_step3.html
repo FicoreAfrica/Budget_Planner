@@ -1,0 +1,90 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script>{% extends "base.html" %}
+{% block title %}{{ trans('t').Net_Worth_Calculator | default('Net Worth Calculator') }}{% endblock %}
+{% block content %}
+<div class="container">
+    <div class="navbar mb-4">
+        <h1>{{ trans('t').Net_Worth_Calculator | default('Net Worth Calculator') }}</h1>
+        <p>{{ trans('t').Enter_your_liabilities | default('Enter your liabilities (optional)') }}</p>
+    </div>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    <div class="card">
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('net_worth.step3') }}">
+                {{ form.csrf_token }}
+                <div class="mb-3">
+                    <label class="form-label">{{ trans('t').Loans | default('Loans') }}</label>
+                    {{ form.loans(class="form-control", placeholder=trans('t')['e.g., 200,000'] | default('e.g., 200,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('t').Money_borrowed_from_friends_banks_colleagues_mobile_money | default('Money borrowed from friends, banks, colleagues, or mobile money like OPay/GT Bank')}) }}
+                    <div class="invalid-feedback">{{ trans('t').Loans_must_be_positive | default('Loans must be positive') }}</div>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('net_worth.step2') }}" class="btn btn-secondary">{{ trans('t').Back | default('Back') }}</a>
+                    <button type="submit" class="btn btn-primary">{{ trans('t').Calculate_Net_Worth | default('Calculate Net Worth') }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+    document.querySelectorAll('input[type="number"]').forEach(input => {
+        input.addEventListener('input', () => {
+            let value = input.value.replace(/,/g, '');
+            if (value > 10000000000) {
+                input.value = '10,000,000,000';
+                alert('{{ trans('t').Input_cannot_exceed_10_billion | default('Input cannot exceed ₦10 billion') }}');
+            } else if (value) {
+                input.value = parseFloat(value).toLocaleString('en-NG');
+            }
+        });
+    });
+</script>
+{% endblock %}
