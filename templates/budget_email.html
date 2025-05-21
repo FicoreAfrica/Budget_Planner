@@ -1,70 +1,39 @@
-<script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
-
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
-                var filteredData = jsonData.filter(row => row.some(filledCell));
-
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
-                var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                );
-                // Fallback
-                if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
-                }
-
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
-            }
-        }
-        return gk_fileData[filename] || "";
-        }
-        </script><!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="{{ session.get('lang', 'en') }}">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ t('Budget Planner') }}</title>
+    <title>{{ trans('t').Your_Budget_Plan_Summary | default('Your Budget Plan Summary') }}</title>
 </head>
 <body>
-    <h1>{{ t('Dear') }} {{ data.first_name or 'User' }},</h1>
-    <p>{{ t('Here is your Budget Planner summary.') }}</p>
-    <h2>{{ t('Budget Summary') }}</h2>
-    <p>{{ t('Monthly Income') }}: ₦{{ data.income | format_number }}</p>
-    <p>{{ t('Total Expenses') }}: ₦{{ data.expenses | format_number }}</p>
-    <p>{{ t('Savings Goal') }}: ₦{{ data.savings_goal | format_number }}</p>
-    <p>{{ t('Surplus/Deficit') }}: ₦{{ data.surplus_deficit | format_number }}</p>
-    <h2>{{ t('Recommendations') }}</h2>
+    <h1>{{ trans('t').Dear | default('Dear') }} {{ data.first_name or 'User' }},</h1>
+    <p>{{ trans('t').Here_is_your_budget_summary | default('Here is your budget summary') }}</p>
+    <h2>{{ trans('t').Budget_Summary | default('Budget Summary') }}</h2>
+    <p>{{ trans('t').Created_At | default('Created At') }}: {{ data.created_at }}</p>
+    <p>{{ trans('t').Monthly_Income | default('Monthly Income') }}: ₦{{ data.income | format_number }}</p>
+    <p>{{ trans('t').Total_Expenses | default('Total Expenses') }}: ₦{{ data.expenses | format_number }}</p>
+    <ul>
+        <li>{{ trans('t').Housing_Rent | default('Housing/Rent') }}: ₦{{ data.housing | format_number }}</li>
+        <li>{{ trans('t').Food | default('Food') }}: ₦{{ data.food | format_number }}</li>
+        <li>{{ trans('t').Transport | default('Transport') }}: ₦{{ data.transport | format_number }}</li>
+        <li>{{ trans('t').Dependents_Support | default('Dependents Support') }}: ₦{{ data.dependents | format_number }}</li>
+        <li>{{ trans('t').Miscellaneous | default('Miscellaneous') }}: ₦{{ data.miscellaneous | format_number }}</li>
+        <li>{{ trans('t').Others | default('Others') }}: ₦{{ data.others | format_number }}</li>
+    </ul>
+    <p>{{ trans('t').Savings_Goal | default('Savings Goal') }}: ₦{{ data.savings_goal | format_number }}</p>
+    <p>{{ trans('t').Surplus_Deficit | default('Surplus/Deficit') }}: ₦{{ data.surplus_deficit | format_number }}</p>
+    <h2>{{ trans('t').Recommendations | default('Recommendations') }}</h2>
     <ul>
         {% if data.surplus_deficit < 0 %}
-            <li>{{ t('Reduce expenses or increase income to meet your savings goal.') }}</li>
+            <li>{{ trans('t').Reduce_expenses_or_increase_income | default('Reduce expenses or increase income to meet your savings goal') }}</li>
         {% else %}
-            <li>{{ t('Consider investing your surplus for long-term growth.') }}</li>
+            <li>{{ trans('t').Invest_surplus_in_savings_schemes | default('Invest your surplus in savings schemes like Ajo or fixed deposits') }}</li>
         {% endif %}
         {% if data.savings_goal == 0 %}
-            <li>{{ t('Set a savings goal to build financial security.') }}</li>
+            <li>{{ trans('t').Set_savings_goal | default('Set a savings goal to build financial security') }}</li>
         {% endif %}
     </ul>
-    <p><a href="{{ url_for('budget.step1') }}">{{ t('Recalculate Your Budget') }}</a></p>
-    <p>{{ t('Thank you for choosing Ficore Africa!') }}</p>
-    <footer>{{ t('Powered by Ficore Africa') }}</footer>
+    <p><a href="{{ data.cta_url }}">{{ trans('t').View_Dashboard | default('View Dashboard') }}</a></p>
+    <p>{{ trans('t').Thank_you_for_using_Ficore_Africa | default('Thank you for using Ficore Africa') }}</p>
+    <footer>{{ trans('t').Powered_by_Ficore_Africa | default('Powered by Ficore Africa') }}</footer>
 </body>
 </html>
