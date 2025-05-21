@@ -1,13 +1,14 @@
 {% extends "base.html" %}
-{% block title %}{{ trans('Net Worth Calculator') }}{% endblock %}
+{% block title %}{{ trans('t').Net_Worth_Dashboard | default('Net Worth Dashboard') }}{% endblock %}
 {% block extra_head %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 {% endblock %}
 {% block content %}
 <div class="container">
     <div class="navbar mb-4">
-        <h1>{{ trans('Net Worth Calculator') }}</h1>
-        <p>{{ trans('Your net worth summary.') }}</p>
+        <h1>{{ trans('t').Net_Worth_Dashboard | default('Net Worth Dashboard') }}</h1>
+        <p>{{ trans('t').Your_personalized_net_worth_summary | default('Your personalized net worth summary') }}</p>
     </div>
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -19,60 +20,122 @@
             {% endfor %}
         {% endif %}
     {% endwith %}
-    <div class="card mb-4">
-        <div class="card-body">
-            <h2>{{ trans('Net Worth') }}: ₦{{ data.net_worth | format_number }}</h2>
-            <p>{{ trans('Total Assets') }}: ₦{{ data.total_assets | format_number }}</p>
-            <p>{{ trans('Total Liabilities') }}: ₦{{ data.total_liabilities | format_number }}</p>
-            <p>{{ trans('Cash and Savings') }}: ₦{{ data.cash | format_number }}</p>
-            <p>{{ trans('Investments') }}: ₦{{ data.investments | format_number }}</p>
-            <p>{{ trans('Property') }}: ₦{{ data.property | format_number }}</p>
-            <p>{{ trans('Loans') }}: ₦{{ data.loans | format_number }}</p>
-            <p>{{ trans('Credit Card Debt') }}: ₦{{ data.credit_cards | format_number }}</p>
+    {% if latest_record %}
+        <div class="card mb-4">
+            <div class="card-body">
+                <h2>{{ trans('t').Hello | default('Hello') }} {{ latest_record.first_name or 'User' }}, {{ trans('t').Net_Worth | default('Net Worth') }}: ₦{{ latest_record.net_worth | format_number }}</h2>
+                <h3>{{ trans('t').What_You_Own | default('What You Own') }}</h3>
+                <p><strong>{{ trans('t').Cash_and_Savings | default('Cash & Savings') }}:</strong> ₦{{ latest_record.cash_savings | format_number }}</p>
+                <p><strong>{{ trans('t').Investments | default('Investments') }}:</strong> ₦{{ latest_record.investments | format_number }}</p>
+                <p><strong>{{ trans('t').Physical_Property | default('Physical Property') }}:</strong> ₦{{ latest_record.property | format_number }}</p>
+                <p><strong>{{ trans('t').Total_Assets | default('Total Assets') }}:</strong> ₦{{ latest_record.total_assets | format_number }}</p>
+                <h3>{{ trans('t').What_You_Owe | default('What You Owe') }}</h3>
+                <p><strong>{{ trans('t').Loans | default('Loans') }}:</strong> ₦{{ latest_record.loans | format_number }}</p>
+                <p><strong>{{ trans('t').Total_Liabilities | default('Total Liabilities') }}:</strong> ₦{{ latest_record.total_liabilities | format_number }}</p>
+                <p><strong>{{ trans('t').Created_At | default('Created At') }}:</strong> {{ latest_record.created_at }}</p>
+            </div>
         </div>
-    </div>
-    <canvas id="netWorthChart" class="mb-4"></canvas>
-    <div class="card mb-4">
-        <div class="card-body">
-            <h3>{{ trans('Recommendations') }}</h3>
-            <ul>
-                {% if data.net_worth < 0 %}
-                    <li>{{ trans('Focus on reducing liabilities to improve your net worth.') }}</li>
+        <div class="card mb-4">
+            <div class="card-body">
+                <h3>{{ trans('t').Net_Worth_Metrics | default('Net Worth Metrics') }}</h3>
+                <canvas id="netWorthChart"></canvas>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const ctx = document.getElementById('netWorthChart').getContext('2d');
+                        new Chart(ctx, {
+                            type: 'bar',
+                            data: {
+                                labels: [
+                                    '{{ trans('t').Total_Assets | default('Total Assets') }}',
+                                    '{{ trans('t').Total_Liabilities | default('Total Liabilities') }}',
+                                    '{{ trans('t').Net_Worth | default('Net Worth') }}'
+                                ],
+                                datasets: [{
+                                    label: '{{ trans('t').Metrics | default('Metrics') }}',
+                                    data: [
+                                        {{ latest_record.total_assets | format_number }},
+                                        {{ latest_record.total_liabilities | format_number }},
+                                        {{ latest_record.net_worth | format_number }}
+                                    ],
+                                    backgroundColor: ['#1E7F71', '#dc3545', '#0288D1']
+                                }]
+                            },
+                            options: {
+                                scales: { y: { beginAtZero: true } },
+                                animation: false
+                            }
+                        });
+                    });
+                </script>
+            </div>
+        </div>
+        <div class="card mb-4">
+            <div class="card-body">
+                <h3>{{ trans('t').Badges | default('Badges') }}</h3>
+                {% if latest_record.badges %}
+                    {% for badge in latest_record.badges %}
+                        <span class="badge bg-{{ 'success' if badge == 'Wealth Builder' else 'primary' if badge == 'Savings Champion' else 'info' if badge == 'Debt Free' else 'warning' }} mb-2">
+                            <i class="fas fa-{{ 'trophy' if badge == 'Wealth Builder' else 'star' if badge == 'Savings Champion' else 'check-circle' if badge == 'Debt Free' else 'building' }}"></i>
+                            {{ trans('t')[badge] | default(badge) }}
+                        </span>
+                    {% endfor %}
                 {% else %}
-                    <li>{{ trans('Consider investing assets to grow your wealth.') }}</li>
+                    <p>{{ trans('t').No_badges_earned_yet | default('No badges earned yet') }}</p>
                 {% endif %}
-                <li>{{ trans('Review your net worth annually to track progress.') }}</li>
-            </ul>
+            </div>
         </div>
-    </div>
-    <div class="d-flex justify-content-between">
-        <a href="{{ url_for('net_worth.step1') }}" class="btn btn-secondary">{{ trans('Recalculate') }}</a>
-        <a href="{{ url_for('general_dashboard') }}" class="btn btn-primary">{{ trans('Go to Dashboard') }}</a>
-    </div>
+        <div class="card mb-4">
+            <div class="card-body">
+                <h3>{{ trans('t').Insights | default('Insights') }}</h3>
+                {% for insight in insights %}
+                    <p>{{ insight }}</p>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="card mb-4">
+            <div class="card-body">
+                <h3>{{ trans('t').Tips_for_Improving_Net_Worth | default('Tips for Improving Net Worth') }}</h3>
+                {% for tip in tips %}
+                    <p>{{ tip }}</p>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="card mb-4">
+            <div class="card-body">
+                <h3>{{ trans('t').Call_to_Actions | default('Call to Actions') }}</h3>
+                <a href="{{ url_for('net_worth.step1') }}" class="btn btn-primary">{{ trans('t').Recalculate_Net_Worth | default('Recalculate Net Worth') }}</a>
+                <a href="{{ url_for('budget.step1') }}" class="btn btn-secondary">{{ trans('t').Create_Budget | default('Create Budget') }}</a>
+                <a href="{{ url_for('financial_health.step1') }}" class="btn btn-secondary">{{ trans('t').Check_Financial_Health | default('Check Financial Health') }}</a>
+            </div>
+        </div>
+        <div class="card mb-4">
+            <div class="card-body">
+                <h3>{{ trans('t').Previous_Assessments | default('Previous Assessments') }}</h3>
+                {% if records %}
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>{{ trans('t').Date | default('Date') }}</th>
+                                <th>{{ trans('t').Net_Worth | default('Net Worth') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for record_id, record in records %}
+                                <tr>
+                                    <td>{{ record.created_at }}</td>
+                                    <td>₦{{ record.net_worth | format_number }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p>{{ trans('t').No_previous_assessments | default('No previous assessments') }}</p>
+                {% endif %}
+            </div>
+        </div>
+    {% else %}
+        <p>{{ trans('t').No_net_worth_data_available | default('No net worth data available') }}</p>
+        <a href="{{ url_for('net_worth.step1') }}" class="btn btn-primary">{{ trans('t').Start_Assessment | default('Start Assessment') }}</a>
+    {% endif %}
 </div>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const ctx = document.getElementById('netWorthChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: ['{{ trans("Assets") }}', '{{ trans("Liabilities") }}', '{{ trans("Net Worth") }}'],
-                datasets: [{
-                    label: '{{ trans("Net Worth Metrics") }}',
-                    data: [{{ (data.total_assets / 1000) | format_number }}, {{ (data.total_liabilities / 1000) | format_number }}, {{ (data.net_worth / 1000) | format_number }}],
-                    backgroundColor: ['#2E7D32', '#dc3545', '#0288D1']
-                }]
-            },
-            options: {
-                scales: {
-                    y: { beginAtZero: true }
-                },
-                animation: false
-            }
-        });
-    });
-</script>
-{% endblock %}
-{% block extra_scripts %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 {% endblock %}
