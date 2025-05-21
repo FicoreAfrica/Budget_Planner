@@ -1,93 +1,66 @@
-<script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
-
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
-                var filteredData = jsonData.filter(row => row.some(filledCell));
-
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
-                var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                );
-                // Fallback
-                if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
-                }
-
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
-            }
-        }
-        return gk_fileData[filename] || "";
-        }
-        </script><!DOCTYPE html>
-<html>
+<!DOCTYPE html>
+<html lang="{{ session.get('lang', 'en') }}">
 <head>
-    <title>{{ trans('Financial Personality Quiz') }}</title>
+    <meta charset="UTF-8">
+    <title>{{ trans('t').Your_Financial_Personality_Quiz_Results | default('Your Financial Personality Quiz Results') }}</title>
     <style>
-        body { font-family: Arial, sans-serif; color: #333; }
+        body { font-family: Arial, sans-serif; color: #333; margin: 0; padding: 0; }
         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background: linear-gradient(90deg, #2E7D32, #0288D1); color: white; padding: 10px; text-align: center; }
+        .header { background: #1E7F71; color: white; padding: 10px; text-align: center; }
         .content { padding: 20px; border: 1px solid #ddd; }
-        .footer { text-align: center; font-size: 12px; color: #777; }
-        .gradient-btn { background: linear-gradient(90deg, #2E7D32, #0288D1); color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; }
+        .footer { text-align: center; font-size: 12px; color: #777; padding: 10px; }
+        a { color: #1E7F71; text-decoration: none; }
+        a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>{{ trans('Financial Personality Quiz') }}</h1>
+            <h1>{{ trans('t').Financial_Personality_Quiz | default('Financial Personality Quiz') }}</h1>
         </div>
         <div class="content">
-            <p>{{ trans('Dear User') }},</p>
-            <p>{{ trans('Here is your Financial Personality Quiz summary.') }}</p>
-            <h2>{{ trans('Your Personality') }}: {{ trans(data.personality) }}</h2>
-            <p>{{ trans('Score') }}: {{ data.score }} / 10</p>
+            <p>{{ trans('t').Dear | default('Dear') }} {{ data.first_name or 'User' }},</p>
+            <p>{{ trans('t').Here_is_your_quiz_summary | default('Here is your financial personality quiz summary') }}</p>
+            <h2>{{ trans('t').Quiz_Results | default('Quiz Results') }}</h2>
+            <p>{{ trans('t').Created_At | default('Created At') }}: {{ data.created_at }}</p>
+            <p>{{ trans('t').Your_Personality | default('Your Personality') }}: {{ trans('t')[data.personality] | default(data.personality) }}</p>
+            <p>{{ trans('t').Score | default('Score') }}: {{ data.score }} / 30</p>
             <p>
                 {% if data.personality == 'Planner' %}
-                    {{ trans('You are disciplined and plan your finances carefully.') }}
+                    {{ trans('t').Planner_description | default('You are disciplined and plan your finances carefully, using tools like PiggyVest and setting clear goals.') }}
                 {% elif data.personality == 'Saver' %}
-                    {{ trans('You prioritize saving and are cautious with spending.') }}
-                {% elif data.personality == 'Minimalist' %}
-                    {{ trans('You keep spending simple and avoid unnecessary expenses.') }}
+                    {{ trans('t').Saver_description | default('You prioritize saving, often using Ajo/Esusu/Adashe, and are cautious with spending.') }}
+                {% elif data.personality == 'Balanced' %}
+                    {{ trans('t').Balanced_description | default('You balance spending and saving, occasionally planning but open to impulse purchases.') }}
                 {% elif data.personality == 'Spender' %}
-                    {{ trans('You enjoy spending and may need to focus on saving.') }}
-                {% else %}
-                    {{ trans('You may avoid financial planning and could benefit from structure.') }}
+                    {{ trans('t').Spender_description | default('You enjoy spending and may need to focus on budgeting and saving with apps like Moniepoint.') }}
                 {% endif %}
             </p>
-            <h3>{{ trans('Recommendations') }}</h3>
+            <h3>{{ trans('t').Badges | default('Badges') }}</h3>
+            {% if data.badges %}
+                <ul>
+                    {% for badge in data.badges %}
+                        <li>{{ trans('t')[badge] | default(badge) }}</li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>{{ trans('t').No_badges_earned_yet | default('No badges earned yet') }}</p>
+            {% endif %}
+            <h3>{{ trans('t').Recommendations | default('Recommendations') }}</h3>
             <ul>
-                {% if data.personality in ['Spender', 'Avoider'] %}
-                    <li>{{ trans('Try using a budgeting app to track your expenses.') }}</li>
+                {% if data.personality in ['Spender', 'Balanced'] %}
+                    <li>{{ trans('t').Use_budgeting_app | default('Try using a budgeting app like PiggyVest or Moniepoint to track expenses.') }}</li>
                 {% endif %}
                 {% if data.personality != 'Saver' %}
-                    <li>{{ trans('Set up an emergency fund for unexpected expenses.') }}</li>
+                    <li>{{ trans('t').Set_up_emergency_fund | default('Set up an emergency fund with Cowrywise for unexpected expenses.') }}</li>
                 {% endif %}
-                <li>{{ trans('Review your financial goals monthly to stay on track.') }}</li>
+                <li>{{ trans('t').Review_financial_goals | default('Review your financial goals monthly to stay on track.') }}</li>
             </ul>
-            <p><a href="{{ url_for('quiz.step1', _external=True) }}" class="gradient-btn">{{ trans('Retake Quiz') }}</a></p>
-            <p>{{ trans('Thank you for choosing Ficore Africa!') }}</p>
+            <p><a href="{{ data.cta_url }}">{{ trans('t').View_Dashboard | default('View Dashboard') }}</a></p>
+            <p>{{ trans('t').Thank_you_for_using_Ficore_Africa | default('Thank you for using Ficore Africa') }}</p>
         </div>
         <div class="footer">
-            <p>{{ trans('Powered by Ficore Africa') }}</p>
+            <p>{{ trans('t').Powered_by_Ficore_Africa | default('Powered by Ficore Africa') }}</p>
         </div>
     </div>
 </body>
