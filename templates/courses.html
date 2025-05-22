@@ -1,0 +1,71 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script>{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5">
+    <h1 class="text-center" style="background: linear-gradient(to right, #0288D1, #2E7D32); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+        {% if lang == 'ha' %} Koyarwa Kan Kudi {% else %} Financial Courses {% endif %}
+    </h1>
+    <div class="row mt-4">
+        {% for course in courses %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">{{ course.title_ha if lang == 'ha' else course.title_en }}</h5>
+                    <p class="card-text">
+                        {% if course.is_premium %}
+                            {% if lang == 'ha' %} Wannan darasi na biya ne {% else %} This is a premium course {% endif %}
+                        {% else %}
+                            {% if lang == 'ha' %} Darasi kyauta {% else %} Free course {% endif %}
+                        {% endif %}
+                    </p>
+                    <a href="{{ url_for('courses.course_page', course_id=course.id) }}" 
+                       class="btn btn-primary" 
+                       style="background: linear-gradient(to right, #0288D1, #2E7D32); border: none;"
+                       aria-label="{% if lang == 'ha' %} Fara {{ course.title_ha }} {% else %} Start {{ course.title_en }} {% endif %}">
+                        {% if lang == 'ha' %} Fara Darasi {% else %} Start Course {% endif %}
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
