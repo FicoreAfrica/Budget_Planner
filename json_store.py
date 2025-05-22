@@ -22,12 +22,12 @@ class JsonStorage:
             try:
                 with open(self.filename, 'w') as f:
                     json.dump([], f)
-                logger.info(f"Created new file {self.filename}")
+                logger.info(f"Created new file {self.filename}", extra={'session_id': 'unknown'})
             except Exception as e:
-                logger.error(f"Failed to create {self.filename}: {str(e)}")
+                logger.error(f"Failed to create {self.filename}: {str(e)}", extra={'session_id': 'unknown'})
                 raise
         if not os.access(self.filename, os.W_OK):
-            logger.error(f"No write permissions for {self.filename}")
+            logger.error(f"No write permissions for {self.filename}", extra={'session_id': 'unknown'})
             raise PermissionError(f"Cannot write to {self.filename}")
 
     def _read(self, max_retries=3):
@@ -37,10 +37,10 @@ class JsonStorage:
                 with open(self.filename, 'r') as f:
                     return json.load(f)
             except json.JSONDecodeError as e:
-                logger.error(f"Invalid JSON in {self.filename} (Attempt {attempt + 1}/{max_retries}): {str(e)}")
+                logger.error(f"Invalid JSON in {self.filename} (Attempt {attempt + 1}/{max_retries}): {str(e)}", extra={'session_id': 'unknown'})
                 return []
             except Exception as e:
-                logger.error(f"Error reading {self.filename} (Attempt {attempt + 1}/{max_retries}): {str(e)}")
+                logger.error(f"Error reading {self.filename} (Attempt {attempt + 1}/{max_retries}): {str(e)}", extra={'session_id': 'unknown'})
                 if attempt == max_retries - 1:
                     return []
                 time.sleep(1)
@@ -48,14 +48,15 @@ class JsonStorage:
 
     def _write(self, data, max_retries=3):
         """Write data to JSON file with retry logic."""
+        session_id = session.get('sid', 'unknown') if has_request_context() else 'unknown'
         for attempt in range(max_retries):
             try:
                 with open(self.filename, 'w') as f:
                     json.dump(data, f, indent=2)
-                logger.info(f"Successfully wrote to {self.filename}")
+                logger.info(f"Successfully wrote to {self.filename}", extra={'session_id': session_id})
                 return True
             except Exception as e:
-                logger.error(f"Error writing to {self.filename} (Attempt {attempt + 1}/{max_retries}): {str(e)}")
+                logger.error(f"Error writing to {self.filename} (Attempt {attempt + 1}/{max_retries}): {str(e)}", extra={'session_id': session_id})
                 if attempt == max_retries - 1:
                     raise
                 time.sleep(1)
