@@ -1,7 +1,71 @@
 {% extends "base.html" %}
 {% block title %}{{ trans('t').Financial_Dashboard | default('Financial Dashboard') }}{% endblock %}
 {% block extra_head %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #E3F2FD, #F5F7FA);
+            color: #333;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: auto;
+        }
+        h1, h3 {
+            color: #0288D1;
+        }
+        .card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            border: 2px solid #0288D1;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: slideIn 0.5s forwards;
+        }
+        @keyframes slideIn {
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .card-body {
+            padding: 1.5rem;
+        }
+        .btn-primary {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: transform 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, #2E7D32, #0288D1);
+            border: none;
+            color: white;
+        }
+        .btn-primary:hover {
+            transform: scale(1.05);
+            background: linear-gradient(135deg, #1B5E20, #01579B);
+        }
+        .chart-container {
+            max-height: 300px;
+            width: 100%;
+            position: relative;
+        }
+        .progress-bar {
+            transition: width 0.5s ease-in-out;
+        }
+        @media (max-width: 600px) {
+            .card-body { padding: 1rem; }
+            .btn-primary { font-size: 0.9rem; padding: 0.5rem 1rem; }
+            .chart-container { max-height: 200px; }
+        }
+    </style>
 {% endblock %}
 {% block content %}
 <div class="container">
@@ -32,7 +96,11 @@
                     {% else %}
                         <p>{{ trans('t').Not_Yet_Calculated | default('Not yet calculated.') }}</p>
                     {% endif %}
-                    <a href="{{ url_for('financial_health.step1') }}" class="btn btn-primary">{{ trans('t').Go_to_Financial_Health | default('Go to Financial Health') }}</a>
+                    <a href="{{ url_for('financial_health.step1') }}" 
+                       class="btn btn-primary"
+                       aria-label="{{ trans('t').Go_to_Financial_Health | default('Go to Financial Health') }}">
+                        <i class="fas fa-heartbeat"></i> {{ trans('t').Go_to_Financial_Health | default('Go to Financial Health') }}
+                    </a>
                 </div>
             </div>
         </div>
@@ -46,7 +114,11 @@
                     {% else %}
                         <p>{{ trans('t').Not_Yet_Calculated | default('Not yet calculated.') }}</p>
                     {% endif %}
-                    <a href="{{ url_for('budget.step1') }}" class="btn btn-primary">{{ trans('t').Go_to_Budget_Planner | default('Go to Budget Planner') }}</a>
+                    <a href="{{ url_for('budget.step1') }}" 
+                       class="btn btn-primary"
+                       aria-label="{{ trans('t').Go_to_Budget_Planner | default('Go to Budget Planner') }}">
+                        <i class="fas fa-chart-pie"></i> {{ trans('t').Go_to_Budget_Planner | default('Go to Budget Planner') }}
+                    </a>
                 </div>
             </div>
         </div>
@@ -60,7 +132,11 @@
                     {% else %}
                         <p>{{ trans('t').Not_Yet_Completed | default('Not yet completed.') }}</p>
                     {% endif %}
-                    <a href="{{ url_for('quiz.step1') }}" class="btn btn-primary">{{ trans('t').Go_to_Personality_Quiz | default('Go to Personality Quiz') }}</a>
+                    <a href="{{ url_for('quiz.step1') }}" 
+                       class="btn btn-primary"
+                       aria-label="{{ trans('t').Go_to_Personality_Quiz | default('Go to Personality Quiz') }}">
+                        <i class="fas fa-question-circle"></i> {{ trans('t').Go_to_Personality_Quiz | default('Go to Personality Quiz') }}
+                    </a>
                 </div>
             </div>
         </div>
@@ -74,7 +150,11 @@
                     {% else %}
                         <p>{{ trans('t').No_Bills_Added | default('No bills added.') }}</p>
                     {% endif %}
-                    <a href="{{ url_for('bill.form') }}" class="btn btn-primary">{{ trans('t').Go_to_Bill_Planner | default('Go to Bill Planner') }}</a>
+                    <a href="{{ url_for('bill.form') }}" 
+                       class="btn btn-primary"
+                       aria-label="{{ trans('t').Go_to_Bill_Planner | default('Go to Bill Planner') }}">
+                        <i class="fas fa-file-invoice"></i> {{ trans('t').Go_to_Bill_Planner | default('Go to Bill Planner') }}
+                    </a>
                 </div>
             </div>
         </div>
@@ -88,7 +168,11 @@
                     {% else %}
                         <p>{{ trans('t').Not_Yet_Calculated | default('Not yet calculated.') }}</p>
                     {% endif %}
-                    <a href="{{ url_for('net_worth.step1') }}" class="btn btn-primary">{{ trans('t').Go_to_Net_Worth | default('Go to Net Worth') }}</a>
+                    <a href="{{ url_for('net_worth.step1') }}" 
+                       class="btn btn-primary"
+                       aria-label="{{ trans('t').Go_to_Net_Worth | default('Go to Net Worth') }}">
+                        <i class="fas fa-balance-scale"></i> {{ trans('t').Go_to_Net_Worth | default('Go to Net Worth') }}
+                    </a>
                 </div>
             </div>
         </div>
@@ -102,7 +186,52 @@
                     {% else %}
                         <p>{{ trans('t').Not_Yet_Calculated | default('Not yet calculated.') }}</p>
                     {% endif %}
-                    <a href="{{ url_for('emergency_fund.step1') }}" class="btn btn-primary">{{ trans('t').Go_to_Emergency_Fund | default('Go to Emergency Fund') }}</a>
+                    <a href="{{ url_for('emergency_fund.step1') }}" 
+                       class="btn btn-primary"
+                       aria-label="{{ trans('t').Go_to_Emergency_Fund | default('Go to Emergency Fund') }}">
+                        <i class="fas fa-piggy-bank"></i> {{ trans('t').Go_to_Emergency_Fund | default('Go to Emergency Fund') }}
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h3>{{ trans('t').My_Courses | default('My Courses') }}</h3>
+                    {% set user_progress = namespace(progress=[]) %}
+                    {% for record in data.courses %}
+                        {% if record.course_id == 'budgeting_101' %}
+                            {% set user_progress.progress = record %}
+                        {% endif %}
+                    {% endfor %}
+                    {% if user_progress.progress %}
+                        <p>
+                            <strong>{{ trans('t').Course_Budgeting | default('Budgeting Basics') }}:</strong>
+                            {{ trans('t').Progress | default('Progress') }} {{ user_progress.progress.progress_percentage | default(0) }}%
+                        </p>
+                        <div class="progress mb-2">
+                            <div class="progress-bar bg-success" 
+                                 role="progressbar" 
+                                 style="width: {{ user_progress.progress.progress_percentage | default(0) }}%" 
+                                 aria-valuenow="{{ user_progress.progress.progress_percentage | default(0) }}" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="100">
+                                {{ user_progress.progress.progress_percentage | default(0) }}%
+                            </div>
+                        </div>
+                        <a href="{{ url_for('courses.course_page', course_id='budgeting_101') }}" 
+                           class="btn btn-primary"
+                           aria-label="{{ trans('t').Continue_Budgeting_Course | default('Continue Budgeting Basics Course') }}">
+                            <i class="fas fa-play"></i> {{ trans('t').Continue_Course | default('Continue Course') }}
+                        </a>
+                    {% else %}
+                        <p>{{ trans('t').No_course_progress | default('You haven’t started any courses yet.') }}</p>
+                        <a href="{{ url_for('courses.course_page', course_id='budgeting_101') }}" 
+                           class="btn btn-primary"
+                           aria-label="{{ trans('t').Start_Budgeting_Course | default('Start Budgeting Basics Course') }}">
+                            <i class="fas fa-book"></i> {{ trans('t').Start_Budgeting_Course | default('Start Budgeting Basics') }}
+                        </a>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -110,7 +239,9 @@
     <div class="card mb-4">
         <div class="card-body">
             <h3>{{ trans('t').Financial_Metrics_Overview | default('Financial Metrics Overview') }}</h3>
-            <canvas id="overviewChart" aria-label="{{ trans('t').Financial_Metrics_Chart | default('Financial Metrics Chart') }}"></canvas>
+            <div class="chart-container">
+                <canvas id="overviewChart" aria-label="{{ trans('t').Financial_Metrics_Chart | default('Financial Metrics Chart') }}"></canvas>
+            </div>
         </div>
     </div>
     <div class="card mb-4">
@@ -126,6 +257,9 @@
                 {% if data.emergency_fund.savings_gap and data.emergency_fund.savings_gap > 0 %}
                     <li>{{ trans('t').Increase_Savings | default('Increase savings to meet your emergency fund needs.') }}</li>
                 {% endif %}
+                {% if not data.courses %}
+                    <li>{{ trans('t').Start_Budgeting_Course | default('Start the Budgeting Basics course to improve financial skills.') }}</li>
+                {% endif %}
                 <li>{{ trans('t').Regularly_Update_Data | default('Regularly update your financial data for accurate insights.') }}</li>
             </ul>
         </div>
@@ -134,6 +268,10 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const ctx = document.getElementById('overviewChart').getContext('2d');
+        // Ensure data is valid and fallback to 0 if undefined/null
+        const financialHealthScore = {{ data.financial_health.score if data.financial_health.score else 0 }};
+        const netWorth = {{ (data.net_worth.net_worth / 1000000) if data.net_worth.net_worth else 0 }};
+        const emergencyFundGap = {{ (data.emergency_fund.savings_gap / 1000000) if data.emergency_fund.savings_gap else 0 }};
         new Chart(ctx, {
             type: 'bar',
             data: {
@@ -144,11 +282,7 @@
                 ],
                 datasets: [{
                     label: "{{ trans('t').Financial_Metrics | default('Financial Metrics') }}",
-                    data: [
-                        {{ data.financial_health.score if data.financial_health.score else 0 }},
-                        {{ (data.net_worth.net_worth / 1000000) if data.net_worth.net_worth else 0 }},
-                        {{ (data.emergency_fund.savings_gap / 1000000) if data.emergency_fund.savings_gap else 0 }}
-                    ],
+                    data: [financialHealthScore, netWorth, emergencyFundGap],
                     backgroundColor: ['#2E7D32', '#0288D1', '#dc3545'],
                     borderColor: ['#1B5E20', '#01579B', '#bd2130'],
                     borderWidth: 1
@@ -158,11 +292,14 @@
                 scales: {
                     y: {
                         beginAtZero: true,
+                        max: Math.max(financialHealthScore, netWorth, emergencyFundGap, 100) * 1.1, // Dynamic max with 10% headroom
                         title: {
                             display: true,
                             text: "{{ trans('t').Value | default('Value') }}"
-                        }
-                    }
+                        },
+                        grid: { color: '#E0E0E0' }
+                    },
+                    x: { grid: { display: false } }
                 },
                 plugins: {
                     legend: { display: true },
@@ -177,13 +314,27 @@
                                 return `${label}: ${value}`;
                             }
                         }
+                    },
+                    datalabels: {
+                        anchor: 'end',
+                        align: 'top',
+                        formatter: (value, context) => {
+                            if (context.dataIndex === 0) {
+                                return value.toFixed(1);
+                            }
+                            return `${value.toFixed(1)}M`;
+                        },
+                        color: '#333',
+                        font: { size: 12, weight: 'bold' }
                     }
                 },
                 animation: false,
                 responsive: true,
-                maintainAspectRatio: false
-            }
+                maintainAspectRatio: true
+            },
+            plugins: [ChartDataLabels]
         });
     });
 </script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 {% endblock %}
