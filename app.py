@@ -215,7 +215,9 @@ def index():
         session['lang'] = 'en'
     t = trans('t')
     log.info("Serving index page")
-    return render_template('index.html', t=t)
+    courses_storage = app.config['STORAGE_MANAGERS']['courses']
+    courses = [record['data'] for record in courses_storage.read_all()]
+    return render_template('index.html', t=t, courses=courses)
 
 @app.route('/set_language/<lang>')
 def set_language(lang):
