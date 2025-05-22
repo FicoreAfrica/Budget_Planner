@@ -356,16 +356,29 @@ def dashboard():
         if not health_record:
             stored_records = financial_health_storage.filter_by_session(session['sid'])
             log.debug(f"Stored records: {stored_records}")
-            health_record = stored_records[-1]['data'] if stored_records else {}
-            log.debug(f"Fallback health_record from storage: {health_record}")
-        if not health_record:
-            log.warning("No valid health record found in session or storage")
-            latest_record = {}
-            records = []
+            if not stored_records:
+                log.warning("No records found for this session in storage")
+                latest_record = {}
+                records = []
+            else:
+                # Find the latest step 3 record (final submission)
+                final_record = None
+                for record in stored_records:
+                    if record['data'].get('step') == 3:
+                        final_record = record
+                        break
+                if not final_record:
+                    log.warning("No step 3 record found for this session")
+                    latest_record = {}
+                    records = []
+                else:
+                    latest_record = final_record['data']['data']  # Nested data structure
+                    records = [(final_record['id'], latest_record)]
+                    log.debug(f"Retrieved user records: {records}")
         else:
             latest_record = health_record
             records = [(str(uuid.uuid4()), latest_record)]
-            log.debug(f"Retrieved user records: {records}")
+            log.debug(f"Retrieved user records from session: {records}")
 
         # Retrieve all records for comparison
         all_records = financial_health_storage._read()
@@ -374,42 +387,45 @@ def dashboard():
         cleaned_records = []
         for record in all_records:
             try:
-                data = record.get("data", {})
+                if record['data'].get('step') != 3:
+                    continue  # Only compare final records
+                data = record.get("data", {}).get("data", {})
                 for key in ['score', 'income', 'expenses', 'debt', 'interest_rate']:
-                    if key in data and isinstance(data[key], str):
+                    if key in data and isinstance(data[key], (str, type(None))):
                         try:
-                            data[key] = float(data[key].replace(',', ''))
+                            data[key] = float(data[key].replace(',', '')) if isinstance(data[key], str) else 0
                         except (ValueError, TypeError) as ve:
                             log.warning(f"Invalid {key} in record {record.get('id')}: {data[key]}, setting to 0")
                             data[key] = 0
+                record["data"]["data"] = data  # Update the nested data
                 cleaned_records.append(record)
             except Exception as record_error:
                 log.warning(f"Skipping invalid record for comparison: {str(record_error)}")
                 continue
         log.debug(f"Cleaned records: {cleaned_records}")
-        log.debug(f"Total users: {total_users}")
+        log.debug(f"Total users: {total_users}, Final records: {len(cleaned_records)}")
 
         # Calculate rank and average score
-        rank = total_users if total_users > 0 else 1
+        rank = len(cleaned_records) if cleaned_records else 1
         average_score = 0
-        if cleaned_records and latest_record.get('score', 0) > 0:
+        if cleaned_records and latest_record.get('score', 0):
             try:
                 sorted_records = sorted(
                     cleaned_records,
-                    key=lambda x: x["data"].get("score", 0),
+                    key=lambda x: x["data"]["data"].get("score", 0),
                     reverse=True
                 )
                 user_score = latest_record.get("score", 0)
                 for i, record in enumerate(sorted_records, 1):
-                    if record["data"].get("score", 0) <= user_score and record.get("session_id") == session['sid']:
+                    if record["data"]["data"].get("score", 0) <= user_score and record.get("session_id") == session['sid']:
                         rank = i
                         break
-                scores = [record["data"].get("score", 0) for record in cleaned_records if record["data"].get("score", 0) > 0]
+                scores = [record["data"]["data"].get("score", 0) for record in cleaned_records if record["data"]["data"].get("score", 0) > 0]
                 average_score = sum(scores) / len(scores) if scores else 0
                 log.debug(f"User rank: {rank}, Average score: {average_score}")
             except Exception as calc_error:
                 log.error(f"Error calculating rank or average score: {str(calc_error)}")
-                rank = total_users
+                rank = len(cleaned_records) if cleaned_records else 1
                 average_score = 0
 
         # Generate insights and tips
@@ -430,17 +446,17 @@ def dashboard():
                     insights.append(t("Great savings rate! Explore investment options like Ajo or fixed deposits."))
                 if latest_record.get('interest_burden', 0) > 10:
                     insights.append(t("High interest burden. Refinance or pay off high-interest loans."))
-                if total_users >= 5:
-                    if rank <= total_users * 0.1:
+                if len(cleaned_records) >= 5:
+                    if rank <= len(cleaned_records) * 0.1:
                         insights.append(t("You're in the top 10% of users! Keep up the excellent financial habits."))
-                    elif rank <= total_users * 0.3:
+                    elif rank <= len(cleaned_records) * 0.3:
                         insights.append(t("You're in the top 30%. Great work, aim for the top 10%!"))
                     else:
                         insights.append(t("You're below the top 30%. Try our Budgeting Basics course to improve your score."))
             except Exception as insight_error:
                 log.error(f"Error generating insights: {str(insight_error)}")
                 insights.append(t("Unable to generate insights due to data issues."))
-        if total_users < 5:
+        if len(cleaned_records) < 5:
             insights.append(t("Not enough users for comparison yet. Invite others to join!"))
 
         return render_template(
@@ -450,7 +466,7 @@ def dashboard():
             insights=insights,
             tips=tips,
             rank=rank,
-            total_users=total_users,
+            total_users=len(cleaned_records),
             average_score=average_score,
             t=t
         )
