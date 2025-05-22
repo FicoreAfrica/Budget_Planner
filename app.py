@@ -218,7 +218,7 @@ def index():
     log.info("Serving index page")
     courses_storage = app.config['STORAGE_MANAGERS']['courses']
     try:
-        courses = [record['data'] for record in courses_storage.read_all()] if courses_storage.read_all() else []
+        courses = courses_storage.read_all() if courses_storage.read_all() else []
         log.debug(f"Retrieved {len(courses)} courses")
     except Exception as e:
         log.error(f"Error retrieving courses: {str(e)}", exc_info=True)
