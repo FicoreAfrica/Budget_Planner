@@ -48,7 +48,6 @@ class Step2Form(FlaskForm):
     def validate_income(self, field):
         if field.data is not None:
             try:
-                # Handle string input with commas
                 cleaned_data = str(field.data).replace(',', '')
                 field.data = float(cleaned_data)
             except (ValueError, TypeError):
@@ -103,7 +102,8 @@ def step1():
                 flash(t("Please correct the errors in the form."), "danger")
                 return render_template('health_score_step1.html', form=form, t=t)
             session['health_step1'] = form.data
-            log.debug(f"Step1 form data: {form.data}")
+            financial_health_storage.save({'session_id': session['sid'], 'step': 1, 'data': form.data})  # Persist to JSON
+            log.debug(f"Step1 form data saved to session and storage: {form.data}")
             return redirect(url_for('financial_health.step2'))
         return render_template('health_score_step1.html', form=form, t=t)
     except Exception as e:
@@ -131,7 +131,8 @@ def step2():
                 'expenses': float(form.expenses.data),
                 'submit': form.submit.data
             }
-            log.debug(f"Step2 form data: {session['health_step2']}")
+            financial_health_storage.save({'session_id': session['sid'], 'step': 2, 'data': session['health_step2']})  # Persist to JSON
+            log.debug(f"Step2 form data saved to session and storage: {session['health_step2']}")
             return redirect(url_for('financial_health.step3'))
         return render_template('health_score_step2.html', form=form, t=t)
     except Exception as e:
@@ -215,7 +216,7 @@ def step3():
                 badges.append("Interest-Free Borrower")
             log.debug(f"Status: {status}, Badges: {badges}")
 
-            # Store record in session
+            # Store record in session and persist to JSON
             record = {
                 "data": {
                     "first_name": step1_data.get('first_name', ''),
@@ -235,8 +236,9 @@ def step3():
                 }
             }
             session['health_record'] = record
-            log.info(f"Saved financial health record to session for session {session['sid']}: {record}")
-            log.debug(f"Session contents after save: {dict(session)}")  # Force session flush
+            financial_health_storage.save({'session_id': session['sid'], 'step': 3, 'data': record['data']})  # Persist final record
+            log.info(f"Saved financial health record to session and storage for session {session['sid']}: {record}")
+            log.debug(f"Session contents after save: {dict(session)}")
 
             # Send email if requested
             email = step1_data.get('email')
@@ -279,6 +281,7 @@ def step3():
         log.exception(f"Unexpected error in step3: {str(e)}")
         flash(t("Unexpected error during financial health assessment. Please try again."), "danger")
         return render_template('health_score_step3.html', form=form, t=t), 500
+
 @financial_health_bp.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
     """Display financial health dashboard with comparison to others."""
@@ -288,20 +291,25 @@ def dashboard():
     t = lambda key: t_dict.get(key, key)
     log.info(f"Starting dashboard for session {session['sid']}")
     try:
-        # Retrieve user-specific record from session with fallback
+        # Retrieve user-specific record from session or storage
         health_record = session.get('health_record', {})
-        log.debug(f"Raw session health_record: {health_record}")
         if not health_record or 'data' not in health_record:
-            log.warning("No valid health record found in session")
+            # Fallback to storage if session is empty
+            stored_records = financial_health_storage.filter_by_session(session['sid'])
+            health_record = {'data': stored_records[-1]['data']} if stored_records else {}
+            log.warning(f"Session health_record empty, falling back to storage: {health_record}")
+        log.debug(f"Raw session/storage health_record: {health_record}")
+        if not health_record or 'data' not in health_record:
+            log.warning("No valid health record found in session or storage")
             latest_record = {}
             records = []
         else:
             latest_record = health_record['data']
             records = [(str(uuid.uuid4()), latest_record)]
-            log.debug(f"Retrieved user records from session: {records}")
+            log.debug(f"Retrieved user records from session/storage: {records}")
 
         # Retrieve all records for comparison (fallback to empty list)
-        all_records = []
+        all_records = financial_health_storage.get_all()  # Assuming get_all() returns all stored records
         total_users = len(all_records)
         cleaned_records = []
         for record in all_records:
