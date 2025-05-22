@@ -97,20 +97,38 @@ def step1():
     log.info(f"Starting step1 for session {session['sid']}")
     try:
         if request.method == 'POST':
+            log.debug(f"Received POST data: {request.form}")
             if not form.validate_on_submit():
                 log.warning(f"Form validation failed: {form.errors}")
                 flash(t("Please correct the errors in the form."), "danger")
                 return render_template('health_score_step1.html', form=form, t=t)
-            session['health_step1'] = form.data
-            financial_health_storage.save({'session_id': session['sid'], 'step': 1, 'data': form.data})  # Persist to JSON
-            log.debug(f"Step1 form data saved to session and storage: {form.data}")
+            
+            # Validate and prepare data
+            form_data = form.data.copy()
+            if form_data.get('email') and not isinstance(form_data['email'], str):
+                log.error(f"Invalid email type: {type(form_data['email'])}")
+                raise ValueError("Email must be a string")
+            session['health_step1'] = form_data
+            log.debug(f"Validated form data: {form_data}")
+
+            # Persist to JSON storage
+            try:
+                storage_data = {'session_id': session['sid'], 'step': 1, 'data': form_data}
+                financial_health_storage.save(storage_data)
+                log.info(f"Step1 form data saved to storage for session {session['sid']}: {storage_data}")
+            except Exception as storage_error:
+                log.exception(f"Failed to save to JSON storage: {str(storage_error)}")
+                flash(t("Error saving data. Please try again."), "danger")
+                return render_template('health_score_step1.html', form=form, t=t), 500
+
+            log.debug(f"Step1 form data saved to session and storage: {form_data}")
             return redirect(url_for('financial_health.step2'))
         return render_template('health_score_step1.html', form=form, t=t)
     except Exception as e:
         log.exception(f"Error in step1: {str(e)}")
         flash(t("Error processing personal information. Please try again."), "danger")
         return render_template('health_score_step1.html', form=form, t=t), 500
-
+        
 @financial_health_bp.route('/step2', methods=['GET', 'POST'])
 def step2():
     """Handle financial health step 2 form (income and expenses)."""
