@@ -1,16 +1,16 @@
 {% extends "base.html" %}
-{% block title %}{{ trans('t').Emergency_Fund_Calculator | default('Emergency Fund Calculator') }}{% endblock %}
+{% block title %}{{ trans('emergency_fund_calculator') | default('Emergency Fund Calculator') }}{% endblock %}
 {% block content %}
 <div class="container">
-    <div class="navbar mb-4">
-        <h1>{{ trans('t').Emergency_Fund_Calculator | default('Emergency Fund Calculator') }}</h1>
-        <p>{{ trans('t').Enter_your_current_savings | default('Enter your current savings') }}</p>
+    <div class="header">
+        <h1>{{ trans('emergency_fund_calculator') | default('Emergency Fund Calculator') }}</h1>
+        <p>{{ trans('enter_current_savings') | default('Enter your current savings') }}</p>
     </div>
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
                 <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                    {{ message }}
+                    {{ trans(message) | default(message) }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             {% endfor %}
@@ -21,13 +21,13 @@
             <form method="POST" action="{{ url_for('emergency_fund.step2') }}">
                 {{ form.csrf_token }}
                 <div class="mb-3">
-                    <label class="form-label">{{ trans('t').Current_Savings | default('Current Savings') }}</label>
-                    {{ form.current_savings(class="form-control", placeholder=trans('t')['e.g., 100,000'] | default('e.g., 100,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('t').Savings_in_bank_ajo_esusu_adashe | default('Savings in bank accounts, Ajo/Esusu/Adashe, or apps like PiggyVest')}) }}
-                    <div class="invalid-feedback">{{ trans('t').Current_savings_are_required | default('Current savings are required') }}</div>
+                    <label class="form-label">{{ trans('current_savings') | default('Current Savings') }}</label>
+                    {{ form.current_savings(class="form-control", placeholder=trans('current_savings_placeholder') | default('e.g., 100,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('current_savings_tooltip') | default('Savings in bank accounts, Ajo/Esusu/Adashe, or apps like PiggyVest'), 'aria-describedby': 'current_savings_help'}) }}
+                    <div class="invalid-feedback">{{ trans('current_savings_required') | default('Current savings are required') }}</div>
                 </div>
                 <div class="d-flex justify-content-between">
-                    <a href="{{ url_for('emergency_fund.step1') }}" class="btn btn-secondary">{{ trans('t').Back | default('Back') }}</a>
-                    <button type="submit" class="btn btn-primary">{{ trans('t').Calculate_Emergency_Fund | default('Calculate Emergency Fund') }}</button>
+                    <a href="{{ url_for('emergency_fund.step1') }}" class="btn btn-secondary">{{ trans('back') | default('Back') }}</a>
+                    <button type="submit" class="btn btn-primary">{{ trans('calculate_emergency_fund') | default('Calculate Emergency Fund') }}</button>
                 </div>
             </form>
         </div>
@@ -41,9 +41,12 @@
     });
     document.querySelectorAll('input[type="number"]').forEach(input => {
         input.addEventListener('input', () => {
-            if (input.value > 10000000000) {
-                input.value = 10000000000;
-                alert('{{ trans("t").Input_cannot_exceed_10_billion | default("Input cannot exceed ₦10 billion") }}');
+            let value = input.value.replace(/,/g, '');
+            if (value > 10000000000) {
+                input.value = '10,000,000,000';
+                alert('{{ trans('input_cannot_exceed_10_billion') | default('Input cannot exceed ₦10 billion') }}');
+            } else if (value) {
+                input.value = parseFloat(value).toLocaleString('en-NG');
             }
         });
     });
