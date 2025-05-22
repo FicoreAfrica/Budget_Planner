@@ -15,86 +15,86 @@ quiz_bp = Blueprint('quiz', __name__)
 QUESTION_POOL = [
     {
         'key': 'track_expenses',
-        'label': 'Do you track your expenses regularly?',
-        'tooltip': 'E.g., recording daily spending on food, transport, or data subscriptions using apps like Flowdiary or notebooks.'
+        'label': trans('question_track_expenses'),
+        'tooltip': trans('tooltip_track_expenses')
     },
     {
         'key': 'save_regularly',
-        'label': 'Do you save money regularly?',
-        'tooltip': 'E.g., contributing to Ajo/Esusu/Adashe or using savings platforms like PiggyVest or Cowrywise.'
+        'label': trans('question_save_regularly'),
+        'tooltip': trans('tooltip_save_regularly')
     },
     {
         'key': 'spend_non_essentials',
-        'label': 'Do you spend on non-essential items?',
-        'tooltip': 'E.g., buying luxury clothing, gadgets, or outings to restaurants or events.'
+        'label': trans('question_spend_non_essentials'),
+        'tooltip': trans('tooltip_spend_non_essentials')
     },
     {
         'key': 'plan_expenses',
-        'label': 'Do you plan your expenses before spending?',
-        'tooltip': 'E.g., budgeting for rent, food, or dependents’ needs before making purchases.'
+        'label': trans('question_plan_expenses'),
+        'tooltip': trans('tooltip_plan_expenses')
     },
     {
         'key': 'impulse_purchases',
-        'label': 'Do you make impulse purchases?',
-        'tooltip': 'E.g., buying items like airtime or snacks without prior planning.'
+        'label': trans('question_impulse_purchases'),
+        'tooltip': trans('tooltip_impulse_purchases')
     },
     {
         'key': 'use_budgeting_tools',
-        'label': 'Do you use budgeting tools or apps?',
-        'tooltip': 'E.g., apps like PiggyVest, Moniepoint, or spreadsheets for tracking income and expenses.'
+        'label': trans('question_use_budgeting_tools'),
+        'tooltip': trans('tooltip_use_budgeting_tools')
     },
     {
         'key': 'invest_money',
-        'label': 'Do you invest your money?',
-        'tooltip': 'E.g., investing in farming, real estate, stocks, or cooperative schemes.'
+        'label': trans('question_invest_money'),
+        'tooltip': trans('tooltip_invest_money')
     },
     {
         'key': 'emergency_fund',
-        'label': 'Do you have an emergency fund?',
-        'tooltip': 'E.g., savings set aside for unexpected expenses like medical bills or vehicle repairs.'
+        'label': trans('question_emergency_fund'),
+        'tooltip': trans('tooltip_emergency_fund')
     },
     {
         'key': 'set_financial_goals',
-        'label': 'Do you set financial goals?',
-        'tooltip': 'E.g., saving for a house, business startup, or children’s education.'
+        'label': trans('question_set_financial_goals'),
+        'tooltip': trans('tooltip_set_financial_goals')
     },
     {
         'key': 'seek_financial_advice',
-        'label': 'Do you seek financial advice?',
-        'tooltip': 'E.g., consulting family, friends, or financial advisors, or learning from platforms like Coursera or Flowdiary.'
+        'label': trans('question_seek_financial_advice'),
+        'tooltip': trans('tooltip_seek_financial_advice')
     },
     {
         'key': 'use_mobile_money',
-        'label': 'Do you use mobile money apps for transactions?',
-        'tooltip': 'E.g., paying bills or transferring money via OPay, Moniepoint, or PalmPay.'
+        'label': trans('question_use_mobile_money'),
+        'tooltip': trans('tooltip_use_mobile_money')
     },
     {
         'key': 'pay_bills_early',
-        'label': 'Do you pay your bills on time?',
-        'tooltip': 'E.g., settling electricity, rent, or data subscriptions before due dates.'
+        'label': trans('question_pay_bills_early'),
+        'tooltip': trans('tooltip_pay_bills_early')
     },
     {
         'key': 'learn_financial_skills',
-        'label': 'Do you actively learn financial skills?',
-        'tooltip': 'E.g., taking courses on budgeting or investing via Flowdiary, Coursera, or local workshops.'
+        'label': trans('question_learn_financial_skills'),
+        'tooltip': trans('tooltip_learn_financial_skills')
     },
     {
         'key': 'avoid_debt',
-        'label': 'Do you avoid taking loans or debt?',
-        'tooltip': 'E.g., minimizing borrowings from friends, banks, or mobile money apps like OPay.'
+        'label': trans('question_avoid_debt'),
+        'tooltip': trans('tooltip_avoid_debt')
     },
     {
         'key': 'diversify_income',
-        'label': 'Do you have multiple sources of income?',
-        'tooltip': 'E.g., combining salary with side businesses, farming, or gig work.'
+        'label': trans('question_diversify_income'),
+        'tooltip': trans('tooltip_diversify_income')
     }
 ]
 
 class Step1Form(FlaskForm):
-    first_name = StringField('First Name', validators=[DataRequired(message='First name is required')])
-    email = StringField('Email', validators=[Optional(), Email(message='Valid email is required')])
-    send_email = BooleanField('Send Email')
-    submit = SubmitField('Start Quiz')
+    first_name = StringField(trans('first_name'), validators=[DataRequired(message=trans('first_name_required'))])
+    email = StringField(trans('email'), validators=[Optional(), Email(message=trans('email_invalid'))])
+    send_email = BooleanField(trans('send_email'))
+    submit = SubmitField(trans('start_quiz'))
 
 class Step2Form(FlaskForm):
     def __init__(self, questions, *args, **kwargs):
@@ -102,17 +102,23 @@ class Step2Form(FlaskForm):
         for q in questions:
             setattr(self, q['key'], SelectField(
                 q['label'],
-                choices=[('', 'Select your answer'), ('always', 'Always'), ('often', 'Often'), ('sometimes', 'Sometimes'), ('never', 'Never')],
-                validators=[DataRequired(message=f"{q['label']} is required")]
+                choices=[
+                    ('', trans('select_answer')),
+                    ('always', trans('always')),
+                    ('often', trans('often')),
+                    ('sometimes', trans('sometimes')),
+                    ('never', trans('never'))
+                ],
+                validators=[DataRequired(message=trans('answer_required', question=q['label']))]
             ))
-    submit = SubmitField('Submit Answers')
+    submit = SubmitField(trans('submit_answers'))
 
 @quiz_bp.route('/step1', methods=['GET', 'POST'])
 def step1():
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
+    lang = session.get('lang', 'en')
     form = Step1Form()
-    t = trans('t')
     course_id = request.args.get('course_id', 'financial_quiz')
     try:
         if request.method == 'POST' and form.validate_on_submit():
@@ -137,17 +143,17 @@ def step1():
                     progress_storage.update_by_id(course_progress['id'], course_progress['data'])
             current_app.logger.info(f"Quiz lesson 0 (step1) completed for course {course_id} by session {session['sid']}")
             return redirect(url_for('quiz.step2', course_id=course_id))
-        return render_template('quiz_step1.html', form=form, t=t, course_id=course_id)
+        return render_template('quiz_step1.html', form=form, trans=trans, lang=lang, course_id=course_id)
     except Exception as e:
         current_app.logger.exception(f"Error in quiz.step1: {str(e)}")
-        flash(t("Error processing personal information."), "danger")
-        return render_template('quiz_step1.html', form=form, t=t, course_id=course_id)
+        flash(trans("error_personal_info", lang=lang), "danger")
+        return render_template('quiz_step1.html', form=form, trans=trans, lang=lang, course_id=course_id)
 
 @quiz_bp.route('/step2', methods=['GET', 'POST'])
 def step2():
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
-    t = trans('t')
+    lang = session.get('lang', 'en')
     course_id = request.args.get('course_id', 'financial_quiz')
     selected_questions = random.sample(QUESTION_POOL, 10)
     form = Step2Form(questions=selected_questions)
@@ -159,20 +165,20 @@ def step2():
                 for v in answers.values()
             )
             personality = (
-                "Planner" if score >= 24 else
-                "Saver" if score >= 18 else
-                "Balanced" if score >= 12 else
-                "Spender"
+                trans("personality_planner", lang=lang) if score >= 24 else
+                trans("personality_saver", lang=lang) if score >= 18 else
+                trans("personality_balanced", lang=lang) if score >= 12 else
+                trans("personality_spender", lang=lang)
             )
             badges = []
             if score >= 24:
-                badges.append("Financial Guru")
+                badges.append(trans("badge_financial_guru", lang=lang))
             if score >= 18:
-                badges.append("Savings Star")
+                badges.append(trans("badge_savings_star", lang=lang))
             if answers.get('avoid_debt') in ['always', 'often']:
-                badges.append("Debt Dodger")
+                badges.append(trans("badge_debt_dodger", lang=lang))
             if answers.get('set_financial_goals') in ['always', 'often']:
-                badges.append("Goal Setter")
+                badges.append(trans("badge_goal_setter", lang=lang))
             
             quiz_storage = current_app.config['STORAGE_MANAGERS']['quiz']
             record = {
@@ -194,7 +200,7 @@ def step2():
             if send_email_flag and email:
                 send_email(
                     to_email=email,
-                    subject=t("Your Financial Personality Quiz Results"),
+                    subject=trans("quiz_results_subject", lang=lang),
                     template_name="quiz_email.html",
                     data={
                         "first_name": record["data"]["first_name"],
@@ -204,7 +210,7 @@ def step2():
                         "created_at": record["data"]["created_at"],
                         "cta_url": url_for('quiz.results', _external=True)
                     },
-                    lang=session.get('lang', 'en')
+                    lang=lang
                 )
             
             progress_storage = current_app.config['STORAGE_MANAGERS']['user_progress']
@@ -227,18 +233,19 @@ def step2():
             
             current_app.logger.info(f"Quiz lesson 1 (step2) completed for course {course_id} by session {session['sid']}")
             session.pop('quiz_step1', None)
+            flash(trans("quiz_completed_success", lang=lang), "success")
             return redirect(url_for('quiz.results', course_id=course_id))
-        return render_template('quiz_step2.html', form=form, questions=selected_questions, t=t, course_id=course_id)
+        return render_template('quiz_step2.html', form=form, questions=selected_questions, trans=trans, lang=lang, course_id=course_id)
     except Exception as e:
         current_app.logger.exception(f"Error in quiz.step2: {str(e)}")
-        flash(t("Error processing quiz answers."), "danger")
-        return render_template('quiz_step2.html', form=form, questions=selected_questions, t=t, course_id=course_id)
+        flash(trans("error_quiz_answers", lang=lang), "danger")
+        return render_template('quiz_step2.html', form=form, questions=selected_questions, trans=trans, lang=lang, course_id=course_id)
 
 @quiz_bp.route('/results', methods=['GET', 'POST'])
 def results():
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
-    t = trans('t')
+    lang = session.get('lang', 'en')
     course_id = request.args.get('course_id', 'financial_quiz')
     try:
         quiz_storage = current_app.config['STORAGE_MANAGERS']['quiz']
@@ -248,22 +255,22 @@ def results():
         
         insights = []
         tips = [
-            t("Use apps like PiggyVest or Cowrywise to automate savings."),
-            t("Join Ajo/Esusu/Adashe groups for disciplined saving habits."),
-            t("Learn financial skills through Flowdiary or Coursera courses."),
-            t("Track expenses weekly using Moniepoint or Flowdiary.")
+            trans("tip_automate_savings", lang=lang),
+            trans("tip_ajo_savings", lang=lang),
+            trans("tip_learn_skills", lang=lang),
+            trans("tip_track_expenses", lang=lang)
         ]
         if latest_record:
-            if latest_record.get('personality') == "Spender":
-                insights.append(t("High spending habits detected. Try budgeting with PiggyVest to control expenses."))
-                tips.append(t("Try using a budgeting app to track your expenses."))
+            if latest_record.get('personality') == trans("personality_spender", lang=lang):
+                insights.append(trans("insight_high_spending", lang=lang))
+                tips.append(trans("tip_use_budgeting_app", lang=lang))
             if latest_record.get('score', 0) < 18:
-                insights.append(t("Low financial discipline. Set small goals, like saving ₦10,000 monthly."))
+                insights.append(trans("insight_low_discipline", lang=lang))
             if latest_record.get('answers', {}).get('emergency_fund') in ['never', 'sometimes']:
-                insights.append(t("No emergency fund. Start saving with Cowrywise for unexpected expenses."))
-                tips.append(t("Set up an emergency fund for unexpected expenses."))
+                insights.append(trans("insight_no_emergency_fund", lang=lang))
+                tips.append(trans("tip_emergency_fund", lang=lang))
             if latest_record.get('answers', {}).get('invest_money') in ['always', 'often']:
-                insights.append(t("Great investment habits! Explore cooperative schemes or real estate."))
+                insights.append(trans("insight_good_investment", lang=lang))
         
         return render_template(
             'quiz_results.html',
@@ -271,18 +278,25 @@ def results():
             latest_record=latest_record,
             insights=insights,
             tips=tips,
-            t=t,
+            trans=trans,
+            lang=lang,
             course_id=course_id
         )
     except Exception as e:
         current_app.logger.exception(f"Error in quiz.results: {str(e)}")
-        flash(t("Error loading quiz results."), "danger")
+        flash(trans("error_loading_results", lang=lang), "danger")
         return render_template(
             'quiz_results.html',
             records=[],
             latest_record={},
             insights=[],
-            tips=[],
-            t=t,
+            tips=[
+                trans("tip_automate_savings", lang=lang),
+                trans("tip_ajo_savings", lang=lang),
+                trans("tip_learn_skills", lang=lang),
+                trans("tip_track_expenses", lang=lang)
+            ],
+            trans=trans,
+            lang=lang,
             course_id=course_id
         )
