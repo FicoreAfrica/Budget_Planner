@@ -3,23 +3,21 @@ import os
 import uuid
 import logging
 from datetime import datetime
-from flask import session, has_request_context # Keep these imports for session context
-
-# IMPORTANT: Do NOT get the logger here directly using logging.getLogger('ficore_app')
-# Instead, the logger instance will be passed during initialization.
+from flask import session, has_request_context
 
 class JsonStorage:
     """Custom JSON storage class to manage records with session ID, user email, and timestamps."""
     def __init__(self, filename, logger_instance=None):
         self.filename = filename
-        # Use the provided logger instance, or fall back to a basic one if none is provided
-        # (though in this setup, logger_instance should always be the SessionAdapter from app.py)
-        self.logger = logger_instance if logger_instance else logging.getLogger(__name__)
+        self.logger = logger_instance if logger_instance else logging.getLogger('ficore_app.json_store')
         if not logger_instance:
-            self.logger.warning(f"JsonStorage initialized without a logger instance. Using default for {filename}.")
-            self.logger.setLevel(logging.DEBUG) # Ensure default is active for debugging
-            if not self.logger.handlers: # Add a basic handler if none exists
-                self.logger.addHandler(logging.StreamHandler())
+            self.logger.warning(f"JsonStorage initialized without a logger instance for {filename}. Using default.")
+            self.logger.setLevel(logging.DEBUG)
+            # Avoid duplicate handlers by checking existing ones
+            if not self.logger.handlers:
+                handler = logging.StreamHandler()
+                handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+                self.logger.addHandler(handler)
 
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         self._initialize_file()
@@ -27,7 +25,6 @@ class JsonStorage:
 
     def _initialize_file(self):
         """Initialize file if it doesn't exist and check write permissions."""
-        # Get session_id safely for initial logs
         current_session_id = session.get('sid', 'unknown') if has_request_context() else 'no-request-context'
         
         if not os.path.exists(self.filename):
@@ -37,7 +34,7 @@ class JsonStorage:
                 self.logger.info(f"Created new file {self.filename}", extra={'session_id': current_session_id})
             except Exception as e:
                 self.logger.error(f"Failed to create {self.filename}: {str(e)}", exc_info=True, extra={'session_id': current_session_id})
-                raise # Re-raise to indicate critical failure
+                raise
         
         if not os.access(self.filename, os.W_OK):
             self.logger.error(f"No write permissions for {self.filename}", extra={'session_id': current_session_id})
@@ -51,33 +48,26 @@ class JsonStorage:
                 with open(self.filename, 'r') as f:
                     data = json.load(f)
                     
-                    # Robust validation and cleaning for records
                     cleaned_data = []
                     for record in data:
                         if not isinstance(record, dict):
-                            self.logger.warning(f"Skipping non-dict record found in {self.filename}: {record}", extra={'session_id': current_session_id})
+                            self.logger.warning(f"Skipping non-dict record in {self.filename}: {record}", extra={'session_id': current_session_id})
                             continue
                         
-                        # Ensure essential top-level keys exist
                         if not all(key in record for key in ['id', 'timestamp', 'data']):
-                            self.logger.warning(f"Skipping record with missing essential keys in {self.filename}: {record}", extra={'session_id': current_session_id})
+                            self.logger.warning(f"Skipping record with missing keys in {self.filename}: {record}", extra={'session_id': current_session_id})
                             continue
 
-                        # Normalize 'data' structure: ensure it's always {'step': X, 'data': { ... }}
-                        # Or if it's an old record, wrap it in this structure for consistent access
                         processed_data = record['data']
                         if isinstance(processed_data, dict) and 'step' in processed_data:
-                            # Already in new nested format or has 'step'
-                            pass
+                            self.logger.debug(f"Record in new format: {record}", extra={'session_id': current_session_id})
                         elif isinstance(processed_data, dict):
-                            # Old format: data is directly under 'data' key without 'step'
-                            # Wrap it to simulate the new structure for consistent access
-                            processed_data = {'step': None, 'data': processed_data} # Use None for old step
+                            self.logger.debug(f"Normalizing old format record: {record}", extra={'session_id': current_session_id})
+                            processed_data = {'step': None, 'data': processed_data}
                         else:
                             self.logger.warning(f"Skipping record with invalid 'data' type in {self.filename}: {record}", extra={'session_id': current_session_id})
                             continue
                         
-                        # Re-assign processed data back to the record
                         record['data'] = processed_data
                         cleaned_data.append(record)
                     
@@ -98,7 +88,7 @@ class JsonStorage:
         current_session_id = session.get('sid', 'unknown') if has_request_context() else 'no-request-context'
         try:
             with open(self.filename, 'w') as f:
-                json.dump(data, f, indent=4) # Use indent=4 for readability
+                json.dump(data, f, indent=4)
             self.logger.info(f"Successfully wrote to {self.filename}", extra={'session_id': current_session_id})
             return True
         except IOError as e:
@@ -110,19 +100,17 @@ class JsonStorage:
 
     def append(self, record, user_email=None, session_id=None):
         """Appends a new record to the JSON file."""
-        # Determine session_id for logging and record metadata
         current_session_id = session_id
         if not current_session_id and has_request_context():
             current_session_id = session.get('sid', str(uuid.uuid4()))
         elif not current_session_id:
-            current_session_id = str(uuid.uuid4()) # Fallback for non-request context
+            current_session_id = str(uuid.uuid4())
 
-        # Determine user_email for record metadata
         current_user_email = user_email
         if not current_user_email and has_request_context():
             current_user_email = session.get('user_email', 'anonymous')
         elif not current_user_email:
-            current_user_email = 'anonymous' # Fallback for non-request context
+            current_user_email = 'anonymous'
 
         try:
             records = self._read()
@@ -130,9 +118,9 @@ class JsonStorage:
             record_with_metadata = {
                 "id": record_id,
                 "user_email": current_user_email,
-                "session_id": current_session_id, # Crucial for filtering
+                "session_id": current_session_id,
                 "timestamp": datetime.utcnow().isoformat() + "Z",
-                "data": record # This 'data' holds the step-specific data (e.g., {'step': 1, 'data': form_data})
+                "data": record
             }
             self.logger.debug(f"Appending record: {record_with_metadata}", extra={'session_id': current_session_id})
             records.append(record_with_metadata)
@@ -140,7 +128,7 @@ class JsonStorage:
                 self.logger.info(f"Appended record {record_id} to {self.filename} for session {current_session_id}", extra={'session_id': current_session_id})
                 return record_id
             else:
-                self.logger.error(f"Failed to write record {record_id} after _write operation", extra={'session_id': current_session_id})
+                self.logger.error(f"Failed to write record {record_id}", extra={'session_id': current_session_id})
                 return None
         except Exception as e:
             self.logger.exception(f"Critical error appending to {self.filename}: {str(e)}", extra={'session_id': current_session_id})
@@ -182,7 +170,6 @@ class JsonStorage:
             for i, record in enumerate(records):
                 if record.get("id") == record_id:
                     found_record = record
-                    # Update only the 'data' part, preserve metadata
                     records[i]['data'] = updated_record.get('data', updated_record)
                     break
             
