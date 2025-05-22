@@ -1,3 +1,12 @@
+from flask import Flask, render_template #... other existing imports
+
+# --- ADD IMPORTS FOR YOUR BLUEPRINTS ---
+from blueprints.financial_health import financial_health_bp
+from blueprints.budget import budget_bp
+from blueprints.quiz import quiz_bp
+from blueprints.bills import bill_bp # Ensure 'bills.py' and 'bill_bp' are correct
+from blueprints.net_worth import net_worth_bp
+from blueprints.emergency_fund import emergency_fund_bp
 import logging
 import os
 import uuid
