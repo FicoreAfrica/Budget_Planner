@@ -1,59 +1,59 @@
 {% extends 'base.html' %}
-{% block title %}{{ trans('Bill Planner') }}{% endblock %}
+{% block title %}{{ trans('bill_planner') | default('Bill Planner') }}{% endblock %}
 {% block content %}
   <div class="container">
-    <div class="navbar mb-4">
-      <h1>{{ trans('Add New Bill') }}</h1>
+    <div class="header">
+      <h1>{{ trans('add_new_bill') | default('Add New Bill') }}</h1>
     </div>
     <div class="card">
       <div class="card-body">
         <form method="POST" action="{{ url_for('bill.form') }}">
           {{ form.csrf_token }}
           <div class="mb-3">
-            <label for="first_name" class="form-label">{{ trans('First Name') }}</label>
-            {{ form.first_name(class="form-control", placeholder=trans('e.g., Chukwuma'), **{'data-bs-toggle': 'tooltip', 'title': trans('Enter your first name')}) }}
-            <div class="invalid-feedback">{{ trans('First name is required') }}</div>
+            <label for="first_name" class="form-label">{{ trans('first_name') | default('First Name') }}</label>
+            {{ form.first_name(class="form-control", placeholder=trans('first_name_placeholder') | default('e.g., Chukwuma'), **{'data-bs-toggle': 'tooltip', 'title': trans('first_name_tooltip') | default('Enter your first name')}) }}
+            <div class="invalid-feedback">{{ trans('first_name_required') | default('First name is required') }}</div>
           </div>
           <div class="mb-3">
-            <label for="email" class="form-label">{{ trans('Email') }}</label>
-            {{ form.email(class="form-control", placeholder=trans('e.g., chukwuma@example.com'), **{'data-bs-toggle': 'tooltip', 'title': trans('Enter your email to receive reminders')}) }}
-            <div class="invalid-feedback">{{ trans('Valid email is required') }}</div>
+            <label for="email" class="form-label">{{ trans('email') | default('Email') }}</label>
+            {{ form.email(class="form-control", placeholder=trans('email_placeholder') | default('e.g., chukwuma@example.com'), **{'data-bs-toggle': 'tooltip', 'title': trans('email_tooltip') | default('Enter your email to receive reminders')}) }}
+            <div class="invalid-feedback">{{ trans('email_required') | default('Valid email is required') }}</div>
           </div>
           <div class="mb-3">
-            <label for="bill_name" class="form-label">{{ trans('Bill Name') }}</label>
-            {{ form.bill_name(class="form-control", placeholder=trans('e.g., NEPA, MTN Data, Ajo Contribution'), **{'data-bs-toggle': 'tooltip', 'title': trans('Enter the name of the bill or expense, e.g., NEPA, MTN Data, Ajo Contribution')}) }}
-            <div class="invalid-feedback">{{ trans('Bill name is required') }}</div>
+            <label for="bill_name" class="form-label">{{ trans('bill_name') | default('Bill Name') }}</label>
+            {{ form.bill_name(class="form-control", placeholder=trans('bill_name_placeholder') | default('e.g., NEPA, MTN Data, Ajo Contribution'), **{'data-bs-toggle': 'tooltip', 'title': trans('bill_name_tooltip') | default('Enter the name of the bill or expense, e.g., NEPA, MTN Data, Ajo Contribution')}) }}
+            <div class="invalid-feedback">{{ trans('bill_name_required') | default('Bill name is required') }}</div>
           </div>
           <div class="mb-3">
-            <label for="amount" class="form-label">{{ trans('Amount') }}</label>
-            {{ form.amount(class="form-control", placeholder=trans('e.g., ₦5000'), **{'data-bs-toggle': 'tooltip', 'title': trans('Enter the amount in Naira, e.g., ₦5,000 for MTN Data')}) }}
-            <div class="invalid-feedback">{{ trans('Valid amount is required') }}</div>
+            <label for="amount" class="form-label">{{ trans('amount') | default('Amount') }}</label>
+            {{ form.amount(class="form-control", placeholder=trans('amount_placeholder') | default('e.g., ₦5000'), **{'data-bs-toggle': 'tooltip', 'title': trans('amount_tooltip') | default('Enter the amount in Naira, e.g., ₦5,000 for MTN Data')}) }}
+            <div class="invalid-feedback">{{ trans('amount_required') | default('Valid amount is required') }}</div>
           </div>
           <div class="mb-3">
-            <label for="due_date" class="form-label">{{ trans('Due Date') }}</label>
-            {{ form.due_date(class="form-control", placeholder="YYYY-MM-DD", **{'data-bs-toggle': 'tooltip', 'title': trans('Enter the due date in YYYY-MM-DD format')}) }}
-            <div class="invalid-feedback">{{ trans('Valid due date is required') }}</div>
+            <label for="due_date" class="form-label">{{ trans('due_date') | default('Due Date') }}</label>
+            {{ form.due_date(class="form-control", placeholder=trans('due_date_placeholder') | default('YYYY-MM-DD'), **{'data-bs-toggle': 'tooltip', 'title': trans('due_date_tooltip') | default('Enter the due date in YYYY-MM-DD format')}) }}
+            <div class="invalid-feedback">{{ trans('due_date_required') | default('Valid due date is required') }}</div>
           </div>
           <div class="mb-3">
-            <label for="frequency" class="form-label">{{ trans('Frequency') }}</label>
-            {{ form.frequency(class="form-control", **{'data-bs-toggle': 'tooltip', 'title': trans('Select how often this bill or expense occurs')}) }}
-            <div class="invalid-feedback">{{ trans('Frequency is required') }}</div>
+            <label for="frequency" class="form-label">{{ trans('frequency') | default('Frequency') }}</label>
+            {{ form.frequency(class="form-control", **{'data-bs-toggle': 'tooltip', 'title': trans('frequency_tooltip') | default('Select how often this bill or expense occurs')}) }}
+            <div class="invalid-feedback">{{ trans('frequency_required') | default('Frequency is required') }}</div>
           </div>
           <div class="mb-3">
-            <label for="category" class="form-label">{{ trans('Category') }}</label>
-            {{ form.category(class="form-control", **{'data-bs-toggle': 'tooltip', 'title': trans('Select a category, e.g., Data/Internet, Ajo/Esusu/Adashe')}) }}
-            <div class="invalid-feedback">{{ trans('Category is required') }}</div>
+            <label for="category" class="form-label">{{ trans('category') | default('Category') }}</label>
+            {{ form.category(class="form-control", **{'data-bs-toggle': 'tooltip', 'title': trans('category_tooltip') | default('Select a category, e.g., Data/Internet, Ajo/Esusu/Adashe')}) }}
+            <div class="invalid-feedback">{{ trans('category_required') | default('Category is required') }}</div>
           </div>
           <div class="mb-3 form-check">
-            {{ form.send_email(class="form-check-input", **{'data-bs-toggle': 'tooltip', 'title': trans('Check this to receive email reminders for this bill')}) }}
-            <label class="form-check-label" for="send_email">{{ trans('Send Email Reminders') }}</label>
+            {{ form.send_email(class="form-check-input", **{'data-bs-toggle': 'tooltip', 'title': trans('send_email_tooltip') | default('Check this to receive email reminders for this bill')}) }}
+            <label class="form-check-label" for="send_email">{{ trans('send_email') | default('Send Email Reminders') }}</label>
           </div>
           <div class="mb-3">
-            <label for="status" class="form-label">{{ trans('Status') }}</label>
-            {{ form.status(class="form-control", **{'data-bs-toggle': 'tooltip', 'title': trans('Select the current status of the bill')}) }}
-            <div class="invalid-feedback">{{ trans('Status is required') }}</div>
+            <label for="status" class="form-label">{{ trans('status') | default('Status') }}</label>
+            {{ form.status(class="form-control", **{'data-bs-toggle': 'tooltip', 'title': trans('status_tooltip') | default('Select the current status of the bill')}) }}
+            <div class="invalid-feedback">{{ trans('status_required') | default('Status is required') }}</div>
           </div>
-          <button type="submit" class="btn btn-primary">{{ trans('Save Bill') }}</button>
+          <button type="submit" class="btn btn-primary">{{ trans('save_bill') | default('Save Bill') }}</button>
         </form>
       </div>
     </div>
