@@ -198,7 +198,10 @@ class JsonStorage:
 
     def delete_by_id(self, record_id):
         """Delete a record by ID."""
-        current_session_id = session.get('sid', 'unknown') if has_request_context() within an active application context.
+        try:
+            current_session_id = session.get('sid', 'unknown') if has_request_context() else 'no-request-context'
+        except RuntimeError:
+            current_session_id = 'no-request-context'
         self.logger.debug(f"Entering delete_by_id for {self.filename}, record_id: {record_id}", extra={'session_id': current_session_id})
         try:
             records = self._read()
