@@ -28,6 +28,16 @@ except ImportError:
 
 try:
     from translations import trans, get_translations
+    from translations.core import CORE_TRANSLATIONS as translations_core
+    from translations.dashboard import DASHBOARD_TRANSLATIONS as translations_dashboard
+    from translations.financial_health import FINANCIAL_HEALTH_TRANSLATIONS as translations_financial_health
+    from translations.budget import BUDGET_TRANSLATIONS as translations_budget
+    from translations.quiz import QUIZ_TRANSLATIONS as translations_quiz
+    from translations.bill import BILL_TRANSLATIONS as translations_bill
+    from translations.net_worth import NET_WORTH_TRANSLATIONS as translations_net_worth
+    from translations.emergency_fund import EMERGENCY_FUND_TRANSLATIONS as translations_emergency_fund
+    from translations.courses import COURSES_TRANSLATIONS as translations_courses
+    from translations.mailersend import MAILERSEND_TRANSLATIONS as translations_mailersend
 except ImportError as e:
     logging.error(f"Translations import failed: {str(e)}. Using fallback translation functions.")
     def trans(key, lang=None):
