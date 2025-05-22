@@ -32,7 +32,7 @@ import traceback
 logger = logging.getLogger('ficore_app')
 logger.setLevel(logging.DEBUG)
 
-# Formatter with timestamp
+# Formatter with timestamp and session ID
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s [session: %(session_id)s]')
 
 # File handler with fallback and flush
@@ -52,7 +52,7 @@ console_handler.setLevel(logging.DEBUG)
 console_handler.setFormatter(formatter)
 logger.addHandler(console_handler)
 
-# LoggerAdapter for session context
+# LoggerAdapter for session context, applied globally
 class SessionAdapter(logging.LoggerAdapter):
     def process(self, msg, kwargs):
         kwargs['extra'] = kwargs.get('extra', {})
@@ -61,6 +61,9 @@ class SessionAdapter(logging.LoggerAdapter):
         else:
             kwargs['extra']['session_id'] = 'unknown'
         return msg, kwargs
+
+# Initialize global logger with SessionAdapter
+log = SessionAdapter(logger, {})
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -76,9 +79,9 @@ try:
     with open(test_file, 'w') as f:
         f.write('test')
     os.remove(test_file)
-    logger.info(f"Session directory set to: {session_dir} and is writable")
+    log.info(f"Session directory set to: {session_dir} and is writable")
 except Exception as e:
-    logger.error(f"Failed to create or verify session directory {session_dir}: {str(e)}", exc_info=True)
+    log.error(f"Failed to create or verify session directory {session_dir}: {str(e)}", exc_info=True)
     session_dir = 'data/sessions'
 app.config['SESSION_FILE_DIR'] = session_dir
 app.config['SESSION_TYPE'] = 'filesystem'
@@ -105,10 +108,10 @@ try:
         # Test write access using append
         test_data = {'test': 'write_check'}
         storage.append(test_data, session_id='test_session')
-        logger.info(f"Initialized JsonStorage for {tool} at {path}")
+        log.info(f"Initialized JsonStorage for {tool} at {path}")
         storage_managers[tool] = storage
 except Exception as e:
-    logger.error(f"Failed to initialize JsonStorage: {str(e)}", exc_info=True)
+    log.error(f"Failed to initialize JsonStorage: {str(e)}", exc_info=True)
     storage_managers = {tool: None for tool in ['financial_health', 'budget', 'quiz', 'bills', 'net_worth', 'emergency_fund']}
 
 app.config['STORAGE_MANAGERS'] = storage_managers
@@ -119,7 +122,7 @@ def format_number(value):
     try:
         return f"{float(value):,.2f}" if isinstance(value, (int, float)) else str(value)
     except (ValueError, TypeError) as e:
-        logger.warning(f"Error formatting number {value}: {str(e)}")
+        log.warning(f"Error formatting number {value}: {str(e)}")
         return str(value)
 
 # Session required decorator
@@ -131,11 +134,9 @@ def session_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# Before request handler to log directory contents and set logger
+# Before request handler to log directory contents
 @app.before_request
 def log_directory():
-    global log
-    log = SessionAdapter(logger, {})
     log.info(f"Current directory: {os.getcwd()}")
     log.info(f"Directory contents: {os.listdir('.')}")
     if not os.path.exists('data/storage.txt'):
@@ -213,7 +214,21 @@ def logout():
     flash(trans('You have been logged out'))
     return redirect(url_for('index'))
 
-# Error Handlers
+# Global Error Handler
+@app.errorhandler(Exception)
+def handle_global_error(e):
+    t = trans('t')
+    log.exception(f"Global error handler caught exception: {str(e)}")
+    traceback_str = ''.join(traceback.format_tb(e.__traceback__))
+    log.error(f"Stack trace: {traceback_str}")
+    flash(t("An unexpected error occurred. Please try again or contact support."), "danger")
+    return render_template(
+        '500.html',
+        error=t.get('Internal Server Error', 'Internal Server Error'),
+        t=t
+    ), 500
+
+# Specific Error Handlers
 @app.errorhandler(CSRFError)
 def handle_csrf_error(e):
     t = trans('t')
