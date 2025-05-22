@@ -3,6 +3,7 @@ from json_store import JsonStorage
 import os
 from datetime import datetime
 import pandas as pd
+from translations import trans
 
 courses_bp = Blueprint('courses', __name__, url_prefix='/courses')
 
@@ -12,23 +13,23 @@ PROGRESS_FILE = os.path.join('data', 'user_progress.json')
 SAMPLE_COURSES = [
     {
         'id': 'budgeting_101',
-        'title_en': 'Budgeting Basics',
-        'title_ha': 'Tushe na Kasafin Kuɗi',
+        'title_en': trans('course_budgeting_101_title_en'),
+        'title_ha': trans('course_budgeting_101_title_ha'),
         'is_premium': False,
         'lessons': [
-            {'title_en': 'Introduction to Budgeting', 'title_ha': 'Gabatarwa ga Kasafin Kuɗi', 'content_en': 'Learn the basics of budgeting.', 'content_ha': 'Koyi tushen kasafin kuɗi.'},
-            {'title_en': 'Creating a Budget', 'title_ha': 'Ƙirƙirar Kasafin Kuɗi', 'content_en': 'Steps to create a personal budget.', 'content_ha': 'Matakai don ƙirƙirar kasafin kuɗi na sirri.'}
+            {'title_en': trans('lesson_intro_budgeting_en'), 'title_ha': trans('lesson_intro_budgeting_ha'), 'content_en': trans('lesson_intro_budgeting_content_en'), 'content_ha': trans('lesson_intro_budgeting_content_ha')},
+            {'title_en': trans('lesson_create_budget_en'), 'title_ha': trans('lesson_create_budget_ha'), 'content_en': trans('lesson_create_budget_content_en'), 'content_ha': trans('lesson_create_budget_content_ha')}
         ]
     },
     {
         'id': 'financial_quiz',
-        'title_en': 'Financial Literacy Quiz',
-        'title_ha': 'Tambayoyin Ilimin Kuɗi',
+        'title_en': trans('course_financial_quiz_title_en'),
+        'title_ha': trans('course_financial_quiz_title_ha'),
         'is_premium': False,
         'lessons': [
-            {'title_en': 'Personal Information', 'title_ha': 'Bayanin Kai', 'content_en': 'Enter your personal information to start the quiz.', 'content_ha': 'Shigar da bayanan ka don fara tambayoyin.'},
-            {'title_en': 'Answer Questions', 'title_ha': 'Amsa Tambayoyin', 'content_en': 'Answer questions to discover your financial personality.', 'content_ha': 'Amsa tambayoyin don gano halin kuɗin ka.'},
-            {'title_en': 'View Results', 'title_ha': 'Duba Sakamako', 'content_en': 'Review your quiz results and insights.', 'content_ha': 'Duba sakamakon tambayoyin ka da fahimta.'}
+            {'title_en': trans('lesson_personal_info_en'), 'title_ha': trans('lesson_personal_info_ha'), 'content_en': trans('lesson_personal_info_content_en'), 'content_ha': trans('lesson_personal_info_content_ha')},
+            {'title_en': trans('lesson_answer_questions_en'), 'title_ha': trans('lesson_answer_questions_ha'), 'content_en': trans('lesson_answer_questions_content_en'), 'content_ha': trans('lesson_answer_questions_content_ha')},
+            {'title_en': trans('lesson_view_results_en'), 'title_ha': trans('lesson_view_results_ha'), 'content_en': trans('lesson_view_results_content_en'), 'content_ha': trans('lesson_view_results_content_ha')}
         ]
     }
 ]
@@ -45,22 +46,24 @@ def initialize_courses():
 def course_catalog():
     courses_storage = current_app.config['STORAGE_MANAGERS']['courses']
     initialize_courses()
-    courses = courses_storage.read_all()  # Changed from [record['data'] for record in ...]
+    courses = courses_storage.read_all()
     lang = session.get('lang', 'en')
     user_progress = []
     if 'sid' in session:
         progress_storage = current_app.config['STORAGE_MANAGERS']['user_progress']
         user_progress = progress_storage.filter_by_session(session['sid'])
-    return render_template('courses.html', courses=courses, lang=lang, user_progress=user_progress)
+    return render_template('courses.html', courses=courses, trans=trans, lang=lang, user_progress=user_progress)
 
 @courses_bp.route('/<course_id>')
 def course_page(course_id):
     courses_storage = current_app.config['STORAGE_MANAGERS']['courses']
     progress_storage = current_app.config['STORAGE_MANAGERS']['user_progress']
-    courses = courses_storage.read_all()  # Changed
+    courses = courses_storage.read_all()
     course = next((c for c in courses if c['id'] == course_id), None)
+    lang = session.get('lang', 'en')
     if not course:
-        return render_template('404.html'), 404
+        flash(trans("course_not_found", lang=lang), "danger")
+        return render_template('404.html', trans=trans, lang=lang), 404
 
     if course_id == 'financial_quiz':
         return redirect(url_for('quiz.step1', course_id=course_id))
@@ -79,21 +82,22 @@ def course_page(course_id):
             current_app.logger.info(f"Initialized progress for course {course_id} for session {session['sid']}")
             sync_progress_to_sheets(session['sid'])
 
-    lang = session.get('lang', 'en')
-    return render_template('course_lesson.html', course=course, lang=lang)
+    return render_template('course_lesson.html', course=course, trans=trans, lang=lang)
 
 @courses_bp.route('/complete_lesson/<course_id>/<int:lesson_index>', methods=['POST'])
 def complete_lesson(course_id, lesson_index):
     if 'sid' not in session:
-        flash(trans('Please log in to track progress'), 'danger')
+        flash(trans('login_to_track_progress', lang=session.get('lang', 'en')), 'danger')
         return redirect(url_for('index'))
 
     progress_storage = current_app.config['STORAGE_MANAGERS']['user_progress']
     courses_storage = current_app.config['STORAGE_MANAGERS']['courses']
-    courses = courses_storage.read_all()  # Changed
+    courses = courses_storage.read_all()
     course = next((c for c in courses if c['id'] == course_id), None)
+    lang = session.get('lang', 'en')
     if not course or lesson_index >= len(course['lessons']):
-        return render_template('404.html'), 404
+        flash(trans("course_not_found", lang=lang), "danger")
+        return render_template('404.html', trans=trans, lang=lang), 404
     
     progress = progress_storage.filter_by_session(session['sid'])
     course_progress = next((p for p in progress if p['data']['course_id'] == course_id), None)
@@ -116,17 +120,18 @@ def complete_lesson(course_id, lesson_index):
 
     current_app.logger.info(f"Lesson {lesson_index} completed for course {course_id} by session {session['sid']}")
     sync_progress_to_sheets(session['sid'])
-    flash(trans('Lesson completed successfully!'), 'success')
+    flash(trans('lesson_completed_success', lang=lang), 'success')
     return redirect(url_for('courses.course_page', course_id=course_id))
 
 @courses_bp.route('/complete_quiz/<course_id>', methods=['POST'])
 def complete_quiz(course_id):
     if 'sid' not in session:
-        flash(trans('Please log in to track progress'), 'danger')
+        flash(trans('login_to_track_progress', lang=session.get('lang', 'en')), 'danger')
         return redirect(url_for('index'))
 
+    lang = session.get('lang', 'en')
     if course_id != 'financial_quiz':
-        flash(trans('Invalid course ID'), 'danger')
+        flash(trans('invalid_course_id', lang=lang), 'danger')
         return redirect(url_for('courses.course_catalog'))
 
     progress_storage = current_app.config['STORAGE_MANAGERS']['user_progress']
@@ -148,7 +153,7 @@ def complete_quiz(course_id):
 
     current_app.logger.info(f"Quiz course {course_id} completed by session {session['sid']}")
     sync_progress_to_sheets(session['sid'])
-    flash(trans('Quiz course completed successfully!'), 'success')
+    flash(trans('quiz_completed_success', lang=lang), 'success')
     return redirect(url_for('courses.course_catalog'))
 
 def sync_progress_to_sheets(session_id):
