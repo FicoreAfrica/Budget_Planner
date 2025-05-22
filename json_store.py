@@ -11,9 +11,7 @@ class JsonStorage:
         self.filename = filename
         self.logger = logger_instance if logger_instance else logging.getLogger('ficore_app.json_store')
         if not logger_instance:
-            self.logger.warning(f"JsonStorage initialized without a logger instance for {filename}. Using default.")
             self.logger.setLevel(logging.DEBUG)
-            # Avoid duplicate handlers by checking existing ones
             if not self.logger.handlers:
                 handler = logging.StreamHandler()
                 handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
@@ -25,7 +23,8 @@ class JsonStorage:
 
     def _initialize_file(self):
         """Initialize file if it doesn't exist and check write permissions."""
-        current_session_id = session.get('sid', 'unknown') if has_request_context() else 'no-request-context'
+        # Use a default session ID for initialization to avoid context issues
+        current_session_id = 'init'
         
         if not os.path.exists(self.filename):
             try:
