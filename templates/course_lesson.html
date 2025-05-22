@@ -1,26 +1,18 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="container mt-5">
-    <h1 class="text-center" style="background: linear-gradient(to right, #0288D1, #2E7D32); -webkit-background-clip: text; -webkit-text-fill-color: transparent;" role="heading" aria-level="1">
+    <h1 class="text-center" style="background: linear-gradient(to right, #0288D1, #2E7D32); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
         {{ course.title_ha if lang == 'ha' else course.title_en }}
     </h1>
     <div class="row mt-4">
         <div class="col-md-8 offset-md-2">
             {% for lesson_index, lesson in course.lessons | enumerate %}
-            <div class="card mb-3" role="article">
+            <div class="card mb-3">
                 <div class="card-body">
-                    <h5 class="card-title" id="lesson-{{ lesson_index }}">{{ lesson.title_ha if lang == 'ha' else lesson.title_en }}</h5>
+                    <h5 class="card-title">{{ lesson.title_ha if lang == 'ha' else lesson.title_en }}</h5>
                     <p class="card-text">{{ lesson.content_ha if lang == 'ha' else lesson.content_en }}</p>
-                    <button class="btn btn-primary speak-btn" 
-                            style="background: linear-gradient(to right, #0288D1, #2E7D32); border: none;"
-                            data-text="{{ lesson.title_ha if lang == 'ha' else lesson.title_en }}: {{ lesson.content_ha if lang == 'ha' else lesson.content_en }}"
-                            aria-label="{% if lang == 'ha' %} Sauke {{ lesson.title_ha }} {% else %} Read aloud {{ lesson.title_en }} {% endif %}">
-                        <span class="sr-only">{% if lang == 'ha' %} Sauke {% else %} Read aloud {% endif %}</span>
-                        📣
-                    </button>
                     <form method="POST" action="{{ url_for('courses.complete_lesson', course_id=course.id, lesson_index=lesson_index) }}">
-                        <button type="submit" class="btn btn-success"
-                                aria-label="{% if lang == 'ha' %} Kammala {{ lesson.title_ha }} {% else %} Complete {{ lesson.title_en }} {% endif %}">
+                        <button type="submit" class="btn btn-success">
                             {% if lang == 'ha' %} Kammala Darasi {% else %} Complete Lesson {% endif %}
                         </button>
                     </form>
@@ -29,13 +21,10 @@
             {% endfor %}
             <a href="{{ url_for('courses.course_catalog') }}" 
                class="btn btn-secondary" 
-               style="background: linear-gradient(to right, #0288D1, #2E7D32); border: none;"
-               aria-label="{% if lang == 'ha' %} Komawa zuwa Katalogin Koyarwa {% else %} Back to Course Catalog {% endif %}"
-               role="button">
+               style="background: linear-gradient(to right, #0288D1, #2E7D32); border: none;">
                 {% if lang == 'ha' %} Komawa {% else %} Back to Courses {% endif %}
             </a>
         </div>
     </div>
 </div>
-<script src="{{ url_for('static', filename='js/interactivity.js') }}"></script>
 {% endblock %}
