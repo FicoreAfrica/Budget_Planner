@@ -3,7 +3,7 @@ import os
 import uuid
 import logging
 from datetime import datetime
-from flask import session, has_request_context
+from flask import session, has_request_context, has_app_context
 
 class JsonStorage:
     """Custom JSON storage class to manage records with session ID, user email, and timestamps."""
