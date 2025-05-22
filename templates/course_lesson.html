@@ -1,29 +1,23 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="container mt-5">
-    <h1 class="text-center" style="background: linear-gradient(to right, #0288D1, #2E7D32); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-        {{ course.title_ha if lang == 'ha' else course.title_en }}
-    </h1>
+<div class="container">
+    <div class="header">
+        <h1>{{ trans(course.title_key) | default(course.title_en) }}</h1>
+    </div>
     <div class="row mt-4">
         <div class="col-md-8 offset-md-2">
             {% for lesson_index, lesson in course.lessons | enumerate %}
             <div class="card mb-3">
                 <div class="card-body">
-                    <h5 class="card-title">{{ lesson.title_ha if lang == 'ha' else lesson.title_en }}</h5>
-                    <p class="card-text">{{ lesson.content_ha if lang == 'ha' else lesson.content_en }}</p>
+                    <h5 class="card-title">{{ trans(lesson.title_key) | default(lesson.title_en) }}</h5>
+                    <p class="card-text">{{ trans(lesson.content_key) | default(lesson.content_en) }}</p>
                     <form method="POST" action="{{ url_for('courses.complete_lesson', course_id=course.id, lesson_index=lesson_index) }}">
-                        <button type="submit" class="btn btn-success">
-                            {% if lang == 'ha' %} Kammala Darasi {% else %} Complete Lesson {% endif %}
-                        </button>
+                        <button type="submit" class="btn btn-success">{{ trans('complete_lesson') | default('Complete Lesson') }}</button>
                     </form>
                 </div>
             </div>
             {% endfor %}
-            <a href="{{ url_for('courses.course_catalog') }}" 
-               class="btn btn-secondary" 
-               style="background: linear-gradient(to right, #0288D1, #2E7D32); border: none;">
-                {% if lang == 'ha' %} Komawa {% else %} Back to Courses {% endif %}
-            </a>
+            <a href="{{ url_for('courses.course_catalog') }}" class="btn btn-secondary">{{ trans('back_to_courses') | default('Back to Courses') }}</a>
         </div>
     </div>
 </div>
