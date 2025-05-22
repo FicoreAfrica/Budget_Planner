@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime
 from flask import Flask, render_template, request, session, redirect, url_for, flash, send_from_directory
 from flask_session import Session
-from flask_wtf.csrf import CSRFProtect
+from flask_wtf.csrf import CSRFProtect, CSRFError
 from blueprints.financial_health import financial_health_bp
 from blueprints.budget import budget_bp
 from blueprints.quiz import quiz_bp
@@ -35,12 +35,13 @@ logger.setLevel(logging.DEBUG)
 # Formatter with timestamp
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s [session: %(session_id)s]')
 
-# File handler with fallback
+# File handler with fallback and flush
 try:
     os.makedirs('data', exist_ok=True)
     file_handler = logging.FileHandler('data/storage.txt')
     file_handler.setLevel(logging.DEBUG)
     file_handler.setFormatter(formatter)
+    file_handler.flush = lambda: None  # Ensure flush method exists
     logger.addHandler(file_handler)
 except Exception as e:
     logger.warning(f"Failed to set up file logging: {str(e)}")
@@ -80,20 +81,34 @@ except Exception as e:
 app.config['SESSION_FILE_DIR'] = session_dir
 app.config['SESSION_TYPE'] = 'filesystem'
 app.config['SESSION_PERMANENT'] = False
-app.config['SESSION_USE_SIGNER'] = True  # Enable session data signing for security
-app.config['SESSION_SERIALIZER'] = 'json'  # Explicitly use JSON serializer for complex data
+app.config['SESSION_USE_SIGNER'] = True
+app.config['SESSION_SERIALIZER'] = 'json'
 Session(app)
 CSRFProtect(app)
 
-# Initialize JsonStorage for each tool
-storage_managers = {
-    'financial_health': JsonStorage('data/financial_health.json'),
-    'budget': JsonStorage('data/budget.json'),
-    'quiz': JsonStorage('data/quiz_data.json'),
-    'bills': JsonStorage('data/bills.json'),
-    'net_worth': JsonStorage('data/networth.json'),
-    'emergency_fund': JsonStorage('data/emergency_fund.json')
-}
+# Initialize JsonStorage for each tool with permission check
+storage_managers = {}
+try:
+    for tool, path in [
+        ('financial_health', 'data/financial_health.json'),
+        ('budget', 'data/budget.json'),
+        ('quiz', 'data/quiz_data.json'),
+        ('bills', 'data/bills.json'),
+        ('net_worth', 'data/networth.json'),
+        ('emergency_fund', 'data/emergency_fund.json')
+    ]:
+        # Ensure file is writable
+        dir_name = os.path.dirname(path)
+        os.makedirs(dir_name, exist_ok=True)
+        storage_managers[tool] = JsonStorage(path)
+        # Test write access
+        test_data = {'test': 'write_check'}
+        storage_managers[tool].save(test_data)
+        logger.info(f"Initialized JsonStorage for {tool} at {path}")
+except Exception as e:
+    logger.error(f"Failed to initialize JsonStorage: {str(e)}", exc_info=True)
+
+app.config['STORAGE_MANAGERS'] = storage_managers
 
 # Template filter for number formatting
 @app.template_filter('format_number')
@@ -194,6 +209,13 @@ def logout():
     return redirect(url_for('index'))
 
 # Error Handlers
+@app.errorhandler(CSRFError)
+def handle_csrf_error(e):
+    t = trans('t')
+    log.error(f"CSRF Error: {str(e)}", exc_info=True)
+    flash(t("CSRF token missing or invalid. Please try again."), "danger")
+    return render_template('500.html', error=t.get('CSRF Error', 'CSRF Error'), t=t), 400
+
 @app.errorhandler(404)
 def page_not_found(e):
     t = trans('t')
@@ -204,6 +226,8 @@ def page_not_found(e):
 def internal_server_error(e):
     t = trans('t')
     log.error(f"500 Error: {str(e)}", exc_info=True)
+    traceback_str = ''.join(traceback.format_tb(e.__traceback__))
+    log.error(f"Stack trace: {traceback_str}")
     return render_template('500.html', error=t.get('Internal Server Error', 'Internal Server Error'), t=t), 500
 
 # Register Blueprints
