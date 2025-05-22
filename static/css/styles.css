@@ -1,6 +1,6 @@
 /* General */
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Poppins', 'Arial', sans-serif;
     background-color: #f8f9fa;
     color: #666;
 }
@@ -23,6 +23,13 @@ body {
     text-decoration: none;
     border-radius: 5px;
     font-size: 0.9rem;
+    border: none;
+}
+.btn-primary.navbar-btn {
+    background: linear-gradient(90deg, #0288D1, #2E7D32);
+}
+.btn-primary.navbar-btn:hover {
+    background: linear-gradient(90deg, #0277BD, #27632A);
 }
 .btn-primary:hover {
     background: linear-gradient(135deg, #1B5E20, #01579B);
@@ -34,6 +41,11 @@ body {
     border: 1px solid #ddd;
     border-radius: 8px;
     margin-bottom: 1.5rem;
+}
+.card.custom-card {
+    border-radius: 15px;
+    border: none;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
 /* Container */
@@ -60,6 +72,7 @@ body {
 .testimonials-section h2,
 .recommended-learning h2,
 .about-section h2 {
+    font-family: 'Poppins', 'Arial', sans-serif;
     color: #2E7D32;
     font-size: 2.5rem;
     font-weight: 600;
