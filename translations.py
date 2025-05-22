@@ -3,7 +3,7 @@ from flask import session
 # translations.py
 # Contains translation strings for Ficore Africa Flask app in English and Hausa
 # Covers all tools: Financial Health Score, Budget Planner, Personality Quiz, Bill Planner, Net Worth Calculator, Emergency Fund Calculator
-    translations = {
+TRANSLATIONS = {
         'en': {
             # General Interface
             'Home': 'Home',
