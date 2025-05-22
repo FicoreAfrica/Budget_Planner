@@ -1,47 +1,120 @@
 <!DOCTYPE html>
-<html>
+<html lang="{{ session.get('lang', 'en') }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ trans('Bill Payment Reminder') }}</title>
+    <title>{{ trans('bill_payment_reminder') | default('Bill Payment Reminder') }}</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .header {
+            background: linear-gradient(135deg, #2E7D32, #0288D1);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .header h2 {
+            color: #FFFFFF;
+            margin: 0;
+        }
+        .header p {
+            font-style: italic;
+            color: #E0F7FA;
+            font-size: 0.9rem;
+            margin: 5px 0 0 0;
+        }
+        .content {
+            background: #fff;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            margin: 10px 0;
+            color: white;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #2E7D32, #0288D1);
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #1B5E20, #01579B);
+        }
+        .btn-secondary {
+            background-color: #FBC02D;
+            color: #333;
+        }
+        .btn-secondary:hover {
+            background-color: #FFB300;
+        }
+        .btn-tertiary {
+            background-color: #D81B60;
+        }
+        .btn-tertiary:hover {
+            background-color: #B71C1C;
+        }
+        ul {
+            padding-left: 20px;
+        }
+        li {
+            margin-bottom: 10px;
+        }
+        .footer {
+            text-align: center;
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 20px;
+        }
+    </style>
 </head>
-<body style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-    <div style="background-color: #1E7F71; padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 20px;">
-        <h2 style="color: #FFFFFF; margin: 0;">{{ trans('Bill Payment Reminder') }}</h2>
-        <p style="font-style: italic; color: #E0F7FA; font-size: 0.9rem; margin: 5px 0 0 0;">
-            {{ trans('Financial growth passport for Africa') }}
-        </p>
+<body>
+    <div class="header">
+        <h2>{{ trans('bill_payment_reminder') | default('Bill Payment Reminder') }}</h2>
+        <p>{{ trans('financial_growth_passport') | default('Financial growth passport for Africa') }}</p>
     </div>
-    <p>{{ trans('Dear') }} {{ user_name }},</p>
-    <p>{{ trans('This is a reminder about your upcoming or overdue bills.') }}</p>
-    <p>{{ trans('Please review the following bills') }}:</p>
-    <ul>
-    {% for bill in bills %}
-        {% if bill.Status == 'Pending' or bill.Status == 'Overdue' %}
-            <li>{{ bill.Description }} - {{ bill.Amount }} ₦ ({{ trans('Due') }}: {{ bill.DueDate }}, {{ trans('Status') }}: {{ trans(bill.Status) }})</li>
-        {% endif %}
-    {% endfor %}
-    </ul>
-    <p>{{ trans('Pay on time to avoid late fees.') }}</p>
-    <p style="margin-bottom: 10px;">
-        {{ trans('Manage your bills now') }}:
-        <a href="{{ url_for('bill_planner_form', _external=True) }}" style="display: inline-block; padding: 10px 20px; background-color: #FBC02D; color: #333; text-decoration: none; border-radius: 5px; font-size: 0.9rem;">{{ trans('Go to Bill Planner') }}</a>
-    </p>
-    <p style="margin-bottom: 10px;">
-        {{ trans('Please provide feedback on your experience') }}:
-        <a href="{{ FEEDBACK_FORM_URL }}" style="display: inline-block; padding: 10px 20px; background-color: #2E7D32; color: white; text-decoration: none; border-radius: 5px; font-size: 0.9rem;">{{ trans('Feedback Form') }}</a>
-    </p>
-    <p style="margin-bottom: 10px;">
-        {{ trans('Want Smart Insights? Join our waitlist') }}:
-        <a href="{{ WAITLIST_FORM_URL }}" style="display: inline-block; padding: 10px 20px; background-color: #0288D1; color: white; text-decoration: none; border-radius: 5px; font-size: 0.9rem;">{{ trans('Join Waitlist') }}</a>
-    </p>
-    <p style="margin-bottom: 10px;">
-        {{ trans('Need expert advice? Book a consultancy') }}:
-        <a href="{{ CONSULTANCY_FORM_URL }}" style="display: inline-block; padding: 10px 20px; background-color: #D81B60; color: white; text-decoration: none; border-radius: 5px; font-size: 0.9rem;">{{ trans('Book Consultancy') }}</a>
-    </p>
-    <p>{{ trans('Thank you for using Ficore Africa') }}</p>
-    <div style="text-align: center; margin-top: 20px; font-size: 0.8rem; color: #666;">
-        <p>{{ trans('Powered by Ficore Africa') }}</p>
+    <div class="content">
+        <p>{{ trans('dear') | default('Dear') }} {{ user_name }},</p>
+        <p>{{ trans('bill_reminder_intro') | default('This is a reminder about your upcoming or overdue bills.') }}</p>
+        <p>{{ trans('review_bills') | default('Please review the following bills') }}:</p>
+        <ul>
+            {% for bill in bills %}
+                {% if bill.Status == 'Pending' or bill.Status == 'Overdue' %}
+                    <li>{{ bill.Description }} - {{ bill.Amount }} ₦ ({{ trans('due') | default('Due') }}: {{ bill.DueDate }}, {{ trans('status') | default('Status') }}: {{ trans(bill.Status) | default(bill.Status) }})</li>
+                {% endif %}
+            {% endfor %}
+        </ul>
+        <p>{{ trans('pay_on_time') | default('Pay on time to avoid late fees.') }}</p>
+        <p>
+            {{ trans('manage_bills') | default('Manage your bills now') }}:
+            <a href="{{ url_for('bill_planner_form', _external=True) }}" class="btn btn-primary">{{ trans('go_to_bill_planner') | default('Go to Bill Planner') }}</a>
+        </p>
+        <p>
+            {{ trans('provide_feedback_prompt') | default('Please provide feedback on your experience') }}:
+            <a href="{{ FEEDBACK_FORM_URL }}" class="btn btn-secondary">{{ trans('feedback_form') | default('Feedback Form') }}</a>
+        </p>
+        <p>
+            {{ trans('join_waitlist_prompt') | default('Want Smart Insights? Join our waitlist') }}:
+            <a href="{{ WAITLIST_FORM_URL }}" class="btn btn-primary">{{ trans('join_waitlist') | default('Join Waitlist') }}</a>
+        </p>
+        <p>
+            {{ trans('book_consultancy_prompt') | default('Need expert advice? Book a consultancy') }}:
+            <a href="{{ CONSULTANCY_FORM_URL }}" class="btn btn-tertiary">{{ trans('book_consultancy') | default('Book Consultancy') }}</a>
+        </p>
+        <p>{{ trans('thank_you') | default('Thank you for using Ficore Africa') }}</p>
+    </div>
+    <div class="footer">
+        <p>{{ trans('powered_by') | default('Powered by Ficore Africa') }}</p>
     </div>
 </body>
 </html>
