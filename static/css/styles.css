@@ -5,6 +5,44 @@ body {
     color: #666;
 }
 
+/* Header */
+.header {
+    background: linear-gradient(135deg, #2E7D32, #0288D1);
+    color: white;
+    padding: 15px;
+    text-align: center;
+    border-radius: 8px 8px 0 0;
+}
+
+/* Buttons */
+.btn-primary {
+    display: inline-block;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #2E7D32, #0288D1);
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    font-size: 0.9rem;
+}
+.btn-primary:hover {
+    background: linear-gradient(135deg, #1B5E20, #01579B);
+}
+
+/* Card */
+.card {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+}
+
+/* Container */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
 /* Logo Centering */
 .logo-container {
     text-align: center;
@@ -188,6 +226,8 @@ body {
         transition: background 0.3s ease;
     }
 }
+
+/* Language Button */
 .language-btn {
     font-size: 1rem;
     padding: 0.5rem 1rem;
