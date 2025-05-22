@@ -80,16 +80,16 @@ class JsonStorage:
                 "timestamp": datetime.utcnow().isoformat() + "Z",
                 "data": record.get("data", record)  # Allow record to be the data itself
             }
-            logger.debug(f"Appending record: {record_with_metadata}")
+            logger.debug(f"Appending record: {record_with_metadata}", extra={'session_id': session_id})
             records.append(record_with_metadata)
             if self._write(records):
-                logger.info(f"Appended record {record_id} to {self.filename} for session {session_id}")
+                logger.info(f"Appended record {record_id} to {self.filename} for session {session_id}", extra={'session_id': session_id})
                 return record_id
             else:
-                logger.error(f"Failed to write record {record_id} after retries")
+                logger.error(f"Failed to write record {record_id} after retries", extra={'session_id': session_id})
                 return None
         except Exception as e:
-            logger.exception(f"Critical error appending to {self.filename}: {str(e)}")
+            logger.exception(f"Critical error appending to {self.filename}: {str(e)}", extra={'session_id': session_id or 'unknown'})
             return None
 
     def filter_by_session(self, session_id):
@@ -97,10 +97,10 @@ class JsonStorage:
         try:
             records = self._read()
             filtered = [r for r in records if r.get("session_id") == session_id]
-            logger.debug(f"Filtered {len(filtered)} records for session {session_id}")
+            logger.debug(f"Filtered {len(filtered)} records for session {session_id}", extra={'session_id': session_id})
             return filtered
         except Exception as e:
-            logger.exception(f"Error filtering {self.filename} by session_id {session_id}: {str(e)}")
+            logger.exception(f"Error filtering {self.filename} by session_id {session_id}: {str(e)}", extra={'session_id': session_id})
             return []
 
     def get_by_id(self, record_id):
@@ -109,12 +109,12 @@ class JsonStorage:
             records = self._read()
             for record in records:
                 if record.get("id") == record_id:
-                    logger.debug(f"Retrieved record {record_id}")
+                    logger.debug(f"Retrieved record {record_id}", extra={'session_id': record.get('session_id', 'unknown')})
                     return record
-            logger.warning(f"Record {record_id} not found in {self.filename}")
+            logger.warning(f"Record {record_id} not found in {self.filename}", extra={'session_id': 'unknown'})
             return None
         except Exception as e:
-            logger.exception(f"Error getting record {record_id} from {self.filename}: {str(e)}")
+            logger.exception(f"Error getting record {record_id} from {self.filename}: {str(e)}", extra={'session_id': 'unknown'})
             return None
 
     def update_by_id(self, record_id, updated_record):
@@ -131,14 +131,14 @@ class JsonStorage:
                         "data": updated_record.get("data", {})
                     }
                     if self._write(records):
-                        logger.info(f"Updated record {record_id} in {self.filename}")
+                        logger.info(f"Updated record {record_id} in {self.filename}", extra={'session_id': record.get('session_id', 'unknown')})
                         return True
-                    logger.error(f"Failed to write updated record {record_id}")
+                    logger.error(f"Failed to write updated record {record_id}", extra={'session_id': record.get('session_id', 'unknown')})
                     return False
-            logger.error(f"Record {record_id} not found in {self.filename}")
+            logger.error(f"Record {record_id} not found in {self.filename}", extra={'session_id': 'unknown'})
             return False
         except Exception as e:
-            logger.exception(f"Error updating record {record_id} in {self.filename}: {str(e)}")
+            logger.exception(f"Error updating record {record_id} in {self.filename}: {str(e)}", extra={'session_id': 'unknown'})
             return False
 
     def delete_by_id(self, record_id):
@@ -149,14 +149,12 @@ class JsonStorage:
             records = [r for r in records if r.get("id") != record_id]
             if len(records) < initial_len:
                 if self._write(records):
-                    logger.info(f"Deleted record {record_id} from {self.filename}")
+                    logger.info(f"Deleted record {record_id} from {self.filename}", extra={'session_id': 'unknown'})
                     return True
-                logger.error(f"Failed to write after deleting record {record_id}")
+                logger.error(f"Failed to write after deleting record {record_id}", extra={'session_id': 'unknown'})
                 return False
-            logger.error(f"Record {record_id} not found in {self.filename}")
+            logger.error(f"Record {record_id} not found in {self.filename}", extra={'session_id': 'unknown'})
             return False
         except Exception as e:
-            logger.exception(f"Error deleting record {record_id} from {self.filename}: {str(e)}")
+            logger.exception(f"Error deleting record {record_id} from {self.filename}: {str(e)}", extra={'session_id': 'unknown'})
             return False
-
-# Do not instantiate here; let app.py handle instantiation
