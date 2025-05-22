@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime, timedelta
-from flask import Flask, render_template, request, session, redirect, url_for, flash, send_from_directory, has_request_context, g
+from flask import Flask, render_template, request, session, redirect, url_for, flash, send_from_directory, has_request_context, g, jsonify
 from flask_session import Session
 from flask_wtf.csrf import CSRFProtect, CSRFError
 from blueprints.financial_health import financial_health_bp
@@ -14,6 +14,9 @@ import logging
 import os
 from json_store import JsonStorage
 from functools import wraps
+import gspread
+from google.oauth2.service_account import Credentials
+import pandas as pd
 
 # Conditional import for python_dotenv
 try:
@@ -97,6 +100,26 @@ app.config['SESSION_SERIALIZER'] = 'json'
 Session(app)
 CSRFProtect(app)
 
+# --- Google Sheets Configuration ---
+def init_gspread_client():
+    try:
+        creds_json = os.environ.get('GOOGLE_CREDENTIALS')
+        if not creds_json:
+            log.error("GOOGLE_CREDENTIALS not set in environment variables")
+            return None
+        creds = Credentials.from_service_account_info(
+            json.loads(creds_json),
+            scopes=['https://www.googleapis.com/auth/spreadsheets']
+        )
+        client = gspread.authorize(creds)
+        log.info("Initialized gspread client for Google Sheets")
+        return client
+    except Exception as e:
+        log.error(f"Failed to initialize gspread client: {str(e)}", exc_info=True)
+        return None
+
+app.config['GSPREAD_CLIENT'] = init_gspread_client()
+
 # Initialize JsonStorage for each tool within app context
 def init_storage_managers():
     storage_managers = {}
@@ -176,6 +199,30 @@ def inject_translations():
         WAITLIST_FORM_URL=os.environ.get('WAITLIST_FORM_URL', '#'),
         CONSULTANCY_FORM_URL=os.environ.get('CONSULTANCY_FORM_URL', '#')
     )
+
+# Health endpoint
+@app.route('/health')
+def health():
+    log.info("Health check requested")
+    status = {"status": "healthy"}
+    try:
+        # Check storage managers
+        for tool, storage in app.config['STORAGE_MANAGERS'].items():
+            if storage is None:
+                status["status"] = "unhealthy"
+                status["details"] = f"Storage for {tool} failed to initialize"
+                return jsonify(status), 500
+        # Check Google Sheets client
+        if app.config['GSPREAD_CLIENT'] is None:
+            status["status"] = "unhealthy"
+            status["details"] = "Google Sheets client not initialized"
+            return jsonify(status), 500
+    except Exception as e:
+        log.error(f"Health check failed: {str(e)}", exc_info=True)
+        status["status"] = "unhealthy"
+        status["details"] = str(e)
+        return jsonify(status), 500
+    return jsonify(status), 200
 
 # Routes
 @app.route('/')
