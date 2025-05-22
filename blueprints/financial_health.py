@@ -8,19 +8,13 @@ from translations import trans
 from datetime import datetime
 import logging
 import uuid
-import traceback # Keep traceback for explicit use if needed, though logger.exception handles most cases
 import os
 
-# IMPORTANT: The SessionAdapter and global logger setup should primarily be in app.py
-# This blueprint will now rely on the logger being made available via Flask's `g` object.
-
-# Get a logger instance for this blueprint.
-# This logger will be adapted by the SessionAdapter configured in app.py
-# and made available via `g.log`.
 logger = logging.getLogger(__name__)
 
 financial_health_bp = Blueprint('financial_health', __name__)
 financial_health_storage = JsonStorage('data/financial_health.json')
+progress_storage = JsonStorage('data/user_progress.json')  # Added for course progress
 
 # Forms for financial health steps
 class Step1Form(FlaskForm):
@@ -397,7 +391,7 @@ def dashboard():
         g.log.debug(f"All records from storage (before cleaning): {all_records}")
         
         cleaned_records = []
-        for record_item in all_records: # Renamed 'record' to 'record_item' to avoid conflict
+        for record_item in all_records:
             try:
                 # Only consider records from step 3 for comparison, or old records without 'step'
                 if record_item.get('data') and 'step' in record_item['data'] and record_item['data'].get('step') != 3:
@@ -425,7 +419,7 @@ def dashboard():
                     'id': record_item.get('id'),
                     'session_id': record_item.get('session_id'),
                     'timestamp': record_item.get('timestamp'),
-                    'data': {'data': data} # Ensure consistent nesting for processing below
+                    'data': {'data': data}
                 })
             except Exception as record_cleaning_error:
                 g.log.warning(f"Skipping invalid record during cleaning for comparison (ID: {record_item.get('id', 'N/A')}): {str(record_cleaning_error)}", exc_info=True)
@@ -446,23 +440,22 @@ def dashboard():
                     all_scores_for_comparison.append(score_val)
             
             if all_scores_for_comparison:
-                all_scores_for_comparison.sort(reverse=True) # Sort scores in descending order
+                all_scores_for_comparison.sort(reverse=True)
                 
                 user_score = latest_record.get("score", 0)
                 
-                # Calculate rank: Count how many scores are strictly greater than user_score + 1
                 rank = 1
                 for s in all_scores_for_comparison:
                     if s > user_score:
                         rank += 1
                     else:
-                        break # Found the first score <= user_score, so user's rank is determined
+                        break
                 
                 average_score = sum(all_scores_for_comparison) / len(all_scores_for_comparison)
                 g.log.debug(f"Calculated user rank: {rank}, Average score of all users: {average_score}")
             else:
                 g.log.warning("No valid scores found in cleaned records for rank/average calculation.")
-                rank = 0 # No scores to rank against
+                rank = 0
                 average_score = 0
         else:
             g.log.info("No cleaned records available for comparison, rank and average score set to 0.")
@@ -478,11 +471,8 @@ def dashboard():
             t("Plan for recurring expenses like food and clothing.")
         ]
         
-        # Ensure latest_record has required numeric fields before generating insights
-        # This is already handled by the validation loops above, but good to be explicit.
         if latest_record:
             try:
-                # Use .get() with default 0 to safely access numeric fields
                 if latest_record.get('debt_to_income', 0) > 40:
                     insights.append(t("High debt-to-income ratio. Consider reducing borrowings from friends or banks."))
                 if latest_record.get('savings_rate', 0) < 0:
@@ -492,7 +482,7 @@ def dashboard():
                 if latest_record.get('interest_burden', 0) > 10:
                     insights.append(t("High interest burden. Refinance or pay off high-interest loans."))
                 
-                if total_users >= 5: # Use total_users (from cleaned_records) for comparison count
+                if total_users >= 5:
                     if rank <= total_users * 0.1:
                         insights.append(t("You're in the top 10% of users! Keep up the excellent financial habits."))
                     elif rank <= total_users * 0.3:
@@ -508,16 +498,23 @@ def dashboard():
         else:
             insights.append(t("No data available to generate personalized insights."))
 
+        # Load course progress for the "My Courses" card
+        progress_records = []
+        if 'sid' in session:
+            progress_records = progress_storage.filter_by_session(session['sid'])
+            g.log.debug(f"Course progress records for session {session['sid']}: {progress_records}")
+
         return render_template(
             'health_score_dashboard.html',
-            records=records, # This 'records' list now contains only the user's latest record
+            records=records,
             latest_record=latest_record,
             insights=insights,
             tips=tips,
             rank=rank,
-            total_users=total_users, # Use total_users (from cleaned_records)
+            total_users=total_users,
             average_score=average_score,
-            t=t
+            t=t,
+            progress_records=progress_records  # Pass progress records to template
         )
     except Exception as e:
         g.log.exception(f"Critical error in dashboard: {str(e)}")
@@ -531,5 +528,6 @@ def dashboard():
             rank=0,
             total_users=0,
             average_score=0,
-            t=t
+            t=t,
+            progress_records=[]
         ), 500
