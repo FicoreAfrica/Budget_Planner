@@ -2,48 +2,118 @@
 <html lang="{{ session.get('lang', 'en') }}">
 <head>
     <meta charset="UTF-8">
-    <title>{{ trans('t').Your_Financial_Health_Report | default('Your Financial Health Report') }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ trans('financial_health_report') | default('Your Financial Health Report') }}</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #2E7D32, #0288D1);
+            color: white;
+            padding: 15px;
+            text-align: center;
+            border-radius: 8px 8px 0 0;
+        }
+        .content {
+            background: #fff;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 0 0 8px 8px;
+        }
+        .footer {
+            text-align: center;
+            font-size: 12px;
+            color: #777;
+            padding: 10px;
+        }
+        a {
+            color: #0288D1;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #2E7D32, #0288D1);
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+        .btn:hover {
+            background: linear-gradient(135deg, #1B5E20, #01579B);
+        }
+        ul {
+            padding-left: 20px;
+        }
+        li {
+            margin-bottom: 10px;
+        }
+    </style>
 </head>
 <body>
-    <h1>{{ trans('t').Dear | default('Dear') }} {{ data.first_name or 'User' }},</h1>
-    <p>{{ trans('t').Here_is_your_financial_health_summary | default('Here is your financial health summary') }}</p>
-    <h2>{{ trans('t').Financial_Health_Summary | default('Financial Health Summary') }}</h2>
-    <p>{{ trans('t').Created_At | default('Created At') }}: {{ data.created_at }}</p>
-    <p>{{ trans('t').Your_Score | default('Your Score') }}: {{ data.score | format_number }}</p>
-    <p>{{ trans('t').Status | default('Status') }}: {{ trans('t')[data.status] | default(data.status) }}</p>
-    <p>{{ trans('t').Monthly_Income | default('Monthly Income') }}: ₦{{ data.income | format_number }}</p>
-    <p>{{ trans('t').Monthly_Expenses | default('Monthly Expenses') }}: ₦{{ data.expenses | format_number }}</p>
-    <p>{{ trans('t').Total_Debt | default('Total Debt') }}: ₦{{ data.debt | format_number }}</p>
-    <p>{{ trans('t').Average_Interest_Rate | default('Average Interest Rate') }}: {{ data.interest_rate | format_number }}%</p>
-    <p>{{ trans('t').Debt_to_Income_Ratio | default('Debt-to-Income Ratio') }}: {{ data.debt_to_income | format_number }}%</p>
-    <p>{{ trans('t').Savings_Rate | default('Savings Rate') }}: {{ data.savings_rate | format_number }}%</p>
-    <p>{{ trans('t').Interest_Burden | default('Interest Burden') }}: {{ data.interest_burden | format_number }}%</p>
-    <h2>{{ trans('t').Badges | default('Badges') }}</h2>
-    {% if data.badges %}
-        <ul>
-            {% for badge in data.badges %}
-                <li>{{ trans('t')[badge] | default(badge) }}</li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>{{ trans('t').No_badges_earned_yet | default('No badges earned yet') }}</p>
-    {% endif %}
-    <h2>{{ trans('t').Recommendations | default('Recommendations') }}</h2>
-    <ul>
-        {% if data.debt_to_income > 40 %}
-            <li>{{ trans('t').Reduce_high_debt_to_improve_score | default('Reduce high debt to improve your score') }}</li>
-        {% endif %}
-        {% if data.savings_rate < 0 %}
-            <li>{{ trans('t').Cut_non_essential_expenses | default('Cut non-essential expenses like outings or subscriptions') }}</li>
-        {% else %}
-            <li>{{ trans('t').Save_or_invest_surplus | default('Save or invest your surplus in Ajo or fixed deposits') }}</li>
-        {% endif %}
-        {% if data.interest_burden > 10 %}
-            <li>{{ trans('t').Pay_off_high_interest_debts | default('Pay off high-interest debts to reduce burden') }}</li>
-        {% endif %}
-    </ul>
-    <p><a href="{{ data.cta_url }}">{{ trans('t').View_Dashboard | default('View Dashboard') }}</a></p>
-    <p>{{ trans('t').Thank_you_for_using_Ficore_Africa | default('Thank you for using Ficore Africa') }}</p>
-    <footer>{{ trans('t').Powered_by_Ficore_Africa | default('Powered by Ficore Africa') }}</footer>
+    <div class="container">
+        <div class="header">
+            <h1>{{ trans('financial_health_report') | default('Your Financial Health Report') }}</h1>
+        </div>
+        <div class="content">
+            <p>{{ trans('dear') | default('Dear') }} {{ data.first_name or 'User' }},</p>
+            <p>{{ trans('health_summary_intro') | default('Here is your financial health summary') }}</p>
+            <h2>{{ trans('health_summary') | default('Financial Health Summary') }}</h2>
+            <p>{{ trans('created_at') | default('Created At') }}: {{ data.created_at }}</p>
+            <p>{{ trans('your_score') | default('Your Score') }}: {{ data.score | format_number }}</p>
+            <p>{{ trans('status') | default('Status') }}: {{ trans(data.status) | default(data.status) }}</p>
+            <p>{{ trans('monthly_income') | default('Monthly Income') }}: ₦{{ data.income | format_number }}</p>
+            <p>{{ trans('monthly_expenses') | default('Monthly Expenses') }}: ₦{{ data.expenses | format_number }}</p>
+            <p>{{ trans('total_debt') | default('Total Debt') }}: ₦{{ data.debt | format_number }}</p>
+            <p>{{ trans('interest_rate') | default('Average Interest Rate') }}: {{ data.interest_rate | format_number }}%</p>
+            <p>{{ trans('debt_to_income') | default('Debt-to-Income Ratio') }}: {{ data.debt_to_income | format_number }}%</p>
+            <p>{{ trans('savings_rate') | default('Savings Rate') }}: {{ data.savings_rate | format_number }}%</p>
+            <p>{{ trans('interest_burden') | default('Interest Burden') }}: {{ data.interest_burden | format_number }}%</p>
+            <h2>{{ trans('badges') | default('Badges') }}</h2>
+            {% if data.badges %}
+                <ul>
+                    {% for badge in data.badges %}
+                        <li>{{ trans(badge) | default(badge) }}</li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>{{ trans('no_badges') | default('No badges earned yet') }}</p>
+            {% endif %}
+            <h2>{{ trans('recommendations') | default('Recommendations') }}</h2>
+            <ul>
+                {% if data.debt_to_income > 40 %}
+                    <li>{{ trans('reduce_debt') | default('Reduce high debt to improve your score') }}</li>
+                {% endif %}
+                {% if data.savings_rate < 0 %}
+                    <li>{{ trans('cut_expenses') | default('Cut non-essential expenses like outings or subscriptions') }}</li>
+                {% else %}
+                    <li>{{ trans('save_surplus') | default('Save or invest your surplus in Ajo or fixed deposits') }}</li>
+                {% endif %}
+                {% if data.interest_burden > 10 %}
+                    <li>{{ trans('pay_high_interest') | default('Pay off high-interest debts to reduce burden') }}</li>
+                {% endif %}
+            </ul>
+            <p><a href="{{ data.cta_url }}" class="btn">{{ trans('view_dashboard') | default('View Dashboard') }}</a></p>
+            <p>{{ trans('thank_you') | default('Thank you for using Ficore Africa') }}</p>
+        </div>
+        <div class="footer">
+            <p>{{ trans('powered_by') | default('Powered by Ficore Africa') }}</p>
+        </div>
+    </div>
 </body>
 </html>
