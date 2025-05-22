@@ -1,4 +1,19 @@
 document.addEventListener('DOMContentLoaded', function() {
+    const toolsLink = document.getElementById('toolsLink');
+    if (toolsLink) {
+        toolsLink.addEventListener('click', function(event) {
+            event.preventDefault();
+            const toolsSection = document.getElementById('tools-section');
+            if (toolsSection) {
+                toolsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } else {
+                // Fallback: redirect to index if not on index.html
+                window.location.href = '/';
+            }
+        });
+    }
+});
+document.addEventListener('DOMContentLoaded', function() {
     const flashMessages = document.querySelectorAll('.flash-message');
     flashMessages.forEach(message => {
         if (message.textContent.includes('successfully')) {
