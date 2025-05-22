@@ -1,24 +1,14 @@
 import uuid
-
 from datetime import datetime
-
 from flask import Flask, render_template, request, session, redirect, url_for, flash, send_from_directory, has_request_context
-
 from flask_session import Session
-
 from flask_wtf.csrf import CSRFProtect, CSRFError
-
 from blueprints.financial_health import financial_health_bp
-
 from blueprints.budget import budget_bp
-
 from blueprints.quiz import quiz_bp
-
 from blueprints.bill import bill_bp
-
 from blueprints.net_worth import net_worth_bp
-
-from blueprints.emergency_fund import emergency_fund_bp. 
+from blueprints.emergency_fund import emergency_fund_bp
 import logging
 import os
 import uuid
