@@ -2,7 +2,7 @@ import logging
 import os
 import uuid
 from datetime import datetime
-from flask import Flask, render_template, request, session, redirect, url_for, flash, send_from_directory
+from flask import Flask, render_template, request, session, redirect, url_for, flash, send_from_directory, has_request_context
 from flask_session import Session
 from flask_wtf.csrf import CSRFProtect, CSRFError
 from blueprints.financial_health import financial_health_bp
@@ -41,7 +41,7 @@ try:
     file_handler = logging.FileHandler('data/storage.txt')
     file_handler.setLevel(logging.DEBUG)
     file_handler.setFormatter(formatter)
-    file_handler.flush = lambda: None  # Ensure flush method exists
+    file_handler.flush = lambda: None
     logger.addHandler(file_handler)
 except Exception as e:
     logger.warning(f"Failed to set up file logging: {str(e)}")
@@ -56,12 +56,16 @@ logger.addHandler(console_handler)
 class SessionAdapter(logging.LoggerAdapter):
     def process(self, msg, kwargs):
         kwargs['extra'] = kwargs.get('extra', {})
-        kwargs['extra']['session_id'] = session.get('sid', 'unknown')
+        # Only try to access session if we're in a request context
+        if has_request_context():
+            kwargs['extra']['session_id'] = session.get('sid', 'unknown')
+        else:
+            kwargs['extra']['session_id'] = 'unknown'
         return msg, kwargs
 
 # Initialize Flask app
 app = Flask(__name__)
-app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'your-secret-key')  # Replace with a secure key in production
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'your-secret-key')
 
 # Configure filesystem-based sessions
 session_dir = os.environ.get('SESSION_DIR', 'data/sessions')
@@ -69,7 +73,6 @@ if os.environ.get('RENDER'):
     session_dir = '/opt/render/project/src/data/sessions'
 try:
     os.makedirs(session_dir, exist_ok=True)
-    # Verify directory is writable
     test_file = os.path.join(session_dir, '.test_write')
     with open(test_file, 'w') as f:
         f.write('test')
@@ -77,7 +80,7 @@ try:
     logger.info(f"Session directory set to: {session_dir} and is writable")
 except Exception as e:
     logger.error(f"Failed to create or verify session directory {session_dir}: {str(e)}", exc_info=True)
-    session_dir = 'data/sessions'  # Fallback to local directory
+    session_dir = 'data/sessions'
 app.config['SESSION_FILE_DIR'] = session_dir
 app.config['SESSION_TYPE'] = 'filesystem'
 app.config['SESSION_PERMANENT'] = False
@@ -97,16 +100,18 @@ try:
         ('net_worth', 'data/networth.json'),
         ('emergency_fund', 'data/emergency_fund.json')
     ]:
-        # Ensure file is writable
         dir_name = os.path.dirname(path)
         os.makedirs(dir_name, exist_ok=True)
-        storage_managers[tool] = JsonStorage(path)
+        storage = JsonStorage(path)
         # Test write access
-        test_data = {'test': 'write_check'}
-        storage_managers[tool].save(test_data)
+        test_data = {'test': 'write_check', 'session_id': 'test_session'}
+        storage.save(test_data)
         logger.info(f"Initialized JsonStorage for {tool} at {path}")
+        storage_managers[tool] = storage
 except Exception as e:
     logger.error(f"Failed to initialize JsonStorage: {str(e)}", exc_info=True)
+    # Fallback to empty storage managers to allow app to start
+    storage_managers = {tool: None for tool in ['financial_health', 'budget', 'quiz', 'bills', 'net_worth', 'emergency_fund']}
 
 app.config['STORAGE_MANAGERS'] = storage_managers
 
@@ -186,6 +191,8 @@ def general_dashboard():
     data = {}
     for tool, storage in storage_managers.items():
         try:
+            if storage is None:
+                raise ValueError(f"Storage for {tool} not initialized")
             records = storage.filter_by_session(session['sid'])
             data[tool] = records[-1]['data'] if records else {
                 'score': None, 'surplus_deficit': None, 'personality': None,
