@@ -1,16 +1,24 @@
 {% extends "base.html" %}
-{% block title %}{{ trans('t').Financial_Personality_Quiz | default('Financial Personality Quiz') }}{% endblock %}
+{% block title %}{{ trans('financial_personality_quiz') | default('Financial Personality Quiz') }}{% endblock %}
+{% block extra_head %}
+    <style>
+        .container {
+            max-width: 600px;
+            margin: 2rem auto;
+        }
+    </style>
+{% endblock %}
 {% block content %}
 <div class="container">
-    <div class="navbar mb-4">
-        <h1>{{ trans('t').Financial_Personality_Quiz | default('Financial Personality Quiz') }}</h1>
-        <p>{{ trans('t').Answer_these_questions_to_discover_your_financial_personality | default('Answer these questions to discover your financial personality') }}</p>
+    <div class="header">
+        <h1>{{ trans('financial_personality_quiz') | default('Financial Personality Quiz') }}</h1>
+        <p>{{ trans('answer_questions_for_personality') | default('Answer these questions to discover your financial personality') }}</p>
     </div>
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
                 <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                    {{ message }}
+                    {{ trans(message) | default(message) }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             {% endfor %}
@@ -18,35 +26,22 @@
     {% endwith %}
     <div class="card">
         <div class="card-body">
-            <form method="POST" action="{{ url_for('quiz.step2', course_id=course_id) }}">
+            <form method="POST" action="{{ url_for('quiz.step2a', course_id=course_id) }}">
                 {{ form.csrf_token }}
                 {% for question in questions %}
                     <div class="mb-3">
-                        <label class="form-label">{{ trans('t')[question.key] | default(question.label) }}</label>
-                        {{ getattr(form, question.key)(class="form-select") }}
-                        <div class="invalid-feedback">{{ trans('t').Please_select_an_answer | default('Please select an answer') }}</div>
+                        <label class="form-label">{{ trans('question_' + question.key) | default(question.label) }}</label>
+                        {{ getattr(form, question.key)(class="form-select", **{'data-bs-toggle': 'tooltip', 'title': trans('tooltip_' + question.key) | default(question.tooltip), 'aria-describedby': question.key + '_help'}) }}
+                        <small class="form-text text-muted">{{ trans('placeholder_' + question.key) | default(question.placeholder) }}</small>
+                        <div class="invalid-feedback">{{ trans('select_answer_required') | default('Please select an answer') }}</div>
                     </div>
                 {% endfor %}
                 <div class="d-flex justify-content-between">
-                    <a href="{{ url_for('quiz.step1', course_id=course_id) }}" class="btn btn-secondary">{{ trans('t').Back | default('Back') }}</a>
-                    <button type="submit" class="btn btn-primary">{{ trans('t').See_Results | default('See Results') }}</button>
+                    <a href="{{ url_for('quiz.step1', course_id=course_id) }}" class="btn btn-secondary">{{ trans('back') | default('Back') }}</a>
+                    <button type="submit" class="btn btn-primary">{{ trans('continue') | default('Continue') }}</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
-{% endblock %}
-{% block extra_scripts %}
-<script>
-    document.querySelector('form').addEventListener('submit', function() {
-        document.querySelectorAll('.form-select').forEach(select => {
-            select.classList.add('was-validated');
-            if (!select.value) {
-                select.setCustomValidity('Please select an answer');
-            } else {
-                select.setCustomValidity('');
-            }
-        });
-    });
-</script>
 {% endblock %}
