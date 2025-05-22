@@ -1,57 +1,12 @@
 {% extends "base.html" %}
-{% block title %}{{ trans('t').Financial_Health_Dashboard | default('Financial Health Dashboard') }}{% endblock %}
+{% block title %}{{ trans('financial_health_dashboard') | default('Financial Health Dashboard') }}{% endblock %}
 {% block extra_head %}
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
     <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #E3F2FD, #F5F7FA);
-            color: #333;
-            padding: 20px;
-        }
-        .container {
-            max-width: 1000px;
-            margin: auto;
-        }
-        h1, h2, h3 {
-            color: #0288D1;
-        }
-        .card {
-            background: #fff;
-            border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-            margin-bottom: 2rem;
-            border: 2px solid #0288D1;
-            opacity: 0;
-            transform: translateY(20px);
-            animation: slideIn 0.5s forwards;
-        }
-        @keyframes slideIn {
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .card-header {
-            background: linear-gradient(135deg, #2E7D32, #0288D1);
-            color: white;
-            padding: 1.2rem;
-            border-radius: 12px 12px 0 0;
-            font-weight: 600;
-            font-size: 1.5rem;
-            text-align: center;
-        }
-        .card-body {
-            padding: 1.5rem;
-        }
         .score-gauge {
             max-width: 300px;
             margin: 0 auto 1.5rem;
-        }
-        .metric {
-            font-size: 1.2rem;
-            font-weight: 600;
-            margin-bottom: 0.75rem;
         }
         .status-badge {
             font-size: 1rem;
@@ -69,33 +24,6 @@
         }
         .badge:hover {
             transform: scale(1.1);
-        }
-        .btn-primary, .btn-secondary {
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
-            font-weight: 600;
-            transition: transform 0.2s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .btn-primary {
-            background: linear-gradient(135deg, #2E7D32, #0288D1);
-            border: none;
-            color: white;
-        }
-        .btn-primary:hover {
-            transform: scale(1.05);
-            background: linear-gradient(135deg, #1B5E20, #01579B);
-        }
-        .btn-secondary {
-            background: linear-gradient(135deg, #B0BEC5, #78909C);
-            border: none;
-            color: white;
-        }
-        .btn-secondary:hover {
-            transform: scale(1.05);
-            background: linear-gradient(135deg, #90A4AE, #607D8B);
         }
         .insights-box, .comparison-box {
             background: #E3F2FD;
@@ -124,35 +52,23 @@
         .progress-bar {
             transition: width 0.5s ease-in-out;
         }
-        .table {
-            background: #F5F7FA;
-            border-radius: 8px;
-        }
         @media (max-width: 600px) {
-            .card-header { font-size: 1.3rem; }
-            .card-body { padding: 1rem; }
-            .metric { font-size: 1rem; }
-            .btn-primary, .btn-secondary, .course-link { font-size: 0.9rem; padding: 0.5rem 1rem; }
             .score-gauge { max-width: 200px; }
         }
     </style>
 {% endblock %}
 {% block content %}
 <div class="container">
-    <div class="card mb-4">
-        <div class="card-header">
-            <i class="fas fa-heartbeat"></i> {{ trans('t').Financial_Health_Dashboard | default('Financial Health Dashboard') }}
-        </div>
-        <div class="card-body">
-            <p>{{ trans('t').Your_personalized_financial_health_score | default('Your personalized financial health score') }}</p>
-        </div>
+    <div class="header">
+        <h1><i class="fas fa-heartbeat"></i> {{ trans('financial_health_dashboard') | default('Financial Health Dashboard') }}</h1>
+        <p>{{ trans('personalized_financial_health_score') | default('Your personalized financial health score') }}</p>
     </div>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
                 <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                    {{ message }}
+                    {{ trans(message) | default(message) }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             {% endfor %}
@@ -162,30 +78,29 @@
     {% if latest_record %}
         <div class="card mb-4">
             <div class="card-body">
-                <h2>{{ trans('t').Hello | default('Hello') }} {{ latest_record.first_name | default('User') }}</h2>
+                <h2>{{ trans('hello') | default('Hello') }} {{ latest_record.first_name | default(trans('user') | default('User')) }}</h2>
                 <canvas id="scoreGauge" class="score-gauge"></canvas>
                 <p class="metric">
-                    <strong>{{ trans('t').Your_Score | default('Your Score') }}:</strong>
+                    <strong>{{ trans('your_score') | default('Your Score') }}:</strong>
                     <span style="font-size: 1.5rem; color: #2E7D32;" id="score">{{ latest_record.score | default(0) }}</span>
                 </p>
                 <p class="metric">
-                    <strong>{{ trans('t').Status | default('Status') }}:</strong>
+                    <strong>{{ trans('status') | default('Status') }}:</strong>
                     <span class="status-badge bg-{{ 'success' if latest_record.status == 'Excellent' or latest_record.status == 'Good' else 'warning' if latest_record.status == 'Needs Improvement' else 'danger' }}">
                         <i class="fas fa-{{ 'check-circle' if latest_record.status == 'Excellent' or latest_record.status == 'Good' else 'exclamation-circle' if latest_record.status == 'Needs Improvement' else 'times-circle' }}"></i>
-                        {{ trans('t')[latest_record.status] | default(latest_record.status | default('Unknown')) }}
+                        {{ trans(latest_record.status) | default(latest_record.status | default('Unknown')) }}
                     </span>
                 </p>
-                <p class="metric"><strong>{{ trans('t').Monthly_Income | default('Monthly Income') }}:</strong> ₦<span id="income">{{ latest_record.income | default(0) }}</span></p>
-                <p class="metric"><strong>{{ trans('t').Monthly_Expenses | default('Monthly Expenses') }}:</strong> ₦<span id="expenses">{{ latest_record.expenses | default(0) }}</span></p>
-                <p class="metric"><strong>{{ trans('t').Total_Debt | default('Total Debt') }}:</strong> ₦<span id="debt">{{ latest_record.debt | default(0) }}</span></p>
-                <p class="metric"><strong>{{ trans('t').Average_Interest_Rate | default('Average Interest Rate') }}:</strong> <span id="interest_rate">{{ latest_record.interest_rate | default(0) }}</span>%</p>
-                <p class="metric"><strong>{{ trans('t').Debt_to_Income_Ratio | default('Debt-to-Income Ratio') }}:</strong> <span id="debt_to_income">{{ latest_record.debt_to_income | default(0) }}</span>%</p>
-                <p class="metric"><strong>{{ trans('t').Savings_Rate | default('Savings Rate') }}:</strong> <span id="savings_rate">{{ latest_record.savings_rate | default(0) }}</span>%</p>
-                <p class="metric"><strong>{{ trans('t').Interest_Burden | default('Interest Burden') }}:</strong> <span id="interest_burden">{{ latest_record.interest_burden | default(0) }}</span>%</p>
-                <p class="metric"><strong>{{ trans('t').Created_At | default('Created At') }}:</strong> {{ latest_record.created_at | default('N/A') }}</p>
+                <p class="metric"><strong>{{ trans('monthly_income') | default('Monthly Income') }}:</strong> ₦<span id="income">{{ latest_record.income | default(0) }}</span></p>
+                <p class="metric"><strong>{{ trans('monthly_expenses') | default('Monthly Expenses') }}:</strong> ₦<span id="expenses">{{ latest_record.expenses | default(0) }}</span></p>
+                <p class="metric"><strong>{{ trans('total_debt') | default('Total Debt') }}:</strong> ₦<span id="debt">{{ latest_record.debt | default(0) }}</span></p>
+                <p class="metric"><strong>{{ trans('average_interest_rate') | default('Average Interest Rate') }}:</strong> <span id="interest_rate">{{ latest_record.interest_rate | default(0) }}</span>%</p>
+                <p class="metric"><strong>{{ trans('debt_to_income_ratio') | default('Debt-to-Income Ratio') }}:</strong> <span id="debt_to_income">{{ latest_record.debt_to_income | default(0) }}</span>%</p>
+                <p class="metric"><strong>{{ trans('savings_rate') | default('Savings Rate') }}:</strong> <span id="savings_rate">{{ latest_record.savings_rate | default(0) }}</span>%</p>
+                <p class="metric"><strong>{{ trans('interest_burden') | default('Interest Burden') }}:</strong> <span id="interest_burden">{{ latest_record.interest_burden | default(0) }}</span>%</p>
+                <p class="metric"><strong>{{ trans('created_at') | default('Created At') }}:</strong> {{ latest_record.created_at | default('N/A') }}</p>
                 <script>
                     document.addEventListener('DOMContentLoaded', function() {
-                        // Format numbers with commas
                         const formatNumber = (num, decimals = 0) => {
                             return num.toLocaleString('en-NG', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
                         };
@@ -233,8 +148,8 @@
         </div>
 
         <div class="card mb-4">
-            <div class="card-header">
-                <i class="fas fa-chart-bar"></i> {{ trans('t').Financial_Metrics | default('Financial Metrics') }}
+            <div class="header">
+                <h3><i class="fas fa-chart-bar"></i> {{ trans('financial_metrics') | default('Financial Metrics') }}</h3>
             </div>
             <div class="card-body">
                 <canvas id="scoreChart"></canvas>
@@ -245,13 +160,13 @@
                             type: 'bar',
                             data: {
                                 labels: [
-                                    '{{ trans('t').Score | default('Score') }}',
-                                    '{{ trans('t').Debt_to_Income | default('Debt-to-Income') }}',
-                                    '{{ trans('t').Savings_Rate | default('Savings Rate') }}',
-                                    '{{ trans('t').Interest_Burden | default('Interest Burden') }}'
+                                    '{{ trans('score') | default('Score') }}',
+                                    '{{ trans('debt_to_income') | default('Debt-to-Income') }}',
+                                    '{{ trans('savings_rate') | default('Savings Rate') }}',
+                                    '{{ trans('interest_burden') | default('Interest Burden') }}'
                                 ],
                                 datasets: [{
-                                    label: '{{ trans('t').Metrics | default('Metrics') }}',
+                                    label: '{{ trans('metrics') | default('Metrics') }}',
                                     data: [
                                         {{ latest_record.score | default(0) }},
                                         {{ latest_record.debt_to_income | default(0) }},
@@ -289,38 +204,38 @@
         </div>
 
         <div class="card mb-4">
-            <div class="card-header">
-                <i class="fas fa-trophy"></i> {{ trans('t').Badges | default('Badges') }}
+            <div class="header">
+                <h3><i class="fas fa-trophy"></i> {{ trans('badges') | default('Badges') }}</h3>
             </div>
             <div class="card-body">
                 {% if latest_record.badges %}
                     {% for badge in latest_record.badges %}
                         <span class="badge bg-{{ 'success' if badge == 'Financial Star' else 'primary' if badge == 'Savings Pro' else 'info' if badge == 'Debt Manager' else 'warning' }} mb-2">
                             <i class="fas fa-{{ 'trophy' if badge == 'Financial Star' else 'star' if badge == 'Savings Pro' else 'check-circle' if badge == 'Debt Manager' else 'hand-holding-usd' }}"></i>
-                            {{ trans('t')[badge] | default(badge) }}
+                            {{ trans(badge) | default(badge) }}
                         </span>
                     {% endfor %}
                 {% else %}
-                    <p>{{ trans('t').No_badges_earned_yet | default('No badges earned yet') }}</p>
+                    <p>{{ trans('no_badges_earned_yet') | default('No badges earned yet') }}</p>
                 {% endif %}
             </div>
         </div>
 
         <div class="card mb-4">
-            <div class="card-header">
-                <i class="fas fa-lightbulb"></i> {{ trans('t').Insights | default('Insights') }}
+            <div class="header">
+                <h3><i class="fas fa-lightbulb"></i> {{ trans('insights') | default('Insights') }}</h3>
             </div>
             <div class="card-body">
                 <div class="insights-box">
                     {% for insight in insights %}
-                        <p>{{ insight }}</p>
+                        <p>{{ trans(insight) | default(insight) }}</p>
                     {% endfor %}
                     <p>
-                        <strong>{{ trans('t').Recommended_Learning | default('Recommended Learning') }}:</strong>
+                        <strong>{{ trans('recommended_learning') | default('Recommended Learning') }}:</strong>
                         <a href="{{ url_for('courses.course_page', course_id='budgeting_101') }}" 
                            class="course-link"
-                           aria-label="{{ trans('t').Start_Budgeting_Course | default('Start Budgeting Basics Course') }}">
-                            <i class="fas fa-book"></i> {{ trans('t').Course_Budgeting | default('Budgeting Basics') }}
+                           aria-label="{{ trans('start_budgeting_course') | default('Start Budgeting Basics Course') }}">
+                            <i class="fas fa-book"></i> {{ trans('course_budgeting') | default('Budgeting Basics') }}
                         </a>
                     </p>
                 </div>
@@ -328,8 +243,8 @@
         </div>
 
         <div class="card mb-4">
-            <div class="card-header">
-                <i class="fas fa-graduation-cap"></i> {{ trans('t').My_Courses | default('My Courses') }}
+            <div class="header">
+                <h3><i class="fas fa-graduation-cap"></i> {{ trans('my_courses') | default('My Courses') }}</h3>
             </div>
             <div class="card-body">
                 {% set user_progress = namespace(progress=[]) %}
@@ -340,8 +255,8 @@
                 {% endfor %}
                 {% if user_progress.progress %}
                     <p>
-                        <strong>{{ trans('t').Course_Budgeting | default('Budgeting Basics') }}:</strong>
-                        {{ trans('t').Progress | default('Progress') }} {{ user_progress.progress.progress_percentage | default(0) }}%
+                        <strong>{{ trans('course_budgeting') | default('Budgeting Basics') }}:</strong>
+                        {{ trans('progress') | default('Progress') }} {{ user_progress.progress.progress_percentage | default(0) }}%
                     </p>
                     <div class="progress mb-2">
                         <div class="progress-bar bg-success" 
@@ -355,46 +270,46 @@
                     </div>
                     <a href="{{ url_for('courses.course_page', course_id='budgeting_101') }}" 
                        class="btn btn-primary"
-                       aria-label="{{ trans('t').Continue_Budgeting_Course | default('Continue Budgeting Basics Course') }}">
-                        <i class="fas fa-play"></i> {{ trans('t').Continue_Course | default('Continue Course') }}
+                       aria-label="{{ trans('continue_budgeting_course') | default('Continue Budgeting Basics Course') }}">
+                        <i class="fas fa-play"></i> {{ trans('continue_course') | default('Continue Course') }}
                     </a>
                 {% else %}
-                    <p>{{ trans('t').No_course_progress | default('You haven’t started any courses yet.') }}</p>
+                    <p>{{ trans('no_course_progress') | default('You haven’t started any courses yet.') }}</p>
                     <a href="{{ url_for('courses.course_page', course_id='budgeting_101') }}" 
                        class="btn btn-primary"
-                       aria-label="{{ trans('t').Start_Budgeting_Course | default('Start Budgeting Basics Course') }}">
-                        <i class="fas fa-book"></i> {{ trans('t').Start_Budgeting_Course | default('Start Budgeting Basics') }}
+                       aria-label="{{ trans('start_budgeting_course') | default('Start Budgeting Basics Course') }}">
+                        <i class="fas fa-book"></i> {{ trans('start_budgeting_course') | default('Start Budgeting Basics') }}
                     </a>
                 {% endif %}
             </div>
         </div>
 
         <div class="card mb-4">
-            <div class="card-header">
-                <i class="fas fa-balance-scale"></i> {{ trans('t').How_You_Compare | default('How You Compare to Others') }}
+            <div class="header">
+                <h3><i class="fas fa-balance-scale"></i> {{ trans('how_you_compare') | default('How You Compare to Others') }}</h3>
             </div>
             <div class="card-body">
                 <div class="comparison-box">
                     {% if total_users >= 5 %}
                         <p>
-                            {{ trans('t').Your_Rank | default('Your Rank') }}: #{{ rank | default(0) }} {{ trans('t').out_of | default('out of') }} {{ total_users | default(0) }} {{ trans('t').users | default('users') }}
+                            {{ trans('your_rank') | default('Your Rank') }}: #{{ rank | default(0) }} {{ trans('out_of') | default('out of') }} {{ total_users | default(0) }} {{ trans('users') | default('users') }}
                         </p>
                         <p>
-                            {{ trans('t').Youre_ahead_of | default("You're ahead of") }} {{ ((total_users - rank) / total_users * 100) | round(1) if total_users > 0 else 0 }}% {{ trans('t').of_users | default('of users') }}
+                            {{ trans('youre_ahead_of') | default("You're ahead of") }} {{ ((total_users - rank) / total_users * 100) | round(1) if total_users > 0 else 0 }}% {{ trans('of_users') | default('of users') }}
                         </p>
                         <p>
                             {% if rank <= total_users * 0.1 %}
-                                {{ trans('t').Top_10 | default('You are in the Top 10%!') }}
+                                {{ trans('top_10') | default('You are in the Top 10%!') }}
                             {% elif rank <= total_users * 0.3 %}
-                                {{ trans('t').Top_30 | default('You are in the Top 30%.') }}
+                                {{ trans('top_30') | default('You are in the Top 30%.') }}
                             {% elif rank <= total_users * 0.7 %}
-                                {{ trans('t').Middle_Range | default('You are in the Middle Range.') }}
+                                {{ trans('middle_range') | default('You are in the Middle Range.') }}
                             {% else %}
-                                {{ trans('t').Lower_Range | default('You are in the Lower Range.') }}
+                                {{ trans('lower_range') | default('You are in the Lower Range.') }}
                             {% endif %}
                         </p>
                     {% else %}
-                        <p>{{ trans('t').Not_enough_users | default('Not enough users for comparison yet. Invite others to join!') }}</p>
+                        <p>{{ trans('not_enough_users') | default('Not enough users for comparison yet. Invite others to join!') }}</p>
                     {% endif %}
                 </div>
                 <canvas id="comparisonChart"></canvas>
@@ -405,11 +320,11 @@
                             type: 'bar',
                             data: {
                                 labels: [
-                                    '{{ trans('t').Your_Score | default('Your Score') }}',
-                                    '{{ trans('t').Average_Score | default('Average Score') }}'
+                                    '{{ trans('your_score') | default('Your Score') }}',
+                                    '{{ trans('average_score') | default('Average Score') }}'
                                 ],
                                 datasets: [{
-                                    label: '{{ trans('t').Score | default('Score') }}',
+                                    label: '{{ trans('score') | default('Score') }}',
                                     data: [{{ latest_record.score | default(0) }}, {{ average_score | default(0) | round(1) }}],
                                     backgroundColor: ['#2E7D32', '#0288D1'],
                                     borderColor: ['#1B5E20', '#01579B'],
@@ -442,45 +357,45 @@
         </div>
 
         <div class="card mb-4">
-            <div class="card-header">
-                <i class="fas fa-rocket"></i> {{ trans('t').Tips_for_Improving_Score | default('Tips for Improving Score') }}
+            <div class="header">
+                <h3><i class="fas fa-rocket"></i> {{ trans('tips_for_improving_score') | default('Tips for Improving Score') }}</h3>
             </div>
             <div class="card-body">
                 {% for tip in tips %}
-                    <p>{{ tip }}</p>
+                    <p>{{ trans(tip) | default(tip) }}</p>
                 {% endfor %}
             </div>
         </div>
 
         <div class="card mb-4">
-            <div class="card-header">
-                <i class="fas fa-bolt"></i> {{ trans('t').Call_to_Actions | default('Call to Actions') }}
+            <div class="header">
+                <h3><i class="fas fa-bolt"></i> {{ trans('call_to_actions') | default('Call to Actions') }}</h3>
             </div>
             <div class="card-body">
                 <a href="{{ url_for('financial_health.step1') }}" class="btn btn-primary">
-                    <i class="fas fa-edit"></i> {{ trans('t').Recalculate_Score | default('Recalculate Score') }}
+                    <i class="fas fa-edit"></i> {{ trans('recalculate_score') | default('Recalculate Score') }}
                 </a>
                 <a href="{{ url_for('budget.step1') }}" class="btn btn-primary">
-                    <i class="fas fa-chart-pie"></i> {{ trans('t').Create_Budget | default('Create Budget') }}
+                    <i class="fas fa-chart-pie"></i> {{ trans('create_budget') | default('Create Budget') }}
                 </a>
                 <a href="#" class="btn btn-secondary">
-                    <i class="fas fa-piggy-bank"></i> {{ trans('t').Explore_Savings_Options | default('Explore Savings Options') }}
+                    <i class="fas fa-piggy-bank"></i> {{ trans('explore_savings_options') | default('Explore Savings Options') }}
                 </a>
             </div>
         </div>
 
         <div class="card mb-4">
-            <div class="card-header">
-                <i class="fas fa-history"></i> {{ trans('t').Previous_Assessments | default('Previous Assessments') }}
+            <div class="header">
+                <h3><i class="fas fa-history"></i> {{ trans('previous_assessments') | default('Previous Assessments') }}</h3>
             </div>
             <div class="card-body">
                 {% if records %}
                     <table class="table table-striped">
                         <thead>
                             <tr>
-                                <th>{{ trans('t').Date | default('Date') }}</th>
-                                <th>{{ trans('t').Score | default('Score') }}</th>
-                                <th>{{ trans('t').Status | default('Status') }}</th>
+                                <th>{{ trans('date') | default('Date') }}</th>
+                                <th>{{ trans('score') | default('Score') }}</th>
+                                <th>{{ trans('status') | default('Status') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -488,27 +403,26 @@
                                 <tr>
                                     <td>{{ record.created_at | default('N/A') }}</td>
                                     <td>{{ record.score | default(0) }}</td>
-                                    <td>{{ trans('t')[record.status] | default(record.status | default('Unknown')) }}</td>
+                                    <td>{{ trans(record.status) | default(record.status | default('Unknown')) }}</td>
                                 </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 {% else %}
-                    <p>{{ trans('t').No_previous_assessments | default('No previous assessments') }}</p>
+                    <p>{{ trans('no_previous_assessments') | default('No previous assessments') }}</p>
                 {% endif %}
             </div>
         </div>
     {% else %}
         <div class="card mb-4">
             <div class="card-body">
-                <p>{{ trans('t').No_financial_health_data_available | default('No financial health data available') }}</p>
+                <p>{{ trans('no_financial_health_data_available') | default('No financial health data available') }}</p>
                 <a href="{{ url_for('financial_health.step1') }}" class="btn btn-primary">
-                    <i class="fas fa-play"></i> {{ trans('t').Start_Assessment | default('Start Assessment') }}
+                    <i class="fas fa-play"></i> {{ trans('start_assessment') | default('Start Assessment') }}
                 </a>
             </div>
         </div>
     {% endif %}
 </div>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 {% endblock %}
