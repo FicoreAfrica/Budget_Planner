@@ -97,10 +97,10 @@ app.config['SESSION_SERIALIZER'] = 'json'
 Session(app)
 CSRFProtect(app)
 
-# Initialize JsonStorage for each tool
-storage_managers = {}
-try:
-    for tool, path in [
+# Initialize JsonStorage for each tool within app context
+def init_storage_managers():
+    storage_managers = {}
+    tools = [
         ('financial_health', 'data/financial_health.json'),
         ('budget', 'data/budget.json'),
         ('quiz', 'data/quiz_data.json'),
@@ -109,25 +109,25 @@ try:
         ('emergency_fund', 'data/emergency_fund.json'),
         ('courses', 'data/courses.json'),
         ('user_progress', 'data/user_progress.json')
-    ]:
-        dir_name = os.path.dirname(path)
-        os.makedirs(dir_name, exist_ok=True)
-        storage = JsonStorage(path, logger_instance=log)
-        try:
-            test_data = {'test': 'write_check'}
-            storage.append(test_data, session_id='test_session_init')
-            log.info(f"Initialized JsonStorage for {tool} at {path}")
-            storage_managers[tool] = storage
-        except Exception as e:
-            log.error(f"Failed to initialize JsonStorage for {tool} at {path}: {str(e)}", exc_info=True)
-            storage_managers[tool] = None
-except Exception as e:
-    log.critical(f"Failed to initialize JsonStorage for one or more tools: {str(e)}", exc_info=True)
-    storage_managers = {tool: None for tool in [
-        'financial_health', 'budget', 'quiz', 'bills', 'net_worth', 'emergency_fund', 'courses', 'user_progress'
-    ]}
+    ]
+    with app.app_context():
+        for tool, path in tools:
+            try:
+                dir_name = os.path.dirname(path)
+                os.makedirs(dir_name, exist_ok=True)
+                storage = JsonStorage(path, logger_instance=log)
+                test_data = {'test': 'write_check'}
+                test_session_id = f'test_session_init_{tool}'
+                storage.append(test_data, session_id=test_session_id)
+                log.info(f"Initialized JsonStorage for {tool} at {path}", extra={'session_id': test_session_id})
+                storage_managers[tool] = storage
+            except Exception as e:
+                log.error(f"Failed to initialize JsonStorage for {tool} at {path}: {str(e)}", exc_info=True)
+                storage_managers[tool] = None
+    return storage_managers
 
-app.config['STORAGE_MANAGERS'] = storage_managers
+# Initialize storage_managers and store in app config
+app.config['STORAGE_MANAGERS'] = init_storage_managers()
 
 # Template filter for number formatting
 @app.template_filter('format_number')
