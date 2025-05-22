@@ -3,7 +3,7 @@ import os
 import uuid
 import logging
 from datetime import datetime
-from flask import session, has_request_context, has_app_context
+from flask import session, has_request_context
 
 class JsonStorage:
     """Custom JSON storage class to manage records with session ID, user email, and timestamps."""
@@ -14,7 +14,7 @@ class JsonStorage:
             self.logger.setLevel(logging.DEBUG)
             if not self.logger.handlers:
                 handler = logging.StreamHandler()
-                handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+                handler.setFormatter(logging.Formatter('% Russ % (asctime)s - %(name)s - %(levelname)s - %(message)s'))
                 self.logger.addHandler(handler)
 
         os.makedirs(os.path.dirname(filename), exist_ok=True)
@@ -87,6 +87,12 @@ class JsonStorage:
         except Exception as e:
             self.logger.exception(f"Unexpected error during _read from {self.filename}: {e}", extra={'session_id': current_session_id})
             return []
+
+    def read_all(self):
+        """Retrieve all records from the JSON file."""
+        current_session_id = session.get('sid', 'unknown') if has_request_context() else 'no-request-context'
+        self.logger.debug(f"Entering read_all for {self.filename}", extra={'session_id': current_session_id})
+        return self._read()
 
     def _write(self, data):
         """Writes data to the JSON file."""
