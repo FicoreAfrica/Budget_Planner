@@ -1,21 +1,29 @@
 import json
-import logging
 import os
 import uuid
+import logging
 from datetime import datetime
 from flask import session, has_request_context # Keep these imports for session context
 
-# Use the logger from app.py (named 'ficore_app')
-logger = logging.getLogger('ficore_app')
+# IMPORTANT: Do NOT get the logger here directly using logging.getLogger('ficore_app')
+# Instead, the logger instance will be passed during initialization.
 
 class JsonStorage:
     """Custom JSON storage class to manage records with session ID, user email, and timestamps."""
-    def __init__(self, filename):
+    def __init__(self, filename, logger_instance=None):
         self.filename = filename
-        # Ensure the directory exists
+        # Use the provided logger instance, or fall back to a basic one if none is provided
+        # (though in this setup, logger_instance should always be the SessionAdapter from app.py)
+        self.logger = logger_instance if logger_instance else logging.getLogger(__name__)
+        if not logger_instance:
+            self.logger.warning(f"JsonStorage initialized without a logger instance. Using default for {filename}.")
+            self.logger.setLevel(logging.DEBUG) # Ensure default is active for debugging
+            if not self.logger.handlers: # Add a basic handler if none exists
+                self.logger.addHandler(logging.StreamHandler())
+
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         self._initialize_file()
-        logger.info(f"Initialized JsonStorage for {os.path.basename(filename)} at {filename}")
+        self.logger.info(f"Initialized JsonStorage for {os.path.basename(filename)} at {filename}")
 
     def _initialize_file(self):
         """Initialize file if it doesn't exist and check write permissions."""
@@ -26,13 +34,13 @@ class JsonStorage:
             try:
                 with open(self.filename, 'w') as f:
                     json.dump([], f)
-                logger.info(f"Created new file {self.filename}", extra={'session_id': current_session_id})
+                self.logger.info(f"Created new file {self.filename}", extra={'session_id': current_session_id})
             except Exception as e:
-                logger.error(f"Failed to create {self.filename}: {str(e)}", exc_info=True, extra={'session_id': current_session_id})
+                self.logger.error(f"Failed to create {self.filename}: {str(e)}", exc_info=True, extra={'session_id': current_session_id})
                 raise # Re-raise to indicate critical failure
         
         if not os.access(self.filename, os.W_OK):
-            logger.error(f"No write permissions for {self.filename}", extra={'session_id': current_session_id})
+            self.logger.error(f"No write permissions for {self.filename}", extra={'session_id': current_session_id})
             raise PermissionError(f"Cannot write to {self.filename}")
 
     def _read(self):
@@ -47,12 +55,12 @@ class JsonStorage:
                     cleaned_data = []
                     for record in data:
                         if not isinstance(record, dict):
-                            logger.warning(f"Skipping non-dict record found in {self.filename}: {record}", extra={'session_id': current_session_id})
+                            self.logger.warning(f"Skipping non-dict record found in {self.filename}: {record}", extra={'session_id': current_session_id})
                             continue
                         
                         # Ensure essential top-level keys exist
                         if not all(key in record for key in ['id', 'timestamp', 'data']):
-                            logger.warning(f"Skipping record with missing essential keys in {self.filename}: {record}", extra={'session_id': current_session_id})
+                            self.logger.warning(f"Skipping record with missing essential keys in {self.filename}: {record}", extra={'session_id': current_session_id})
                             continue
 
                         # Normalize 'data' structure: ensure it's always {'step': X, 'data': { ... }}
@@ -66,7 +74,7 @@ class JsonStorage:
                             # Wrap it to simulate the new structure for consistent access
                             processed_data = {'step': None, 'data': processed_data} # Use None for old step
                         else:
-                            logger.warning(f"Skipping record with invalid 'data' type in {self.filename}: {record}", extra={'session_id': current_session_id})
+                            self.logger.warning(f"Skipping record with invalid 'data' type in {self.filename}: {record}", extra={'session_id': current_session_id})
                             continue
                         
                         # Re-assign processed data back to the record
@@ -76,13 +84,13 @@ class JsonStorage:
                     return cleaned_data
             return []
         except FileNotFoundError:
-            logger.warning(f"File not found: {self.filename}. Returning empty list.", extra={'session_id': current_session_id})
+            self.logger.warning(f"File not found: {self.filename}. Returning empty list.", extra={'session_id': current_session_id})
             return []
         except json.JSONDecodeError as e:
-            logger.error(f"Error decoding JSON from {self.filename}: {e}", exc_info=True, extra={'session_id': current_session_id})
+            self.logger.error(f"Error decoding JSON from {self.filename}: {e}", exc_info=True, extra={'session_id': current_session_id})
             return []
         except Exception as e:
-            logger.exception(f"Unexpected error during _read from {self.filename}: {e}", extra={'session_id': current_session_id})
+            self.logger.exception(f"Unexpected error during _read from {self.filename}: {e}", extra={'session_id': current_session_id})
             return []
 
     def _write(self, data):
@@ -91,13 +99,13 @@ class JsonStorage:
         try:
             with open(self.filename, 'w') as f:
                 json.dump(data, f, indent=4) # Use indent=4 for readability
-            logger.info(f"Successfully wrote to {self.filename}", extra={'session_id': current_session_id})
+            self.logger.info(f"Successfully wrote to {self.filename}", extra={'session_id': current_session_id})
             return True
         except IOError as e:
-            logger.error(f"Error writing to {self.filename}: {e}", exc_info=True, extra={'session_id': current_session_id})
+            self.logger.error(f"Error writing to {self.filename}: {e}", exc_info=True, extra={'session_id': current_session_id})
             return False
         except Exception as e:
-            logger.exception(f"Unexpected error during _write to {self.filename}: {e}", extra={'session_id': current_session_id})
+            self.logger.exception(f"Unexpected error during _write to {self.filename}: {e}", extra={'session_id': current_session_id})
             return False
 
     def append(self, record, user_email=None, session_id=None):
@@ -126,16 +134,16 @@ class JsonStorage:
                 "timestamp": datetime.utcnow().isoformat() + "Z",
                 "data": record # This 'data' holds the step-specific data (e.g., {'step': 1, 'data': form_data})
             }
-            logger.debug(f"Appending record: {record_with_metadata}", extra={'session_id': current_session_id})
+            self.logger.debug(f"Appending record: {record_with_metadata}", extra={'session_id': current_session_id})
             records.append(record_with_metadata)
             if self._write(records):
-                logger.info(f"Appended record {record_id} to {self.filename} for session {current_session_id}", extra={'session_id': current_session_id})
+                self.logger.info(f"Appended record {record_id} to {self.filename} for session {current_session_id}", extra={'session_id': current_session_id})
                 return record_id
             else:
-                logger.error(f"Failed to write record {record_id} after _write operation", extra={'session_id': current_session_id})
+                self.logger.error(f"Failed to write record {record_id} after _write operation", extra={'session_id': current_session_id})
                 return None
         except Exception as e:
-            logger.exception(f"Critical error appending to {self.filename}: {str(e)}", extra={'session_id': current_session_id})
+            self.logger.exception(f"Critical error appending to {self.filename}: {str(e)}", extra={'session_id': current_session_id})
             return None
 
     def filter_by_session(self, session_id):
@@ -144,10 +152,10 @@ class JsonStorage:
         try:
             records = self._read()
             filtered = [r for r in records if r.get("session_id") == session_id]
-            logger.debug(f"Filtered {len(filtered)} records for session {session_id}", extra={'session_id': current_session_id})
+            self.logger.debug(f"Filtered {len(filtered)} records for session {session_id}", extra={'session_id': current_session_id})
             return filtered
         except Exception as e:
-            logger.exception(f"Error filtering {self.filename} by session_id {session_id}: {str(e)}", extra={'session_id': current_session_id})
+            self.logger.exception(f"Error filtering {self.filename} by session_id {session_id}: {str(e)}", extra={'session_id': current_session_id})
             return []
 
     def get_by_id(self, record_id):
@@ -157,12 +165,12 @@ class JsonStorage:
             records = self._read()
             for record in records:
                 if record.get("id") == record_id:
-                    logger.debug(f"Retrieved record {record_id}", extra={'session_id': record.get('session_id', 'unknown')})
+                    self.logger.debug(f"Retrieved record {record_id}", extra={'session_id': record.get('session_id', 'unknown')})
                     return record
-            logger.warning(f"Record {record_id} not found in {self.filename}", extra={'session_id': current_session_id})
+            self.logger.warning(f"Record {record_id} not found in {self.filename}", extra={'session_id': current_session_id})
             return None
         except Exception as e:
-            logger.exception(f"Error getting record {record_id} from {self.filename}: {str(e)}", extra={'session_id': current_session_id})
+            self.logger.exception(f"Error getting record {record_id} from {self.filename}: {str(e)}", extra={'session_id': current_session_id})
             return None
 
     def update_by_id(self, record_id, updated_record):
@@ -180,15 +188,15 @@ class JsonStorage:
             
             if found_record:
                 if self._write(records):
-                    logger.info(f"Updated record {record_id} in {self.filename}", extra={'session_id': found_record.get('session_id', 'unknown')})
+                    self.logger.info(f"Updated record {record_id} in {self.filename}", extra={'session_id': found_record.get('session_id', 'unknown')})
                     return True
-                logger.error(f"Failed to write updated record {record_id}", extra={'session_id': found_record.get('session_id', 'unknown')})
+                self.logger.error(f"Failed to write updated record {record_id}", extra={'session_id': found_record.get('session_id', 'unknown')})
                 return False
             
-            logger.error(f"Record {record_id} not found for update in {self.filename}", extra={'session_id': current_session_id})
+            self.logger.error(f"Record {record_id} not found for update in {self.filename}", extra={'session_id': current_session_id})
             return False
         except Exception as e:
-            logger.exception(f"Error updating record {record_id} in {self.filename}: {str(e)}", extra={'session_id': current_session_id})
+            self.logger.exception(f"Error updating record {record_id} in {self.filename}: {str(e)}", extra={'session_id': current_session_id})
             return False
 
     def delete_by_id(self, record_id):
@@ -200,12 +208,12 @@ class JsonStorage:
             records = [r for r in records if r.get("id") != record_id]
             if len(records) < initial_len:
                 if self._write(records):
-                    logger.info(f"Deleted record {record_id} from {self.filename}", extra={'session_id': current_session_id})
+                    self.logger.info(f"Deleted record {record_id} from {self.filename}", extra={'session_id': current_session_id})
                     return True
-                logger.error(f"Failed to write after deleting record {record_id}", extra={'session_id': current_session_id})
+                self.logger.error(f"Failed to write after deleting record {record_id}", extra={'session_id': current_session_id})
                 return False
-            logger.warning(f"Record {record_id} not found for deletion in {self.filename}", extra={'session_id': current_session_id})
+            self.logger.warning(f"Record {record_id} not found for deletion in {self.filename}", extra={'session_id': current_session_id})
             return False
         except Exception as e:
-            logger.exception(f"Error deleting record {record_id} from {self.filename}: {str(e)}", extra={'session_id': current_session_id})
+            self.logger.exception(f"Error deleting record {record_id} from {self.filename}: {str(e)}", extra={'session_id': current_session_id})
             return False
