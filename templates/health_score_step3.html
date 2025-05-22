@@ -1,88 +1,25 @@
 {% extends "base.html" %}
-{% block title %}{{ trans('t').Financial_Health_Score | default('Financial Health Score') }}{% endblock %}
+{% block title %}{{ trans('financial_health_score') | default('Financial Health Score') }}{% endblock %}
 {% block extra_head %}
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #E3F2FD, #F5F7FA);
-        }
         .container {
             max-width: 600px;
             margin: 2rem auto;
-        }
-        .navbar {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-        .navbar h1 {
-            color: #0288D1;
-            font-weight: 600;
-        }
-        .navbar p {
-            color: #333;
-        }
-        .card {
-            border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-            border: 2px solid #0288D1;
-        }
-        .card-body {
-            padding: 2rem;
-        }
-        .form-label {
-            font-weight: 600;
-            color: #2E7D32;
-        }
-        .form-control {
-            border-radius: 8px;
-            border: 1px solid #0288D1;
-            padding: 0.75rem;
-        }
-        .form-control:focus {
-            border-color: #2E7D32;
-            box-shadow: 0 0 0 0.2rem rgba(46, 125, 50, 0.25);
-        }
-        .invalid-feedback {
-            color: #D81B60;
-        }
-        .btn-primary {
-            background: linear-gradient(135deg, #2E7D32, #0288D1);
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
-            font-weight: 600;
-        }
-        .btn-primary:hover {
-            background: linear-gradient(135deg, #1B5E20, #01579B);
-        }
-        .btn-secondary {
-            background: linear-gradient(135deg, #B0BEC5, #78909C);
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
-            font-weight: 600;
-        }
-        .btn-secondary:hover {
-            background: linear-gradient(135deg, #90A4AE, #607D8B);
-        }
-        @media (max-width: 600px) {
-            .card-body { padding: 1.5rem; }
-            .btn-primary, .btn-secondary { font-size: 0.9rem; padding: 0.5rem 1rem; }
         }
     </style>
 {% endblock %}
 {% block content %}
 <div class="container">
-    <div class="navbar mb-4">
-        <h1>{{ trans('t').Financial_Health_Score | default('Financial Health Score') }}</h1>
-        <p>{{ trans('t').Enter_your_debt_and_interest_details | default('Enter your debt and interest details (optional)') }}</p>
+    <div class="header">
+        <h1>{{ trans('financial_health_score') | default('Financial Health Score') }}</h1>
+        <p>{{ trans('enter_debt_interest_details') | default('Enter your debt and interest details (optional)') }}</p>
     </div>
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
                 <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                    {{ message }}
+                    {{ trans(message) | default(message) }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             {% endfor %}
@@ -93,18 +30,18 @@
             <form method="POST" action="{{ url_for('financial_health.step3') }}" id="step3Form">
                 {{ form.csrf_token }}
                 <div class="mb-3">
-                    <label class="form-label">{{ trans('t').Total_Debt | default('Total Debt') }}</label>
-                    {{ form.debt(class="form-control number-input", placeholder=trans('t')['e.g., 200,000'] | default('e.g., 200,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('t').Borrowings_from_banks_friends_colleagues | default('Borrowings from banks, friends, colleagues'), 'type': 'text'}) }}
-                    <div class="invalid-feedback">{{ trans('t').Debt_must_be_positive | default('Debt must be positive') }}</div>
+                    <label class="form-label">{{ trans('total_debt') | default('Total Debt') }}</label>
+                    {{ form.debt(class="form-control number-input", placeholder=trans('debt_placeholder') | default('e.g., 200,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('debt_tooltip') | default('Borrowings from banks, friends, colleagues'), 'type': 'text', 'aria-describedby': 'debt_help'}) }}
+                    <div class="invalid-feedback">{{ trans('debt_must_be_positive') | default('Debt must be positive') }}</div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">{{ trans('t').Average_Interest_Rate | default('Average Interest Rate') }}</label>
-                    {{ form.interest_rate(class="form-control number-input", placeholder=trans('t')['e.g., 5'] | default('e.g., 5'), **{'data-bs-toggle': 'tooltip', 'title': trans('t').Average_interest_rate_on_debts | default('Average interest rate on debts (% per year)'), 'type': 'text'}) }}
-                    <div class="invalid-feedback">{{ trans('t').Interest_rate_must_be_positive | default('Interest rate must be positive') }}</div>
+                    <label class="form-label">{{ trans('average_interest_rate') | default('Average Interest Rate') }}</label>
+                    {{ form.interest_rate(class="form-control number-input", placeholder=trans('interest_rate_placeholder') | default('e.g., 5'), **{'data-bs-toggle': 'tooltip', 'title': trans('interest_rate_tooltip') | default('Average interest rate on debts (% per year)'), 'type': 'text', 'aria-describedby': 'interest_rate_help'}) }}
+                    <div class="invalid-feedback">{{ trans('interest_rate_must_be_positive') | default('Interest rate must be positive') }}</div>
                 </div>
                 <div class="d-flex justify-content-between">
-                    <a href="{{ url_for('financial_health.step2') }}" class="btn btn-secondary">{{ trans('t').Back | default('Back') }}</a>
-                    <button type="submit" class="btn btn-primary">{{ trans('t').Calculate_Health_Score | default('Calculate Health Score') }}</button>
+                    <a href="{{ url_for('financial_health.step2') }}" class="btn btn-secondary">{{ trans('back') | default('Back') }}</a>
+                    <button type="submit" class="btn btn-primary">{{ trans('calculate_health_score') | default('Calculate Health Score') }}</button>
                 </div>
                 <input type="hidden" id="debugData" name="debugData">
             </form>
@@ -135,7 +72,7 @@
             const numValue = parseFloat(cleanValue) || 0;
             if (!isInterestRate && numValue > 10000000000) {
                 cleanValue = '10000000000';
-                alert('{{ trans('t').Input_cannot_exceed_10_billion | default('Input cannot exceed ₦10 billion') }}');
+                alert('{{ trans('input_cannot_exceed_10_billion') | default('Input cannot exceed ₦10 billion') }}');
             }
             const formatted = formatNumber(cleanValue);
             input.value = formatted;
@@ -172,18 +109,18 @@
                     valid = false;
                 } else {
                     input.classList.remove('is-invalid');
-                    input.value = parseFloat(value).toString(); // Send clean number to server
+                    input.value = parseFloat(value).toString();
                     debugData[input.name] = input.value;
                 }
             } else {
-                input.value = '0'; // Default to 0 for optional fields
+                input.value = '0';
                 debugData[input.name] = '0';
             }
         });
         document.getElementById('debugData').value = JSON.stringify(debugData);
         if (!valid) {
             e.preventDefault();
-            alert('{{ trans('t').Please_enter_valid_numbers | default('Please enter valid numbers') }}');
+            alert('{{ trans('please_enter_valid_numbers') | default('Please enter valid numbers') }}');
         }
     });
 </script>
