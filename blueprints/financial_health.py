@@ -15,7 +15,6 @@ import os
 logger = logging.getLogger('financial_health')
 logger.setLevel(logging.DEBUG)
 
-# Use the same logger setup as app.py
 formatter = logging.Formatter('%(asctime)s - %(name)s - SessionID: %(session_id)s - %(levelname)s - %(message)s')
 file_handler = logging.FileHandler('data/storage.txt')
 file_handler.setLevel(logging.DEBUG)
@@ -105,7 +104,6 @@ def step1():
                 flash(t("Please correct the errors in the form."), "danger")
                 return render_template('health_score_step1.html', form=form, t=t)
             
-            # Validate and prepare data
             form_data = form.data.copy()
             if form_data.get('email') and not isinstance(form_data['email'], str):
                 log.error(f"Invalid email type: {type(form_data['email'])}")
@@ -113,7 +111,6 @@ def step1():
             session['health_step1'] = form_data
             log.debug(f"Validated form data: {form_data}")
 
-            # Persist to JSON storage using append
             try:
                 storage_data = {
                     'step': 1,
@@ -159,7 +156,6 @@ def step2():
                 'expenses': float(form.expenses.data),
                 'submit': form.submit.data
             }
-            # Persist to JSON storage using append
             try:
                 storage_data = {
                     'step': 2,
@@ -201,7 +197,6 @@ def step3():
                 flash(t("Please correct the errors in the form."), "danger")
                 return render_template('health_score_step3.html', form=form, t=t)
 
-            # Extract and validate data
             data = {
                 'debt': float(form.debt.data) if form.debt.data is not None else 0,
                 'interest_rate': float(form.interest_rate.data) if form.interest_rate.data is not None else 0,
@@ -223,7 +218,6 @@ def step3():
                 flash(t("Income must be greater than zero to calculate financial health."), "danger")
                 return render_template('health_score_step3.html', form=form, t=t), 500
 
-            # Calculate financial health metrics
             log.info("Calculating financial health metrics")
             try:
                 debt_to_income = (debt / income * 100)
@@ -234,7 +228,6 @@ def step3():
                 flash(t("Calculation error: Income cannot be zero."), "danger")
                 return render_template('health_score_step3.html', form=form, t=t), 500
 
-            # Financial health score (0-100)
             score = 100
             if debt_to_income > 0:
                 score -= min(debt_to_income, 50)
@@ -246,7 +239,6 @@ def step3():
             score = max(0, min(100, round(score)))
             log.debug(f"Calculated score: {score}")
 
-            # Status and badges
             status = ("Excellent" if score >= 80 else
                      "Good" if score >= 60 else
                      "Needs Improvement")
@@ -261,7 +253,6 @@ def step3():
                 badges.append("Interest-Free Borrower")
             log.debug(f"Status: {status}, Badges: {badges}")
 
-            # Store record in session and persist to JSON
             record = {
                 "first_name": step1_data.get('first_name', ''),
                 "email": step1_data.get('email', ''),
@@ -279,7 +270,6 @@ def step3():
                 "created_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             }
             session['health_record'] = record
-            # Persist final record using append
             try:
                 storage_data = {
                     'step': 3,
@@ -299,7 +289,6 @@ def step3():
 
             log.debug(f"Session contents after save: {dict(session)}")
 
-            # Send email if requested
             email = step1_data.get('email')
             send_email_flag = step1_data.get('send_email', False)
             if send_email_flag and email:
@@ -361,22 +350,40 @@ def dashboard():
                 latest_record = {}
                 records = []
             else:
-                # Find the latest step 3 record (final submission)
+                # Find the latest record (prioritize step 3 if present)
                 final_record = None
-                for record in stored_records:
+                for record in sorted(stored_records, key=lambda x: x['timestamp'], reverse=True):
                     if record['data'].get('step') == 3:
                         final_record = record
                         break
                 if not final_record:
-                    log.warning("No step 3 record found for this session")
-                    latest_record = {}
-                    records = []
+                    final_record = stored_records[-1]
+                    log.warning("No step 3 record found, using latest record")
+                # Handle both old and new structures
+                if 'step' in final_record['data']:
+                    latest_record = final_record['data'].get('data', {})
                 else:
-                    latest_record = final_record['data']['data']  # Nested data structure
-                    records = [(final_record['id'], latest_record)]
-                    log.debug(f"Retrieved user records: {records}")
+                    latest_record = final_record['data']
+                # Validate required fields
+                required_fields = ['score', 'income', 'expenses', 'debt', 'interest_rate', 'debt_to_income', 'savings_rate']
+                for field in required_fields:
+                    if field not in latest_record:
+                        log.warning(f"Missing field '{field}' in latest record: {latest_record}")
+                        latest_record[field] = 0
+                    elif not isinstance(latest_record[field], (int, float)):
+                        log.warning(f"Invalid type for '{field}' in latest record: {type(latest_record[field])}, setting to 0")
+                        latest_record[field] = 0
+                records = [(final_record['id'], latest_record)]
+                log.debug(f"Retrieved user records: {records}")
         else:
             latest_record = health_record
+            for field in required_fields:
+                if field not in latest_record:
+                    log.warning(f"Missing field '{field}' in session health_record: {latest_record}")
+                    latest_record[field] = 0
+                elif not isinstance(latest_record[field], (int, float)):
+                    log.warning(f"Invalid type for '{field}' in session health_record: {type(latest_record[field])}, setting to 0")
+                    latest_record[field] = 0
             records = [(str(uuid.uuid4()), latest_record)]
             log.debug(f"Retrieved user records from session: {records}")
 
@@ -387,9 +394,9 @@ def dashboard():
         cleaned_records = []
         for record in all_records:
             try:
-                if record['data'].get('step') != 3:
-                    continue  # Only compare final records
-                data = record.get("data", {}).get("data", {})
+                if record['data'].get('step') != 3 and 'step' in record['data']:
+                    continue
+                data = record['data'].get('data', record['data'])
                 for key in ['score', 'income', 'expenses', 'debt', 'interest_rate']:
                     if key in data and isinstance(data[key], (str, type(None))):
                         try:
@@ -397,7 +404,10 @@ def dashboard():
                         except (ValueError, TypeError) as ve:
                             log.warning(f"Invalid {key} in record {record.get('id')}: {data[key]}, setting to 0")
                             data[key] = 0
-                record["data"]["data"] = data  # Update the nested data
+                if 'step' in record['data']:
+                    record['data']['data'] = data
+                else:
+                    record['data'] = data
                 cleaned_records.append(record)
             except Exception as record_error:
                 log.warning(f"Skipping invalid record for comparison: {str(record_error)}")
@@ -412,15 +422,17 @@ def dashboard():
             try:
                 sorted_records = sorted(
                     cleaned_records,
-                    key=lambda x: x["data"]["data"].get("score", 0),
+                    key=lambda x: x["data"].get("data", {}).get("score", 0) if 'step' in x['data'] else x["data"].get("score", 0),
                     reverse=True
                 )
                 user_score = latest_record.get("score", 0)
                 for i, record in enumerate(sorted_records, 1):
-                    if record["data"]["data"].get("score", 0) <= user_score and record.get("session_id") == session['sid']:
+                    score = record["data"].get("data", {}).get("score", 0) if 'step' in record['data'] else record["data"].get("score", 0)
+                    if score <= user_score and record.get("session_id") == session['sid']:
                         rank = i
                         break
-                scores = [record["data"]["data"].get("score", 0) for record in cleaned_records if record["data"]["data"].get("score", 0) > 0]
+                scores = [record["data"].get("data", {}).get("score", 0) for record in cleaned_records if record["data"].get("data", {}).get("score", 0) > 0] + \
+                         [record["data"].get("score", 0) for record in cleaned_records if record["data"].get("score", 0) > 0 and 'step' not in record['data']]
                 average_score = sum(scores) / len(scores) if scores else 0
                 log.debug(f"User rank: {rank}, Average score: {average_score}")
             except Exception as calc_error:
@@ -484,3 +496,23 @@ def dashboard():
             average_score=0,
             t=t
         ), 500
+
+# Blueprint-level error handler
+@financial_health_bp.errorhandler(Exception)
+def handle_blueprint_error(e):
+    """Handle unexpected errors in the financial_health blueprint."""
+    t_dict = trans('t')
+    t = lambda key: t_dict.get(key, key)
+    log.exception(f"Unexpected error in financial_health blueprint: {str(e)}")
+    flash(t("An unexpected error occurred. Please try again or contact support."), "danger")
+    return render_template(
+        'health_score_dashboard.html',
+        records=[],
+        latest_record={},
+        insights=[t("No data available due to an error.")],
+        tips=[],
+        rank=0,
+        total_users=0,
+        average_score=0,
+        t=t
+    ), 500
