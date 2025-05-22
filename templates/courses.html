@@ -1,65 +1,43 @@
-<script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
-
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
-                var filteredData = jsonData.filter(row => row.some(filledCell));
-
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
-                var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                );
-                // Fallback
-                if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
-                }
-
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
-            }
-        }
-        return gk_fileData[filename] || "";
-        }
-        </script>{% extends "base.html" %}
+{% extends "base.html" %}
 {% block content %}
 <div class="container mt-5">
-    <h1 class="text-center" style="background: linear-gradient(to right, #0288D1, #2E7D32); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+    <h1 class="text-center" style="background: linear-gradient(to right, #0288D1, #2E7D32); -webkit-background-clip: text; -webkit-text-fill-color: transparent;" role="heading" aria-level="1">
         {% if lang == 'ha' %} Koyarwa Kan Kudi {% else %} Financial Courses {% endif %}
     </h1>
-    <div class="row mt-4">
+    <div class="row mt-4" role="list">
         {% for course in courses %}
-        <div class="col-md-4 mb-4">
+        <div class="col-md-4 mb-4" role="listitem">
             <div class="card h-100">
                 <div class="card-body">
-                    <h5 class="card-title">{{ course.title_ha if lang == 'ha' else course.title_en }}</h5>
+                    <h5 class="card-title" id="course-{{ course.id }}">{{ course.title_ha if lang == 'ha' else course.title_en }}</h5>
                     <p class="card-text">
                         {% if course.is_premium %}
                             {% if lang == 'ha' %} Wannan darasi na biya ne {% else %} This is a premium course {% endif %}
                         {% else %}
                             {% if lang == 'ha' %} Darasi kyauta {% else %} Free course {% endif %}
                         {% endif %}
+                        <br>
+                        {% set course_progress = (user_progress | selectattr('data.course_id', 'equalto', course.id) | first) %}
+                        {% if course_progress %}
+                            {% if lang == 'ha' %}
+                                Ci gaba: {{ course_progress.data.progress_percentage | round(2) }}%
+                            {% else %}
+                                Progress: {{ course_progress.data.progress_percentage | round(2) }}%
+                            {% endif %}
+                        {% endif %}
                     </p>
+                    <button class="btn btn-primary speak-btn" 
+                            style="background: linear-gradient(to right, #0288D1, #2E7D32); border: none;"
+                            data-text="{{ course.title_ha if lang == 'ha' else course.title_en }}"
+                            aria-label="{% if lang == 'ha' %} Sauke {{ course.title_ha }} {% else %} Read aloud {{ course.title_en }} {% endif %}">
+                        <span class="sr-only">{% if lang == 'ha' %} Sauke {% else %} Read aloud {% endif %}</span>
+                        📣
+                    </button>
                     <a href="{{ url_for('courses.course_page', course_id=course.id) }}" 
                        class="btn btn-primary" 
                        style="background: linear-gradient(to right, #0288D1, #2E7D32); border: none;"
-                       aria-label="{% if lang == 'ha' %} Fara {{ course.title_ha }} {% else %} Start {{ course.title_en }} {% endif %}">
+                       aria-label="{% if lang == 'ha' %} Fara {{ course.title_ha }} {% else %} Start {{ course.title_en }} {% endif %}"
+                       role="button">
                         {% if lang == 'ha' %} Fara Darasi {% else %} Start Course {% endif %}
                     </a>
                 </div>
@@ -68,4 +46,5 @@
         {% endfor %}
     </div>
 </div>
+<script src="{{ url_for('static', filename='js/interactivity.js') }}"></script>
 {% endblock %}
