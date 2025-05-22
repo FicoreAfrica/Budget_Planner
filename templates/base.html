@@ -74,6 +74,14 @@
     <nav class="navbar navbar-expand-lg">
         <div class="container-fluid">
             <a class="navbar-brand" href="{{ url_for('index') }}"><img src="{{ url_for('static', filename='img/ficore_logo.png') }}" alt="Ficore Africa Logo" style="max-width: 150px;"></a>
+            <!-- Language Toggle Button (Always Visible) -->
+            <a href="{{ url_for('set_language', lang='ha' if session.lang == 'en' else 'en') }}"
+               class="btn btn-outline-light language-btn ms-2 me-2"
+               title="{{ t('Change Language') | default('Change Language') }}"
+               aria-label="{{ t('Change Language') | default('Change Language') }}">
+                <i class="fas fa-globe me-1"></i>
+                {{ 'HA' if session.lang == 'en' else 'EN' }}
+            </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -82,18 +90,8 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('index') }}">{{ t('Home') | default('Home') }}</a>
                     </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="toolsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            {{ t('Tools') | default('Tools') }}
-                        </a>
-                        <ul class="dropdown-menu" aria-labelledby="toolsDropdown">
-                            <li><a class="dropdown-item" href="{{ url_for('financial_health.step1') }}">{{ t('Financial Health Score') | default('Financial Health Score') }}</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('budget.step1') }}">{{ t('Budget Planner') | default('Budget Planner') }}</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('quiz.step1') }}">{{ t('Personality Quiz') | default('Personality Quiz') }}</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('bill.form') }}">{{ t('Bill Planner') | default('Bill Planner') }}</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('net_worth.step1') }}">{{ t('Net Worth Calculator') | default('Net Worth Calculator') }}</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('emergency_fund.step1') }}">{{ t('Emergency Fund Calculator') | default('Emergency Fund Calculator') }}</a></li>
-                        </ul>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#tools-section" id="toolsLink">{{ t('Tools') | default('Tools') }}</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('general_dashboard') }}">{{ t('General Dashboard') | default('General Dashboard') }}</a>
@@ -103,14 +101,6 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('logout') }}">{{ t('Logout') | default('Logout') }}</a>
-                    </li>
-                    <li class="nav-item">
-                        <form id="language-form" method="GET" class="d-flex">
-                            <select name="lang" onchange="this.form.action='/set_language/' + this.value; this.form.submit();" aria-label="{{ t('Choose your language') | default('Choose your language') }}">
-                                <option value="en" {% if session.lang == 'en' %}selected{% endif %}>{{ t('English') | default('English') }}</option>
-                                <option value="ha" {% if session.lang == 'ha' %}selected{% endif %}>{{ t('Hausa') | default('Hausa') }}</option>
-                            </select>
-                        </form>
                     </li>
                 </ul>
             </div>
