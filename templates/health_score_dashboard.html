@@ -104,12 +104,25 @@
             margin-bottom: 1rem;
         }
         .course-link {
-            color: #0288D1;
-            text-decoration: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
             font-weight: 600;
+            transition: transform 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, #2E7D32, #0288D1);
+            border: none;
+            color: white;
+            text-decoration: none;
         }
         .course-link:hover {
-            text-decoration: underline;
+            transform: scale(1.05);
+            background: linear-gradient(135deg, #1B5E20, #01579B);
+            text-decoration: none;
+        }
+        .progress-bar {
+            transition: width 0.5s ease-in-out;
         }
         .table {
             background: #F5F7FA;
@@ -119,7 +132,7 @@
             .card-header { font-size: 1.3rem; }
             .card-body { padding: 1rem; }
             .metric { font-size: 1rem; }
-            .btn-primary, .btn-secondary { font-size: 0.9rem; padding: 0.5rem 1rem; }
+            .btn-primary, .btn-secondary, .course-link { font-size: 0.9rem; padding: 0.5rem 1rem; }
             .score-gauge { max-width: 200px; }
         }
     </style>
@@ -304,11 +317,55 @@
                     {% endfor %}
                     <p>
                         <strong>{{ trans('t').Recommended_Learning | default('Recommended Learning') }}:</strong>
-                        <a href="{{ url_for('courses.course_page', course_id='budgeting_101') }}" class="course-link">
-                            {{ trans('t').Course_Budgeting | default('Budgeting Basics') }}
+                        <a href="{{ url_for('courses.course_page', course_id='budgeting_101') }}" 
+                           class="course-link"
+                           aria-label="{{ trans('t').Start_Budgeting_Course | default('Start Budgeting Basics Course') }}">
+                            <i class="fas fa-book"></i> {{ trans('t').Course_Budgeting | default('Budgeting Basics') }}
                         </a>
                     </p>
                 </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="fas fa-graduation-cap"></i> {{ trans('t').My_Courses | default('My Courses') }}
+            </div>
+            <div class="card-body">
+                {% set user_progress = namespace(progress=[]) %}
+                {% for record in progress_records %}
+                    {% if record.course_id == 'budgeting_101' %}
+                        {% set user_progress.progress = record %}
+                    {% endif %}
+                {% endfor %}
+                {% if user_progress.progress %}
+                    <p>
+                        <strong>{{ trans('t').Course_Budgeting | default('Budgeting Basics') }}:</strong>
+                        {{ trans('t').Progress | default('Progress') }} {{ user_progress.progress.progress_percentage | default(0) }}%
+                    </p>
+                    <div class="progress mb-2">
+                        <div class="progress-bar bg-success" 
+                             role="progressbar" 
+                             style="width: {{ user_progress.progress.progress_percentage | default(0) }}%" 
+                             aria-valuenow="{{ user_progress.progress.progress_percentage | default(0) }}" 
+                             aria-valuemin="0" 
+                             aria-valuemax="100">
+                            {{ user_progress.progress.progress_percentage | default(0) }}%
+                        </div>
+                    </div>
+                    <a href="{{ url_for('courses.course_page', course_id='budgeting_101') }}" 
+                       class="btn btn-primary"
+                       aria-label="{{ trans('t').Continue_Budgeting_Course | default('Continue Budgeting Basics Course') }}">
+                        <i class="fas fa-play"></i> {{ trans('t').Continue_Course | default('Continue Course') }}
+                    </a>
+                {% else %}
+                    <p>{{ trans('t').No_course_progress | default('You haven’t started any courses yet.') }}</p>
+                    <a href="{{ url_for('courses.course_page', course_id='budgeting_101') }}" 
+                       class="btn btn-primary"
+                       aria-label="{{ trans('t').Start_Budgeting_Course | default('Start Budgeting Basics Course') }}">
+                        <i class="fas fa-book"></i> {{ trans('t').Start_Budgeting_Course | default('Start Budgeting Basics') }}
+                    </a>
+                {% endif %}
             </div>
         </div>
 
