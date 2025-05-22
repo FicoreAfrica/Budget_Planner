@@ -14,7 +14,7 @@ class JsonStorage:
             self.logger.setLevel(logging.DEBUG)
             if not self.logger.handlers:
                 handler = logging.StreamHandler()
-                handler.setFormatter(logging.Formatter('% Russ % (asctime)s - %(name)s - %(levelname)s - %(message)s'))
+                handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
                 self.logger.addHandler(handler)
 
         os.makedirs(os.path.dirname(filename), exist_ok=True)
@@ -51,6 +51,25 @@ class JsonStorage:
                 with open(self.filename, 'r') as f:
                     data = json.load(f)
                     
+                    if not isinstance(data, list):
+                        self.logger.warning(f"Invalid data format in {self.filename}: expected list, got {type(data)}", extra={'session_id': current_session_id})
+                        return []
+                    
+                    # Special handling for courses.json: return raw records
+                    if os.path.basename(self.filename) == 'courses.json':
+                        valid_records = []
+                        for record in data:
+                            if not isinstance(record, dict):
+                                self.logger.warning(f"Skipping non-dict record in {self.filename}: {record}", extra={'session_id': current_session_id})
+                                continue
+                            if 'id' not in record or 'title_en' not in record or 'title_ha' not in record:
+                                self.logger.warning(f"Skipping course record with missing required keys in {self.filename}: {record}", extra={'session_id': current_session_id})
+                                continue
+                            valid_records.append(record)
+                        self.logger.debug(f"Read {len(valid_records)} course records from {self.filename}", extra={'session_id': current_session_id})
+                        return valid_records
+
+                    # Standard handling for other files
                     cleaned_data = []
                     for record in data:
                         if not isinstance(record, dict):
@@ -128,13 +147,17 @@ class JsonStorage:
         try:
             records = self._read()
             record_id = str(uuid.uuid4())
-            record_with_metadata = {
-                "id": record_id,
-                "user_email": current_user_email,
-                "session_id": current_session_id,
-                "timestamp": datetime.utcnow().isoformat() + "Z",
-                "data": record
-            }
+            # Skip metadata wrapping for courses.json
+            if os.path.basename(self.filename) == 'courses.json':
+                record_with_metadata = record
+            else:
+                record_with_metadata = {
+                    "id": record_id,
+                    "user_email": current_user_email,
+                    "session_id": current_session_id,
+                    "timestamp": datetime.utcnow().isoformat() + "Z",
+                    "data": record
+                }
             self.logger.debug(f"Appending record: {record_with_metadata}", extra={'session_id': current_session_id})
             records.append(record_with_metadata)
             if self._write(records):
@@ -153,6 +176,8 @@ class JsonStorage:
         self.logger.debug(f"Entering filter_by_session for {self.filename}, session_id: {session_id}", extra={'session_id': current_session_id})
         try:
             records = self._read()
+            if os.path.basename(self.filename) == 'courses.json':
+                return records  # Courses are not session-specific
             filtered = [r for r in records if r.get("session_id") == session_id]
             self.logger.debug(f"Filtered {len(filtered)} records for session {session_id}", extra={'session_id': current_session_id})
             return filtered
@@ -186,7 +211,10 @@ class JsonStorage:
             for i, record in enumerate(records):
                 if record.get("id") == record_id:
                     found_record = record
-                    records[i]['data'] = updated_record.get('data', updated_record)
+                    if os.path.basename(self.filename) == 'courses.json':
+                        records[i] = updated_record
+                    else:
+                        records[i]['data'] = updated_record.get('data', updated_record)
                     break
             
             if found_record:
