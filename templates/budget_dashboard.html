@@ -1,39 +1,44 @@
 {% extends "base.html" %}
-{% block title %}{{ trans('t').Budget_Dashboard | default('Budget Dashboard') }}{% endblock %}
+{% block title %}{{ trans('budget_dashboard') | default('Budget Dashboard') }}{% endblock %}
 {% block extra_head %}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <style>
+        .insights p, .tips p {
+            margin-bottom: 15px;
+        }
+    </style>
 {% endblock %}
 {% block content %}
 <div class="container">
-    <div class="navbar mb-4">
-        <h1>{{ trans('t').Budget_Dashboard | default('Budget Dashboard') }}</h1>
-        <p>{{ trans('t').Your_budget_summary | default('Your budget summary') }}</p>
+    <div class="header">
+        <h1>{{ trans('budget_dashboard') | default('Budget Dashboard') }}</h1>
+        <p>{{ trans('budget_summary') | default('Your budget summary') }}</p>
     </div>
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
                 <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                    {{ message }}
+                    {{ trans(message) | default(message) }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             {% endfor %}
         {% endif %}
     {% endwith %}
     {% if latest_budget %}
-        <div class="card mb-4">
+        <div class="card">
             <div class="card-body">
-                <h3>{{ trans('t').Budget_Overview | default('Budget Overview') }}</h3>
-                <p><strong>{{ trans('t').Monthly_Income | default('Monthly Income') }}:</strong> ₦{{ latest_budget.income | format_number }}</p>
-                <p><strong>{{ trans('t').Total_Expenses | default('Total Expenses') }}:</strong> ₦{{ latest_budget.expenses | format_number }}</p>
-                <p><strong>{{ trans('t').Savings_Goal | default('Savings Goal') }}:</strong> ₦{{ latest_budget.savings_goal | format_number }}</p>
-                <p><strong>{{ trans('t').Surplus_Deficit | default('Surplus/Deficit') }}:</strong> ₦{{ latest_budget.surplus_deficit | format_number }}</p>
-                <p><strong>{{ trans('t').Created_At | default('Created At') }}:</strong> {{ latest_budget.created_at }}</p>
+                <h3>{{ trans('budget_overview') | default('Budget Overview') }}</h3>
+                <p><strong>{{ trans('monthly_income') | default('Monthly Income') }}:</strong> ₦{{ latest_budget.income | format_number }}</p>
+                <p><strong>{{ trans('total_expenses') | default('Total Expenses') }}:</strong> ₦{{ latest_budget.expenses | format_number }}</p>
+                <p><strong>{{ trans('savings_goal') | default('Savings Goal') }}:</strong> ₦{{ latest_budget.savings_goal | format_number }}</p>
+                <p><strong>{{ trans('surplus_deficit') | default('Surplus/Deficit') }}:</strong> ₦{{ latest_budget.surplus_deficit | format_number }}</p>
+                <p><strong>{{ trans('created_at') | default('Created At') }}:</strong> {{ latest_budget.created_at }}</p>
             </div>
         </div>
-        <div class="card mb-4">
+        <div class="card">
             <div class="card-body">
-                <h3>{{ trans('t').Expense_Breakdown | default('Expense Breakdown') }}</h3>
+                <h3>{{ trans('expense_breakdown') | default('Expense Breakdown') }}</h3>
                 <canvas id="expenseChart"></canvas>
                 <script>
                     document.addEventListener('DOMContentLoaded', function() {
@@ -42,15 +47,15 @@
                             type: 'pie',
                             data: {
                                 labels: [
-                                    '{{ trans('t').Housing_Rent | default('Housing/Rent') }}',
-                                    '{{ trans('t').Food | default('Food') }}',
-                                    '{{ trans('t').Transport | default('Transport') }}',
-                                    '{{ trans('t').Dependents_Support | default('Dependents Support') }}',
-                                    '{{ trans('t').Miscellaneous | default('Miscellaneous') }}',
-                                    '{{ trans('t').Others | default('Others') }}'
+                                    '{{ trans('housing_rent') | default('Housing/Rent') }}',
+                                    '{{ trans('food') | default('Food') }}',
+                                    '{{ trans('transport') | default('Transport') }}',
+                                    '{{ trans('dependents_support') | default('Dependents Support') }}',
+                                    '{{ trans('miscellaneous') | default('Miscellaneous') }}',
+                                    '{{ trans('others') | default('Others') }}'
                                 ],
                                 datasets: [{
-                                    label: '{{ trans('t').Amount | default('Amount') }} (₦)',
+                                    label: '{{ trans('amount') | default('Amount') }} (₦)',
                                     data: [
                                         {{ latest_budget.housing | format_number }},
                                         {{ latest_budget.food | format_number }},
@@ -71,19 +76,19 @@
                 </script>
             </div>
         </div>
-        <div class="card mb-4">
+        <div class="card">
             <div class="card-body">
-                <h3>{{ trans('t').Budget_Items | default('Budget Items') }}</h3>
+                <h3>{{ trans('budget_items') | default('Budget Items') }}</h3>
                 {% if budgets %}
                     <table class="table table-striped">
                         <thead>
                             <tr>
-                                <th>{{ trans('t').Date | default('Date') }}</th>
-                                <th>{{ trans('t').Income | default('Income') }}</th>
-                                <th>{{ trans('t').Expenses | default('Expenses') }}</th>
-                                <th>{{ trans('t').Savings_Goal | default('Savings Goal') }}</th>
-                                <th>{{ trans('t').Surplus_Deficit | default('Surplus/Deficit') }}</th>
-                                <th>{{ trans('t').Actions | default('Actions') }}</th>
+                                <th>{{ trans('date') | default('Date') }}</th>
+                                <th>{{ trans('income') | default('Income') }}</th>
+                                <th>{{ trans('expenses') | default('Expenses') }}</th>
+                                <th>{{ trans('savings_goal') | default('Savings Goal') }}</th>
+                                <th>{{ trans('surplus_deficit') | default('Surplus/Deficit') }}</th>
+                                <th>{{ trans('actions') | default('Actions') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -99,7 +104,7 @@
                                             {{ form.csrf_token }}
                                             <input type="hidden" name="budget_id" value="{{ budget_id }}">
                                             <input type="hidden" name="action" value="delete">
-                                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('{{ trans('t').Confirm_Delete | default('Confirm Delete') }}');">{{ trans('t').Delete | default('Delete') }}</button>
+                                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('{{ trans('confirm_delete') | default('Confirm Delete') }}');">{{ trans('delete') | default('Delete') }}</button>
                                         </form>
                                     </td>
                                 </tr>
@@ -107,37 +112,37 @@
                         </tbody>
                     </table>
                 {% else %}
-                    <p>{{ trans('t').No_budget_items_found | default('No budget items found') }}</p>
+                    <p>{{ trans('no_budget_items_found') | default('No budget items found') }}</p>
                 {% endif %}
             </div>
         </div>
-        <div class="card mb-4">
+        <div class="card insights">
             <div class="card-body">
-                <h3>{{ trans('t').Insights | default('Insights') }}</h3>
+                <h3>{{ trans('insights') | default('Insights') }}</h3>
                 {% for insight in insights %}
-                    <p>{{ insight }}</p>
+                    <p>{{ trans(insight) | default(insight) }}</p>
                 {% endfor %}
             </div>
         </div>
-        <div class="card mb-4">
+        <div class="card tips">
             <div class="card-body">
-                <h3>{{ trans('t').Tips_for_Managing_Budget | default('Tips for Managing Budget') }}</h3>
+                <h3>{{ trans('tips_for_managing_budget') | default('Tips for Managing Budget') }}</h3>
                 {% for tip in tips %}
-                    <p>{{ tip }}</p>
+                    <p>{{ trans(tip) | default(tip) }}</p>
                 {% endfor %}
             </div>
         </div>
-        <div class="card mb-4">
+        <div class="card">
             <div class="card-body">
-                <h3>{{ trans('t').Call_to_Actions | default('Call to Actions') }}</h3>
-                <a href="{{ url_for('budget.step1') }}" class="btn btn-primary">{{ trans('t').Recalculate_Budget | default('Recalculate Budget') }}</a>
-                <a href="{{ url_for('bill.form') }}" class="btn btn-secondary">{{ trans('t').Manage_Bills | default('Manage Bills') }}</a>
-                <a href="#" class="btn btn-secondary">{{ trans('t').Explore_Investments | default('Explore Investments') }}</a>
+                <h3>{{ trans('call_to_actions') | default('Call to Actions') }}</h3>
+                <a href="{{ url_for('budget.step1') }}" class="btn btn-primary">{{ trans('recalculate_budget') | default('Recalculate Budget') }}</a>
+                <a href="{{ url_for('bill.form') }}" class="btn btn-secondary">{{ trans('manage_bills') | default('Manage Bills') }}</a>
+                <a href="#" class="btn btn-secondary">{{ trans('explore_investments') | default('Explore Investments') }}</a>
             </div>
         </div>
     {% else %}
-        <p>{{ trans('t').No_budget_data_available | default('No budget data available') }}</p>
-        <a href="{{ url_for('budget.step1') }}" class="btn btn-primary">{{ trans('t').Start_Budgeting | default('Start Budgeting') }}</a>
+        <p>{{ trans('no_budget_data_available') | default('No budget data available') }}</p>
+        <a href="{{ url_for('budget.step1') }}" class="btn btn-primary">{{ trans('start_budgeting') | default('Start Budgeting') }}</a>
     {% endif %}
 </div>
 {% endblock %}
