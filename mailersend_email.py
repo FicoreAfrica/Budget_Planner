@@ -1,7 +1,7 @@
 import os
 import requests
 from flask import current_app, render_template, flash
-from translations import trans  # Import trans directly
+from translations.trans import trans  # Import trans directly
 
 def send_email(to_email, subject, template_name, data, lang='en'):
     """
