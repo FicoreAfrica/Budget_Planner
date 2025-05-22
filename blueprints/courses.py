@@ -45,7 +45,7 @@ def initialize_courses():
 def course_catalog():
     courses_storage = current_app.config['STORAGE_MANAGERS']['courses']
     initialize_courses()
-    courses = [record['data'] for record in courses_storage.read_all()]
+    courses = courses_storage.read_all()  # Changed from [record['data'] for record in ...]
     lang = session.get('lang', 'en')
     user_progress = []
     if 'sid' in session:
@@ -57,7 +57,7 @@ def course_catalog():
 def course_page(course_id):
     courses_storage = current_app.config['STORAGE_MANAGERS']['courses']
     progress_storage = current_app.config['STORAGE_MANAGERS']['user_progress']
-    courses = [record['data'] for record in courses_storage.read_all()]
+    courses = courses_storage.read_all()  # Changed
     course = next((c for c in courses if c['id'] == course_id), None)
     if not course:
         return render_template('404.html'), 404
@@ -90,11 +90,11 @@ def complete_lesson(course_id, lesson_index):
 
     progress_storage = current_app.config['STORAGE_MANAGERS']['user_progress']
     courses_storage = current_app.config['STORAGE_MANAGERS']['courses']
-    courses = [record['data'] for record in courses_storage.read_all()]
+    courses = courses_storage.read_all()  # Changed
     course = next((c for c in courses if c['id'] == course_id), None)
     if not course or lesson_index >= len(course['lessons']):
         return render_template('404.html'), 404
-
+    
     progress = progress_storage.filter_by_session(session['sid'])
     course_progress = next((p for p in progress if p['data']['course_id'] == course_id), None)
     if not course_progress:
