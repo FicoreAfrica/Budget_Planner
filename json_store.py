@@ -18,13 +18,14 @@ class JsonStorage:
                 self.logger.addHandler(handler)
 
         os.makedirs(os.path.dirname(filename), exist_ok=True)
+        self.logger.debug(f"Starting initialization for {filename}", extra={'session_id': 'init'})
         self._initialize_file()
-        self.logger.info(f"Initialized JsonStorage for {os.path.basename(filename)} at {filename}")
+        self.logger.info(f"Initialized JsonStorage for {os.path.basename(filename)} at {filename}", extra={'session_id': 'init'})
 
     def _initialize_file(self):
         """Initialize file if it doesn't exist and check write permissions."""
-        # Use a default session ID for initialization to avoid context issues
         current_session_id = 'init'
+        self.logger.debug(f"Entering _initialize_file for {self.filename}", extra={'session_id': current_session_id})
         
         if not os.path.exists(self.filename):
             try:
@@ -38,10 +39,13 @@ class JsonStorage:
         if not os.access(self.filename, os.W_OK):
             self.logger.error(f"No write permissions for {self.filename}", extra={'session_id': current_session_id})
             raise PermissionError(f"Cannot write to {self.filename}")
+        
+        self.logger.debug(f"Completed _initialize_file for {self.filename}", extra={'session_id': current_session_id})
 
     def _read(self):
         """Reads all records from the JSON file, handling old/new data structures."""
         current_session_id = session.get('sid', 'unknown') if has_request_context() else 'no-request-context'
+        self.logger.debug(f"Entering _read for {self.filename}", extra={'session_id': current_session_id})
         try:
             if os.path.exists(self.filename):
                 with open(self.filename, 'r') as f:
@@ -70,7 +74,9 @@ class JsonStorage:
                         record['data'] = processed_data
                         cleaned_data.append(record)
                     
+                    self.logger.debug(f"Read {len(cleaned_data)} records from {self.filename}", extra={'session_id': current_session_id})
                     return cleaned_data
+            self.logger.debug(f"File {self.filename} not found. Returning empty list.", extra={'session_id': current_session_id})
             return []
         except FileNotFoundError:
             self.logger.warning(f"File not found: {self.filename}. Returning empty list.", extra={'session_id': current_session_id})
@@ -85,6 +91,7 @@ class JsonStorage:
     def _write(self, data):
         """Writes data to the JSON file."""
         current_session_id = session.get('sid', 'unknown') if has_request_context() else 'no-request-context'
+        self.logger.debug(f"Entering _write for {self.filename}", extra={'session_id': current_session_id})
         try:
             with open(self.filename, 'w') as f:
                 json.dump(data, f, indent=4)
@@ -111,6 +118,7 @@ class JsonStorage:
         elif not current_user_email:
             current_user_email = 'anonymous'
 
+        self.logger.debug(f"Entering append for {self.filename}, record: {record}", extra={'session_id': current_session_id})
         try:
             records = self._read()
             record_id = str(uuid.uuid4())
@@ -136,6 +144,7 @@ class JsonStorage:
     def filter_by_session(self, session_id):
         """Retrieve records matching the session ID."""
         current_session_id = session.get('sid', 'unknown') if has_request_context() else 'no-request-context'
+        self.logger.debug(f"Entering filter_by_session for {self.filename}, session_id: {session_id}", extra={'session_id': current_session_id})
         try:
             records = self._read()
             filtered = [r for r in records if r.get("session_id") == session_id]
@@ -148,6 +157,7 @@ class JsonStorage:
     def get_by_id(self, record_id):
         """Retrieve a record by ID."""
         current_session_id = session.get('sid', 'unknown') if has_request_context() else 'no-request-context'
+        self.logger.debug(f"Entering get_by_id for {self.filename}, record_id: {record_id}", extra={'session_id': current_session_id})
         try:
             records = self._read()
             for record in records:
@@ -163,6 +173,7 @@ class JsonStorage:
     def update_by_id(self, record_id, updated_record):
         """Update a record by ID."""
         current_session_id = session.get('sid', 'unknown') if has_request_context() else 'no-request-context'
+        self.logger.debug(f"Entering update_by_id for {self.filename}, record_id: {record_id}", extra={'session_id': current_session_id})
         try:
             records = self._read()
             found_record = None
@@ -187,7 +198,8 @@ class JsonStorage:
 
     def delete_by_id(self, record_id):
         """Delete a record by ID."""
-        current_session_id = session.get('sid', 'unknown') if has_request_context() else 'no-request-context'
+        current_session_id = session.get('sid', 'unknown') if has_request_context() within an active application context.
+        self.logger.debug(f"Entering delete_by_id for {self.filename}, record_id: {record_id}", extra={'session_id': current_session_id})
         try:
             records = self._read()
             initial_len = len(records)
