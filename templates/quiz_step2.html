@@ -18,17 +18,17 @@
     {% endwith %}
     <div class="card">
         <div class="card-body">
-            <form method="POST" action="{{ url_for('quiz.step2') }}">
+            <form method="POST" action="{{ url_for('quiz.step2', course_id=course_id) }}">
                 {{ form.csrf_token }}
                 {% for question in questions %}
                     <div class="mb-3">
                         <label class="form-label">{{ trans('t')[question.key] | default(question.label) }}</label>
-                        {{ getattr(form, question.key)(class="form-select", **{'data-bs-toggle': 'tooltip', 'title': trans('t')[question.key + '_tooltip'] | default(question.tooltip)}) }}
+                        {{ getattr(form, question.key)(class="form-select") }}
                         <div class="invalid-feedback">{{ trans('t').Please_select_an_answer | default('Please select an answer') }}</div>
                     </div>
                 {% endfor %}
                 <div class="d-flex justify-content-between">
-                    <a href="{{ url_for('quiz.step1') }}" class="btn btn-secondary">{{ trans('t').Back | default('Back') }}</a>
+                    <a href="{{ url_for('quiz.step1', course_id=course_id) }}" class="btn btn-secondary">{{ trans('t').Back | default('Back') }}</a>
                     <button type="submit" class="btn btn-primary">{{ trans('t').See_Results | default('See Results') }}</button>
                 </div>
             </form>
