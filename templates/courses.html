@@ -1,15 +1,15 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="container mt-5">
-    <h1 class="text-center" style="background: linear-gradient(to right, #0288D1, #2E7D32); -webkit-background-clip: text; -webkit-text-fill-color: transparent;" role="heading" aria-level="1">
+    <h1 class="text-center" style="background: linear-gradient(to right, #0288D1, #2E7D32); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
         {% if lang == 'ha' %} Koyarwa Kan Kudi {% else %} Financial Courses {% endif %}
     </h1>
-    <div class="row mt-4" role="list">
+    <div class="row mt-4">
         {% for course in courses %}
-        <div class="col-md-4 mb-4" role="listitem">
+        <div class="col-md-4 mb-4">
             <div class="card h-100">
                 <div class="card-body">
-                    <h5 class="card-title" id="course-{{ course.id }}">{{ course.title_ha if lang == 'ha' else course.title_en }}</h5>
+                    <h5 class="card-title">{{ course.title_ha if lang == 'ha' else course.title_en }}</h5>
                     <p class="card-text">
                         {% if course.is_premium %}
                             {% if lang == 'ha' %} Wannan darasi na biya ne {% else %} This is a premium course {% endif %}
@@ -26,18 +26,9 @@
                             {% endif %}
                         {% endif %}
                     </p>
-                    <button class="btn btn-primary speak-btn" 
-                            style="background: linear-gradient(to right, #0288D1, #2E7D32); border: none;"
-                            data-text="{{ course.title_ha if lang == 'ha' else course.title_en }}"
-                            aria-label="{% if lang == 'ha' %} Sauke {{ course.title_ha }} {% else %} Read aloud {{ course.title_en }} {% endif %}">
-                        <span class="sr-only">{% if lang == 'ha' %} Sauke {% else %} Read aloud {% endif %}</span>
-                        📣
-                    </button>
                     <a href="{{ url_for('courses.course_page', course_id=course.id) }}" 
                        class="btn btn-primary" 
-                       style="background: linear-gradient(to right, #0288D1, #2E7D32); border: none;"
-                       aria-label="{% if lang == 'ha' %} Fara {{ course.title_ha }} {% else %} Start {{ course.title_en }} {% endif %}"
-                       role="button">
+                       style="background: linear-gradient(to right, #0288D1, #2E7D32); border: none;">
                         {% if lang == 'ha' %} Fara Darasi {% else %} Start Course {% endif %}
                     </a>
                 </div>
@@ -46,5 +37,4 @@
         {% endfor %}
     </div>
 </div>
-<script src="{{ url_for('static', filename='js/interactivity.js') }}"></script>
 {% endblock %}
