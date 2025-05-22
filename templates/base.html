@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ t('Ficore Africa') | default('Ficore Africa') }} | {% block title %}{% endblock %}</title>
+    <title>{{ trans('ficore_africa') | default('Ficore Africa') }} | {% block title %}{% endblock %}</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <!-- Font Awesome 6.4 -->
@@ -67,40 +67,40 @@
 <body>
     <!-- Header Message -->
     <div class="header-message">
-        {{ t('Welcome to Ficore Africa Tools Suite') | default('Welcome to Ficore Africa Tools Suite: Use Ficore to Track your income, net worth, budgets, and bills, to grow your money with confidence.') }}
+        {{ trans('welcome_to_ficore') | default('Welcome to Ficore Africa Tools Suite: Use Ficore to Track your income, net worth, budgets, and bills, to grow your money with confidence.') }}
     </div>
 
     <!-- Navigation Bar -->
     <nav class="navbar navbar-expand-lg">
         <div class="container-fluid">
-            <a class="navbar-brand" href="{{ url_for('index') }}"><img src="{{ url_for('static', filename='img/ficore_logo.png') }}" alt="Ficore Africa Logo" style="max-width: 150px;"></a>
+            <a class="navbar-brand" href="{{ url_for('index') }}"><img src="{{ url_for('static', filename='img/ficore_logo.png') }}" alt="{{ trans('ficore_africa_logo') | default('Ficore Africa Logo') }}" style="max-width: 150px;"></a>
             <!-- Language Toggle Button (Always Visible) -->
             <a href="{{ url_for('set_language', lang='ha' if session.lang == 'en' else 'en') }}"
                class="btn btn-outline-light language-btn ms-2 me-2"
-               title="{{ t('Change Language') | default('Change Language') }}"
-               aria-label="{{ t('Change Language') | default('Change Language') }}">
+               title="{{ trans('change_language') | default('Change Language') }}"
+               aria-label="{{ trans('change_language') | default('Change Language') }}">
                 <i class="fas fa-globe me-1"></i>
                 {{ 'HA' if session.lang == 'en' else 'EN' }}
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="{{ trans('toggle_navigation') | default('Toggle navigation') }}">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('index') }}">{{ t('Home') | default('Home') }}</a>
+                        <a class="nav-link" href="{{ url_for('index') }}">{{ trans('home') | default('Home') }}</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#tools-section" id="toolsLink">{{ t('Tools') | default('Tools') }}</a>
+                        <a class="nav-link" href="#tools-section" id="toolsLink">{{ trans('tools') | default('Tools') }}</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('general_dashboard') }}">{{ t('General Dashboard') | default('General Dashboard') }}</a>
+                        <a class="nav-link" href="{{ url_for('general_dashboard') }}">{{ trans('general_dashboard') | default('General Dashboard') }}</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ FEEDBACK_FORM_URL }}" target="_blank">{{ t('Feedback') | default('Feedback') }}</a>
+                        <a class="nav-link" href="{{ FEEDBACK_FORM_URL }}" target="_blank">{{ trans('feedback') | default('Feedback') }}</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('logout') }}">{{ t('Logout') | default('Logout') }}</a>
+                        <a class="nav-link" href="{{ url_for('logout') }}">{{ trans('logout') | default('Logout') }}</a>
                     </li>
                 </ul>
             </div>
@@ -115,7 +115,7 @@
                     {% for category, message in messages %}
                         <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
                             {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('close') | default('Close') }}"></button>
                         </div>
                     {% endfor %}
                 </div>
@@ -127,24 +127,24 @@
     <!-- Footer -->
     <footer class="footer mt-5" style="background: linear-gradient(90deg, #003087, #004D40); color: white;">
         <div class="container text-center py-4">
-            <p>{{ t('About Ficore Africa') | default('About Ficore Africa') }}: {{ t('Empowering financial growth across Africa since 2025') | default('Empowering financial growth across Africa since 2025') }}</p>
+            <p>{{ trans('about_ficore_africa') | default('About Ficore Africa') }}: {{ trans('empowering_financial_growth') | default('Empowering financial growth across Africa since 2025') }}</p>
             <div class="social-icons d-flex justify-content-center gap-3">
-                <a href="{{ LINKEDIN_URL }}" target="_blank" aria-label="{{ t('Connect on LinkedIn') | default('Connect on LinkedIn') }}" class="d-flex align-items-center text-white">
+                <a href="{{ LINKEDIN_URL }}" target="_blank" aria-label="{{ trans('connect_on_linkedin') | default('Connect on LinkedIn') }}" class="d-flex align-items-center text-white">
                     <i class="fab fa-linkedin me-1"></i> LinkedIn
                 </a>
-                <a href="{{ TWITTER_URL }}" target="_blank" aria-label="{{ t('Follow on Twitter') | default('Follow on Twitter') }}" class="d-flex align-items-center text-white">
+                <a href="{{ TWITTER_URL }}" target="_blank" aria-label="{{ trans('follow_on_twitter') | default('Follow on Twitter') }}" class="d-flex align-items-center text-white">
                     <i class="fab fa-x-twitter me-1"></i> Twitter
                 </a>
-                <a href="{{ FACEBOOK_URL }}" target="_blank" aria-label="{{ t('Follow on Facebook') | default('Follow on Facebook') }}" class="d-flex align-items-center text-white">
+                <a href="{{ FACEBOOK_URL }}" target="_blank" aria-label="{{ trans('follow_on_facebook') | default('Follow on Facebook') }}" class="d-flex align-items-center text-white">
                     <i class="fab fa-facebook me-1"></i> Facebook
                 </a>
             </div>
             <div class="footer-buttons mt-3">
-                <a href="/cdn-cgi/l/email-protection#8fe9e6ece0fdeaeee9fde6eceecfe8e2eee6e3a1ece0e2" class="text-white"><i class="fas fa-envelope"></i> {{ t('Contact Us') | default('Contact Us') }}</a>
-                <a href="{{ FEEDBACK_FORM_URL }}" target="_blank" class="text-white"><i class="fas fa-comment"></i> {{ t('Provide Feedback') | default('Provide Feedback') }}</a>
-                <a href="{{ WAITLIST_FORM_URL }}" target="_blank" class="text-white"><i class="fas fa-users"></i> {{ t('Join Waitlist') | default('Join Waitlist') }}</a>
-                <a href="{{ CONSULTANCY_FORM_URL }}" target="_blank" class="text-white"><i class="fas fa-briefcase"></i> {{ t('Book Consultancy') | default('Book Consultancy') }}</a>
-                <a href="{{ url_for('logout') }}" class="text-white"><i class="fas fa-sign-out-alt"></i> {{ t('Logout') | default('Logout') }}</a>
+                <a href="/cdn-cgi/l/email-protection#8fe9e6ece0fdeaeee9fde6eceecfe8e2eee6e3a1ece0e2" class="text-white"><i class="fas fa-envelope"></i> {{ trans('contact_us') | default('Contact Us') }}</a>
+                <a href="{{ FEEDBACK_FORM_URL }}" target="_blank" class="text-white"><i class="fas fa-comment"></i> {{ trans('provide_feedback') | default('Provide Feedback') }}</a>
+                <a href="{{ WAITLIST_FORM_URL }}" target="_blank" class="text-white"><i class="fas fa-users"></i> {{ trans('join_waitlist') | default('Join Waitlist') }}</a>
+                <a href="{{ CONSULTANCY_FORM_URL }}" target="_blank" class="text-white"><i class="fas fa-briefcase"></i> {{ trans('book_consultancy') | default('Book Consultancy') }}</a>
+                <a href="{{ url_for('logout') }}" class="text-white"><i class="fas fa-sign-out-alt"></i> {{ trans('logout') | default('Logout') }}</a>
             </div>
         </div>
     </footer>
