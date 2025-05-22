@@ -1,16 +1,16 @@
 {% extends "base.html" %}
-{% block title %}{{ trans('t').Budget_Planner | default('Budget Planner') }}{% endblock %}
+{% block title %}{{ trans('budget_planner') | default('Budget Planner') }}{% endblock %}
 {% block content %}
 <div class="container">
-    <div class="navbar mb-4">
-        <h1>{{ trans('t').Budget_Planner | default('Budget Planner') }}</h1>
-        <p>{{ trans('t').Enter_your_personal_information | default('Enter your personal information') }}</p>
+    <div class="header">
+        <h1>{{ trans('budget_planner') | default('Budget Planner') }}</h1>
+        <p>{{ trans('enter_personal_information') | default('Enter your personal information') }}</p>
     </div>
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
                 <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                    {{ message }}
+                    {{ trans(message) | default(message) }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             {% endfor %}
@@ -21,20 +21,20 @@
             <form method="POST" action="{{ url_for('budget.step1') }}">
                 {{ form.csrf_token }}
                 <div class="mb-3">
-                    <label class="form-label">{{ trans('t').First_Name | default('First Name') }}</label>
-                    {{ form.first_name(class="form-control", placeholder=trans('t')['e.g., Ahmad, Kamal, Musa'] | default('e.g., Ahmad, Kamal, Musa'), **{'data-bs-toggle': 'tooltip', 'title': trans('t').Enter_your_first_name | default('Enter your first name')}) }}
-                    <div class="invalid-feedback">{{ trans('t').First_name_is_required | default('First name is required') }}</div>
+                    <label class="form-label">{{ trans('first_name') | default('First Name') }}</label>
+                    {{ form.first_name(class="form-control", placeholder=trans('first_name_placeholder') | default('e.g., Ahmad, Kamal, Musa'), **{'data-bs-toggle': 'tooltip', 'title': trans('first_name_tooltip') | default('Enter your first name'), 'aria-describedby': 'first_name_help'}) }}
+                    <div class="invalid-feedback">{{ trans('first_name_required') | default('First name is required') }}</div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">{{ trans('t').Email | default('Email') }}</label>
-                    {{ form.email(class="form-control", placeholder=trans('t')['e.g., ahmad@example.com'] | default('e.g., ahmad@example.com'), **{'data-bs-toggle': 'tooltip', 'title': trans('t').Enter_your_email_to_receive_budget_summary | default('Enter your email to receive budget summary')}) }}
-                    <div class="invalid-feedback">{{ trans('t').Valid_email_is_required | default('Valid email is required') }}</div>
+                    <label class="form-label">{{ trans('email') | default('Email') }}</label>
+                    {{ form.email(class="form-control", placeholder=trans('email_placeholder') | default('e.g., ahmad@example.com'), **{'data-bs-toggle': 'tooltip', 'title': trans('email_tooltip') | default('Enter your email to receive budget summary'), 'aria-describedby': 'email_help'}) }}
+                    <div class="invalid-feedback">{{ trans('email_required') | default('Valid email is required') }}</div>
                 </div>
                 <div class="mb-3 form-check">
-                    {{ form.send_email(class="form-check-input", **{'data-bs-toggle': 'tooltip', 'title': trans('t').Check_to_receive_email_summary | default('Check to receive email summary')}) }}
-                    <label class="form-check-label" for="send_email">{{ trans('t').Send_Email | default('Send Email') }}</label>
+                    {{ form.send_email(class="form-check-input", **{'data-bs-toggle': 'tooltip', 'title': trans('send_email_tooltip') | default('Check to receive email summary'), 'aria-describedby': 'send_email_help'}) }}
+                    <label class="form-check-label" for="send_email">{{ trans('send_email') | default('Send Email') }}</label>
                 </div>
-                <button type="submit" class="btn btn-primary">{{ trans('t').Continue_to_Income | default('Continue to Income') }}</button>
+                <button type="submit" class="btn btn-primary">{{ trans('continue_to_income') | default('Continue to Income') }}</button>
             </form>
         </div>
     </div>
