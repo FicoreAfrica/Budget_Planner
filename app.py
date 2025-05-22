@@ -6,14 +6,6 @@ from flask import Flask, render_template, request, session, redirect, url_for, f
 from flask_session import Session
 from flask_wtf.csrf import CSRFProtect, CSRFError
 
-# Import your blueprints
-from blueprints.financial_health import financial_health_bp
-from blueprints.budget import budget_bp
-from blueprints.quiz import quiz_bp
-from blueprints.bill import bill_bp
-from blueprints.net_worth import net_worth_bp
-from blueprints.emergency_fund import emergency_fund_bp
-
 # Conditional import for python_dotenv
 try:
     from python_dotenv import load_dotenv
@@ -33,7 +25,7 @@ except ImportError as e:
     def get_translations(lang):
         return {}
 
-# Import JsonStorage (it will now use the global 'ficore_app' logger)
+# Import JsonStorage (it will now receive the global 'ficore_app' logger via constructor)
 from json_store import JsonStorage
 from functools import wraps
 
@@ -52,7 +44,6 @@ os.makedirs('data', exist_ok=True)
 file_handler = logging.FileHandler('data/storage.txt')
 file_handler.setLevel(logging.DEBUG)
 file_handler.setFormatter(formatter)
-# Removed file_handler.flush = lambda: None as it's generally not needed and can hide issues
 root_logger.addHandler(file_handler)
 
 # Console handler for Render compatibility and local development
@@ -73,7 +64,7 @@ class SessionAdapter(logging.LoggerAdapter):
         return msg, kwargs
 
 # Initialize global logger with SessionAdapter, wrapping the root_logger
-# This 'log' instance will be used in app.py's routes and contexts
+# This 'log' instance will be used in app.py's routes and contexts, and passed to JsonStorage
 log = SessionAdapter(root_logger, {})
 
 # Initialize Flask app
@@ -128,8 +119,10 @@ try:
     ]:
         dir_name = os.path.dirname(path)
         os.makedirs(dir_name, exist_ok=True)
-        storage = JsonStorage(path) # JsonStorage now uses the global 'ficore_app' logger
-        # Test write access using append (this will use the global logger)
+        # Pass the SessionAdapter instance directly to JsonStorage
+        storage = JsonStorage(path, logger_instance=log)
+        
+        # Test write access using append (this will now correctly use the adapted logger)
         test_data = {'test': 'write_check'}
         storage.append(test_data, session_id='test_session_init') # Use a distinct session ID for init tests
         log.info(f"Initialized JsonStorage for {tool} at {path}")
@@ -304,7 +297,9 @@ def internal_server_error(e):
 
 
 # Register Blueprints
-app.register_blueprint(financial_health_bp) # url_prefix is handled in blueprint definition
+# Note: url_prefix is handled in the blueprint definition (e.g., financial_health_bp = Blueprint('financial_health', __name__, url_prefix='/financial_health'))
+# If not defined in blueprint, you can add it here: app.register_blueprint(financial_health_bp, url_prefix='/financial_health')
+app.register_blueprint(financial_health_bp)
 app.register_blueprint(budget_bp)
 app.register_blueprint(quiz_bp)
 app.register_blueprint(bill_bp)
