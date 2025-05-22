@@ -352,12 +352,12 @@ def dashboard():
     try:
         # Retrieve user-specific record from session or storage
         health_record = session.get('health_record', {})
+        log.debug(f"Session health_record: {health_record}")
         if not health_record:
-            # Fallback to storage if session is empty
             stored_records = financial_health_storage.filter_by_session(session['sid'])
+            log.debug(f"Stored records: {stored_records}")
             health_record = stored_records[-1]['data'] if stored_records else {}
-            log.warning(f"Session health_record empty, falling back to storage: {health_record}")
-        log.debug(f"Raw session/storage health_record: {health_record}")
+            log.debug(f"Fallback health_record from storage: {health_record}")
         if not health_record:
             log.warning("No valid health record found in session or storage")
             latest_record = {}
@@ -365,10 +365,11 @@ def dashboard():
         else:
             latest_record = health_record
             records = [(str(uuid.uuid4()), latest_record)]
-            log.debug(f"Retrieved user records from session/storage: {records}")
+            log.debug(f"Retrieved user records: {records}")
 
         # Retrieve all records for comparison
-        all_records = financial_health_storage._read()  # Direct access since get_all isn't available
+        all_records = financial_health_storage._read()
+        log.debug(f"All records from storage: {all_records}")
         total_users = len(all_records)
         cleaned_records = []
         for record in all_records:
@@ -378,13 +379,14 @@ def dashboard():
                     if key in data and isinstance(data[key], str):
                         try:
                             data[key] = float(data[key].replace(',', ''))
-                        except (ValueError, TypeError):
-                            log.warning(f"Invalid {key} in record {record.get('id')}: {data[key]}")
+                        except (ValueError, TypeError) as ve:
+                            log.warning(f"Invalid {key} in record {record.get('id')}: {data[key]}, setting to 0")
                             data[key] = 0
                 cleaned_records.append(record)
             except Exception as record_error:
                 log.warning(f"Skipping invalid record for comparison: {str(record_error)}")
                 continue
+        log.debug(f"Cleaned records: {cleaned_records}")
         log.debug(f"Total users: {total_users}")
 
         # Calculate rank and average score
