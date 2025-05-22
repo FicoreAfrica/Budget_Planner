@@ -1,17 +1,1 @@
-[
-    {
-        "id": "budgeting_101",
-        "title_en": "Budgeting Basics",
-        "title_ha": "Tushen Kasafin Kudi",
-        "is_premium": false,
-        "lessons": [
-            {
-                "id": "lesson_1",
-                "title_en": "What is a Budget?",
-                "title_ha": "Menene Kasafin Kudi?",
-                "content_en": "A budget is a plan for your income and expenses.",
-                "content_ha": "Kasafin kudi shine shiri don samun kudin shiga da kashe kudi."
-            }
-        ]
-    }
-]
+[]
