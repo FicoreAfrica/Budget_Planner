@@ -3,8 +3,6 @@ from flask import session
 # translations.py
 # Contains translation strings for Ficore Africa Flask app in English and Hausa
 # Covers all tools: Financial Health Score, Budget Planner, Personality Quiz, Bill Planner, Net Worth Calculator, Emergency Fund Calculator
-
-def get_translations(language='en'):
     translations = {
         'en': {
             # General Interface
@@ -2081,23 +2079,17 @@ def get_translations(language='en'):
             'Emergency_fund_plan_completed_successfully': 'An kammala tsarin asusun gaggawa cikin nasara'
         }
     }
-    # Log the language being used
-    logging.debug(f"Fetching translations for language: {language}")
-    # Return translations for the specified language, default to English if not found
-    translation_dict = translations.get(language, translations['en'])
-    logging.debug(f"Returning translation dictionary with {len(translation_dict)} keys")
-    return translation_dict
+def trans(key, lang=None):
+    """
+    Retrieve a translation for the given key in the specified language.
+    If lang is None, use the language from the session, defaulting to 'en'.
+    """
+    if lang is None:
+        lang = session.get('lang', 'en')
+    return TRANSLATIONS.get(lang, {}).get(key, key)
 
-def trans(key):
-    # Get the language from the session, default to English
-    lang = session.get('lang', 'en')
-    logging.debug(f"Session language: {lang}")
-    # Ensure the language is valid, otherwise default to English
-    if lang not in ['en', 'ha']:
-        logging.warning(f"Invalid language '{lang}' detected, defaulting to English")
-        lang = 'en'
-        session['lang'] = lang  # Update session to prevent repeated issues
-    translations = get_translations(lang)
-    if key == 't':
-        return translations
-    return translations.get(key, key)  # Fallback to the key itself if not found
+def get_translations(lang):
+    """
+    Retrieve all translations for the specified language.
+    """
+    return TRANSLATIONS.get(lang, {})
