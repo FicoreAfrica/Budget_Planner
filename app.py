@@ -116,13 +116,10 @@ def init_storage_managers():
                 dir_name = os.path.dirname(path)
                 os.makedirs(dir_name, exist_ok=True)
                 storage = JsonStorage(path, logger_instance=log)
-                test_data = {'test': 'write_check'}
-                test_session_id = f'test_session_init_{tool}'
-                storage.append(test_data, session_id=test_session_id)
-                log.info(f"Initialized JsonStorage for {tool} at {path}", extra={'session_id': test_session_id})
+                log.info(f"Initialized JsonStorage for {tool} at {path}", extra={'session_id': f'init_{tool}'})
                 storage_managers[tool] = storage
             except Exception as e:
-                log.error(f"Failed to initialize JsonStorage for {tool} at {path}: {str(e)}", exc_info=True)
+                log.error(f"Failed to initialize JsonStorage for {tool} at {path}: {str(e)}", exc_info=True, extra={'session_id': f'init_{tool}'})
                 storage_managers[tool] = None
     return storage_managers
 
