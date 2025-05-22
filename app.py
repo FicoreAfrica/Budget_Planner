@@ -17,6 +17,7 @@ from functools import wraps
 import gspread
 from google.oauth2.service_account import Credentials
 import pandas as pd
+import json
 
 try:
     from python_dotenv import load_dotenv
@@ -175,7 +176,7 @@ def before_request_setup():
 @app.context_processor
 def inject_translations():
     def context_trans(key):
-        return trans(key, lang=session.get('lang', 'en'))
+        return trans(key)  # Remove lang argument
     log.debug("Injecting translations and context variables")
     return dict(
         trans=context_trans,
@@ -213,7 +214,7 @@ def health():
 def index():
     if 'lang' not in session:
         session['lang'] = 'en'
-    t = get_translations(session.get('lang', 'en'))
+    t = trans  # Pass trans function
     log.info("Serving index page")
     courses_storage = app.config['STORAGE_MANAGERS']['courses']
     try:
@@ -222,7 +223,7 @@ def index():
     except Exception as e:
         log.error(f"Error retrieving courses: {str(e)}", exc_info=True)
         courses = []
-        flash(t.get("error_message", "Failed to load courses. Please try again."), "danger")
+        flash(trans("error_message"), "danger")
     return render_template('index.html', t=t, courses=courses)
 
 @app.route('/set_language/<lang>')
@@ -230,7 +231,7 @@ def set_language(lang):
     valid_langs = ['en', 'ha']
     session['lang'] = lang if lang in valid_langs else 'en'
     log.info(f"Language set to {session['lang']}")
-    flash(trans('language_changed', lang=session['lang']) if lang in valid_langs else trans('invalid_language', lang=session['lang']))
+    flash(trans('language_changed') if lang in valid_langs else trans('invalid_language'))
     return redirect(request.referrer or url_for('index'))
 
 @app.route('/favicon.ico')
@@ -242,7 +243,7 @@ def favicon():
 @session_required
 def general_dashboard():
     log.info("Serving general_dashboard")
-    t = get_translations(session.get('lang', 'en'))
+    t = trans  # Pass trans function
     data = {}
     for tool, storage in app.config['STORAGE_MANAGERS'].items():
         try:
@@ -287,35 +288,35 @@ def general_dashboard():
 def logout():
     log.info("Logging out user")
     session.clear()
-    flash(trans('logged_out', lang=session.get('lang', 'en')))
+    flash(trans('logged_out'))
     return redirect(url_for('index'))
 
 @app.errorhandler(Exception)
 def handle_global_error(e):
-    t = get_translations(session.get('lang', 'en'))
+    t = trans  # Pass trans function
     log.exception(f"Global error handler caught exception: {str(e)}")
-    flash(t.get("error_message", "An unexpected error occurred. Please try again or contact support."), "danger")
-    return render_template('500.html', error=t.get('error_message', 'Internal Server Error'), t=t), 500
+    flash(trans("error_message"), "danger")
+    return render_template('500.html', error=trans('error_message'), t=t), 500
 
 @app.errorhandler(CSRFError)
 def handle_csrf_error(e):
-    t = get_translations(session.get('lang', 'en'))
+    t = trans
     log.error(f"CSRF Error: {str(e)}", exc_info=True)
-    flash(t.get("csrf_error", "CSRF token missing or invalid. Please try again."), "danger")
-    return render_template('500.html', error=t.get('csrf_error', 'CSRF Error'), t=t), 400
+    flash(trans("csrf_error"), "danger")
+    return render_template('500.html', error=trans('csrf_error'), t=t), 400
 
 @app.errorhandler(404)
 def page_not_found(e):
-    t = get_translations(session.get('lang', 'en'))
+    t = trans
     log.error(f"404 Error: {str(e)}", exc_info=True)
-    return render_template('404.html', error=t.get('page_not_found', 'Page Not Found'), t=t), 404
+    return render_template('404.html', error=trans('page_not_found'), t=t), 404
 
 @app.errorhandler(500)
 def internal_server_error(e):
-    t = get_translations(session.get('lang', 'en'))
+    t = trans
     log.error(f"500 Error: {str(e)}", exc_info=True)
-    flash(t.get("error_message", "An internal server error occurred. Please try again."), "danger")
-    return render_template('500.html', error=t.get('error_message', 'Internal Server Error'), t=t), 500
+    flash(trans("error_message"), "danger")
+    return render_template('500.html', error=trans('error_message'), t=t), 500
 
 app.register_blueprint(financial_health_bp)
 app.register_blueprint(budget_bp)
