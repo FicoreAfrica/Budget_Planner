@@ -18,7 +18,6 @@ import gspread
 from google.oauth2.service_account import Credentials
 import pandas as pd
 
-# Conditional import for python_dotenv
 try:
     from python_dotenv import load_dotenv
     load_dotenv()
@@ -26,7 +25,6 @@ except ImportError:
     logging.basicConfig(level=logging.WARNING)
     logging.warning("python_dotenv not found, using os.environ directly for environment variables.")
 
-# Conditional import for translations
 try:
     from translations import trans, get_translations
 except ImportError as e:
@@ -36,7 +34,6 @@ except ImportError as e:
     def get_translations(lang):
         return {}
 
-# --- Global Logging Configuration ---
 root_logger = logging.getLogger('ficore_app')
 root_logger.setLevel(logging.DEBUG)
 
@@ -65,10 +62,8 @@ class SessionAdapter(logging.LoggerAdapter):
 
 log = SessionAdapter(root_logger, {})
 
-# Initialize Flask app
 app = Flask(__name__)
 
-# --- Application Configuration ---
 app.secret_key = os.environ.get('FLASK_SECRET_KEY')
 if not app.secret_key:
     log.critical("FLASK_SECRET_KEY not set. Using insecure default!")
@@ -100,7 +95,6 @@ app.config['SESSION_SERIALIZER'] = 'json'
 Session(app)
 CSRFProtect(app)
 
-# --- Google Sheets Configuration ---
 def init_gspread_client():
     try:
         creds_json = os.environ.get('GOOGLE_CREDENTIALS')
@@ -120,7 +114,6 @@ def init_gspread_client():
 
 app.config['GSPREAD_CLIENT'] = init_gspread_client()
 
-# Initialize JsonStorage for each tool within app context
 def init_storage_managers():
     storage_managers = {}
     tools = [
@@ -146,10 +139,8 @@ def init_storage_managers():
                 storage_managers[tool] = None
     return storage_managers
 
-# Initialize storage_managers and store in app config
 app.config['STORAGE_MANAGERS'] = init_storage_managers()
 
-# Template filter for number formatting
 @app.template_filter('format_number')
 def format_number(value):
     try:
@@ -160,7 +151,6 @@ def format_number(value):
         log.warning(f"Error formatting number {value}: {str(e)}")
         return str(value)
 
-# Session required decorator
 def session_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -170,7 +160,6 @@ def session_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# Before request handler
 @app.before_request
 def before_request_setup():
     if 'sid' not in session:
@@ -183,7 +172,6 @@ def before_request_setup():
     if not os.path.exists('data/storage.txt'):
         g.log.warning("data/storage.txt not found in data directory")
 
-# Context processor
 @app.context_processor
 def inject_translations():
     def context_trans(key):
@@ -200,19 +188,16 @@ def inject_translations():
         CONSULTANCY_FORM_URL=os.environ.get('CONSULTANCY_FORM_URL', '#')
     )
 
-# Health endpoint
 @app.route('/health')
 def health():
     log.info("Health check requested")
     status = {"status": "healthy"}
     try:
-        # Check storage managers
         for tool, storage in app.config['STORAGE_MANAGERS'].items():
             if storage is None:
                 status["status"] = "unhealthy"
                 status["details"] = f"Storage for {tool} failed to initialize"
                 return jsonify(status), 500
-        # Check Google Sheets client
         if app.config['GSPREAD_CLIENT'] is None:
             status["status"] = "unhealthy"
             status["details"] = "Google Sheets client not initialized"
@@ -224,7 +209,6 @@ def health():
         return jsonify(status), 500
     return jsonify(status), 200
 
-# Routes
 @app.route('/')
 def index():
     if 'lang' not in session:
@@ -298,7 +282,6 @@ def logout():
     flash(trans('You have been logged out'))
     return redirect(url_for('index'))
 
-# Error Handlers
 @app.errorhandler(Exception)
 def handle_global_error(e):
     t = trans('t')
@@ -326,7 +309,6 @@ def internal_server_error(e):
     flash(t("An internal server error occurred. Please try again."), "danger")
     return render_template('500.html', error=t.get('Internal Server Error', 'Internal Server Error'), t=t), 500
 
-# Register Blueprints
 app.register_blueprint(financial_health_bp)
 app.register_blueprint(budget_bp)
 app.register_blueprint(quiz_bp)
