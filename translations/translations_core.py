@@ -165,7 +165,7 @@ CORE_TRANSLATIONS = {
         'Back': 'Baya',
         'Thanks again': 'Na gode kuma',
         'e.g., Chukwuma': 'misali, Chukwuma',
-        'e.g., chukwuma@example.com': 'misali, chukwuma@example.com',
+        'e.g., chukwuma@example.com': 'misali, Yunus@example.com',
         'e.g., ₦5000': 'misali, ₦5000',
         'food': 'abinci',
         'transport': 'sufuri',
@@ -173,6 +173,6 @@ CORE_TRANSLATIONS = {
         'education': 'ilimi',
         'healthcare': 'kiwon lafiya',
         'entertainment': 'nishaɗi',
-        'savings_investments': 'ajiya_jarin hannu'
+        'savings_investments': 'ajiya jarin hannu'
     }
 }
