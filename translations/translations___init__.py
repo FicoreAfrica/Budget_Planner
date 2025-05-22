@@ -1,39 +1,63 @@
-import logging
 from flask import session
-from .translations_core import CORE_TRANSLATIONS
-from .translations_dashboard import DASHBOARD_TRANSLATIONS
-from .translations_financial_health import FINANCIAL_HEALTH_TRANSLATIONS
-from .translations_budget import BUDGET_TRANSLATIONS
 from .translations_quiz import QUIZ_TRANSLATIONS
-from .translations_bill import BILL_TRANSLATIONS
-from .translations_net_worth import NET_WORTH_TRANSLATIONS
-from .translations_emergency_fund import EMERGENCY_FUND_TRANSLATIONS
-from .translations_courses import COURSES_TRANSLATIONS
 from .translations_mailersend import MAILERSEND_TRANSLATIONS
+from .translations_bill import BILL_TRANSLATIONS
+from .translations_budget import BUDGET_TRANSLATIONS
+from .translations_courses import COURSES_TRANSLATIONS
+from .translations_dashboard import DASHBOARD_TRANSLATIONS
+from .translations_emergency_fund import EMERGENCY_FUND_TRANSLATIONS
+from .translations_financial_health import FINANCIAL_HEALTH_TRANSLATIONS
+from .translations_net_worth import NET_WORTH_TRANSLATIONS
+from .translations_core import CORE_TRANSLATIONS
 
-TRANSLATIONS = {}
-TRANSLATIONS.update(CORE_TRANSLATIONS)
-TRANSLATIONS.update(DASHBOARD_TRANSLATIONS)
-TRANSLATIONS.update(FINANCIAL_HEALTH_TRANSLATIONS)
-TRANSLATIONS.update(BUDGET_TRANSLATIONS)
-TRANSLATIONS.update(QUIZ_TRANSLATIONS)
-TRANSLATIONS.update(BILL_TRANSLATIONS)
-TRANSLATIONS.update(NET_WORTH_TRANSLATIONS)
-TRANSLATIONS.update(EMERGENCY_FUND_TRANSLATIONS)
-TRANSLATIONS.update(COURSES_TRANSLATIONS)
-TRANSLATIONS.update(MAILERSEND_TRANSLATIONS)
-
-def trans(key, lang=None):
+def trans(key, lang=None, **kwargs):
     """
-    Retrieve a translation for the given key in the specified language.
-    If lang is None, use the language from the session, defaulting to 'en'.
+    Translate a key using the appropriate language dictionary.
+    Falls back to English or the key itself if translation is missing.
+    Supports string formatting with kwargs.
     """
     if lang is None:
         lang = session.get('lang', 'en')
-    return TRANSLATIONS.get(lang, {}).get(key, key)
+    
+    # Combine translations from all modules
+    translations = {
+        'en': {
+            **CORE_TRANSLATIONS.get('en', {}),
+            **QUIZ_TRANSLATIONS.get('en', {}),
+            **MAILERSEND_TRANSLATIONS.get('en', {}),
+            **BILL_TRANSLATIONS.get('en', {}),
+            **BUDGET_TRANSLATIONS.get('en', {}),
+            **COURSES_TRANSLATIONS.get('en', {}),
+            **DASHBOARD_TRANSLATIONS.get('en', {}),
+            **EMERGENCY_FUND_TRANSLATIONS.get('en', {}),
+            **FINANCIAL_HEALTH_TRANSLATIONS.get('en', {}),
+            **NET_WORTH_TRANSLATIONS.get('en', {})
+        },
+        'ha': {
+            **CORE_TRANSLATIONS.get('ha', {}),
+            **QUIZ_TRANSLATIONS.get('ha', {}),
+            **MAILERSEND_TRANSLATIONS.get('ha', {}),
+            **BILL_TRANSLATIONS.get('ha', {}),
+            **BUDGET_TRANSLATIONS.get('ha', {}),
+            **COURSES_TRANSLATIONS.get('ha', {}),
+            **DASHBOARD_TRANSLATIONS.get('ha', {}),
+            **EMERGENCY_FUND_TRANSLATIONS.get('ha', {}),
+            **FINANCIAL_HEALTH_TRANSLATIONS.get('ha', {}),
+            **NET_WORTH_TRANSLATIONS.get('ha', {})
+        }
+    }
 
-def get_translations(lang):
-    """
-    Retrieve all translations for the specified language.
-    """
-    return TRANSLATIONS.get(lang, {})
+    # Get translation, fallback to English, then key
+    translation = translations.get(lang, {}).get(key, translations['en'].get(key, key))
+    
+    # Apply string formatting if kwargs provided
+    try:
+        return translation.format(**kwargs) if kwargs else translation
+    except (KeyError, ValueError):
+        return translation
+
+def register_trans(app):
+    """Register the trans function as a Jinja context processor."""
+    @app.context_processor
+    def inject_trans():
+        return dict(trans=trans)
