@@ -344,7 +344,7 @@ def dashboard():
         log.debug(f"Session health_record: {health_record}")
         if not health_record:
             stored_records = financial_health_storage.filter_by_session(session['sid'])
-            log.debug(f"Stored records: {stored_records}")
+            log.debug(f"Raw stored records: {stored_records}")
             if not stored_records:
                 log.warning("No records found for this session in storage")
                 latest_record = {}
@@ -374,7 +374,7 @@ def dashboard():
                         log.warning(f"Invalid type for '{field}' in latest record: {type(latest_record[field])}, setting to 0")
                         latest_record[field] = 0
                 records = [(final_record['id'], latest_record)]
-                log.debug(f"Retrieved user records: {records}")
+                log.debug(f"Processed user records: {records}")
         else:
             latest_record = health_record
             for field in required_fields:
@@ -385,7 +385,7 @@ def dashboard():
                     log.warning(f"Invalid type for '{field}' in session health_record: {type(latest_record[field])}, setting to 0")
                     latest_record[field] = 0
             records = [(str(uuid.uuid4()), latest_record)]
-            log.debug(f"Retrieved user records from session: {records}")
+            log.debug(f"Processed user records from session: {records}")
 
         # Retrieve all records for comparison
         all_records = financial_health_storage._read()
@@ -397,6 +397,7 @@ def dashboard():
                 if record['data'].get('step') != 3 and 'step' in record['data']:
                     continue
                 data = record['data'].get('data', record['data'])
+                log.debug(f"Processing record data: {data}")
                 for key in ['score', 'income', 'expenses', 'debt', 'interest_rate']:
                     if key in data and isinstance(data[key], (str, type(None))):
                         try:
@@ -425,9 +426,11 @@ def dashboard():
                     key=lambda x: x["data"].get("data", {}).get("score", 0) if 'step' in x['data'] else x["data"].get("score", 0),
                     reverse=True
                 )
+                log.debug(f"Sorted records: {[(r['id'], r['data'].get('data', {}).get('score', 0) if 'step' in r['data'] else r['data'].get('score', 0)) for r in sorted_records]}")
                 user_score = latest_record.get("score", 0)
                 for i, record in enumerate(sorted_records, 1):
                     score = record["data"].get("data", {}).get("score", 0) if 'step' in record['data'] else record["data"].get("score", 0)
+                    log.debug(f"Comparing user score {user_score} with record {record['id']} score {score}")
                     if score <= user_score and record.get("session_id") == session['sid']:
                         rank = i
                         break
@@ -496,23 +499,3 @@ def dashboard():
             average_score=0,
             t=t
         ), 500
-
-# Blueprint-level error handler
-@financial_health_bp.errorhandler(Exception)
-def handle_blueprint_error(e):
-    """Handle unexpected errors in the financial_health blueprint."""
-    t_dict = trans('t')
-    t = lambda key: t_dict.get(key, key)
-    log.exception(f"Unexpected error in financial_health blueprint: {str(e)}")
-    flash(t("An unexpected error occurred. Please try again or contact support."), "danger")
-    return render_template(
-        'health_score_dashboard.html',
-        records=[],
-        latest_record={},
-        insights=[t("No data available due to an error.")],
-        tips=[],
-        rank=0,
-        total_users=0,
-        average_score=0,
-        t=t
-    ), 500
