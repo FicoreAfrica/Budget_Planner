@@ -1,4 +1,4 @@
-from flask import Blueprint, request, session, redirect, url_for, render_template, flash
+from flask import Blueprint, request, session, redirect, url_for, render_template, flash, current_app
 from flask_wtf import FlaskForm
 from wtforms import StringField, SelectField, BooleanField, SubmitField
 from wtforms.validators import DataRequired, Optional, Email
@@ -10,13 +10,8 @@ import logging
 import uuid
 import random
 
-# Configure logging
-logging.basicConfig(filename='data/storage.txt', level=logging.DEBUG)
-
 quiz_bp = Blueprint('quiz', __name__)
-quiz_storage = JsonStorage('data/quiz_data.json')
 
-# Question pool with Nigeria-contextual questions
 QUESTION_POOL = [
     {
         'key': 'track_expenses',
@@ -95,14 +90,12 @@ QUESTION_POOL = [
     }
 ]
 
-# Form for Step 1 (Personal Info)
 class Step1Form(FlaskForm):
     first_name = StringField('First Name', validators=[DataRequired(message='First name is required')])
     email = StringField('Email', validators=[Optional(), Email(message='Valid email is required')])
     send_email = BooleanField('Send Email')
     submit = SubmitField('Start Quiz')
 
-# Form for Step 2 (Quiz Questions)
 class Step2Form(FlaskForm):
     def __init__(self, questions, *args, **kwargs):
         super(Step2Form, self).__init__(*args, **kwargs)
@@ -114,51 +107,63 @@ class Step2Form(FlaskForm):
             ))
     submit = SubmitField('Submit Answers')
 
-# Route for Step 1
 @quiz_bp.route('/step1', methods=['GET', 'POST'])
 def step1():
-    """Handle quiz step 1 form (personal info)."""
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
     form = Step1Form()
     t = trans('t')
+    course_id = request.args.get('course_id', 'financial_quiz')
     try:
         if request.method == 'POST' and form.validate_on_submit():
             session['quiz_step1'] = form.data
-            logging.debug(f"Quiz step1 form data: {form.data}")
-            return redirect(url_for('quiz.step2'))
-        return render_template('quiz_step1.html', form=form, t=t)
+            current_app.logger.debug(f"Quiz step1 form data: {form.data}")
+            progress_storage = current_app.config['STORAGE_MANAGERS']['user_progress']
+            progress = progress_storage.filter_by_session(session['sid'])
+            course_progress = next((p for p in progress if p['data']['course_id'] == course_id), None)
+            if not course_progress:
+                progress_data = {
+                    'course_id': course_id,
+                    'completed_lessons': [0],
+                    'progress_percentage': (1/3) * 100,
+                    'last_updated': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                }
+                progress_storage.append(progress_data, session_id=session['sid'])
+            else:
+                if 0 not in course_progress['data']['completed_lessons']:
+                    course_progress['data']['completed_lessons'].append(0)
+                    course_progress['data']['progress_percentage'] = (len(course_progress['data']['completed_lessons']) / 3) * 100
+                    course_progress['data']['last_updated'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    progress_storage.update_by_id(course_progress['id'], course_progress['data'])
+            current_app.logger.info(f"Quiz lesson 0 (step1) completed for course {course_id} by session {session['sid']}")
+            return redirect(url_for('quiz.step2', course_id=course_id))
+        return render_template('quiz_step1.html', form=form, t=t, course_id=course_id)
     except Exception as e:
-        logging.exception(f"Error in quiz.step1: {str(e)}")
+        current_app.logger.exception(f"Error in quiz.step1: {str(e)}")
         flash(t("Error processing personal information."), "danger")
-        return render_template('quiz_step1.html', form=form, t=t)
+        return render_template('quiz_step1.html', form=form, t=t, course_id=course_id)
 
-# Route for Step 2
 @quiz_bp.route('/step2', methods=['GET', 'POST'])
 def step2():
-    """Handle quiz step 2 form (quiz questions)."""
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
     t = trans('t')
-    # Select 10 random questions
+    course_id = request.args.get('course_id', 'financial_quiz')
     selected_questions = random.sample(QUESTION_POOL, 10)
     form = Step2Form(questions=selected_questions)
     try:
         if request.method == 'POST' and form.validate_on_submit():
-            # Calculate score
             answers = {q['key']: getattr(form, q['key']).data for q in selected_questions}
             score = sum(
                 3 if v == 'always' else 2 if v == 'often' else 1 if v == 'sometimes' else 0
                 for v in answers.values()
             )
-            # Assign personality
             personality = (
                 "Planner" if score >= 24 else
                 "Saver" if score >= 18 else
                 "Balanced" if score >= 12 else
                 "Spender"
             )
-            # Assign badges
             badges = []
             if score >= 24:
                 badges.append("Financial Guru")
@@ -169,7 +174,7 @@ def step2():
             if answers.get('set_financial_goals') in ['always', 'often']:
                 badges.append("Goal Setter")
             
-            # Store results
+            quiz_storage = current_app.config['STORAGE_MANAGERS']['quiz']
             record = {
                 "id": str(uuid.uuid4()),
                 "data": {
@@ -186,7 +191,6 @@ def step2():
             send_email_flag = session.get('quiz_step1', {}).get('send_email', False)
             quiz_storage.append(record, user_email=email, session_id=session['sid'])
             
-            # Send email if requested
             if send_email_flag and email:
                 send_email(
                     to_email=email,
@@ -203,29 +207,45 @@ def step2():
                     lang=session.get('lang', 'en')
                 )
             
-            # Clear session
+            progress_storage = current_app.config['STORAGE_MANAGERS']['user_progress']
+            progress = progress_storage.filter_by_session(session['sid'])
+            course_progress = next((p for p in progress if p['data']['course_id'] == course_id), None)
+            if not course_progress:
+                progress_data = {
+                    'course_id': course_id,
+                    'completed_lessons': [0, 1],
+                    'progress_percentage': (2/3) * 100,
+                    'last_updated': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                }
+                progress_storage.append(progress_data, session_id=session['sid'])
+            else:
+                if 1 not in course_progress['data']['completed_lessons']:
+                    course_progress['data']['completed_lessons'].append(1)
+                    course_progress['data']['progress_percentage'] = (len(course_progress['data']['completed_lessons']) / 3) * 100
+                    course_progress['data']['last_updated'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    progress_storage.update_by_id(course_progress['id'], course_progress['data'])
+            
+            current_app.logger.info(f"Quiz lesson 1 (step2) completed for course {course_id} by session {session['sid']}")
             session.pop('quiz_step1', None)
-            flash(t("Quiz completed successfully."), "success")
-            return redirect(url_for('quiz.results'))
-        return render_template('quiz_step2.html', form=form, questions=selected_questions, t=t)
+            return redirect(url_for('quiz.results', course_id=course_id))
+        return render_template('quiz_step2.html', form=form, questions=selected_questions, t=t, course_id=course_id)
     except Exception as e:
-        logging.exception(f"Error in quiz.step2: {str(e)}")
+        current_app.logger.exception(f"Error in quiz.step2: {str(e)}")
         flash(t("Error processing quiz answers."), "danger")
-        return render_template('quiz_step2.html', form=form, questions=selected_questions, t=t)
+        return render_template('quiz_step2.html', form=form, questions=selected_questions, t=t, course_id=course_id)
 
-# Route for Results
 @quiz_bp.route('/results', methods=['GET', 'POST'])
 def results():
-    """Display quiz results."""
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
     t = trans('t')
+    course_id = request.args.get('course_id', 'financial_quiz')
     try:
+        quiz_storage = current_app.config['STORAGE_MANAGERS']['quiz']
         user_data = quiz_storage.filter_by_session(session['sid'])
         records = [(record["id"], record["data"]) for record in user_data]
         latest_record = records[-1][1] if records else {}
         
-        # Generate insights and tips
         insights = []
         tips = [
             t("Use apps like PiggyVest or Cowrywise to automate savings."),
@@ -236,10 +256,12 @@ def results():
         if latest_record:
             if latest_record.get('personality') == "Spender":
                 insights.append(t("High spending habits detected. Try budgeting with PiggyVest to control expenses."))
+                tips.append(t("Try using a budgeting app to track your expenses."))
             if latest_record.get('score', 0) < 18:
                 insights.append(t("Low financial discipline. Set small goals, like saving ₦10,000 monthly."))
             if latest_record.get('answers', {}).get('emergency_fund') in ['never', 'sometimes']:
                 insights.append(t("No emergency fund. Start saving with Cowrywise for unexpected expenses."))
+                tips.append(t("Set up an emergency fund for unexpected expenses."))
             if latest_record.get('answers', {}).get('invest_money') in ['always', 'often']:
                 insights.append(t("Great investment habits! Explore cooperative schemes or real estate."))
         
@@ -249,10 +271,11 @@ def results():
             latest_record=latest_record,
             insights=insights,
             tips=tips,
-            t=t
+            t=t,
+            course_id=course_id
         )
     except Exception as e:
-        logging.exception(f"Error in quiz.results: {str(e)}")
+        current_app.logger.exception(f"Error in quiz.results: {str(e)}")
         flash(t("Error loading quiz results."), "danger")
         return render_template(
             'quiz_results.html',
@@ -260,5 +283,6 @@ def results():
             latest_record={},
             insights=[],
             tips=[],
-            t=t
+            t=t,
+            course_id=course_id
         )
