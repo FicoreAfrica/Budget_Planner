@@ -17,5 +17,24 @@ MAILERSEND_TRANSLATIONS = {
         'Invalid_Email_Address': 'Invalid email address provided',
         'Email_Sending_Limit_Reached': 'Email sending limit reached. Please try again later.',
         'Email_Configuration_Error': 'Email service not configured properly'
+    },
+    'ha': {
+        'Email_Sent_Successfully': 'An aika imel cikin nasara',
+        'Error_Sending_Email': 'Kuskure wajen aika imel',
+        'Test_Email_Sent': 'An aika imel na gwaji',
+        'Emergency_Fund_Summary_Email_Subject': 'Taƙaitaccen Asusun Gaggawa na Ka daga Ficore Africa',
+        'Course_Completion_Email_Subject': 'Taya Murna! Ka Kammala Kwas',
+        'Financial_Health_Summary_Email_Subject': 'Taƙaitaccen Lafiyar Kuɗin Ka',
+        'Welcome_Email_Subject': 'Barka da Zuwa Ficore Africa!',
+        'Email_Body_Greeting': 'Sannu {name},',
+        'Email_Body_Closing': 'Gaisuwa mafi kyau,\nƘungiyar Ficore Africa',
+        'Emergency_Fund_Summary_Email_Body': 'Ga shirin asusun gaggawa na ka:\n\nAsusun da Aka Nufa: ₦{target}\nAjiya ta Wata: ₦{monthly}\nJadawali: watanni {months}\n\nCi gaba da ajiya don gina raga na tsaro na kuɗi!',
+        'Course_Completion_Email_Body': 'Ka kammala kwas na {course_name}!\n\nZazzage takardar shaidarka a nan: {certificate_url}\n\nCi gaba da koyo tare da Ficore Africa!',
+        'Financial_Health_Summary_Email_Body': 'Makin lafiyar kuɗin ka: {score}\n\nHaske masu mahimmanci:\n- {insight1}\n- {insight2}\n\nBincika ƙarin kayan aiki a Ficore Africa don inganta kuɗin ka!',
+        'Welcome_Email_Body': 'Barka da zuwa Ficore Africa!\n\nFara tafiyar kuɗin ka tare da kayan aikinmu da kwasuna. Bincika yanzu a {website_url}.',
+        'Email_Footer': 'Ficore Africa - Ƙarfafa ’Yancin Kuɗi\nCire biɗa: {unsubscribe_url}',
+        'Invalid_Email_Address': 'An ba da adireshin imel ba daidai ba',
+        'Email_Sending_Limit_Reached': 'An kai iyakar aika imel. Da fatan za a sake gwadawa daga baya.',
+        'Email_Configuration_Error': 'Ba a saita sabis na imel yadda ya kamata ba'
     }
 }
