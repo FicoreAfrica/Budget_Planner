@@ -11,12 +11,14 @@ import uuid
 import traceback
 import os
 
-# Configure logging with immediate flush
+# Configure logging
 logger = logging.getLogger('financial_health')
 logger.setLevel(logging.DEBUG)
+
+# Use the same logger setup as app.py
+formatter = logging.Formatter('%(asctime)s - %(name)s - SessionID: %(session_id)s - %(levelname)s - %(message)s')
 file_handler = logging.FileHandler('data/storage.txt')
 file_handler.setLevel(logging.DEBUG)
-formatter = logging.Formatter('%(asctime)s - %(name)s - SessionID: %(session_id)s - %(levelname)s - %(message)s')
 file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 
@@ -111,24 +113,32 @@ def step1():
             session['health_step1'] = form_data
             log.debug(f"Validated form data: {form_data}")
 
-            # Persist to JSON storage
+            # Persist to JSON storage using append
             try:
-                storage_data = {'session_id': session['sid'], 'step': 1, 'data': form_data}
-                financial_health_storage.save(storage_data)
-                log.info(f"Step1 form data saved to storage for session {session['sid']}: {storage_data}")
+                storage_data = {
+                    'step': 1,
+                    'data': form_data
+                }
+                record_id = financial_health_storage.append(storage_data, user_email=form_data.get('email'), session_id=session['sid'])
+                if record_id:
+                    log.info(f"Step1 form data appended to storage with record ID {record_id} for session {session['sid']}")
+                else:
+                    log.error("Failed to append Step1 data to storage")
+                    flash(t("Error saving data. Please try again."), "danger")
+                    return render_template('health_score_step1.html', form=form, t=t), 500
             except Exception as storage_error:
-                log.exception(f"Failed to save to JSON storage: {str(storage_error)}")
+                log.exception(f"Failed to append to JSON storage: {str(storage_error)}")
                 flash(t("Error saving data. Please try again."), "danger")
                 return render_template('health_score_step1.html', form=form, t=t), 500
 
-            log.debug(f"Step1 form data saved to session and storage: {form_data}")
+            log.debug(f"Step1 form data saved to session: {form_data}")
             return redirect(url_for('financial_health.step2'))
         return render_template('health_score_step1.html', form=form, t=t)
     except Exception as e:
         log.exception(f"Error in step1: {str(e)}")
         flash(t("Error processing personal information. Please try again."), "danger")
         return render_template('health_score_step1.html', form=form, t=t), 500
-        
+
 @financial_health_bp.route('/step2', methods=['GET', 'POST'])
 def step2():
     """Handle financial health step 2 form (income and expenses)."""
@@ -149,8 +159,25 @@ def step2():
                 'expenses': float(form.expenses.data),
                 'submit': form.submit.data
             }
-            financial_health_storage.save({'session_id': session['sid'], 'step': 2, 'data': session['health_step2']})  # Persist to JSON
-            log.debug(f"Step2 form data saved to session and storage: {session['health_step2']}")
+            # Persist to JSON storage using append
+            try:
+                storage_data = {
+                    'step': 2,
+                    'data': session['health_step2']
+                }
+                record_id = financial_health_storage.append(storage_data, session_id=session['sid'])
+                if record_id:
+                    log.info(f"Step2 form data appended to storage with record ID {record_id} for session {session['sid']}")
+                else:
+                    log.error("Failed to append Step2 data to storage")
+                    flash(t("Error saving data. Please try again."), "danger")
+                    return render_template('health_score_step2.html', form=form, t=t), 500
+            except Exception as storage_error:
+                log.exception(f"Failed to append to JSON storage: {str(storage_error)}")
+                flash(t("Error saving data. Please try again."), "danger")
+                return render_template('health_score_step2.html', form=form, t=t), 500
+
+            log.debug(f"Step2 form data saved to session: {session['health_step2']}")
             return redirect(url_for('financial_health.step3'))
         return render_template('health_score_step2.html', form=form, t=t)
     except Exception as e:
@@ -236,26 +263,40 @@ def step3():
 
             # Store record in session and persist to JSON
             record = {
-                "data": {
-                    "first_name": step1_data.get('first_name', ''),
-                    "email": step1_data.get('email', ''),
-                    "user_type": step1_data.get('user_type', 'individual'),
-                    "income": income,
-                    "expenses": expenses,
-                    "debt": debt,
-                    "interest_rate": interest_rate,
-                    "debt_to_income": debt_to_income,
-                    "savings_rate": savings_rate,
-                    "interest_burden": interest_burden,
-                    "score": score,
-                    "status": status,
-                    "badges": badges,
-                    "created_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                }
+                "first_name": step1_data.get('first_name', ''),
+                "email": step1_data.get('email', ''),
+                "user_type": step1_data.get('user_type', 'individual'),
+                "income": income,
+                "expenses": expenses,
+                "debt": debt,
+                "interest_rate": interest_rate,
+                "debt_to_income": debt_to_income,
+                "savings_rate": savings_rate,
+                "interest_burden": interest_burden,
+                "score": score,
+                "status": status,
+                "badges": badges,
+                "created_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             }
             session['health_record'] = record
-            financial_health_storage.save({'session_id': session['sid'], 'step': 3, 'data': record['data']})  # Persist final record
-            log.info(f"Saved financial health record to session and storage for session {session['sid']}: {record}")
+            # Persist final record using append
+            try:
+                storage_data = {
+                    'step': 3,
+                    'data': record
+                }
+                record_id = financial_health_storage.append(storage_data, user_email=step1_data.get('email'), session_id=session['sid'])
+                if record_id:
+                    log.info(f"Step3 final record appended to storage with record ID {record_id} for session {session['sid']}")
+                else:
+                    log.error("Failed to append Step3 final record to storage")
+                    flash(t("Error saving final record. Please try again."), "danger")
+                    return render_template('health_score_step3.html', form=form, t=t), 500
+            except Exception as storage_error:
+                log.exception(f"Failed to append to JSON storage: {str(storage_error)}")
+                flash(t("Error saving final record. Please try again."), "danger")
+                return render_template('health_score_step3.html', form=form, t=t), 500
+
             log.debug(f"Session contents after save: {dict(session)}")
 
             # Send email if requested
@@ -269,18 +310,18 @@ def step3():
                         subject=t("Your Financial Health Report"),
                         template_name="health_score_email.html",
                         data={
-                            "first_name": record["data"]["first_name"],
-                            "score": record["data"]["score"],
-                            "status": record["data"]["status"],
-                            "income": record["data"]["income"],
-                            "expenses": record["data"]["expenses"],
-                            "debt": record["data"]["debt"],
-                            "interest_rate": record["data"]["interest_rate"],
-                            "debt_to_income": record["data"]["debt_to_income"],
-                            "savings_rate": record["data"]["savings_rate"],
-                            "interest_burden": record["data"]["interest_burden"],
-                            "badges": record["data"]["badges"],
-                            "created_at": record["data"]["created_at"],
+                            "first_name": record["first_name"],
+                            "score": record["score"],
+                            "status": record["status"],
+                            "income": record["income"],
+                            "expenses": record["expenses"],
+                            "debt": record["debt"],
+                            "interest_rate": record["interest_rate"],
+                            "debt_to_income": record["debt_to_income"],
+                            "savings_rate": record["savings_rate"],
+                            "interest_burden": record["interest_burden"],
+                            "badges": record["badges"],
+                            "created_at": record["created_at"],
                             "cta_url": url_for('financial_health.dashboard', _external=True)
                         },
                         lang=session.get('lang', 'en')
@@ -311,23 +352,23 @@ def dashboard():
     try:
         # Retrieve user-specific record from session or storage
         health_record = session.get('health_record', {})
-        if not health_record or 'data' not in health_record:
+        if not health_record:
             # Fallback to storage if session is empty
             stored_records = financial_health_storage.filter_by_session(session['sid'])
-            health_record = {'data': stored_records[-1]['data']} if stored_records else {}
+            health_record = stored_records[-1]['data'] if stored_records else {}
             log.warning(f"Session health_record empty, falling back to storage: {health_record}")
         log.debug(f"Raw session/storage health_record: {health_record}")
-        if not health_record or 'data' not in health_record:
+        if not health_record:
             log.warning("No valid health record found in session or storage")
             latest_record = {}
             records = []
         else:
-            latest_record = health_record['data']
+            latest_record = health_record
             records = [(str(uuid.uuid4()), latest_record)]
             log.debug(f"Retrieved user records from session/storage: {records}")
 
-        # Retrieve all records for comparison (fallback to empty list)
-        all_records = financial_health_storage.get_all()  # Assuming get_all() returns all stored records
+        # Retrieve all records for comparison
+        all_records = financial_health_storage._read()  # Direct access since get_all isn't available
         total_users = len(all_records)
         cleaned_records = []
         for record in all_records:
