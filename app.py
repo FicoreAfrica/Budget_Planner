@@ -56,7 +56,6 @@ logger.addHandler(console_handler)
 class SessionAdapter(logging.LoggerAdapter):
     def process(self, msg, kwargs):
         kwargs['extra'] = kwargs.get('extra', {})
-        # Only try to access session if we're in a request context
         if has_request_context():
             kwargs['extra']['session_id'] = session.get('sid', 'unknown')
         else:
@@ -103,14 +102,13 @@ try:
         dir_name = os.path.dirname(path)
         os.makedirs(dir_name, exist_ok=True)
         storage = JsonStorage(path)
-        # Test write access
-        test_data = {'test': 'write_check', 'session_id': 'test_session'}
-        storage.save(test_data)
+        # Test write access using append
+        test_data = {'test': 'write_check'}
+        storage.append(test_data, session_id='test_session')
         logger.info(f"Initialized JsonStorage for {tool} at {path}")
         storage_managers[tool] = storage
 except Exception as e:
     logger.error(f"Failed to initialize JsonStorage: {str(e)}", exc_info=True)
-    # Fallback to empty storage managers to allow app to start
     storage_managers = {tool: None for tool in ['financial_health', 'budget', 'quiz', 'bills', 'net_worth', 'emergency_fund']}
 
 app.config['STORAGE_MANAGERS'] = storage_managers
