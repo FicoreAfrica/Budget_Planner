@@ -4,10 +4,14 @@ from wtforms import StringField, FloatField, BooleanField, SubmitField
 from wtforms.validators import DataRequired, NumberRange, Optional, Email
 from json_store import JsonStorage
 from mailersend_email import send_email
-from translations import trans
 from datetime import datetime
 import logging
 import uuid
+try:
+    from app import trans  # Import trans from app.py instead
+except ImportError:
+    def trans(key, lang=None):
+        return key  # Fallback to return the key as the translation
 
 # Configure logging
 logging.basicConfig(filename='data/storage.txt', level=logging.DEBUG)
