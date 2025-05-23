@@ -2,23 +2,23 @@
 {% block content %}
 <div class="container">
     <div class="header">
-        <h1>{{ trans('financial_courses') | default('Financial Courses') }}</h1>
+        <h1>{{ trans('courses_financial_courses') | default('Financial Courses') }}</h1>
     </div>
     <div class="row mt-4">
         {% for course in courses %}
         <div class="col-md-4 mb-4">
             <div class="card h-100">
                 <div class="card-body">
-                    <h5 class="card-title">{{ trans(course.title_key) | default(course.title_en) }}</h5>
+                    <h5 class="card-title">{{ trans('courses_' + course.title_key) | default(course.title_en) }}</h5>
                     <p class="card-text">
-                        {{ trans('premium_course') | default('This is a premium course') if course.is_premium else trans('free_course') | default('Free course') }}
+                        {{ trans('courses_premium_course') | default('This is a premium course') if course.is_premium else trans('courses_free_course') | default('Free course') }}
                         <br>
                         {% set course_progress = (user_progress | selectattr('data.course_id', 'equalto', course.id) | first) %}
                         {% if course_progress %}
-                            {{ trans('progress') | default('Progress') }}: {{ course_progress.data.progress_percentage | round(2) }}%
+                            {{ trans('courses_progress') | default('Progress') }}: {{ course_progress.data.progress_percentage | round(2) }}%
                         {% endif %}
                     </p>
-                    <a href="{{ url_for('courses.course_page', course_id=course.id) }}" class="btn btn-primary">{{ trans('start_course') | default('Start Course') }}</a>
+                    <a href="{{ url_for('courses.course_page', course_id=course.id) }}" class="btn btn-primary">{{ trans('courses_start_course') | default('Start Course') }}</a>
                 </div>
             </div>
         </div>
