@@ -48,8 +48,15 @@ def trans(key, lang=None, **kwargs):
     }
 
     # Get translation, fallback to English, then key
-    translation = translations.get(lang, {}).get(key, translations['en'].get(key, key))
+ # Debug logging
+    logging.debug(f"Translation request: key={key}, lang={lang}")
+    if lang not in translations:
+        logging.warning(f"Language {lang} not found in translations, falling back to 'en'")
+        lang = 'en'
     
+    translation = translations.get(lang, {}).get(key, translations['en'].get(key, key))
+    logging.debug(f"Translation result: key={key}, lang={lang}, result={translation}")
+
     # Apply string formatting if kwargs provided
     try:
         return translation.format(**kwargs) if kwargs else translation
