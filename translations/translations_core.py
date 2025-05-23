@@ -19,11 +19,11 @@ CORE_TRANSLATIONS = {
         'core_feedback': 'Feedback',
         'core_logout': 'Logout',
         'core_all_in_one_toolkit': 'Your All-in-One Toolkit for Personal & SME Financial Health Across Africa',
-        'core_track_finances': 'Track your finances with ease',
-        'core_explore_tools': 'Explore Tools',
+        'core_track_finances': 'Use Ficore to Track your income, net worth, budgets, and bills, to grow your money with confidence.',
+        'core_explore_tools': 'Explore Ficore Tools',
         'core_choose_tool': 'Choose a Tool',
         'core_start': 'Start',
-        'core_why_ficore': 'Why Ficore?',
+        'core_why_ficore': 'Why Ficore Africa?',
         'core_connect_on_linkedin': 'Connect on LinkedIn',
         'core_follow_on_twitter': 'Follow on Twitter',
         'core_follow_on_facebook': 'Follow on Facebook',
@@ -56,23 +56,34 @@ CORE_TRANSLATIONS = {
         'core_return_to_home': 'Return to Home',
         'core_form_processing_error': 'Form processing error. Please try again.',
         'core_correct_errors_below': 'Please correct the errors below.',
-        'core_about_ficore_africa': 'Ficore Africa is building Nigeria’s first localized, all-in-one suite of personal and SME financial management tools that don’t just tell you /what/ but also guides you to understand it, improve it, and take control of your money. More? We have quizzes, tips, educational courses, and practical dashboards, made just for you!',
+        'core_about_ficore_africa': '''
+            <section class="featured-courses-section text-center my-5">
+                <h2>Featured Courses</h2>
+                <p>Boost your financial literacy with these top courses:</p>
+                <ul class="why-list list-unstyled">
+                    {% for course in sample_courses %}
+                        <li><i class="fas fa-book"></i> {{ trans('courses_' + course.title_key) | default(course.title_en) }}</li>
+                    {% endfor %}
+                </ul>
+                <a href="{{ url_for('courses.course_catalog') }}" class="btn btn-primary mt-3">Explore All Courses</a>
+            </section>
+        ''',
         'core_why_ficore_africa': 'Why Ficore Africa?',
         'core_localized_for_africa': 'Localized for Africa with support for Naira and regional financial contexts',
         'core_actionable_insights': 'Provides actionable insights for better financial decisions',
         'core_empowers_financial_literacy': 'Empowers financial literacy with easy-to-use tools',
         'core_what_people_say': 'What people are saying about Us',
         'core_testimonials': 'Testimonials',
-        'core_impressed_features': 'I explored Ficore Apps features for the first time today and I’m impressed... I thought it was only for SMEs, but now I see even individuals can benefit. Their learning section is on another level.',
-        'core_ficore_praise': 'Ficore 🔥🔥🔥!',
-        'core_software_engineer': 'Software Engineer',
-        'core_potential_support': 'I’ve been following Ficore’s work for a while and I’m impressed. It’s clearly viable, and I’d love more insight, especially if there’s a way I can support operations. I’d like to contribute if needed!',
+        'core_impressed_features': 'I explored the features earlier today and was impressed... I thought it was only for SMEs, but now I see even individuals can benefit. The learning section is on another level.',
+        'core_fic━ore_praise': '🔥 Ficore 🔥🔥🔥🔥🔥',
+        'core_software_engineer': 'Software Engineer for Sustainable Solutions',
+        'core_potential_support': 'I’ve been following the Ficore project and I’m impressed. It’s clear there’s potential, and I’d love more insight, especially if there’s a way I can support operations. I’d like to contribute if needed!',
         'core_explore_more_tools': 'Explore More Tools from Ficore',
         'core_use_ficore_to_track': 'Use Ficore to Track your income, net worth, budgets, and bills, to grow your money with confidence.',
         'core_where_to_start': 'Where to Start? Get Your Free Health Score!',
         'core_localized_africa': 'Localized for Africa',
         'core_empowers_literacy': 'Empowers Financial Literacy',
-        'core_empowering_financial_growth': 'Empowering Financial Growth',
+        'core_empowering_financial_growth': 'Empowering financial growth across Africa since 2025',
         'core_error_processing_data': 'Error processing data. Please try again.',
         'core_track_financial_health': 'Track your financial health with Ficore Africa. See your score, earn badges, and get smart insights.',
         'core_financial_health_dashboard': 'Ficore Africa - Your Financial Health Dashboard',
@@ -141,7 +152,18 @@ CORE_TRANSLATIONS = {
         'core_localized_africa': 'An keɓance don Afrika',
         'core_empowers_literacy': 'Yana Ƙarfafa Ilimin Kuɗi',
         'core_actionable_insights': 'Yana ba da fahimta mai aiki don ingantaccen yanke shawara na kuɗi',
-        'core_about_ficore_africa': 'Game da Ficore Afrika: Ƙarfafa ci gaban kuɗi a duk Afrika tun 2025',
+        'core_about_ficore_africa': '''
+            <section class="featured-courses-section text-center my-5">
+                <h2>Featured Courses</h2>
+                <p>Haɓaka ilimin kuɗin ku tare da waɗannan manyan darussan:</p>
+                <ul class="why-list list-unstyled">
+                    {% for course in sample_courses %}
+                        <li><i class="fas fa-book"></i> {{ trans('courses_' + course.title_key) | default(course.title_en) }}</li>
+                    {% endfor %}
+                </ul>
+                <a href="{{ url_for('courses.course_catalog') }}" class="btn btn-primary mt-3">Bincika Duk Darussan</a>
+            </section>
+        ''',
         'core_empowering_financial_growth': 'Ƙarfafa Ci Gaban Kuɗi',
         'core_connect_on_linkedin': 'Haɗa a LinkedIn',
         'core_follow_on_twitter': 'Bi a Twitter',
@@ -173,6 +195,7 @@ CORE_TRANSLATIONS = {
         'core_page_not_found_message': 'Shafin da kake nema ba ya wanzu.',
         'core_unexpected_server_error': 'Kuskure da ba a ji tsammani ba ya faru a sabar.',
         'core_error_details': 'Bayanin Kuskure',
+        Corresponding core key: core_page_not_found_message
         'core_return_to_home': 'Koma zuwa Gida',
         'core_form_processing_error': 'Kuskuren sarrafa fom. Da fatan za a sake gwadawa.',
         'core_correct_errors_below': 'Da fatan za a gyara kurakurai a ƙasa.',
@@ -237,6 +260,6 @@ CORE_TRANSLATIONS = {
         'core_invalid_language': 'Harshe mara inganci aka zaɓa.',
         'core_logged_out': 'An fita daga shiga.',
         'core_csrf_error': 'Gwajin alamar CSRF ya gaza.',
-        'core_page_not_found': 'Ba a sami shafin ba.'
+        'core_page_not_found': 'Ba a sami shafin ba.',
     }
 }
