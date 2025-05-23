@@ -1,6 +1,38 @@
 QUIZ_TRANSLATIONS = {
     'en': {
         'quiz_financial_personality_quiz': 'Financial Personality Quiz',
+        # --- Likely Missing Quiz Keys ---
+        'quiz_enter_personal_information': 'Enter your personal information',
+        'quiz_answer_questions_for_personality': 'Answer these questions to discover your financial personality',
+        'quiz_send_email_tooltip': 'Check to receive email with quiz results',
+        'quiz_send_email': 'Send Email',
+
+        # --- Likely Missing or Dynamic Keys (examples for dynamic) ---
+        # For each quiz question, tooltip, and placeholder, add keys like:
+        'quiz_question_example': 'Example Question',
+        'quiz_tooltip_example': 'Tooltip for example question',
+        'quiz_placeholder_example': 'e.g., Example answer',
+        'quiz_select_answer_required': 'Please select an answer',
+
+        # --- Likely Core/Other Module Keys ---
+        'core_first_name': 'First Name',
+        'core_first_name_placeholder': 'e.g., Muhammad, Bashir, Umar',
+        'core_first_name_tooltip': 'Enter your first name',
+        'core_first_name_required': 'First name is required',
+        'core_email': 'Email',
+        'core_email_placeholder': 'e.g., muhammad@example.com',
+        'core_email_tooltip': 'Enter your email to receive quiz results',
+        'core_email_required': 'Valid email is required',
+        'core_back': 'Back',
+        'core_continue': 'Continue',
+        'core_hello': 'Hello',
+        'core_user': 'User',
+        'core_dear': 'Dear',
+        'core_created_at': 'Created At',
+        'core_close': 'Close',
+
+        # --- Courses Keys ---
+        'courses_back_to_courses': 'Back to Courses',
         'quiz_financial_quiz': 'Financial Quiz',
         'quiz_discover_your_financial_personality': 'Discover Your Financial Personality',
         'quiz_start_quiz': 'Start Quiz',
@@ -373,6 +405,37 @@ QUIZ_TRANSLATIONS = {
         'quiz_first_name_required': 'Ana buƙatar sunan farko.',
         'quiz_email_invalid': 'Don Allah shigar da adireshin imel mai inganci.',
         'quiz_answer_required': 'Don Allah zaɓi amsa.',
-        'quiz_results_subject': 'Sakamakon Gwajin Kuɗin Ka'
+        'quiz_results_subject': 'Sakamakon Gwajin Kuɗin Ka',
+        # --- Likely Missing Quiz Keys ---
+        'quiz_enter_personal_information': 'Shigar da bayanin kai',
+        'quiz_answer_questions_for_personality': 'Amsa waɗannan tambayoyin don gano halin kuɗin ka',
+        'quiz_send_email_tooltip': 'Duba don karɓar sakamakon gwaji ta imel',
+        'quiz_send_email': 'Aika Imel',
+
+        # --- Likely Missing or Dynamic Keys (examples for dynamic) ---
+        'quiz_question_example': 'Misalin Tambaya',
+        'quiz_tooltip_example': 'Bayani mai taimako ga misalin tambaya',
+        'quiz_placeholder_example': 'misali, Amsa',
+        'quiz_select_answer_required': 'Da fatan za a zaɓi amsa',
+
+        # --- Likely Core/Other Module Keys ---
+        'core_first_name': 'Sunan Farko',
+        'core_first_name_placeholder': 'misali, Muhammad, Bashir, Umar',
+        'core_first_name_tooltip': 'Shigar da sunan farko',
+        'core_first_name_required': 'Ana buƙatar sunan farko',
+        'core_email': 'Imel',
+        'core_email_placeholder': 'misali, muhammad@example.com',
+        'core_email_tooltip': 'Shigar da imel ɗin ka don karɓar sakamakon gwaji',
+        'core_email_required': 'Ana buƙatar imel mai inganci',
+        'core_back': 'Baya',
+        'core_continue': 'Ci gaba',
+        'core_hello': 'Sannu',
+        'core_user': 'Mai amfani',
+        'core_dear': 'Mai girma',
+        'core_created_at': 'An Ƙirƙira A',
+        'core_close': 'Rufe',
+
+        # --- Courses Keys ---
+        'courses_back_to_courses': 'Komawa Zuwa Kwasa-kwasai'
     }
 }
