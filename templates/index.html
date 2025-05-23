@@ -144,18 +144,18 @@
         <h2>{{ trans('core_courses_ficore_africa') | default('About Ficore Africa: Featured Courses to Boost Your Financial Literacy') }}</h2>
         <div class="card shadow mb-5">
             <div class="card-body">
-                <section class="featured-courses-section text-center">
-                    <h2 class="mb-3">{{ trans('courses_featured_courses') | default('Featured Courses') }}</h2>
-                    <p class="lead mb-4">{{ trans('courses_boost_literacy') | default('Boost your financial literacy with these top courses:') }}</p>
-                    <ul class="list-group list-group-flush mb-4">
+                <section class="featured-courses-section text-center my-5">
+                    <h2 class="mb-3">Featured Courses</h2>
+                    <p class="lead mb-4">Boost your financial literacy with these top courses:</p>
+                    <ul class="why-list list-group list-group-flush mb-4">
                         {% for course in sample_courses %}
-                            <li class="list-group-item d-flex align-items-center justify-content-center">
-                                <i class="fas fa-book me-2"></i>
+                            <li class="list-group-item">
+                                <i class="fas fa-book"></i>
                                 {{ trans('courses_' + course.title_key) | default(course.title_en) }}
                             </li>
                         {% endfor %}
                     </ul>
-                    <a href="{{ url_for('courses.course_catalog') }}" class="btn btn-primary mt-3">{{ trans('course_view_all_courses') | default('Explore All Courses') }}</a>
+                    <a href="{{ url_for('courses.course_catalog') }}" class="btn btn-primary mt-3">View All Courses</a>
                 </section>
             </div>
         </div>
