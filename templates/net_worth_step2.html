@@ -12,14 +12,14 @@
 <div class="container">
     <div class="header">
         <h1>{{ trans('net_worth_calculator') | default('Net Worth Calculator') }}</h1>
-        <p>{{ trans('enter_your_assets') | default('Enter your assets') }}</p>
+        <p>{{ trans('net_worth_enter_your_assets') | default('Enter your assets') }}</p>
     </div>
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
                 <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                    {{ trans(message) | default(message) }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    {{ trans('core_' + message) | default(message) }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close') | default('Close') }}"></button>
                 </div>
             {% endfor %}
         {% endif %}
@@ -29,23 +29,23 @@
             <form method="POST" action="{{ url_for('net_worth.step2') }}">
                 {{ form.csrf_token }}
                 <div class="mb-3">
-                    <label class="form-label">{{ trans('cash_and_savings') | default('Cash & Savings') }}</label>
-                    {{ form.cash_savings(class="form-control number-input", placeholder=trans('cash_savings_placeholder') | default('e.g., 500,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('cash_savings_tooltip') | default('Money in bank accounts, cash, Ajo/Esusu/Adashe'), 'type': 'text', 'aria-describedby': 'cash_savings_help'}) }}
-                    <div class="invalid-feedback">{{ trans('cash_savings_required') | default('Cash & Savings is required') }}</div>
+                    <label class="form-label">{{ trans('net_worth_cash_and_savings') | default('Cash & Savings') }}</label>
+                    {{ form.cash_savings(class="form-control number-input", placeholder=trans('net_worth_cash_savings_placeholder') | default('e.g., 500,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('net_worth_cash_savings_tooltip') | default('Money in bank accounts, cash, Ajo/Esusu/Adashe'), 'type': 'text', 'aria-describedby': 'cash_savings_help'}) }}
+                    <div class="invalid-feedback">{{ trans('net_worth_cash_savings_required') | default('Cash & Savings is required') }}</div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">{{ trans('investments') | default('Investments') }}</label>
-                    {{ form.investments(class="form-control number-input", placeholder=trans('investments_placeholder') | default('e.g., 1,000,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('investments_tooltip') | default('Value of stocks, bonds, farming, or other investments'), 'type': 'text', 'aria-describedby': 'investments_help'}) }}
-                    <div class="invalid-feedback">{{ trans('investments_required') | default('Investments is required') }}</div>
+                    <label class="form-label">{{ trans('net_worth_investments') | default('Investments') }}</label>
+                    {{ form.investments(class="form-control number-input", placeholder=trans('net_worth_investments_placeholder') | default('e.g., 1,000,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('net_worth_investments_tooltip') | default('Value of stocks, bonds, farming, or other investments'), 'type': 'text', 'aria-describedby': 'investments_help'}) }}
+                    <div class="invalid-feedback">{{ trans('net_worth_investments_required') | default('Investments is required') }}</div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">{{ trans('physical_property') | default('Physical Property') }}</label>
-                    {{ form.property(class="form-control number-input", placeholder=trans('property_placeholder') | default('e.g., 5,000,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('property_tooltip') | default('Value of houses, real estate, or land you own'), 'type': 'text', 'aria-describedby': 'property_help'}) }}
-                    <div class="invalid-feedback">{{ trans('physical_property_required') | default('Physical Property is required') }}</div>
+                    <label class="form-label">{{ trans('net_worth_physical_property') | default('Physical Property') }}</label>
+                    {{ form.property(class="form-control number-input", placeholder=trans('net_worth_property_placeholder') | default('e.g., 5,000,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('net_worth_property_tooltip') | default('Value of houses, real estate, or land you own'), 'type': 'text', 'aria-describedby': 'property_help'}) }}
+                    <div class="invalid-feedback">{{ trans('net_worth_physical_property_required') | default('Physical Property is required') }}</div>
                 </div>
                 <div class="d-flex justify-content-between">
-                    <a href="{{ url_for('net_worth.step1') }}" class="btn btn-secondary">{{ trans('back') | default('Back') }}</a>
-                    <button type="submit" class="btn btn-primary">{{ trans('continue_to_liabilities') | default('Continue to Liabilities') }}</button>
+                    <a href="{{ url_for('net_worth.step1') }}" class="btn btn-secondary">{{ trans('core_back') | default('Back') }}</a>
+                    <button type="submit" class="btn btn-primary">{{ trans('net_worth_continue_to_liabilities') | default('Continue to Liabilities') }}</button>
                 </div>
             </form>
         </div>
@@ -74,7 +74,7 @@
             const numValue = parseFloat(cleanValue) || 0;
             if (numValue > 10000000000) {
                 cleanValue = '10000000000';
-                alert('{{ trans('input_cannot_exceed_10_billion') | default('Input cannot exceed ₦10 billion') }}');
+                alert('{{ trans('core_input_cannot_exceed_10_billion') | default('Input cannot exceed ₦10 billion') }}');
             }
             const formatted = formatNumber(cleanValue);
             input.value = formatted;
@@ -114,7 +114,7 @@
         });
         if (!valid) {
             e.preventDefault();
-            alert('{{ trans('please_enter_valid_numbers') | default('Please enter valid numbers') }}');
+            alert('{{ trans('core_please_enter_valid_numbers') | default('Please enter valid numbers') }}');
         }
     });
 </script>
