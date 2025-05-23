@@ -1,9 +1,16 @@
+# mailersend_email.py
 import os
 import requests
 from flask import current_app, render_template, flash
-from translations.trans import trans  # Import trans directly
+
+try:
+    from translations import trans
+except ImportError:
+    def trans(key, lang=None):
+        return key  # Fallback to return the key as the translation
 
 def send_email(to_email, subject, template_name, data, lang='en'):
+    # ... rest of the code remains unchanged ...
     """
     Send an email using MailerSend API with a rendered template.
     
