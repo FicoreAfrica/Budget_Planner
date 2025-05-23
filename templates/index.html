@@ -67,7 +67,6 @@
                     </div>
                 </div>
             </div>
-            <!-- New Courses Card -->
             <div class="col-md-4 mb-4">
                 <div class="card h-100">
                     <div class="card-body">
@@ -110,6 +109,20 @@
                 </div>
                 {% endfor %}
             </div>
+            <!-- Integrated Featured Courses -->
+            <div class="featured-courses-section text-center my-5">
+                <h3 class="mb-3">{{ trans('core_featured_courses') | default('Featured Courses') }}</h3>
+                <p class="lead mb-4">{{ trans('core_boost_literacy') | default('Boost your financial literacy with these top courses:') }}</p>
+                <ul class="why-list list-group list-group-flush mb-4">
+                    {% for course in sample_courses %}
+                        <li class="list-group-item">
+                            <i class="fas fa-book"></i>
+                            {{ trans('courses_' + course.title_key) | default(course.title_en) }}
+                        </li>
+                    {% endfor %}
+                </ul>
+                <a href="{{ url_for('courses.course_catalog') }}" class="btn btn-primary mt-3">{{ trans('core_view_all_courses') | default('View All Courses') }}</a>
+            </div>
         </div>
         <div class="testimonials-section my-5">
             <h2 class="text-center"><i class="fas fa-quote-left"></i> {{ trans('core_testimonials') | default('What people are saying about Us') }}</h2>
@@ -139,27 +152,6 @@
             <li><i class="fas fa-check-circle"></i> {{ trans('core_empowers_literacy') | default('Empowers financial literacy with easy-to-use tools') }}</li>
             <li><i class="fas fa-check-circle"></i> {{ trans('core_actionable_insights') | default('Provides actionable insights for better financial decisions') }}</li>
         </ul>
-    </section>
-    <!-- New Featured Courses Section -->
-    <section class="about-section text-center my-5">
-        <h2>{{ trans('core_courses_ficore_africa') | default('>Boost your financial literacy with these top courses') }}</h2>
-        <div class="card shadow mb-5">
-            <div class="card-body">
-                <section class="featured-courses-section text-center my-5">
-                    <h2 class="mb-3">Featured Courses</h2>
-                    <p class="lead mb-4">Boost your financial literacy with these top courses:</p>
-                    <ul class="why-list list-group list-group-flush mb-4">
-                        {% for course in sample_courses %}
-                            <li class="list-group-item">
-                                <i class="fas fa-book"></i>
-                                {{ trans('courses_' + course.title_key) | default(course.title_en) }}
-                            </li>
-                        {% endfor %}
-                    </ul>
-                    <a href="{{ url_for('courses.course_catalog') }}" class="btn btn-primary mt-3">View All Courses</a>
-                </section>
-            </div>
-        </div>
     </section>
 </div>
 {% endblock %}
