@@ -4,14 +4,14 @@
 <div class="container">
     <div class="header">
         <h1>{{ trans('emergency_fund_calculator') | default('Emergency Fund Calculator') }}</h1>
-        <p>{{ trans('plan_emergency_fund') | default('Plan your emergency fund with Ficore Africa') }}</p>
+        <p>{{ trans('emergency_fund_plan_emergency_fund') | default('Plan your emergency fund with Ficore Africa') }}</p>
     </div>
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
                 <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                    {{ trans(message) | default(message) }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    {{ trans('core_' + message) | default(message) }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close') | default('Close') }}"></button>
                 </div>
             {% endfor %}
         {% endif %}
@@ -21,25 +21,25 @@
             <form method="POST" action="{{ url_for('emergency_fund.step1') }}">
                 {{ form.csrf_token }}
                 <div class="mb-3">
-                    <label class="form-label">{{ trans('first_name') | default('First Name') }}</label>
-                    {{ form.first_name(class="form-control", placeholder=trans('first_name_placeholder') | default('e.g., Khadijah, Amina, Maryam'), **{'data-bs-toggle': 'tooltip', 'title': trans('first_name_tooltip') | default('Enter your first name'), 'aria-describedby': 'first_name_help'}) }}
-                    <div class="invalid-feedback">{{ trans('first_name_required') | default('First name is required') }}</div>
+                    <label class="form-label">{{ trans('core_first_name') | default('First Name') }}</label>
+                    {{ form.first_name(class="form-control", placeholder=trans('core_first_name_placeholder') | default('e.g., Khadijah, Amina, Maryam'), **{'data-bs-toggle': 'tooltip', 'title': trans('core_first_name_tooltip') | default('Enter your first name'), 'aria-describedby': 'first_name_help'}) }}
+                    <div class="invalid-feedback">{{ trans('core_first_name_required') | default('First name is required') }}</div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">{{ trans('email') | default('Email') }}</label>
-                    {{ form.email(class="form-control", placeholder=trans('email_placeholder') | default('e.g., khadijah@example.com'), **{'data-bs-toggle': 'tooltip', 'title': trans('email_tooltip') | default('Enter your email to receive fund summary'), 'aria-describedby': 'email_help'}) }}
-                    <div class="invalid-feedback">{{ trans('email_required') | default('Valid email is required') }}</div>
+                    <label class="form-label">{{ trans('core_email') | default('Email') }}</label>
+                    {{ form.email(class="form-control", placeholder=trans('core_email_placeholder') | default('e.g., khadijah@example.com'), **{'data-bs-toggle': 'tooltip', 'title': trans('core_email_tooltip') | default('Enter your email to receive fund summary'), 'aria-describedby': 'email_help'}) }}
+                    <div class="invalid-feedback">{{ trans('core_email_required') | default('Valid email is required') }}</div>
                 </div>
                 <div class="mb-3 form-check">
-                    {{ form.send_email(class="form-check-input", **{'data-bs-toggle': 'tooltip', 'title': trans('send_email_tooltip') | default('Check to receive email summary'), 'aria-describedby': 'send_email_help'}) }}
-                    <label class="form-check-label" for="send_email">{{ trans('send_email') | default('Send Email') }}</label>
+                    {{ form.send_email(class="form-check-input", **{'data-bs-toggle': 'tooltip', 'title': trans('emergency_fund_send_email_tooltip') | default('Check to receive email summary'), 'aria-describedby': 'send_email_help'}) }}
+                    <label class="form-check-label" for="send_email">{{ trans('emergency_fund_send_email') | default('Send Email') }}</label>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">{{ trans('monthly_expenses') | default('Monthly Expenses') }}</label>
-                    {{ form.monthly_expenses(class="form-control", placeholder=trans('monthly_expenses_placeholder') | default('e.g., 50,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('monthly_expenses_tooltip') | default('Expenses like food, transport, data subscriptions'), 'aria-describedby': 'monthly_expenses_help'}) }}
-                    <div class="invalid-feedback">{{ trans('monthly_expenses_required') | default('Monthly expenses are required') }}</div>
+                    <label class="form-label">{{ trans('emergency_fund_monthly_expenses') | default('Monthly Expenses') }}</label>
+                    {{ form.monthly_expenses(class="form-control", placeholder=trans('emergency_fund_monthly_expenses_placeholder') | default('e.g., 50,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('emergency_fund_monthly_expenses_tooltip') | default('Expenses like food, transport, data subscriptions'), 'aria-describedby': 'monthly_expenses_help'}) }}
+                    <div class="invalid-feedback">{{ trans('emergency_fund_monthly_expenses_required') | default('Monthly expenses are required') }}</div>
                 </div>
-                <button type="submit" class="btn btn-primary">{{ trans('continue_to_savings') | default('Continue to Savings') }}</button>
+                <button type="submit" class="btn btn-primary">{{ trans('emergency_fund_continue_to_savings') | default('Continue to Savings') }}</button>
             </form>
         </div>
     </div>
