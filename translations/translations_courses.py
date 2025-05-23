@@ -6,6 +6,7 @@ COURSES_TRANSLATIONS = {
         'courses_start_course': 'Start Course',
         'courses_progress': 'Progress',
         'courses_back_to_courses': 'Back to Courses',
+        'courses_my_courses': 'My Courses',
         'courses_complete_lesson': 'Complete Lesson',
         # Dynamic: See note below for how to add dynamic keys like courses_basic_course, courses_intro_lesson1, etc.
         # Example dynamic keys for sample courses/lessons, add more as needed for your catalog:
@@ -191,6 +192,7 @@ COURSES_TRANSLATIONS = {
         'courses_learn_budgeting': 'Koyi tushen ƙirƙirar da sarrafa kasafin kuɗi.',
         # --- MISSING KEYS FROM TEMPLATES ---
         'courses_financial_courses': 'Kwasunan Kuɗi',
+        'courses_my_courses': 'Kwasuna na',
         'courses_start_course': 'Fara Kwas',
         'courses_progress': 'Ci gaba',
         'courses_back_to_courses': 'Komawa Kwasuna',
