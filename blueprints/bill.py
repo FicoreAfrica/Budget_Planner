@@ -20,41 +20,41 @@ bill_bp = Blueprint('bill', __name__)
 bill_storage = JsonStorage('data/bills.json')
 
 class BillForm(FlaskForm):
-    first_name = StringField('First Name', validators=[DataRequired(message=trans('first_name_required'))])
-    email = StringField('Email', validators=[DataRequired(message=trans('email_required')), Email()])
-    bill_name = StringField('Bill Name', validators=[DataRequired(message=trans('bill_name_required'))])
-    amount = FloatField('Amount', validators=[DataRequired(message=trans('amount_required')), NumberRange(min=0, max=10000000000)])
-    due_date = StringField('Due Date (YYYY-MM-DD)', validators=[DataRequired(message=trans('due_date_required'))])
+    first_name = StringField('First Name', validators=[DataRequired(message=trans('bill_first_name_required'))])
+    email = StringField('Email', validators=[DataRequired(message=trans('bill_email_required')), Email()])
+    bill_name = StringField('Bill Name', validators=[DataRequired(message=trans('bill_bill_name_required'))])
+    amount = FloatField('Amount', validators=[DataRequired(message=trans('bill_amount_required')), NumberRange(min=0, max=10000000000)])
+    due_date = StringField('Due Date (YYYY-MM-DD)', validators=[DataRequired(message=trans('bill_due_date_required'))])
     frequency = SelectField('Frequency', choices=[
-        ('one-time', trans('frequency_one_time')),
-        ('weekly', trans('frequency_weekly')),
-        ('monthly', trans('frequency_monthly')),
-        ('quarterly', trans('frequency_quarterly'))
+        ('one-time', trans('bill_frequency_one_time')),
+        ('weekly', trans('bill_frequency_weekly')),
+        ('monthly', trans('bill_frequency_monthly')),
+        ('quarterly', trans('bill_frequency_quarterly'))
     ], default='one-time')
     category = SelectField('Category', choices=[
-        ('utilities', trans('category_utilities')),
-        ('rent', trans('category_rent')),
-        ('data_internet', trans('category_data_internet')),
-        ('ajo_esusu_adashe', trans('category_ajo_esusu_adashe')),
-        ('food', trans('category_food')),
-        ('transport', trans('category_transport')),
-        ('clothing', trans('category_clothing')),
-        ('education', trans('category_education')),
-        ('healthcare', trans('category_healthcare')),
-        ('entertainment', trans('category_entertainment')),
-        ('airtime', trans('category_airtime')),
-        ('school_fees', trans('category_school_fees')),
-        ('savings_investments', trans('category_savings_investments')),
-        ('other', trans('category_other'))
-    ], validators=[DataRequired(message=trans('category_required'))])
-    send_email = BooleanField(trans('send_email_reminders'))
+        ('utilities', trans('bill_category_utilities')),
+        ('rent', trans('bill_category_rent')),
+        ('data_internet', trans('bill_category_data_internet')),
+        ('ajo_esusu_adashe', trans('bill_category_ajo_esusu_adashe')),
+        ('food', trans('bill_category_food')),
+        ('transport', trans('bill_category_transport')),
+        ('clothing', trans('bill_category_clothing')),
+        ('education', trans('bill_category_education')),
+        ('healthcare', trans('bill_category_healthcare')),
+        ('entertainment', trans('bill_category_entertainment')),
+        ('airtime', trans('bill_category_airtime')),
+        ('school_fees', trans('bill_category_school_fees')),
+        ('savings_investments', trans('bill_category_savings_investments')),
+        ('other', trans('bill_category_other'))
+    ], validators=[DataRequired(message=trans('bill_category_required'))])
+    send_email = BooleanField(trans('bill_send_email_reminders'))
     status = SelectField('Status', choices=[
-        ('unpaid', trans('status_unpaid')),
-        ('paid', trans('status_paid')),
-        ('pending', trans('status_pending')),
-        ('overdue', trans('status_overdue'))
+        ('unpaid', trans('bill_status_unpaid')),
+        ('paid', trans('bill_status_paid')),
+        ('pending', trans('bill_status_pending')),
+        ('overdue', trans('bill_status_overdue'))
     ], default='unpaid')
-    submit = SubmitField(trans('save_bill'))
+    submit = SubmitField(trans('bill_save_bill'))
 
 @bill_bp.route('/form', methods=['GET', 'POST'])
 def form():
@@ -71,11 +71,11 @@ def form():
                 try:
                     due_date = datetime.strptime(data['due_date'], '%Y-%m-%d').date()
                     if due_date < date.today():
-                        flash(trans("due_date_future", lang=lang), "danger")
+                        flash(trans("bill_due_date_future"), "danger")
                         logging.error("Due date in the past in bill.form")
                         return redirect(url_for('bill.form'))
                 except ValueError:
-                    flash(trans("due_date_format_invalid", lang=lang), "danger")
+                    flash(trans("bill_due_date_format_invalid"), "danger")
                     logging.error("Invalid due date format in bill.form")
                     return redirect(url_for('bill.form'))
 
@@ -99,29 +99,29 @@ def form():
                 if data['send_email'] and data['email']:
                     send_email(
                         to_email=data['email'],
-                        subject=trans("bill_payment_reminder", lang=lang),
+                        subject=trans("bill_payment_reminder"),
                         template_name="bill_reminder.html",
                         data={
                             "first_name": data['first_name'],
                             "bill_name": data['bill_name'],
                             "amount": data['amount'],
                             "due_date": data['due_date'],
-                            "category": trans(data['category'].replace('_', '/').title(), lang=lang),
-                            "status": trans(status.capitalize(), lang=lang),
+                            "category": trans(f"bill_category_{data['category']}"),
+                            "status": trans(f"bill_status_{status}"),
                             "cta_url": url_for('bill.dashboard', _external=True)
                         },
                         lang=lang
                     )
-                flash(trans("bill_added_success", lang=lang), "success")
+                flash(trans("bill_bill_added_success"), "success")
                 return redirect(url_for('bill.view_edit'))
             except Exception as e:
                 logging.exception(f"Error processing bill form: {str(e)}")
-                flash(trans("bill_add_error", lang=lang), "danger")
+                flash(trans("bill_bill_add_error"), "danger")
                 return redirect(url_for('bill.form'))
         return render_template('bill_form.html', form=form, trans=trans, lang=lang)
     except Exception as e:
         logging.exception(f"Template rendering error in bill.form: {str(e)}")
-        flash(trans("bill_form_load_error", lang=lang), "danger")
+        flash(trans("bill_bill_form_load_error"), "danger")
         return redirect(url_for('index'))
 
 @bill_bp.route('/dashboard')
@@ -158,11 +158,11 @@ def dashboard():
 
         # Nigeria-specific tips
         tips = [
-            trans("tip_pay_early", lang=lang),
-            trans("tip_energy_efficient", lang=lang),
-            trans("tip_plan_monthly", lang=lang),
-            trans("tip_ajo_reminders", lang=lang),
-            trans("tip_data_topup", lang=lang)
+            trans("bill_tip_pay_early"),
+            trans("bill_tip_energy_efficient"),
+            trans("bill_tip_plan_monthly"),
+            trans("bill_tip_ajo_reminders"),
+            trans("bill_tip_data_topup")
         ]
 
         return render_template(
@@ -187,7 +187,7 @@ def dashboard():
         )
     except Exception as e:
         logging.exception(f"Error in bill.dashboard: {str(e)}")
-        flash(trans("dashboard_load_error", lang=lang), "danger")
+        flash(trans("bill_dashboard_load_error"), "danger")
         try:
             return render_template(
                 'bill_dashboard.html',
@@ -206,18 +206,18 @@ def dashboard():
                 due_month=[],
                 upcoming_bills=[],
                 tips=[
-                    trans("tip_pay_early", lang=lang),
-                    trans("tip_energy_efficient", lang=lang),
-                    trans("tip_plan_monthly", lang=lang),
-                    trans("tip_ajo_reminders", lang=lang),
-                    trans("tip_data_topup", lang=lang)
+                    trans("bill_tip_pay_early"),
+                    trans("bill_tip_energy_efficient"),
+                    trans("bill_tip_plan_monthly"),
+                    trans("bill_tip_ajo_reminders"),
+                    trans("bill_tip_data_topup")
                 ],
                 trans=trans,
                 lang=lang
             )
         except Exception as render_e:
             logging.exception(f"Template rendering error in bill.dashboard: {str(render_e)}")
-            flash(trans("dashboard_template_error", lang=lang), "danger")
+            flash(trans("bill_dashboard_template_error"), "danger")
             return redirect(url_for('index'))
 
 @bill_bp.route('/view_edit', methods=['GET', 'POST'])
@@ -242,11 +242,11 @@ def view_edit():
                         try:
                             due_date = datetime.strptime(data['due_date'], '%Y-%m-%d').date()
                             if due_date < date.today():
-                                flash(trans("due_date_future", lang=lang), "danger")
+                                flash(trans("bill_due_date_future"), "danger")
                                 logging.error("Due date in the past in bill.view_edit")
                                 return redirect(url_for('bill.view_edit'))
                         except ValueError:
-                            flash(trans("due_date_format_invalid", lang=lang), "danger")
+                            flash(trans("bill_due_date_format_invalid"), "danger")
                             logging.error("Invalid due date format in bill.view_edit")
                             return redirect(url_for('bill.view_edit'))
 
@@ -266,26 +266,26 @@ def view_edit():
                             }
                         }
                         if bill_storage.update_by_id(bill_id, updated_record):
-                            flash(trans("bill_updated_success", lang=lang), "success")
+                            flash(trans("bill_bill_updated_success"), "success")
                         else:
-                            flash(trans("bill_update_failed", lang=lang), "danger")
+                            flash(trans("bill_bill_update_failed"), "danger")
                             logging.error(f"Failed to update bill ID {bill_id}")
                     except Exception as e:
                         logging.exception(f"Error in bill.view_edit (edit): {str(e)}")
-                        flash(trans("bill_update_error", lang=lang), "danger")
+                        flash(trans("bill_bill_update_error"), "danger")
                     return redirect(url_for('bill.view_edit'))
 
             elif action == "delete":
                 try:
                     if bill_storage.delete_by_id(bill_id):
-                        flash(trans("bill_deleted_success", lang=lang), "success")
+                        flash(trans("bill_bill_deleted_success"), "success")
                     else:
-                        flash(trans("bill_delete_failed", lang=lang), "danger")
+                        flash(trans("bill_bill_delete_failed"), "danger")
                         logging.error(f"Failed to delete bill ID {bill_id}")
                     return redirect(url_for('bill.view_edit'))
                 except Exception as e:
                     logging.exception(f"Error in bill.view_edit (delete): {str(e)}")
-                    flash(trans("bill_delete_error", lang=lang), "danger")
+                    flash(trans("bill_bill_delete_error"), "danger")
                     return redirect(url_for('bill.view_edit'))
 
             elif action == "toggle_status":
@@ -296,26 +296,26 @@ def view_edit():
                         new_status = 'paid' if current_status == 'unpaid' else 'unpaid'
                         record["data"]["status"] = new_status
                         if bill_storage.update_by_id(bill_id, record):
-                            flash(trans("bill_status_toggled", lang=lang), "success")
+                            flash(trans("bill_bill_status_toggled"), "success")
                         else:
-                            flash(trans("bill_status_toggle_failed", lang=lang), "danger")
+                            flash(trans("bill_bill_status_toggle_failed"), "danger")
                             logging.error(f"Failed to toggle status for bill ID {bill_id}")
                     else:
-                        flash(trans("bill_not_found", lang=lang), "danger")
+                        flash(trans("bill_bill_not_found"), "danger")
                         logging.error(f"Bill ID {bill_id} not found")
                     return redirect(url_for('bill.view_edit'))
                 except Exception as e:
                     logging.exception(f"Error in bill.view_edit (toggle_status): {str(e)}")
-                    flash(trans("bill_status_toggle_error", lang=lang), "danger")
+                    flash(trans("bill_bill_status_toggle_error"), "danger")
                     return redirect(url_for('bill.view_edit'))
 
         return render_template('view_edit_bills.html', bills=bills, form=form, trans=trans, lang=lang)
     except Exception as e:
         logging.exception(f"Error in bill.view_edit: {str(e)}")
-        flash(trans("bills_load_error", lang=lang), "danger")
+        flash(trans("bill_bills_load_error"), "danger")
         try:
             return render_template('view_edit_bills.html', bills=[], form=BillForm(), trans=trans, lang=lang)
         except Exception as render_e:
             logging.exception(f"Template rendering error in bill.view_edit: {str(render_e)}")
-            flash(trans("view_edit_template_error", lang=lang), "danger")
+            flash(trans("bill_view_edit_template_error"), "danger")
             return redirect(url_for('index'))
