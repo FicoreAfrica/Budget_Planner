@@ -7,7 +7,7 @@ CORE_TRANSLATIONS = {
         'core_csrf_error': 'CSRF token missing or invalid',
         'core_page_not_found': 'Page not found',
         'core_language_changed': 'Language changed successfully',
-        'core_about_ficore_africa': 'About Ficore Africa: Featured Courses to Boost Your Financial Literacy',
+        'core_about_ficore_africa': 'About Ficore Africa: Tailored Courses to Boost Your Financial Literacy',
         'core_invalid_language': 'Invalid language selected',
         'core_logged_out': 'You have been logged out',
         'core_ficore_africa': 'Ficore Africa',
