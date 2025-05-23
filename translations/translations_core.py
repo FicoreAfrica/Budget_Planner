@@ -112,7 +112,7 @@ CORE_TRANSLATIONS = {
         'core_actionable_insights': 'Provides actionable insights for better financial decisions',
         'core_empowers_financial_literacy': 'Empowers financial literacy with easy-to-use tools',
         'core_what_people_say': 'What people are saying about Us',
-        'core_testimonials': 'Testimonials',
+        'core_testimonials': 'What People Are Saying About Us',
         'core_impressed_features': 'I explored the features earlier today and was impressed... I thought it was only for SMEs, but now I see even individuals can benefit. The learning section is on another level.',
         'core_ficore_praise': '🔥 Ficore 🔥🔥🔥🔥🔥',
         'core_software_engineer': 'Software Engineer for Sustainable Solutions',
