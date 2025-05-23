@@ -1,76 +1,76 @@
 {% extends 'base.html' %}
-{% block title %}{{ trans('home') | default('Home') }}{% endblock %}
+{% block title %}{{ trans('core_home') | default('Home') }}{% endblock %}
 {% block content %}
 <div class="container">
     <section class="hero text-center my-5">
         <div class="navbar mb-4">
-            <h2>{{ trans('all_in_one_toolkit') | default('Your All-in-One Toolkit for Personal & SME Financial Health Across Africa') }}</h2>
+            <h2>{{ trans('core_all_in_one_toolkit') | default('Your All-in-One Toolkit for Personal & SME Financial Health Across Africa') }}</h2>
         </div>
-        <p>{{ trans('track_finances') | default('Use Ficore to Track your income, net worth, budgets, and bills, to grow your money with confidence.') }}</p>
-        <a href="{{ url_for('financial_health.step1') }}" class="btn btn-primary">{{ trans('get_health_score') | default('Where to Start? Get Your Free Health Score') }}</a>
-        <a href="#tools-section" class="btn btn-primary mt-3">{{ trans('explore_tools') | default('Explore Ficore Tools') }}</a>
+        <p>{{ trans('core_track_finances') | default('Use Ficore to Track your income, net worth, budgets, and bills, to grow your money with confidence.') }}</p>
+        <a href="{{ url_for('financial_health.step1') }}" class="btn btn-primary">{{ trans('financial_health_get_health_score') | default('Where to Start? Get Your Free Health Score') }}</a>
+        <a href="#tools-section" class="btn btn-primary mt-3">{{ trans('core_explore_tools') | default('Explore Ficore Tools') }}</a>
     </section>
     <section class="tools-section my-5" id="tools-section">
-        <h2 class="text-center">{{ trans('choose_tool') | default('Choose a Tool') }}</h2>
+        <h2 class="text-center">{{ trans('core_choose_tool') | default('Choose a Tool') }}</h2>
         <div class="tools-grid row">
             <div class="col-md-4 mb-4">
                 <div class="card h-100">
                     <div class="card-body">
-                        <h3 class="card-title">{{ trans('financial_health_score') | default('Financial Health Score') }}</h3>
-                        <p class="card-text">{{ trans('evaluate_finances') | default('Evaluates income, expenses, and debt for a health score') }}</p>
-                        <a href="{{ url_for('financial_health.step1') }}" class="btn btn-primary" aria-label="{{ trans('start_financial_health') | default('Start Financial Health Score Assessment') }}">{{ trans('start') | default('Start') }}</a>
+                        <h3 class="card-title">{{ trans('financial_health_financial_health_score') | default('Financial Health Score') }}</h3>
+                        <p class="card-text">{{ trans('financial_health_evaluate_finances') | default('Evaluates income, expenses, and debt for a health score') }}</p>
+                        <a href="{{ url_for('financial_health.step1') }}" class="btn btn-primary" aria-label="{{ trans('financial_health_start_financial_health') | default('Start Financial Health Score Assessment') }}">{{ trans('core_start') | default('Start') }}</a>
                     </div>
                 </div>
             </div>
             <div class="col-md-4 mb-4">
                 <div class="card h-100">
                     <div class="card-body">
-                        <h3 class="card-title">{{ trans('budget_planner') | default('Budget Planner') }}</h3>
-                        <p class="card-text">{{ trans('allocate_income') | default('Allocate income across expense categories') }}</p>
-                        <a href="{{ url_for('budget.step1') }}" class="btn btn-primary" aria-label="{{ trans('start_budget_planner') | default('Start Monthly Budget Planner') }}">{{ trans('start') | default('Start') }}</a>
+                        <h3 class="card-title">{{ trans('budget_budget_planner') | default('Budget Planner') }}</h3>
+                        <p class="card-text">{{ trans('budget_allocate_income') | default('Allocate income across expense categories') }}</p>
+                        <a href="{{ url_for('budget.step1') }}" class="btn btn-primary" aria-label="{{ trans('budget_start_budget_planner') | default('Start Monthly Budget Planner') }}">{{ trans('core_start') | default('Start') }}</a>
                     </div>
                 </div>
             </div>
             <div class="col-md-4 mb-4">
                 <div class="card h-100">
                     <div class="card-body">
-                        <h3 class="card-title">{{ trans('personality_quiz') | default('Personality Quiz') }}</h3>
-                        <p class="card-text">{{ trans('assess_literacy') | default('Answer questions to assess financial literacy') }}</p>
-                        <a href="{{ url_for('quiz.step1') }}" class="btn btn-primary" aria-label="{{ trans('start_personality_quiz') | default('Start Personality Quiz') }}">{{ trans('start') | default('Start') }}</a>
+                        <h3 class="card-title">{{ trans('quiz_personality_quiz') | default('Personality Quiz') }}</h3>
+                        <p class="card-text">{{ trans('quiz_assess_literacy') | default('Answer questions to assess financial literacy') }}</p>
+                        <a href="{{ url_for('quiz.step1') }}" class="btn btn-primary" aria-label="{{ trans('quiz_start_personality_quiz') | default('Start Personality Quiz') }}">{{ trans('core_start') | default('Start') }}</a>
                     </div>
                 </div>
             </div>
             <div class="col-md-4 mb-4">
                 <div class="card h-100">
                     <div class="card-body">
-                        <h3 class="card-title">{{ trans('bill_planner') | default('Bill Planner') }}</h3>
-                        <p class="card-text">{{ trans('manage_bills') | default('Manage and mark bills as paid') }}</p>
-                        <a href="{{ url_for('bill.form') }}" class="btn btn-primary" aria-label="{{ trans('start_bill_planner') | default('Start Bill Planner') }}">{{ trans('start') | default('Start') }}</a>
+                        <h3 class="card-title">{{ trans('bill_bill_planner') | default('Bill Planner') }}</h3>
+                        <p class="card-text">{{ trans('bill_manage_bills') | default('Manage and mark bills as paid') }}</p>
+                        <a href="{{ url_for('bill.form') }}" class="btn btn-primary" aria-label="{{ trans('bill_start_bill_planner') | default('Start Bill Planner') }}">{{ trans('core_start') | default('Start') }}</a>
                     </div>
                 </div>
             </div>
             <div class="col-md-4 mb-4">
                 <div class="card h-100">
                     <div class="card-body">
-                        <h3 class="card-title">{{ trans('net_worth_calculator') | default('Net Worth Calculator') }}</h3>
-                        <p class="card-text">{{ trans('calculate_net_worth') | default('Net worth is assets minus liabilities') }}</p>
-                        <a href="{{ url_for('net_worth.step1') }}" class="btn btn-primary" aria-label="{{ trans('start_net_worth') | default('Start Net Worth Calculator') }}">{{ trans('start') | default('Start') }}</a>
+                        <h3 class="card-title">{{ trans('net_worth_net_worth_calculator') | default('Net Worth Calculator') }}</h3>
+                        <p class="card-text">{{ trans('net_worth_calculate_net_worth') | default('Net worth is assets minus liabilities') }}</p>
+                        <a href="{{ url_for('net_worth.step1') }}" class="btn btn-primary" aria-label="{{ trans('net_worth_start_net_worth') | default('Start Net Worth Calculator') }}">{{ trans('core_start') | default('Start') }}</a>
                     </div>
                 </div>
             </div>
             <div class="col-md-4 mb-4">
                 <div class="card h-100">
                     <div class="card-body">
-                        <h3 class="card-title">{{ trans('emergency_fund_calculator') | default('Emergency Fund Calculator') }}</h3>
-                        <p class="card-text">{{ trans('emergency_fund_goal') | default('Aims to cover 3-6 months of expenses for financial security') }}</p>
-                        <a href="{{ url_for('emergency_fund.step1') }}" class="btn btn-primary" aria-label="{{ trans('start_emergency_fund') | default('Start Emergency Fund Calculator') }}">{{ trans('start') | default('Start') }}</a>
+                        <h3 class="card-title">{{ trans('emergency_fund_emergency_fund_calculator') | default('Emergency Fund Calculator') }}</h3>
+                        <p class="card-text">{{ trans('emergency_fund_emergency_fund_goal') | default('Aims to cover 3-6 months of expenses for financial security') }}</p>
+                        <a href="{{ url_for('emergency_fund.step1') }}" class="btn btn-primary" aria-label="{{ trans('emergency_fund_start_emergency_fund') | default('Start Emergency Fund Calculator') }}">{{ trans('core_start') | default('Start') }}</a>
                     </div>
                 </div>
             </div>
         </div>
         <div class="recommended-learning my-5">
-            <h2 class="text-center"><i class="fas fa-book"></i> {{ trans('recommended_learning') | default('Recommended Learning') }}</h2>
-            <p class="text-center">{{ trans('explore_courses') | default('Explore our courses to improve your financial literacy!') }}</p>
+            <h2 class="text-center"><i class="fas fa-book"></i> {{ trans('courses_recommended_learning') | default('Recommended Learning') }}</h2>
+            <p class="text-center">{{ trans('courses_explore_courses') | default('Explore our courses to improve your financial literacy!') }}</p>
             <div class="courses-grid row">
                 {% for course in courses %}
                 <div class="col-md-4 mb-4">
@@ -79,21 +79,21 @@
                             <h3 class="card-title">{{ course.title_ha if lang == 'ha' else course.title_en }}</h3>
                             <p class="card-text">
                                 {% if course.id == 'budgeting_101' %}
-                                    {{ trans('learn_budgeting') | default('Learn the basics of creating and managing a budget.') }}
+                                    {{ trans('courses_learn_budgeting') | default('Learn the basics of creating and managing a budget.') }}
                                 {% elif course.id == 'financial_quiz' %}
-                                    {{ trans('assess_personality') | default('Take a quiz to discover your financial personality.') }}
+                                    {{ trans('quiz_assess_personality') | default('Take a quiz to discover your financial personality.') }}
                                 {% endif %}
                                 <br>
                                 {% if course.is_premium %}
-                                    {{ trans('premium_course') | default('Premium course') }}
+                                    {{ trans('courses_premium_course') | default('Premium course') }}
                                 {% else %}
-                                    {{ trans('free_course') | default('Free course') }}
+                                    {{ trans('courses_free_course') | default('Free course') }}
                                 {% endif %}
                             </p>
                             <a href="{{ url_for('courses.course_page', course_id=course.id) }}" 
                                class="btn btn-primary" 
-                               aria-label="{{ trans('start_course') | default('Start Course') }} {{ course.title_ha if lang == 'ha' else course.title_en }}">
-                               {{ trans('start') | default('Start') }}
+                               aria-label="{{ trans('courses_start_course') | default('Start Course') }} {{ course.title_ha if lang == 'ha' else course.title_en }}">
+                               {{ trans('core_start') | default('Start') }}
                             </a>
                         </div>
                     </div>
@@ -102,37 +102,37 @@
             </div>
         </div>
         <div class="testimonials-section my-5">
-            <h2 class="text-center"><i class="fas fa-quote-left"></i> {{ trans('testimonials') | default('What people are saying about Us') }}</h2>
+            <h2 class="text-center"><i class="fas fa-quote-left"></i> {{ trans('core_testimonials') | default('What people are saying about Us') }}</h2>
             <div class="row">
                 <div class="col-md-4">
                     <div class="testimonial text-center">
-                        <i class="fas fa-quote-left"></i> {{ trans('impressed_features') | default('I explored the features earlier today and was impressed... I thought it was only for SMEs, but even individuals can benefit. The learning section is on another level.') }} — <span class="name">Maisarata Uqubatu</span>
+                        <i class="fas fa-quote-left"></i> {{ trans('core_impressed_features') | default('I explored the features earlier today and was impressed... I thought it was only for SMEs, but even individuals can benefit. The learning section is on another level.') }} — <span class="name">Maisarata Uqubatu</span>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="testimonial text-center">
-                        <i class="fas fa-quote-left"></i> {{ trans('ficore_praise') | default('🔥 Ficore 🔥🔥🔥🔥🔥') }} — <span class="name">Abubakar Abdulkadir</span>, {{ trans('software_engineer') | default('Software Engineer for Sustainable Solutions') }}
+                        <i class="fas fa-quote-left"></i> {{ trans('core_ficore_praise') | default('🔥 Ficore 🔥🔥🔥🔥🔥') }} — <span class="name">Abubakar Abdulkadir</span>, {{ trans('core_software_engineer') | default('Software Engineer for Sustainable Solutions') }}
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="testimonial text-center">
-                        <i class="fas fa-quote-left"></i> {{ trans('potential_support') | default('I’ve been following the Ficore project and I’m impressed. It’s clear there’s potential, and I’m curious to know more—especially if there’s a customer support channel included. I’d love to contribute if needed!') }} — <span class="name">Aminu Sani Usman</span>
+                        <i class="fas fa-quote-left"></i> {{ trans('core_potential_support') | default('I’ve been following the Ficore project and I’m impressed. It’s clear there’s potential, and I’m curious to know more—especially if there’s a customer support channel included. I’d love to contribute if needed!') }} — <span class="name">Aminu Sani Usman</span>
                     </div>
                 </div>
             </div>
         </div>
     </section>
     <section class="why-section my-5">
-        <h2 class="text-center">{{ trans('why_ficore') | default('Why Ficore Africa?') }}</h2>
+        <h2 class="text-center">{{ trans('core_why_ficore') | default('Why Ficore Africa?') }}</h2>
         <ul class="why-list list-unstyled">
-            <li><i class="fas fa-check-circle"></i> {{ trans('localized_africa') | default('Localized for Africa with support for Naira and regional financial contexts') }}</li>
-            <li><i class="fas fa-check-circle"></i> {{ trans('empowers_literacy') | default('Empowers financial literacy with easy-to-use tools') }}</li>
-            <li><i class="fas fa-check-circle"></i> {{ trans('actionable_insights') | default('Provides actionable insights for better financial decisions') }}</li>
+            <li><i class="fas fa-check-circle"></i> {{ trans('core_localized_africa') | default('Localized for Africa with support for Naira and regional financial contexts') }}</li>
+            <li><i class="fas fa-check-circle"></i> {{ trans('core_empowers_literacy') | default('Empowers financial literacy with easy-to-use tools') }}</li>
+            <li><i class="fas fa-check-circle"></i> {{ trans('core_actionable_insights') | default('Provides actionable insights for better financial decisions') }}</li>
         </ul>
     </section>
     <section class="about-section text-center my-5">
-        <h2>{{ trans('about_ficore_africa') | default('About Ficore Africa') }}</h2>
-        <p>{{ trans('empowering_financial_growth') | default('Empowering financial growth across Africa since 2025') }}</p>
+        <h2>{{ trans('core_about_ficore_africa') | default('About Ficore Africa') }}</h2>
+        <p>{{ trans('core_empowering_financial_growth') | default('Empowering financial growth across Africa since 2025') }}</p>
     </section>
 </div>
 {% endblock %}
