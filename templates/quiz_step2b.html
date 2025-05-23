@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{{ trans('financial_personality_quiz') | default('Financial Personality Quiz') }}{% endblock %}
+{% block title %}{{ trans('quiz_financial_personality_quiz') | default('Financial Personality Quiz') }}{% endblock %}
 {% block extra_head %}
     <style>
         .container {
@@ -11,15 +11,15 @@
 {% block content %}
 <div class="container">
     <div class="header">
-        <h1>{{ trans('financial_personality_quiz') | default('Financial Personality Quiz') }}</h1>
-        <p>{{ trans('answer_questions_for_personality') | default('Answer these questions to discover your financial personality') }}</p>
+        <h1>{{ trans('quiz_financial_personality_quiz') | default('Financial Personality Quiz') }}</h1>
+        <p>{{ trans('quiz_answer_questions_for_personality') | default('Answer these questions to discover your financial personality') }}</p>
     </div>
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
                 <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                    {{ trans(message) | default(message) }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    {{ trans('core_' + message) | default(message) }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close') | default('Close') }}"></button>
                 </div>
             {% endfor %}
         {% endif %}
@@ -30,15 +30,15 @@
                 {{ form.csrf_token }}
                 {% for question in questions %}
                     <div class="mb-3">
-                        <label class="form-label">{{ trans('question_' + question.key) | default(question.label) }}</label>
-                        {{ getattr(form, question.key)(class="form-select", **{'data-bs-toggle': 'tooltip', 'title': trans('tooltip_' + question.key) | default(question.tooltip), 'aria-describedby': question.key + '_help'}) }}
-                        <small class="form-text text-muted">{{ trans('placeholder_' + question.key) | default(question.placeholder) }}</small>
-                        <div class="invalid-feedback">{{ trans('select_answer_required') | default('Please select an answer') }}</div>
+                        <label class="form-label">{{ trans('quiz_question_' + question.key) | default(question.label) }}</label>
+                        {{ getattr(form, question.key)(class="form-select", **{'data-bs-toggle': 'tooltip', 'title': trans('quiz_tooltip_' + question.key) | default(question.tooltip), 'aria-describedby': question.key + '_help'}) }}
+                        <small class="form-text text-muted">{{ trans('quiz_placeholder_' + question.key) | default(question.placeholder) }}</small>
+                        <div class="invalid-feedback">{{ trans('quiz_select_answer_required') | default('Please select an answer') }}</div>
                     </div>
                 {% endfor %}
                 <div class="d-flex justify-content-between">
-                    <a href="{{ url_for('quiz.step2a', course_id=course_id) }}" class="btn btn-secondary">{{ trans('back') | default('Back') }}</a>
-                    <button type="submit" class="btn btn-primary">{{ trans('see_results') | default('See Results') }}</button>
+                    <a href="{{ url_for('quiz.step2a', course_id=course_id) }}" class="btn btn-secondary">{{ trans('core_back') | default('Back') }}</a>
+                    <button type="submit" class="btn btn-primary">{{ trans('quiz_see_results') | default('See Results') }}</button>
                 </div>
             </form>
         </div>
