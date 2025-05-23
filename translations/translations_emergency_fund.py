@@ -1,6 +1,15 @@
 EMERGENCY_FUND_TRANSLATIONS = {
     'en': {
         'emergency_fund_calculator': 'Emergency Fund Calculator',
+        # --- MISSING KEYS FROM TEMPLATES ---
+        'emergency_fund_send_email': 'Send Email',
+        'emergency_fund_send_email_tooltip': 'Check to receive email summary',
+        'emergency_fund_monthly_expenses_placeholder': 'e.g., 50,000',
+        'emergency_fund_monthly_expenses_tooltip': 'Expenses like food, transport, data subscriptions',
+        'emergency_fund_current_savings_placeholder': 'e.g., 100,000',
+        'emergency_fund_current_savings_tooltip': 'Savings in bank accounts, Ajo/Esusu/Adashe, or apps like PiggyVest',
+        'emergency_fund_summary_intro': 'Here is your emergency fund summary',
+        'emergency_fund_fund_summary': 'Fund Summary',
         'emergency_fund_plan_emergency_fund': 'Plan Emergency Fund',
         'emergency_fund_financial_details': 'Financial Details',
         'emergency_fund_monthly_expenses': 'Monthly Expenses',
@@ -193,6 +202,15 @@ EMERGENCY_FUND_TRANSLATIONS = {
         'emergency_fund_error_processing_details': 'Kuskure wajen sarrafa bayanan kuɗi',
         'emergency_fund_invalid_numeric_input': 'Shigar da lambar ba daidai ba ga kashe kuɗi ko ajiya',
         'emergency_fund_error_calculating_fund': 'Kuskure wajen ƙididdigar asusun gaggawa',
+        # --- MISSING KEYS FROM TEMPLATES ---
+        'emergency_fund_send_email': 'Aika Imel',
+        'emergency_fund_send_email_tooltip': 'Duba don karɓar taƙaitaccen imel',
+        'emergency_fund_monthly_expenses_placeholder': 'misali, 50,000',
+        'emergency_fund_monthly_expenses_tooltip': 'Kashe kuɗi kamar abinci, sufuri, biɗan bayanai',
+        'emergency_fund_current_savings_placeholder': 'misali, 100,000',
+        'emergency_fund_current_savings_tooltip': 'Ajiya a asusun banki, Ajo/Esusu/Adashe, ko manhajojin kamar PiggyVest',
+        'emergency_fund_summary_intro': 'Ga taƙaitaccen asusun gaggawa na ka',
+        'emergency_fund_fund_summary': 'Taƙaitaccen Asusu',
         'emergency_fund_plan_completed_successfully': 'An kammala shirin asusun gaggawa cikin nasara'
     }
 }
