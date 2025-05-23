@@ -13,14 +13,14 @@
 <div class="container">
     <div class="header">
         <h1>{{ trans('financial_health_score') | default('Financial Health Score') }}</h1>
-        <p>{{ trans('enter_debt_interest_details') | default('Enter your debt and interest details (optional)') }}</p>
+        <p>{{ trans('financial_health_enter_debt_interest_details') | default('Enter your debt and interest details (optional)') }}</p>
     </div>
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
                 <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                    {{ trans(message) | default(message) }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    {{ trans('core_' + message) | default(message) }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close') | default('Close') }}"></button>
                 </div>
             {% endfor %}
         {% endif %}
@@ -30,18 +30,18 @@
             <form method="POST" action="{{ url_for('financial_health.step3') }}" id="step3Form">
                 {{ form.csrf_token }}
                 <div class="mb-3">
-                    <label class="form-label">{{ trans('total_debt') | default('Total Debt') }}</label>
-                    {{ form.debt(class="form-control number-input", placeholder=trans('debt_placeholder') | default('e.g., 200,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('debt_tooltip') | default('Borrowings from banks, friends, colleagues'), 'type': 'text', 'aria-describedby': 'debt_help'}) }}
-                    <div class="invalid-feedback">{{ trans('debt_must_be_positive') | default('Debt must be positive') }}</div>
+                    <label class="form-label">{{ trans('financial_health_total_debt') | default('Total Debt') }}</label>
+                    {{ form.debt(class="form-control number-input", placeholder=trans('financial_health_debt_placeholder') | default('e.g., 200,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('financial_health_debt_tooltip') | default('Borrowings from banks, friends, colleagues'), 'type': 'text', 'aria-describedby': 'debt_help'}) }}
+                    <div class="invalid-feedback">{{ trans('financial_health_debt_must_be_positive') | default('Debt must be positive') }}</div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">{{ trans('average_interest_rate') | default('Average Interest Rate') }}</label>
-                    {{ form.interest_rate(class="form-control number-input", placeholder=trans('interest_rate_placeholder') | default('e.g., 5'), **{'data-bs-toggle': 'tooltip', 'title': trans('interest_rate_tooltip') | default('Average interest rate on debts (% per year)'), 'type': 'text', 'aria-describedby': 'interest_rate_help'}) }}
-                    <div class="invalid-feedback">{{ trans('interest_rate_must_be_positive') | default('Interest rate must be positive') }}</div>
+                    <label class="form-label">{{ trans('financial_health_average_interest_rate') | default('Average Interest Rate') }}</label>
+                    {{ form.interest_rate(class="form-control number-input", placeholder=trans('financial_health_interest_rate_placeholder') | default('e.g., 5'), **{'data-bs-toggle': 'tooltip', 'title': trans('financial_health_interest_rate_tooltip') | default('Average interest rate on debts (% per year)'), 'type': 'text', 'aria-describedby': 'interest_rate_help'}) }}
+                    <div class="invalid-feedback">{{ trans('financial_health_interest_rate_must_be_positive') | default('Interest rate must be positive') }}</div>
                 </div>
                 <div class="d-flex justify-content-between">
-                    <a href="{{ url_for('financial_health.step2') }}" class="btn btn-secondary">{{ trans('back') | default('Back') }}</a>
-                    <button type="submit" class="btn btn-primary">{{ trans('calculate_health_score') | default('Calculate Health Score') }}</button>
+                    <a href="{{ url_for('financial_health.step2') }}" class="btn btn-secondary">{{ trans('core_back') | default('Back') }}</a>
+                    <button type="submit" class="btn btn-primary">{{ trans('financial_health_calculate_health_score') | default('Calculate Health Score') }}</button>
                 </div>
                 <input type="hidden" id="debugData" name="debugData">
             </form>
@@ -72,7 +72,7 @@
             const numValue = parseFloat(cleanValue) || 0;
             if (!isInterestRate && numValue > 10000000000) {
                 cleanValue = '10000000000';
-                alert('{{ trans('input_cannot_exceed_10_billion') | default('Input cannot exceed ₦10 billion') }}');
+                alert('{{ trans('core_input_cannot_exceed_10_billion') | default('Input cannot exceed ₦10 billion') }}');
             }
             const formatted = formatNumber(cleanValue);
             input.value = formatted;
@@ -120,7 +120,7 @@
         document.getElementById('debugData').value = JSON.stringify(debugData);
         if (!valid) {
             e.preventDefault();
-            alert('{{ trans('please_enter_valid_numbers') | default('Please enter valid numbers') }}');
+            alert('{{ trans('core_please_enter_valid_numbers') | default('Please enter valid numbers') }}');
         }
     });
 </script>
