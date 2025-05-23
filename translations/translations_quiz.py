@@ -179,7 +179,6 @@ QUIZ_TRANSLATIONS = {
         'quiz_error_processing_quiz_answers': 'Error processing quiz answers',
         'quiz_error_loading_quiz_results': 'Error loading quiz results',
         'quiz_completed_successfully': 'Quiz completed successfully',
-        # Added missing keys from logs and quiz functionality
         'quiz_first_name_required': 'First name is required.',
         'quiz_email_invalid': 'Please enter a valid email address.',
         'quiz_answer_required': 'Please select an answer.',
@@ -365,7 +364,6 @@ QUIZ_TRANSLATIONS = {
         'quiz_error_processing_quiz_answers': 'Kuskure wajen sarrafa amsoshin gwaji',
         'quiz_error_loading_quiz_results': 'Kuskure wajen loda sakamakon gwaji',
         'quiz_completed_successfully': 'An kammala gwaji cikin nasara',
-        # Added missing keys from logs and quiz functionality
         'quiz_first_name_required': 'Ana buƙatar sunan farko.',
         'quiz_email_invalid': 'Don Allah shigar da adireshin imel mai inganci.',
         'quiz_answer_required': 'Don Allah zaɓi amsa.',
