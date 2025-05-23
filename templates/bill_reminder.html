@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ trans('bill_payment_reminder') | default('Bill Payment Reminder') }}</title>
+    <title>{{ trans('bill_bill_payment_reminder') | default('Bill Payment Reminder') }}</title>
     <style>
         body {
             font-family: 'Arial', sans-serif;
@@ -80,41 +80,41 @@
 </head>
 <body>
     <div class="header">
-        <h2>{{ trans('bill_payment_reminder') | default('Bill Payment Reminder') }}</h2>
-        <p>{{ trans('financial_growth_passport') | default('Financial growth passport for Africa') }}</p>
+        <h2>{{ trans('bill_bill_payment_reminder') | default('Bill Payment Reminder') }}</h2>
+        <p>{{ trans('core_financial_growth_passport') | default('Financial growth passport for Africa') }}</p>
     </div>
     <div class="content">
-        <p>{{ trans('dear') | default('Dear') }} {{ user_name }},</p>
-        <p>{{ trans('bill_reminder_intro') | default('This is a reminder about your upcoming or overdue bills.') }}</p>
-        <p>{{ trans('review_bills') | default('Please review the following bills') }}:</p>
+        <p>{{ trans('core_dear') | default('Dear') }} {{ user_name }},</p>
+        <p>{{ trans('bill_bill_reminder_intro') | default('This is a reminder about your upcoming or overdue bills.') }}</p>
+        <p>{{ trans('bill_review_bills') | default('Please review the following bills') }}:</p>
         <ul>
             {% for bill in bills %}
                 {% if bill.Status == 'Pending' or bill.Status == 'Overdue' %}
-                    <li>{{ bill.Description }} - {{ bill.Amount }} ₦ ({{ trans('due') | default('Due') }}: {{ bill.DueDate }}, {{ trans('status') | default('Status') }}: {{ trans(bill.Status) | default(bill.Status) }})</li>
+                    <li>{{ bill.Description }} - {{ bill.Amount }} ₦ ({{ trans('bill_due') | default('Due') }}: {{ bill.DueDate }}, {{ trans('bill_status') | default('Status') }}: {{ trans('bill_' + bill.Status.lower()) | default(bill.Status) }})</li>
                 {% endif %}
             {% endfor %}
         </ul>
-        <p>{{ trans('pay_on_time') | default('Pay on time to avoid late fees.') }}</p>
+        <p>{{ trans('bill_pay_on_time') | default('Pay on time to avoid late fees.') }}</p>
         <p>
-            {{ trans('manage_bills') | default('Manage your bills now') }}:
-            <a href="{{ url_for('bill_planner_form', _external=True) }}" class="btn btn-primary">{{ trans('go_to_bill_planner') | default('Go to Bill Planner') }}</a>
+            {{ trans('bill_manage_bills') | default('Manage your bills now') }}:
+            <a href="{{ url_for('bill_planner_form', _external=True) }}" class="btn btn-primary">{{ trans('bill_go_to_bill_planner') | default('Go to Bill Planner') }}</a>
         </p>
         <p>
-            {{ trans('provide_feedback_prompt') | default('Please provide feedback on your experience') }}:
-            <a href="{{ FEEDBACK_FORM_URL }}" class="btn btn-secondary">{{ trans('feedback_form') | default('Feedback Form') }}</a>
+            {{ trans('core_provide_feedback_prompt') | default('Please provide feedback on your experience') }}:
+            <a href="{{ FEEDBACK_FORM_URL }}" class="btn btn-secondary">{{ trans('core_feedback_form') | default('Feedback Form') }}</a>
         </p>
         <p>
-            {{ trans('join_waitlist_prompt') | default('Want Smart Insights? Join our waitlist') }}:
-            <a href="{{ WAITLIST_FORM_URL }}" class="btn btn-primary">{{ trans('join_waitlist') | default('Join Waitlist') }}</a>
+            {{ trans('core_join_waitlist_prompt') | default('Want Smart Insights? Join our waitlist') }}:
+            <a href="{{ WAITLIST_FORM_URL }}" class="btn btn-primary">{{ trans('core_join_waitlist') | default('Join Waitlist') }}</a>
         </p>
         <p>
-            {{ trans('book_consultancy_prompt') | default('Need expert advice? Book a consultancy') }}:
-            <a href="{{ CONSULTANCY_FORM_URL }}" class="btn btn-tertiary">{{ trans('book_consultancy') | default('Book Consultancy') }}</a>
+            {{ trans('core_book_consultancy_prompt') | default('Need expert advice? Book a consultancy') }}:
+            <a href="{{ CONSULTANCY_FORM_URL }}" class="btn btn-tertiary">{{ trans('core_book_consultancy') | default('Book Consultancy') }}</a>
         </p>
-        <p>{{ trans('thank_you') | default('Thank you for using Ficore Africa') }}</p>
+        <p>{{ trans('core_thank_you') | default('Thank you for using Ficore Africa') }}</p>
     </div>
     <div class="footer">
-        <p>{{ trans('powered_by') | default('Powered by Ficore Africa') }}</p>
+        <p>{{ trans('core_powered_by') | default('Powered by Ficore Africa') }}</p>
     </div>
 </body>
 </html>
