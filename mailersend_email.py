@@ -4,7 +4,7 @@ import requests
 from flask import current_app, render_template, flash
 
 try:
-    from translations import trans
+    from app import trans  # Import trans from app.py instead
 except ImportError:
     def trans(key, lang=None):
         return key  # Fallback to return the key as the translation
