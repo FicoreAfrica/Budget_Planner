@@ -71,41 +71,41 @@
             <h1>{{ trans('emergency_fund_calculator') | default('Emergency Fund Calculator') }}</h1>
         </div>
         <div class="content">
-            <p>{{ trans('dear') | default('Dear') }} {{ data.first_name or 'User' }},</p>
+            <p>{{ trans('core_dear') | default('Dear') }} {{ data.first_name or 'User' }},</p>
             <p>{{ trans('emergency_fund_summary_intro') | default('Here is your emergency fund summary') }}</p>
-            <h2>{{ trans('fund_summary') | default('Fund Summary') }}</h2>
-            <p>{{ trans('created_at') | default('Created At') }}: {{ data.created_at }}</p>
-            <p>{{ trans('monthly_expenses') | default('Monthly Expenses') }}: ₦{{ data.monthly_expenses | format_number }}</p>
-            <p>{{ trans('current_savings') | default('Current Savings') }}: ₦{{ data.current_savings | format_number }}</p>
-            <p>{{ trans('target_savings_3m') | default('Target Savings (3 Months)') }}: ₦{{ data.target_savings_3m | format_number }}</p>
-            <p>{{ trans('target_savings_6m') | default('Target Savings (6 Months)') }}: ₦{{ data.target_savings_6m | format_number }}</p>
-            <p>{{ trans('savings_gap_3m') | default('Savings Gap (3 Months)') }}: ₦{{ data.savings_gap_3m | format_number }}</p>
-            <p>{{ trans('savings_gap_6m') | default('Savings Gap (6 Months)') }}: ₦{{ data.savings_gap_6m | format_number }}</p>
-            <h3>{{ trans('badges') | default('Badges') }}</h3>
+            <h2>{{ trans('emergency_fund_fund_summary') | default('Fund Summary') }}</h2>
+            <p>{{ trans('core_created_at') | default('Created At') }}: {{ data.created_at }}</p>
+            <p>{{ trans('emergency_fund_monthly_expenses') | default('Monthly Expenses') }}: ₦{{ data.monthly_expenses | format_number }}</p>
+            <p>{{ trans('emergency_fund_current_savings') | default('Current Savings') }}: ₦{{ data.current_savings | format_number }}</p>
+            <p>{{ trans('emergency_fund_target_savings_3_months') | default('Target Savings (3 Months)') }}: ₦{{ data.target_savings_3m | format_number }}</p>
+            <p>{{ trans('emergency_fund_target_savings_6_months') | default('Target Savings (6 Months)') }}: ₦{{ data.target_savings_6m | format_number }}</p>
+            <p>{{ trans('emergency_fund_savings_gap_3_months') | default('Savings Gap (3 Months)') }}: ₦{{ data.savings_gap_3m | format_number }}</p>
+            <p>{{ trans('emergency_fund_savings_gap_6_months') | default('Savings Gap (6 Months)') }}: ₦{{ data.savings_gap_6m | format_number }}</p>
+            <h3>{{ trans('emergency_fund_badges') | default('Badges') }}</h3>
             {% if data.badges %}
                 <ul>
                     {% for badge in data.badges %}
-                        <li>{{ trans(badge) | default(badge) }}</li>
+                        <li>{{ trans('emergency_fund_' + badge.lower().replace(' ', '_')) | default(badge) }}</li>
                     {% endfor %}
                 </ul>
             {% else %}
-                <p>{{ trans('no_badges') | default('No badges earned yet') }}</p>
+                <p>{{ trans('emergency_fund_no_badges') | default('No badges earned yet') }}</p>
             {% endif %}
-            <h3>{{ trans('recommendations') | default('Recommendations') }}</h3>
+            <h3>{{ trans('emergency_fund_recommendations') | default('Recommendations') }}</h3>
             <ul>
                 {% if data.savings_gap_6m > 0 %}
-                    <li>{{ trans('close_6m_gap') | default('Increase savings to close the 6-month emergency fund gap') }}</li>
+                    <li>{{ trans('emergency_fund_close_6m_gap') | default('Increase savings to close the 6-month emergency fund gap') }}</li>
                 {% else %}
-                    <li>{{ trans('maintain_fund') | default('Maintain or grow your emergency fund for stability') }}</li>
+                    <li>{{ trans('emergency_fund_maintain_fund') | default('Maintain or grow your emergency fund for stability') }}</li>
                 {% endif %}
-                <li>{{ trans('use_savings_apps') | default('Use apps like PiggyVest or Cowrywise to automate savings') }}</li>
-                <li>{{ trans('join_savings_groups') | default('Join Ajo/Esusu/Adashe groups for disciplined saving habits') }}</li>
+                <li>{{ trans('emergency_fund_use_savings_apps') | default('Use apps like PiggyVest or Cowrywise to automate savings') }}</li>
+                <li>{{ trans('emergency_fund_join_savings_groups') | default('Join Ajo/Esusu/Adashe groups for disciplined saving habits') }}</li>
             </ul>
-            <p><a href="{{ data.cta_url }}" class="btn">{{ trans('view_dashboard') | default('View Dashboard') }}</a></p>
-            <p>{{ trans('thank_you') | default('Thank you for using Ficore Africa') }}</p>
+            <p><a href="{{ data.cta_url }}" class="btn">{{ trans('emergency_fund_view_dashboard') | default('View Dashboard') }}</a></p>
+            <p>{{ trans('core_thank_you') | default('Thank you for using Ficore Africa') }}</p>
         </div>
         <div class="footer">
-            <p>{{ trans('powered_by') | default('Powered by Ficore Africa') }}</p>
+            <p>{{ trans('core_powered_by') | default('Powered by Ficore Africa') }}</p>
         </div>
     </div>
 </body>
