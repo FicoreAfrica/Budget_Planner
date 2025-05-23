@@ -1,17 +1,17 @@
 {% extends "base.html" %}
-{% block title %}{{ trans('budget_planner') | default('Budget Planner') }}{% endblock %}
+{% block title %}{{ trans('budget_budget_planner') | default('Budget Planner') }}{% endblock %}
 {% block content %}
 <div class="container">
     <div class="header">
-        <h1>{{ trans('budget_planner') | default('Budget Planner') }}</h1>
-        <p>{{ trans('enter_monthly_expenses') | default('Enter your monthly expenses') }}</p>
+        <h1>{{ trans('budget_budget_planner') | default('Budget Planner') }}</h1>
+        <p>{{ trans('budget_enter_monthly_expenses') | default('Enter your monthly expenses') }}</p>
     </div>
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
                 <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                    {{ trans(message) | default(message) }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    {{ trans('core_' + message) | default(message) }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close') | default('Close') }}"></button>
                 </div>
             {% endfor %}
         {% endif %}
@@ -21,38 +21,38 @@
             <form method="POST" action="{{ url_for('budget.step3') }}">
                 {{ form.csrf_token }}
                 <div class="mb-3">
-                    <label class="form-label">{{ trans('housing_rent') | default('Housing/Rent') }}</label>
-                    {{ form.housing(class="form-control", placeholder=trans('housing_placeholder') | default('e.g., 100,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('housing_tooltip') | default('Rent or housing costs'), 'aria-describedby': 'housing_help'}) }}
-                    <div class="invalid-feedback">{{ trans('housing_required') | default('Housing cost is required') }}</div>
+                    <label class="form-label">{{ trans('budget_housing_rent') | default('Housing/Rent') }}</label>
+                    {{ form.housing(class="form-control", placeholder=trans('budget_housing_placeholder') | default('e.g., 100,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('budget_housing_tooltip') | default('Rent or housing costs'), 'aria-describedby': 'housing_help'}) }}
+                    <div class="invalid-feedback">{{ trans('budget_housing_required') | default('Housing cost is required') }}</div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">{{ trans('food') | default('Food') }}</label>
-                    {{ form.food(class="form-control", placeholder=trans('food_placeholder') | default('e.g., 50,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('food_tooltip') | default('Groceries, dining expenses'), 'aria-describedby': 'food_help'}) }}
-                    <div class="invalid-feedback">{{ trans('food_required') | default('Food cost is required') }}</div>
+                    <label class="form-label">{{ trans('budget_food') | default('Food') }}</label>
+                    {{ form.food(class="form-control", placeholder=trans('budget_food_placeholder') | default('e.g., 50,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('budget_food_tooltip') | default('Groceries, dining expenses'), 'aria-describedby': 'food_help'}) }}
+                    <div class="invalid-feedback">{{ trans('budget_food_required') | default('Food cost is required') }}</div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">{{ trans('transport') | default('Transport') }}</label>
-                    {{ form.transport(class="form-control", placeholder=trans('transport_placeholder') | default('e.g., 20,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('transport_tooltip') | default('Fuel, public transport, vehicle maintenance'), 'aria-describedby': 'transport_help'}) }}
-                    <div class="invalid-feedback">{{ trans('transport_required') | default('Transport cost is required') }}</div>
+                    <label class="form-label">{{ trans('budget_transport') | default('Transport') }}</label>
+                    {{ form.transport(class="form-control", placeholder=trans('budget_transport_placeholder') | default('e.g., 20,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('budget_transport_tooltip') | default('Fuel, public transport, vehicle maintenance'), 'aria-describedby': 'transport_help'}) }}
+                    <div class="invalid-feedback">{{ trans('budget_transport_required') | default('Transport cost is required') }}</div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">{{ trans('dependents_support') | default('Dependents Support') }}</label>
-                    {{ form.dependents(class="form-control", placeholder=trans('dependents_placeholder') | default('e.g., 30,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('dependents_tooltip') | default('Support for family or dependents'), 'aria-describedby': 'dependents_help'}) }}
-                    <div class="invalid-feedback">{{ trans('dependents_required') | default('Dependents support cost is required') }}</div>
+                    <label class="form-label">{{ trans('budget_dependents_support') | default('Dependents Support') }}</label>
+                    {{ form.dependents(class="form-control", placeholder=trans('budget_dependents_placeholder') | default('e.g., 30,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('budget_dependents_tooltip') | default('Support for family or dependents'), 'aria-describedby': 'dependents_help'}) }}
+                    <div class="invalid-feedback">{{ trans('budget_dependents_required') | default('Dependents support cost is required') }}</div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">{{ trans('miscellaneous') | default('Miscellaneous') }}</label>
-                    {{ form.miscellaneous(class="form-control", placeholder=trans('miscellaneous_placeholder') | default('e.g., 10,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('miscellaneous_tooltip') | default('Data subscriptions, gifts, outings'), 'aria-describedby': 'miscellaneous_help'}) }}
-                    <div class="invalid-feedback">{{ trans('miscellaneous_required') | default('Miscellaneous cost is required') }}</div>
+                    <label class="form-label">{{ trans('budget_miscellaneous') | default('Miscellaneous') }}</label>
+                    {{ form.miscellaneous(class="form-control", placeholder=trans('budget_miscellaneous_placeholder') | default('e.g., 10,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('budget_miscellaneous_tooltip') | default('Data subscriptions, gifts, outings'), 'aria-describedby': 'miscellaneous_help'}) }}
+                    <div class="invalid-feedback">{{ trans('budget_miscellaneous_required') | default('Miscellaneous cost is required') }}</div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">{{ trans('others') | default('Others') }}</label>
-                    {{ form.others(class="form-control", placeholder=trans('others_placeholder') | default('e.g., 15,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('others_tooltip') | default('Other non-specific expenses'), 'aria-describedby': 'others_help'}) }}
-                    <div class="invalid-feedback">{{ trans('others_required') | default('Other expenses are required') }}</div>
+                    <label class="form-label">{{ trans('budget_others') | default('Others') }}</label>
+                    {{ form.others(class="form-control", placeholder=trans('budget_others_placeholder') | default('e.g., 15,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('budget_others_tooltip') | default('Other non-specific expenses'), 'aria-describedby': 'others_help'}) }}
+                    <div class="invalid-feedback">{{ trans('budget_others_required') | default('Other expenses are required') }}</div>
                 </div>
                 <div class="d-flex justify-content-between">
-                    <a href="{{ url_for('budget.step2') }}" class="btn btn-secondary">{{ trans('back') | default('Back') }}</a>
-                    <button type="submit" class="btn btn-primary">{{ trans('continue_to_savings') | default('Continue to Savings') }}</button>
+                    <a href="{{ url_for('budget.step2') }}" class="btn btn-secondary">{{ trans('core_back') | default('Back') }}</a>
+                    <button type="submit" class="btn btn-primary">{{ trans('budget_continue_to_savings') | default('Continue to Savings') }}</button>
                 </div>
             </form>
         </div>
@@ -66,7 +66,7 @@
             let value = input.value.replace(/,/g, '');
             if (value > 10000000000) {
                 input.value = '10,000,000,000';
-                alert('{{ trans('input_cannot_exceed_10_billion') | default('Input cannot exceed ₦10 billion') }}');
+                alert('{{ trans('budget_input_cannot_exceed_10_billion') | default('Input cannot exceed ₦10 billion') }}');
             } else if (value) {
                 input.value = parseFloat(value).toLocaleString('en-NG');
             }
