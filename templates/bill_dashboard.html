@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}{{ trans('bill_dashboard') | default('Bill Dashboard') }}{% endblock %}
+{% block title %}{{ trans('bill_bill_dashboard') | default('Bill Dashboard') }}{% endblock %}
 {% block extra_head %}
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/main.min.css">
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/main.min.js"></script>
@@ -20,14 +20,14 @@
 {% block content %}
   <div class="container">
     <div class="header">
-      <h1>{{ trans('bill_dashboard') | default('Bill Dashboard') }}</h1>
+      <h1>{{ trans('bill_bill_dashboard') | default('Bill Dashboard') }}</h1>
     </div>
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         {% for category, message in messages %}
           <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-            {{ trans(message) | default(message) }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            {{ trans('core_' + message) | default(message) }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close') | default('Close') }}"></button>
           </div>
         {% endfor %}
       {% endif %}
@@ -35,26 +35,26 @@
     <div class="card">
       <div class="card-body">
         <div class="stat">
-          <strong>{{ trans('paid_bills') | default('Paid Bills') }}:</strong> {{ paid_count | format_number }} (₦{{ total_paid | format_number }})
+          <strong>{{ trans('bill_paid_bills') | default('Paid Bills') }}:</strong> {{ paid_count | format_number }} (₦{{ total_paid | format_number }})
         </div>
         <div class="stat">
-          <strong>{{ trans('unpaid_bills') | default('Unpaid Bills') }}:</strong> {{ unpaid_count | format_number }} (₦{{ total_unpaid | format_number }})
+          <strong>{{ trans('bill_unpaid_bills') | default('Unpaid Bills') }}:</strong> {{ unpaid_count | format_number }} (₦{{ total_unpaid | format_number }})
         </div>
         <div class="stat">
-          <strong>{{ trans('overdue_bills') | default('Overdue Bills') }}:</strong>
+          <strong>{{ trans('bill_overdue_bills') | default('Overdue Bills') }}:</strong>
           <span class="overdue-alert">{{ overdue_count | format_number }} (₦{{ total_overdue | format_number }})</span>
         </div>
         <div class="stat">
-          <strong>{{ trans('pending_bills') | default('Pending Bills') }}:</strong> {{ pending_count | format_number }}
+          <strong>{{ trans('bill_pending_bills') | default('Pending Bills') }}:</strong> {{ pending_count | format_number }}
         </div>
         <div class="stat">
-          <strong>{{ trans('total_bills') | default('Total Bills') }}:</strong> ₦{{ total_bills | format_number }}
+          <strong>{{ trans('bill_total_bills') | default('Total Bills') }}:</strong> ₦{{ total_bills | format_number }}
         </div>
       </div>
     </div>
     <div class="card">
       <div class="card-body">
-        <h3>{{ trans('spending_by_category') | default('Spending by Category') }}</h3>
+        <h3>{{ trans('bill_spending_by_category') | default('Spending by Category') }}</h3>
         <canvas id="categoryChart"></canvas>
         <script>
           document.addEventListener('DOMContentLoaded', function() {
@@ -62,9 +62,9 @@
             new Chart(ctx, {
               type: 'bar',
               data: {
-                labels: [{% for cat in categories %}"{{ trans(cat.replace('_', '/').title()) | default(cat.replace('_', '/').title()) }}",{% endfor %}],
+                labels: [{% for cat in categories %}"{{ trans('bill_' + cat.replace('_', '/')) | default(cat.replace('_', '/').title()) }}",{% endfor %}],
                 datasets: [{
-                  label: '{{ trans('amount') | default('Amount') }} (₦)',
+                  label: '{{ trans('bill_amount') | default('Amount') }} (₦)',
                   data: [{% for cat, amt in categories.items() %}{{ amt | format_number }},{% endfor %}],
                   backgroundColor: ['#1E7F71', '#2E7D32', '#0288D1', '#dc3545', '#FBC02D', '#D81B60', '#7B1FA2', '#FF5722', '#795548', '#607D8B', '#00ACC1', '#8E24AA', '#F06292', '#4CAF50'],
                   borderColor: ['#1E7F71', '#2E7D32', '#0288D1', '#dc3545', '#FBC02D', '#D81B60', '#7B1FA2', '#FF5722', '#795548', '#607D8B', '#00ACC1', '#8E24AA', '#F06292', '#4CAF50'],
@@ -82,10 +82,10 @@
     </div>
     <div class="card">
       <div class="card-body">
-        <h3>{{ trans('bills_due') | default('Bills Due') }}</h3>
-        <p>{{ trans('today') | default('Today') }}: {{ due_today|length | format_number }}</p>
-        <p>{{ trans('this_week') | default('This Week') }}: {{ due_week|length | format_number }}</p>
-        <p>{{ trans('this_month') | default('This Month') }}: {{ due_month|length | format_number }}</p>
+        <h3>{{ trans('bill_bills_due') | default('Bills Due') }}</h3>
+        <p>{{ trans('core_today') | default('Today') }}: {{ due_today|length | format_number }}</p>
+        <p>{{ trans('core_this_week') | default('This Week') }}: {{ due_week|length | format_number }}</p>
+        <p>{{ trans('core_this_month') | default('This Month') }}: {{ due_month|length | format_number }}</p>
         <div id="calendar"></div>
         <script>
           document.addEventListener('DOMContentLoaded', function() {
@@ -113,34 +113,34 @@
     </div>
     <div class="card">
       <div class="card-body">
-        <h3>{{ trans('upcoming_bills') | default('Upcoming Bills') }}</h3>
+        <h3>{{ trans('bill_upcoming_bills') | default('Upcoming Bills') }}</h3>
         {% if upcoming_bills %}
           <ul>
             {% for bill in upcoming_bills %}
-              <li>{{ bill.bill_name }} (₦{{ bill.amount | format_number }}) - {{ trans('due') | default('Due') }} {{ bill.due_date }} <a href="{{ url_for('bill.view_edit') }}" class="btn btn-primary btn-sm">{{ trans('pay_now') | default('Pay Now') }}</a></li>
+              <li>{{ bill.bill_name }} (₦{{ bill.amount | format_number }}) - {{ trans('bill_due') | default('Due') }} {{ bill.due_date }} <a href="{{ url_for('bill.view_edit') }}" class="btn btn-primary btn-sm">{{ trans('bill_pay_now') | default('Pay Now') }}</a></li>
             {% endfor %}
           </ul>
         {% else %}
-          <p>{{ trans('no_upcoming_bills') | default('No upcoming bills') }}</p>
+          <p>{{ trans('bill_no_upcoming_bills') | default('No upcoming bills') }}</p>
         {% endif %}
       </div>
     </div>
     <div class="card tips">
       <div class="card-body">
-        <h3>{{ trans('tips_for_bills') | default('Tips for Managing Bills') }}</h3>
+        <h3>{{ trans('bill_tips_for_bills') | default('Tips for Managing Bills') }}</h3>
         {% for tip in tips %}
-          <p>{{ trans(tip) | default(tip) }}</p>
+          <p>{{ trans('bill_' + tip) | default(tip) }}</p>
         {% endfor %}
       </div>
     </div>
     <div class="card">
       <div class="card-body">
-        <h3>{{ trans('feedback') | default('Feedback') }}</h3>
-        <p>{{ trans('provide_feedback_prompt') | default('Please provide feedback on your experience') }}</p>
-        <a href="#" class="btn btn-secondary">{{ trans('feedback_form') | default('Feedback Form') }}</a>
+        <h3>{{ trans('core_feedback') | default('Feedback') }}</h3>
+        <p>{{ trans('core_provide_feedback_prompt') | default('Please provide feedback on your experience') }}</p>
+        <a href="#" class="btn btn-secondary">{{ trans('core_feedback_form') | default('Feedback Form') }}</a>
       </div>
     </div>
-    <a href="{{ url_for('bill.view_edit') }}" class="btn btn-primary">{{ trans('view_edit_bills') | default('View and Edit Bills') }}</a>
+    <a href="{{ url_for('bill.view_edit') }}" class="btn btn-primary">{{ trans('bill_view_edit_bills') | default('View and Edit Bills') }}</a>
   </div>
 {% endblock %}
 {% block extra_scripts %}
