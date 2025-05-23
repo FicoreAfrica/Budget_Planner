@@ -1,5 +1,5 @@
 import logging
-from flask import session
+from flask import session, has_request_context
 from typing import Dict, Any
 
 # Set up logger to match app.py's logging configuration
@@ -65,11 +65,15 @@ def trans(key: str, lang: str = None, **kwargs: Any) -> str:
     Logs a warning if the key is not found in the expected module.
     Supports string formatting with kwargs.
     """
+    # Default to 'en' if lang is None and we're not in a request context
     if lang is None:
-        lang = session.get('lang', 'en')
+        if has_request_context():
+            lang = session.get('lang', 'en')
+        else:
+            lang = 'en'  # Default to English during initialization or outside request context
     
     # Debug logging for the translation request
-    session_id = session.get('session_id', 'no-session-id')
+    session_id = session.get('session_id', 'no-session-id') if has_request_context() else 'no-session-id'
     logger.debug(f"Translation request: key={key}, lang={lang} [session: {session_id}]")
     
     # Validate language
@@ -105,8 +109,12 @@ def get_translations(lang: str = None) -> Dict[str, str]:
     Return the combined translations dictionary for the specified language.
     Falls back to English if the language is not found.
     """
+    # Default to 'en' if lang is None and we're not in a request context
     if lang is None:
-        lang = session.get('lang', 'en')
+        if has_request_context():
+            lang = session.get('lang', 'en')
+        else:
+            lang = 'en'  # Default to English during initialization or outside request context
     
     if lang not in TRANSLATIONS:
         logger.warning(f"Language {lang} not found, returning English translations")
