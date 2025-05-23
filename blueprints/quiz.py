@@ -8,6 +8,11 @@ from datetime import datetime
 import logging
 import uuid
 import random
+try:
+    from app import trans  # Import trans from app.py instead
+except ImportError:
+    def trans(key, lang=None):
+        return key  # Fallback to return the key as the translation
 
 quiz_bp = Blueprint('quiz', __name__)
 
