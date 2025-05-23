@@ -1,6 +1,35 @@
 BILL_TRANSLATIONS = {
     'en': {
         'bill_planner': 'Bill Planner',
+        # --- New keys from bill_form.html ---
+        'bill_bill_name': 'Bill Name',
+        'bill_bill_name_placeholder': 'e.g., NEPA, MTN Data, Ajo Contribution',
+        'bill_bill_name_tooltip': 'Enter the name of the bill or expense, e.g., NEPA, MTN Data, Ajo Contribution',
+        'bill_bill_name_required': 'Bill name is required',
+        'bill_amount_placeholder': 'e.g., ₦5000',
+        'bill_amount_tooltip': 'Enter the amount in Naira, e.g., ₦5,000 for MTN Data',
+        'bill_amount_required': 'Valid amount is required',
+        'bill_due_date_placeholder': 'YYYY-MM-DD',
+        'bill_due_date_tooltip': 'Enter the due date in YYYY-MM-DD format',
+
+        # --- From bill_dashboard.html ---
+        'bill_pending_bills': 'Pending Bills',
+        'bill_view_edit_bills': 'View and Edit Bills',
+
+        # --- From bill_reminder.html ---
+        'bill_bill_reminder_intro': 'This is a reminder about your upcoming or overdue bills.',
+        'bill_review_bills': 'Please review the following bills',
+
+        # --- From view_edit_bills.html (categories) ---
+        'bill_data_internet': 'Data/Internet',
+        'bill_ajo_esusu_adashe': 'Ajo/Esusu/Adashe',
+        'bill_food': 'Food',
+        'bill_transport': 'Transport',
+        'bill_clothing': 'Clothing',
+        'bill_education': 'Education',
+        'bill_healthcare': 'Healthcare',
+        'bill_entertainment': 'Entertainment',
+        'bill_airtime': 'Airtime',
         'bill_view_and_edit_bills': 'View and Edit Bills',
         'bill_select_category': 'Select Category',
         'bill_category_all': 'All',
@@ -153,6 +182,35 @@ BILL_TRANSLATIONS = {
         'bill_enter_due_date_format': 'Shigar da ranar biya a tsarin YYYY-MM-DD',
         'bill_check_for_email_reminders': 'Duba wannan don karɓar tunatarwar imel na wannan lissafin kuɗin',
         'bill_select_status': 'Zaɓi matsayin yanzu na lissafin kuɗin',
+        # --- New keys from bill_form.html ---
+        'bill_bill_name': 'Sunan Lissafi',
+        'bill_bill_name_placeholder': 'misali, NEPA, MTN Data, Gudummawar Ajo',
+        'bill_bill_name_tooltip': 'Shigar da sunan lissafin kuɗi ko kuɗin da ake kashewa, misali NEPA, MTN Data, Gudummawar Ajo',
+        'bill_bill_name_required': 'Ana buƙatar sunan lissafi',
+        'bill_amount_placeholder': 'misali, ₦5000',
+        'bill_amount_tooltip': 'Shigar da adadin kuɗi a Naira, misali ₦5,000 don MTN Data',
+        'bill_amount_required': 'Ana buƙatar adadi mai inganci',
+        'bill_due_date_placeholder': 'YYYY-MM-DD',
+        'bill_due_date_tooltip': 'Shigar da ranar biya a tsarin YYYY-MM-DD',
+
+        # --- From bill_dashboard.html ---
+        'bill_pending_bills': 'Lissafin Da Ake Jira',
+        'bill_view_edit_bills': 'Duba da Gyara Lissafi',
+
+        # --- From bill_reminder.html ---
+        'bill_bill_reminder_intro': 'Wannan tunatarwa ce game da lissafin kuɗin da ke gabatowa ko wanda ya wuce lokaci.',
+        'bill_review_bills': 'Don Allah duba lissafin kuɗin da ke ƙasa',
+
+        # --- From view_edit_bills.html (categories) ---
+        'bill_data_internet': 'Bayanan Intanet',
+        'bill_ajo_esusu_adashe': 'Ajo/Esusu/Adashe',
+        'bill_food': 'Abinci',
+        'bill_transport': 'Sufuri',
+        'bill_clothing': 'Tufafi',
+        'bill_education': 'Ilimi',
+        'bill_healthcare': 'Kiwon Lafiya',
+        'bill_entertainment': 'Nishaɗi',
+        'bill_airtime': 'Kudin Kira',
         'bill_no_upcoming_bills': 'Babu lissafin da ke gabatowa'
     }
 }
