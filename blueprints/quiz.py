@@ -60,34 +60,29 @@ def step1():
         session['sid'] = str(uuid.uuid4())
     form = Step1Form()
     course_id = request.args.get('course_id', 'financial_quiz')
-    try:
-        if request.method == 'POST' and form.validate_on_submit():
-            session['quiz_step1'] = form.data
-            current_app.logger.debug(f"Quiz step1 form data: {form.data}")
-            progress_storage = current_app.config['STORAGE_MANAGERS']['user_progress']
-            progress = progress_storage.filter_by_session(session['sid'])
-            course_progress = next((p for p in progress if p['data']['course_id'] == course_id), None)
-            if not course_progress:
-                progress_data = {
-                    'course_id': course_id,
-                    'completed_lessons': [0],
-                    'progress_percentage': (1/4) * 100,
-                    'last_updated': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                }
-                progress_storage.append(progress_data, session_id=session['sid'])
-            else:
-                if 0 not in course_progress['data']['completed_lessons']:
-                    course_progress['data']['completed_lessons'].append(0)
-                    course_progress['data']['progress_percentage'] = (len(course_progress['data']['completed_lessons']) / 4) * 100
-                    course_progress['data']['last_updated'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                    progress_storage.update_by_id(course_progress['id'], course_progress['data'])
-            current_app.logger.info(f"Quiz lesson 0 (step1) completed for course {course_id} by session {session['sid']}")
-            return redirect(url_for('quiz.step2a', course_id=course_id))
-        return render_template('quiz_step1.html', form=form, course_id=course_id)
-    except Exception as e:
-        current_app.logger.exception(f"Error in quiz.step1: {str(e)}")
-        flash(trans('quiz_error_personal_info'), 'danger')
-        return render_template('quiz_step1.html', form=form, course_id=course_id)
+    if request.method == 'POST' and form.validate_on_submit():
+        session['quiz_step1'] = form.data
+        current_app.logger.debug(f"Quiz step1 form data: {form.data}")
+        progress_storage = current_app.config['STORAGE_MANAGERS']['user_progress']
+        progress = progress_storage.filter_by_session(session['sid'])
+        course_progress = next((p for p in progress if p['data'].get('course_id') == course_id), None)
+        if not course_progress:
+            progress_data = {
+                'course_id': course_id,
+                'completed_lessons': [0],
+                'progress_percentage': (1/4) * 100,
+                'last_updated': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            }
+            progress_storage.append(progress_data, session_id=session['sid'])
+        else:
+            if 0 not in course_progress['data'].get('completed_lessons', []):
+                course_progress['data']['completed_lessons'].append(0)
+                course_progress['data']['progress_percentage'] = (len(course_progress['data']['completed_lessons']) / 4) * 100
+                course_progress['data']['last_updated'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                progress_storage.update_by_id(course_progress['id'], course_progress['data'])
+        current_app.logger.info(f"Quiz lesson 0 (step1) completed for course {course_id} by session {session['sid']}")
+        return redirect(url_for('quiz.step2a', course_id=course_id))
+    return render_template('quiz_step1.html', form=form, course_id=course_id)
 
 @quiz_bp.route('/step2a', methods=['GET', 'POST'])
 def step2a():
@@ -106,25 +101,20 @@ def step2a():
         } for key in question_keys
     ]
     form = Step2Form(questions, form_type='step2a')
-    try:
-        if request.method == 'POST' and form.validate_on_submit():
-            session['quiz_step2a'] = {q['key']: getattr(form, q['key']).data for q in questions}
-            current_app.logger.debug(f"Quiz step2a form data: {session['quiz_step2a']}")
-            progress_storage = current_app.config['STORAGE_MANAGERS']['user_progress']
-            progress = progress_storage.filter_by_session(session['sid'])
-            course_progress = next((p for p in progress if p['data']['course_id'] == course_id), None)
-            if course_progress and 1 not in course_progress['data']['completed_lessons']:
-                course_progress['data']['completed_lessons'].append(1)
-                course_progress['data']['progress_percentage'] = (len(course_progress['data']['completed_lessons']) / 4) * 100
-                course_progress['data']['last_updated'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                progress_storage.update_by_id(course_progress['id'], course_progress['data'])
-            current_app.logger.info(f"Quiz lesson 1 (step2a) completed for course {course_id} by session {session['sid']}")
-            return redirect(url_for('quiz.step2b', course_id=course_id))
-        return render_template('quiz_step2a.html', form=form, questions=questions, course_id=course_id)
-    except Exception as e:
-        current_app.logger.exception(f"Error in quiz.step2a: {str(e)}")
-        flash(trans('quiz_error_quiz_answers'), 'danger')
-        return render_template('quiz_step2a.html', form=form, questions=questions, course_id=course_id)
+    if request.method == 'POST' and form.validate_on_submit():
+        session['quiz_step2a'] = {q['key']: getattr(form, q['key']).data for q in questions}
+        current_app.logger.debug(f"Quiz step2a form data: {session['quiz_step2a']}")
+        progress_storage = current_app.config['STORAGE_MANAGERS']['user_progress']
+        progress = progress_storage.filter_by_session(session['sid'])
+        course_progress = next((p for p in progress if p['data'].get('course_id') == course_id), None)
+        if course_progress and 1 not in course_progress['data'].get('completed_lessons', []):
+            course_progress['data']['completed_lessons'].append(1)
+            course_progress['data']['progress_percentage'] = (len(course_progress['data']['completed_lessons']) / 4) * 100
+            course_progress['data']['last_updated'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            progress_storage.update_by_id(course_progress['id'], course_progress['data'])
+        current_app.logger.info(f"Quiz lesson 1 (step2a) completed for course {course_id} by session {session['sid']}")
+        return redirect(url_for('quiz.step2b', course_id=course_id))
+    return render_template('quiz_step2a.html', form=form, questions=questions, course_id=course_id)
 
 @quiz_bp.route('/step2b', methods=['GET', 'POST'])
 def step2b():
@@ -143,91 +133,86 @@ def step2b():
         } for key in question_keys
     ]
     form = Step2Form(questions, form_type='step2b')
-    try:
-        if request.method == 'POST' and form.validate_on_submit():
-            answers = session.get('quiz_step2a', {})
-            answers.update({q['key']: getattr(form, q['key']).data for q in questions})
-            score = sum(
-                3 if v == 'always' else 2 if v == 'often' else 1 if v == 'sometimes' else 0
-                for v in answers.values()
-            )
-            personality = (
-                trans('quiz_personality_planner') if score >= 24 else
-                trans('quiz_personality_saver') if score >= 18 else
-                trans('quiz_personality_balanced') if score >= 12 else
-                trans('quiz_personality_spender')
-            )
-            badges = []
-            if score >= 24:
-                badges.append(trans('quiz_badge_financial_guru'))
-            if score >= 18:
-                badges.append(trans('quiz_badge_savings_star'))
-            if answers.get('avoid_debt') in ['always', 'often']:
-                badges.append(trans('quiz_badge_debt_dodger'))
-            if answers.get('set_financial_goals') in ['always', 'often']:
-                badges.append(trans('quiz_badge_goal_setter'))
-            
-            quiz_storage = current_app.config['STORAGE_MANAGERS']['quiz']
-            record = {
-                "id": str(uuid.uuid4()),
-                "data": {
-                    "first_name": session.get('quiz_step1', {}).get('first_name', ''),
-                    "email": session.get('quiz_step1', {}).get('email', ''),
-                    "answers": answers,
+    if request.method == 'POST' and form.validate_on_submit():
+        answers = session.get('quiz_step2a', {})
+        answers.update({q['key']: getattr(form, q['key']).data for q in questions})
+        score = sum(
+            3 if v == 'always' else 2 if v == 'often' else 1 if v == 'sometimes' else 0
+            for v in answers.values()
+        )
+        personality = (
+            trans('quiz_personality_planner') if score >= 24 else
+            trans('quiz_personality_saver') if score >= 18 else
+            trans('quiz_personality_balanced') if score >= 12 else
+            trans('quiz_personality_spender')
+        )
+        badges = []
+        if score >= 24:
+            badges.append(trans('quiz_badge_financial_guru'))
+        if score >= 18:
+            badges.append(trans('quiz_badge_savings_star'))
+        if answers.get('avoid_debt') in ['always', 'often']:
+            badges.append(trans('quiz_badge_debt_dodger'))
+        if answers.get('set_financial_goals') in ['always', 'often']:
+            badges.append(trans('quiz_badge_goal_setter'))
+        
+        quiz_storage = current_app.config['STORAGE_MANAGERS']['quiz']
+        record = {
+            "id": str(uuid.uuid4()),
+            "data": {
+                "first_name": session.get('quiz_step1', {}).get('first_name', ''),
+                "email": session.get('quiz_step1', {}).get('email', ''),
+                "answers": answers,
+                "score": score,
+                "personality": personality,
+                "badges": badges,
+                "created_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            }
+        }
+        email = session.get('quiz_step1', {}).get('email')
+        send_email_flag = session.get('quiz_step1', {}).get('send_email', False)
+        quiz_storage.append(record, user_email=email, session_id=session['sid'])
+        
+        if send_email_flag and email:
+            send_email(
+                to_email=email,
+                subject=trans('quiz_results_subject'),
+                template_name="quiz_email.html",
+                data={
+                    "first_name": record["data"]["first_name"],
                     "score": score,
                     "personality": personality,
                     "badges": badges,
-                    "created_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    "created_at": record["data"]["created_at"],
+                    "cta_url": url_for('quiz.results', _external=True)
                 }
+            )
+        
+        progress_storage = current_app.config['STORAGE_MANAGERS']['user_progress']
+        progress = progress_storage.filter_by_session(session['sid'])
+        course_progress = next((p for p in progress if p['data'].get('course_id') == course_id), None)
+        if not course_progress:
+            progress_data = {
+                'course_id': course_id,
+                'completed_lessons': [0, 1, 2],
+                'progress_percentage': (3/4) * 100,
+                'last_updated': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             }
-            email = session.get('quiz_step1', {}).get('email')
-            send_email_flag = session.get('quiz_step1', {}).get('send_email', False)
-            quiz_storage.append(record, user_email=email, session_id=session['sid'])
-            
-            if send_email_flag and email:
-                send_email(
-                    to_email=email,
-                    subject=trans('quiz_results_subject'),
-                    template_name="quiz_email.html",
-                    data={
-                        "first_name": record["data"]["first_name"],
-                        "score": score,
-                        "personality": personality,
-                        "badges": badges,
-                        "created_at": record["data"]["created_at"],
-                        "cta_url": url_for('quiz.results', _external=True)
-                    }
-                )
-            
-            progress_storage = current_app.config['STORAGE_MANAGERS']['user_progress']
-            progress = progress_storage.filter_by_session(session['sid'])
-            course_progress = next((p for p in progress if p['data']['course_id'] == course_id), None)
-            if not course_progress:
-                progress_data = {
-                    'course_id': course_id,
-                    'completed_lessons': [0, 1, 2],
-                    'progress_percentage': (3/4) * 100,
-                    'last_updated': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                }
-                progress_storage.append(progress_data, session_id=session['sid'])
-            else:
-                if 2 not in course_progress['data']['completed_lessons']:
-                    course_progress['data']['completed_lessons'].append(2)
-                    course_progress['data']['progress_percentage'] = (len(course_progress['data']['completed_lessons']) / 4) * 100
-                    course_progress['data']['last_updated'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                    progress_storage.update_by_id(course_progress['id'], course_progress['data'])
-            
-            current_app.logger.info(f"Quiz lesson 2 (step2b) completed for course {course_id} by session {session['sid']}")
-            session.pop('quiz_step1', None)
-            session.pop('quiz_step2a', None)
-            session.pop('quiz_questions', None)
-            flash(trans('quiz_completed_success'), 'success')
-            return redirect(url_for('quiz.results', course_id=course_id))
-        return render_template('quiz_step2b.html', form=form, questions=questions, course_id=course_id)
-    except Exception as e:
-        current_app.logger.exception(f"Error in quiz.step2b: {str(e)}")
-        flash(trans('quiz_error_quiz_answers'), 'danger')
-        return render_template('quiz_step2b.html', form=form, questions=questions, course_id=course_id)
+            progress_storage.append(progress_data, session_id=session['sid'])
+        else:
+            if 2 not in course_progress['data'].get('completed_lessons', []):
+                course_progress['data']['completed_lessons'].append(2)
+                course_progress['data']['progress_percentage'] = (len(course_progress['data']['completed_lessons']) / 4) * 100
+                course_progress['data']['last_updated'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                progress_storage.update_by_id(course_progress['id'], course_progress['data'])
+        
+        current_app.logger.info(f"Quiz lesson 2 (step2b) completed for course {course_id} by session {session['sid']}")
+        session.pop('quiz_step1', None)
+        session.pop('quiz_step2a', None)
+        session.pop('quiz_questions', None)
+        flash(trans('quiz_completed_success'), 'success')
+        return redirect(url_for('quiz.results', course_id=course_id))
+    return render_template('quiz_step2b.html', form=form, questions=questions, course_id=course_id)
 
 @quiz_bp.route('/results', methods=['GET', 'POST'])
 def results():
