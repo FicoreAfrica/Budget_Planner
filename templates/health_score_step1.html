@@ -13,14 +13,14 @@
 <div class="container">
     <div class="header">
         <h1>{{ trans('financial_health_score') | default('Financial Health Score') }}</h1>
-        <p>{{ trans('enter_personal_information') | default('Enter your personal information') }}</p>
+        <p>{{ trans('financial_health_enter_personal_information') | default('Enter your personal information') }}</p>
     </div>
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
                 <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                    {{ trans(message) | default(message) }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    {{ trans('core_' + message) | default(message) }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close') | default('Close') }}"></button>
                 </div>
             {% endfor %}
         {% endif %}
@@ -30,25 +30,25 @@
             <form method="POST" action="{{ url_for('financial_health.step1') }}">
                 {{ form.csrf_token }}
                 <div class="mb-3">
-                    <label class="form-label">{{ trans('first_name') | default('First Name') }}</label>
-                    {{ form.first_name(class="form-control", placeholder=trans('first_name_placeholder') | default('e.g., Ahmad, Kamal, Musa'), **{'data-bs-toggle': 'tooltip', 'title': trans('first_name_tooltip') | default('Enter your first name'), 'aria-describedby': 'first_name_help'}) }}
-                    <div class="invalid-feedback">{{ trans('first_name_required') | default('First name is required') }}</div>
+                    <label class="form-label">{{ trans('core_first_name') | default('First Name') }}</label>
+                    {{ form.first_name(class="form-control", placeholder=trans('core_first_name_placeholder') | default('e.g., Ahmad, Kamal, Musa'), **{'data-bs-toggle': 'tooltip', 'title': trans('core_first_name_tooltip') | default('Enter your first name'), 'aria-describedby': 'first_name_help'}) }}
+                    <div class="invalid-feedback">{{ trans('core_first_name_required') | default('First name is required') }}</div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">{{ trans('email') | default('Email') }}</label>
-                    {{ form.email(class="form-control", placeholder=trans('email_placeholder') | default('e.g., ahmad@example.com'), **{'data-bs-toggle': 'tooltip', 'title': trans('email_tooltip') | default('Enter your email to receive health score'), 'aria-describedby': 'email_help'}) }}
-                    <div class="invalid-feedback">{{ trans('email_required') | default('Valid email is required') }}</div>
+                    <label class="form-label">{{ trans('core_email') | default('Email') }}</label>
+                    {{ form.email(class="form-control", placeholder=trans('core_email_placeholder') | default('e.g., ahmad@example.com'), **{'data-bs-toggle': 'tooltip', 'title': trans('core_email_tooltip') | default('Enter your email to receive health score'), 'aria-describedby': 'email_help'}) }}
+                    <div class="invalid-feedback">{{ trans('core_email_required') | default('Valid email is required') }}</div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">{{ trans('user_type') | default('User Type') }}</label>
-                    {{ form.user_type(class="form-select", **{'data-bs-toggle': 'tooltip', 'title': trans('select_individual_or_business') | default('Select individual or business'), 'aria-describedby': 'user_type_help'}) }}
-                    <div class="form-text">{{ trans('individual_or_business') | default('Are you an individual or business?') }}</div>
+                    <label class="form-label">{{ trans('financial_health_user_type') | default('User Type') }}</label>
+                    {{ form.user_type(class="form-select", **{'data-bs-toggle': 'tooltip', 'title': trans('financial_health_select_individual_or_business') | default('Select individual or business'), 'aria-describedby': 'user_type_help'}) }}
+                    <div class="form-text">{{ trans('financial_health_individual_or_business') | default('Are you an individual or business?') }}</div>
                 </div>
                 <div class="mb-3 form-check">
-                    {{ form.send_email(class="form-check-input", **{'data-bs-toggle': 'tooltip', 'title': trans('send_email_tooltip') | default('Check to receive email summary'), 'aria-describedby': 'send_email_help'}) }}
-                    <label class="form-check-label" for="send_email">{{ trans('send_email') | default('Send Email') }}</label>
+                    {{ form.send_email(class="form-check-input", **{'data-bs-toggle': 'tooltip', 'title': trans('financial_health_send_email_tooltip') | default('Check to receive email summary'), 'aria-describedby': 'send_email_help'}) }}
+                    <label class="form-check-label" for="send_email">{{ trans('financial_health_send_email') | default('Send Email') }}</label>
                 </div>
-                <button type="submit" class="btn btn-primary">{{ trans('continue_to_income') | default('Continue to Income') }}</button>
+                <button type="submit" class="btn btn-primary">{{ trans('financial_health_continue_to_income') | default('Continue to Income') }}</button>
             </form>
         </div>
     </div>
