@@ -185,8 +185,32 @@ def index():
         log.error(f"Error retrieving courses: {str(e)}")
         courses = []
         flash(trans('core_error_message'), 'danger')
-    return render_template('index.html', t=trans, courses=courses, lang=lang)
-
+    # --- FIX: Provide sample_courses for the featured section ---
+    sample_courses = [
+        {
+            'id': 'budgeting_101',
+            'title_key': 'course_budgeting_101_title',
+            'title_en': 'Budgeting 101'
+        },
+        {
+            'id': 'financial_quiz',
+            'title_key': 'course_financial_quiz_title',
+            'title_en': 'Financial Personality Quiz'
+        },
+        {
+            'id': 'savings_basics',
+            'title_key': 'course_savings_basics_title',
+            'title_en': 'Savings Basics'
+        }
+        # Add more sample courses as needed
+    ]
+    return render_template(
+        'index.html',
+        t=trans,
+        courses=courses,
+        lang=lang,
+        sample_courses=sample_courses  # <---- THIS FIXES THE FEATURED SECTION
+    )
 @app.route('/set_language/<lang>')
 @session_required
 def set_language(lang):
