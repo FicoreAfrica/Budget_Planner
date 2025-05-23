@@ -21,27 +21,27 @@ budget_storage = JsonStorage('data/budget.json')
 
 # Forms for budget steps
 class Step1Form(FlaskForm):
-    first_name = StringField(trans('first_name'), validators=[DataRequired(message=trans('first_name_required'))])
-    email = StringField(trans('email'), validators=[Optional(), Email(message=trans('email_invalid'))])
-    send_email = BooleanField(trans('send_email'))
-    submit = SubmitField(trans('next'))
+    first_name = StringField(trans('budget_first_name'), validators=[DataRequired(message=trans('budget_first_name_required'))])
+    email = StringField(trans('budget_email'), validators=[Optional(), Email(message=trans('budget_email_invalid'))])
+    send_email = BooleanField(trans('budget_send_email'))
+    submit = SubmitField(trans('budget_next'))
 
 class Step2Form(FlaskForm):
-    income = FloatField(trans('monthly_income'), validators=[DataRequired(message=trans('income_required')), NumberRange(min=0, max=10000000000, message=trans('income_max'))])
-    submit = SubmitField(trans('next'))
+    income = FloatField(trans('budget_monthly_income'), validators=[DataRequired(message=trans('budget_income_required')), NumberRange(min=0, max=10000000000, message=trans('budget_income_max'))])
+    submit = SubmitField(trans('budget_next'))
 
 class Step3Form(FlaskForm):
-    housing = FloatField(trans('housing_rent'), validators=[DataRequired(message=trans('housing_required')), NumberRange(min=0, message=trans('amount_positive'))])
-    food = FloatField(trans('food'), validators=[DataRequired(message=trans('food_required')), NumberRange(min=0, message=trans('amount_positive'))])
-    transport = FloatField(trans('transport'), validators=[DataRequired(message=trans('transport_required')), NumberRange(min=0, message=trans('amount_positive'))])
-    dependents = FloatField(trans('dependents_support'), validators=[DataRequired(message=trans('dependents_required')), NumberRange(min=0, message=trans('amount_positive'))])
-    miscellaneous = FloatField(trans('miscellaneous'), validators=[DataRequired(message=trans('miscellaneous_required')), NumberRange(min=0, message=trans('amount_positive'))])
-    others = FloatField(trans('others'), validators=[DataRequired(message=trans('others_required')), NumberRange(min=0, message=trans('amount_positive'))])
-    submit = SubmitField(trans('next'))
+    housing = FloatField(trans('budget_housing_rent'), validators=[DataRequired(message=trans('budget_housing_required')), NumberRange(min=0, message=trans('budget_amount_positive'))])
+    food = FloatField(trans('budget_food'), validators=[DataRequired(message=trans('budget_food_required')), NumberRange(min=0, message=trans('budget_amount_positive'))])
+    transport = FloatField(trans('budget_transport'), validators=[DataRequired(message=trans('budget_transport_required')), NumberRange(min=0, message=trans('budget_amount_positive'))])
+    dependents = FloatField(trans('budget_dependents_support'), validators=[DataRequired(message=trans('budget_dependents_required')), NumberRange(min=0, message=trans('budget_amount_positive'))])
+    miscellaneous = FloatField(trans('budget_miscellaneous'), validators=[DataRequired(message=trans('budget_miscellaneous_required')), NumberRange(min=0, message=trans('budget_amount_positive'))])
+    others = FloatField(trans('budget_others'), validators=[DataRequired(message=trans('budget_others_required')), NumberRange(min=0, message=trans('budget_amount_positive'))])
+    submit = SubmitField(trans('budget_next'))
 
 class Step4Form(FlaskForm):
-    savings_goal = FloatField(trans('savings_goal'), validators=[DataRequired(message=trans('savings_goal_required')), NumberRange(min=0, message=trans('amount_positive'))])
-    submit = SubmitField(trans('submit'))
+    savings_goal = FloatField(trans('budget_savings_goal'), validators=[DataRequired(message=trans('budget_savings_goal_required')), NumberRange(min=0, message=trans('budget_amount_positive'))])
+    submit = SubmitField(trans('budget_submit'))
 
 @budget_bp.route('/step1', methods=['GET', 'POST'])
 def step1():
@@ -58,7 +58,7 @@ def step1():
         return render_template('budget_step1.html', form=form, trans=trans, lang=lang)
     except Exception as e:
         logging.exception(f"Error in budget.step1: {str(e)}")
-        flash(trans("error_personal_info", lang=lang), "danger")
+        flash(trans("budget_error_personal_info"), "danger")
         return render_template('budget_step1.html', form=form, trans=trans, lang=lang)
 
 @budget_bp.route('/step2', methods=['GET', 'POST'])
@@ -76,7 +76,7 @@ def step2():
         return render_template('budget_step2.html', form=form, trans=trans, lang=lang)
     except Exception as e:
         logging.exception(f"Error in budget.step2: {str(e)}")
-        flash(trans("error_income_invalid", lang=lang), "danger")
+        flash(trans("budget_error_income_invalid"), "danger")
         return render_template('budget_step2.html', form=form, trans=trans, lang=lang)
 
 @budget_bp.route('/step3', methods=['GET', 'POST'])
@@ -94,7 +94,7 @@ def step3():
         return render_template('budget_step3.html', form=form, trans=trans, lang=lang)
     except Exception as e:
         logging.exception(f"Error in budget.step3: {str(e)}")
-        flash(trans("error_expenses_invalid", lang=lang), "danger")
+        flash(trans("budget_error_expenses_invalid"), "danger")
         return render_template('budget_step3.html', form=form, trans=trans, lang=lang)
 
 @budget_bp.route('/step4', methods=['GET', 'POST'])
@@ -144,7 +144,7 @@ def step4():
             if send_email_flag and email:
                 send_email(
                     to_email=email,
-                    subject=trans("budget_plan_summary", lang=lang),
+                    subject=trans("budget_plan_summary"),
                     template_name="budget_email.html",
                     data={
                         "first_name": record["data"]["first_name"],
@@ -166,12 +166,12 @@ def step4():
             session.pop('budget_step1', None)
             session.pop('budget_step2', None)
             session.pop('budget_step3', None)
-            flash(trans("budget_completed_success", lang=lang), "success")
+            flash(trans("budget_budget_completed_success"), "success")
             return redirect(url_for('budget.dashboard'))
         return render_template('budget_step4.html', form=form, trans=trans, lang=lang)
     except Exception as e:
         logging.exception(f"Error in budget.step4: {str(e)}")
-        flash(trans("budget_process_error", lang=lang), "danger")
+        flash(trans("budget_budget_process_error"), "danger")
         return render_template('budget_step4.html', form=form, trans=trans, lang=lang)
 
 @budget_bp.route('/dashboard', methods=['GET', 'POST'])
@@ -192,30 +192,30 @@ def dashboard():
             if action == 'delete':
                 try:
                     if budget_storage.delete_by_id(budget_id):
-                        flash(trans("budget_deleted_success", lang=lang), "success")
+                        flash(trans("budget_budget_deleted_success"), "success")
                     else:
-                        flash(trans("budget_delete_failed", lang=lang), "danger")
+                        flash(trans("budget_budget_delete_failed"), "danger")
                         logging.error(f"Failed to delete budget ID {budget_id}")
                     return redirect(url_for('budget.dashboard'))
                 except Exception as e:
                     logging.exception(f"Error deleting budget item: {str(e)}")
-                    flash(trans("budget_delete_error", lang=lang), "danger")
+                    flash(trans("budget_budget_delete_error"), "danger")
                     return redirect(url_for('budget.dashboard'))
         
         # Calculate insights and tips
         tips = [
-            trans("tip_track_expenses", lang=lang),
-            trans("tip_ajo_savings", lang=lang),
-            trans("tip_data_subscriptions", lang=lang),
-            trans("tip_plan_dependents", lang=lang)
+            trans("budget_tip_track_expenses"),
+            trans("budget_tip_ajo_savings"),
+            trans("budget_tip_data_subscriptions"),
+            trans("budget_tip_plan_dependents")
         ]
         insights = []
         if latest_budget.get('surplus_deficit', 0) < 0:
-            insights.append(trans("insight_budget_deficit", lang=lang))
+            insights.append(trans("budget_insight_budget_deficit"))
         elif latest_budget.get('surplus_deficit', 0) > 0:
-            insights.append(trans("insight_budget_surplus", lang=lang))
+            insights.append(trans("budget_insight_budget_surplus"))
         if latest_budget.get('savings_goal', 0) == 0:
-            insights.append(trans("insight_set_savings_goal", lang=lang))
+            insights.append(trans("budget_insight_set_savings_goal"))
 
         return render_template(
             'budget_dashboard.html',
@@ -228,16 +228,16 @@ def dashboard():
         )
     except Exception as e:
         logging.exception(f"Error in budget.dashboard: {str(e)}")
-        flash(trans("dashboard_load_error", lang=lang), "danger")
+        flash(trans("budget_dashboard_load_error"), "danger")
         return render_template(
             'budget_dashboard.html',
             budgets=[],
             latest_budget={},
             tips=[
-                trans("tip_track_expenses", lang=lang),
-                trans("tip_ajo_savings", lang=lang),
-                trans("tip_data_subscriptions", lang=lang),
-                trans("tip_plan_dependents", lang=lang)
+                trans("budget_tip_track_expenses"),
+                trans("budget_tip_ajo_savings"),
+                trans("budget_tip_data_subscriptions"),
+                trans("budget_tip_plan_dependents")
             ],
             insights=[],
             trans=trans,
