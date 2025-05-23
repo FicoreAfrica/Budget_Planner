@@ -21,20 +21,20 @@ net_worth_storage = JsonStorage('data/networth.json')
 
 # Forms for net worth steps
 class Step1Form(FlaskForm):
-    first_name = StringField(trans('first_name'), validators=[DataRequired(message=trans('first_name_required'))])
-    email = StringField(trans('email'), validators=[Optional(), Email(message=trans('email_invalid'))])
-    send_email = BooleanField(trans('send_email'))
-    submit = SubmitField(trans('next'))
+    first_name = StringField(trans('net_worth_first_name'), validators=[DataRequired(message=trans('net_worth_first_name_required'))])
+    email = StringField(trans('net_worth_email'), validators=[Optional(), Email(message=trans('net_worth_email_invalid'))])
+    send_email = BooleanField(trans('net_worth_send_email'))
+    submit = SubmitField(trans('net_worth_next'))
 
 class Step2Form(FlaskForm):
-    cash_savings = FloatField(trans('cash_savings'), validators=[DataRequired(message=trans('cash_savings_required')), NumberRange(min=0, max=10000000000, message=trans('cash_savings_max'))])
-    investments = FloatField(trans('investments'), validators=[DataRequired(message=trans('investments_required')), NumberRange(min=0, max=10000000000, message=trans('investments_max'))])
-    property = FloatField(trans('property'), validators=[DataRequired(message=trans('property_required')), NumberRange(min=0, max=10000000000, message=trans('property_max'))])
-    submit = SubmitField(trans('next'))
+    cash_savings = FloatField(trans('net_worth_cash_savings'), validators=[DataRequired(message=trans('net_worth_cash_savings_required')), NumberRange(min=0, max=10000000000, message=trans('net_worth_cash_savings_max'))])
+    investments = FloatField(trans('net_worth_investments'), validators=[DataRequired(message=trans('net_worth_investments_required')), NumberRange(min=0, max=10000000000, message=trans('net_worth_investments_max'))])
+    property = FloatField(trans('net_worth_property'), validators=[DataRequired(message=trans('net_worth_property_required')), NumberRange(min=0, max=10000000000, message=trans('net_worth_property_max'))])
+    submit = SubmitField(trans('net_worth_next'))
 
 class Step3Form(FlaskForm):
-    loans = FloatField(trans('loans'), validators=[Optional(), NumberRange(min=0, max=10000000000, message=trans('loans_max'))])
-    submit = SubmitField(trans('submit'))
+    loans = FloatField(trans('net_worth_loans'), validators=[Optional(), NumberRange(min=0, max=10000000000, message=trans('net_worth_loans_max'))])
+    submit = SubmitField(trans('net_worth_submit'))
 
 @net_worth_bp.route('/step1', methods=['GET', 'POST'])
 def step1():
@@ -51,7 +51,7 @@ def step1():
         return render_template('net_worth_step1.html', form=form, trans=trans, lang=lang)
     except Exception as e:
         logging.exception(f"Error in net_worth.step1: {str(e)}")
-        flash(trans("error_personal_info", lang=lang), "danger")
+        flash(trans("net_worth_error_personal_info"), "danger")
         return render_template('net_worth_step1.html', form=form, trans=trans, lang=lang)
 
 @net_worth_bp.route('/step2', methods=['GET', 'POST'])
@@ -69,7 +69,7 @@ def step2():
         return render_template('net_worth_step2.html', form=form, trans=trans, lang=lang)
     except Exception as e:
         logging.exception(f"Error in net_worth.step2: {str(e)}")
-        flash(trans("error_assets_input", lang=lang), "danger")
+        flash(trans("net_worth_error_assets_input"), "danger")
         return render_template('net_worth_step2.html', form=form, trans=trans, lang=lang)
 
 @net_worth_bp.route('/step3', methods=['GET', 'POST'])
@@ -98,13 +98,13 @@ def step3():
             # Assign badges
             badges = []
             if net_worth > 0:
-                badges.append(trans("badge_wealth_builder", lang=lang))
+                badges.append(trans("net_worth_badge_wealth_builder"))
             if total_liabilities == 0:
-                badges.append(trans("badge_debt_free", lang=lang))
+                badges.append(trans("net_worth_badge_debt_free"))
             if cash_savings >= total_assets * 0.3:
-                badges.append(trans("badge_savings_champion", lang=lang))
+                badges.append(trans("net_worth_badge_savings_champion"))
             if property >= total_assets * 0.5:
-                badges.append(trans("badge_property_mogul", lang=lang))
+                badges.append(trans("net_worth_badge_property_mogul"))
             
             # Store record
             record = {
@@ -131,7 +131,7 @@ def step3():
             if send_email_flag and email:
                 send_email(
                     to_email=email,
-                    subject=trans("net_worth_summary", lang=lang),
+                    subject=trans("net_worth_net_worth_summary"),
                     template_name="net_worth_email.html",
                     data={
                         "first_name": record["data"]["first_name"],
@@ -152,12 +152,12 @@ def step3():
             # Clear session
             session.pop('net_worth_step1', None)
             session.pop('net_worth_step2', None)
-            flash(trans("net_worth_completed_success", lang=lang), "success")
+            flash(trans("net_worth_net_worth_completed_success"), "success")
             return redirect(url_for('net_worth.dashboard'))
         return render_template('net_worth_step3.html', form=form, trans=trans, lang=lang)
     except Exception as e:
         logging.exception(f"Error in net_worth.step3: {str(e)}")
-        flash(trans("error_net_worth_calculation", lang=lang), "danger")
+        flash(trans("net_worth_error_net_worth_calculation"), "danger")
         return render_template('net_worth_step3.html', form=form, trans=trans, lang=lang)
 
 @net_worth_bp.route('/dashboard', methods=['GET', 'POST'])
@@ -174,20 +174,20 @@ def dashboard():
         # Generate insights and tips
         insights = []
         tips = [
-            trans("tip_track_ajo", lang=lang),
-            trans("tip_review_property", lang=lang),
-            trans("tip_pay_loans_early", lang=lang),
-            trans("tip_diversify_investments", lang=lang)
+            trans("net_worth_tip_track_ajo"),
+            trans("net_worth_tip_review_property"),
+            trans("net_worth_tip_pay_loans_early"),
+            trans("net_worth_tip_diversify_investments")
         ]
         if latest_record:
             if latest_record.get('total_liabilities', 0) > latest_record.get('total_assets', 0) * 0.5:
-                insights.append(trans("insight_high_loans", lang=lang))
+                insights.append(trans("net_worth_insight_high_loans"))
             if latest_record.get('cash_savings', 0) < latest_record.get('total_assets', 0) * 0.1:
-                insights.append(trans("insight_low_cash", lang=lang))
+                insights.append(trans("net_worth_insight_low_cash"))
             if latest_record.get('investments', 0) >= latest_record.get('total_assets', 0) * 0.3:
-                insights.append(trans("insight_strong_investments", lang=lang))
+                insights.append(trans("net_worth_insight_strong_investments"))
             if latest_record.get('net_worth', 0) <= 0:
-                insights.append(trans("insight_negative_net_worth", lang=lang))
+                insights.append(trans("net_worth_insight_negative_net_worth"))
         
         return render_template(
             'net_worth_dashboard.html',
@@ -200,17 +200,17 @@ def dashboard():
         )
     except Exception as e:
         logging.exception(f"Error in net_worth.dashboard: {str(e)}")
-        flash(trans("dashboard_load_error", lang=lang), "danger")
+        flash(trans("net_worth_dashboard_load_error"), "danger")
         return render_template(
             'net_worth_dashboard.html',
             records=[],
             latest_record={},
             insights=[],
             tips=[
-                trans("tip_track_ajo", lang=lang),
-                trans("tip_review_property", lang=lang),
-                trans("tip_pay_loans_early", lang=lang),
-                trans("tip_diversify_investments", lang=lang)
+                trans("net_worth_tip_track_ajo"),
+                trans("net_worth_tip_review_property"),
+                trans("net_worth_tip_pay_loans_early"),
+                trans("net_worth_tip_diversify_investments")
             ],
             trans=trans,
             lang=lang
