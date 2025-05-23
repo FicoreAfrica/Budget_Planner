@@ -85,7 +85,13 @@ CORE_TRANSLATIONS = {
         'core_education': 'education',
         'core_healthcare': 'healthcare',
         'core_entertainment': 'entertainment',
-        'core_savings_investments': 'savings_investments'
+        'core_savings_investments': 'savings_investments',
+        'core_error_message': 'An error occurred. Please try again.',
+        'core_language_changed': 'Language changed successfully.',
+        'core_invalid_language': 'Invalid language selected.',
+        'core_logged_out': 'You have been logged out.',
+        'core_csrf_error': 'CSRF token validation failed.',
+        'core_page_not_found': 'Page not found.'
     },
     'ha': {
         'core_home': 'Gida',
@@ -173,6 +179,12 @@ CORE_TRANSLATIONS = {
         'core_education': 'ilimi',
         'core_healthcare': 'kiwon lafiya',
         'core_entertainment': 'nishaɗi',
-        'core_savings_investments': 'ajiya jarin hannu'
+        'core_savings_investments': 'ajiya jarin hannu',
+        'core_error_message': 'An kuskure ya faru. Da fatan za a sake gwadawa.',
+        'core_language_changed': 'An canza harshe cikin nasara.',
+        'core_invalid_language': 'Harshe mara inganci aka zaɓa.',
+        'core_logged_out': 'An fita daga shiga.',
+        'core_csrf_error': 'Gwajin alamar CSRF ya gaza.',
+        'core_page_not_found': 'Ba a sami shafin ba.'
     }
 }
