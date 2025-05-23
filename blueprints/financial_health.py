@@ -22,19 +22,19 @@ progress_storage = JsonStorage('data/user_progress.json')
 
 # Forms for financial health steps
 class Step1Form(FlaskForm):
-    first_name = StringField(trans('first_name'), validators=[DataRequired(message=trans('first_name_required'))])
-    email = StringField(trans('email'), validators=[Optional(), Email(message=trans('email_invalid'))])
-    user_type = SelectField(trans('user_type'), choices=[
-        ('individual', trans('user_type_individual')),
-        ('business', trans('user_type_business'))
+    first_name = StringField(trans('financial_health_first_name'), validators=[DataRequired(message=trans('financial_health_first_name_required'))])
+    email = StringField(trans('financial_health_email'), validators=[Optional(), Email(message=trans('financial_health_email_invalid'))])
+    user_type = SelectField(trans('financial_health_user_type'), choices=[
+        ('individual', trans('financial_health_user_type_individual')),
+        ('business', trans('financial_health_user_type_business'))
     ])
-    send_email = BooleanField(trans('send_email'))
-    submit = SubmitField(trans('next'))
+    send_email = BooleanField(trans('financial_health_send_email'))
+    submit = SubmitField(trans('financial_health_next'))
 
 class Step2Form(FlaskForm):
-    income = FloatField(trans('monthly_income'), validators=[DataRequired(message=trans('income_required')), NumberRange(min=0, max=10000000000, message=trans('income_max'))])
-    expenses = FloatField(trans('monthly_expenses'), validators=[DataRequired(message=trans('expenses_required')), NumberRange(min=0, max=10000000000, message=trans('expenses_max'))])
-    submit = SubmitField(trans('next'))
+    income = FloatField(trans('financial_health_monthly_income'), validators=[DataRequired(message=trans('financial_health_income_required')), NumberRange(min=0, max=10000000000, message=trans('financial_health_income_max'))])
+    expenses = FloatField(trans('financial_health_monthly_expenses'), validators=[DataRequired(message=trans('financial_health_expenses_required')), NumberRange(min=0, max=10000000000, message=trans('financial_health_expenses_max'))])
+    submit = SubmitField(trans('financial_health_next'))
 
     def validate_income(self, field):
         if field.data is not None:
@@ -43,7 +43,7 @@ class Step2Form(FlaskForm):
                 field.data = float(cleaned_data)
             except (ValueError, TypeError):
                 g.log.error(f"Invalid income input: {field.data}")
-                raise ValidationError(trans('income_invalid'))
+                raise ValidationError(trans('financial_health_income_invalid'))
 
     def validate_expenses(self, field):
         if field.data is not None:
@@ -52,12 +52,12 @@ class Step2Form(FlaskForm):
                 field.data = float(cleaned_data)
             except (ValueError, TypeError):
                 g.log.error(f"Invalid expenses input: {field.data}")
-                raise ValidationError(trans('expenses_invalid'))
+                raise ValidationError(trans('financial_health_expenses_invalid'))
 
 class Step3Form(FlaskForm):
-    debt = FloatField(trans('total_debt'), validators=[Optional(), NumberRange(min=0, max=10000000000, message=trans('debt_max'))])
-    interest_rate = FloatField(trans('average_interest_rate'), validators=[Optional(), NumberRange(min=0, message=trans('interest_rate_positive'))])
-    submit = SubmitField(trans('submit'))
+    debt = FloatField(trans('financial_health_total_debt'), validators=[Optional(), NumberRange(min=0, max=10000000000, message=trans('financial_health_debt_max'))])
+    interest_rate = FloatField(trans('financial_health_average_interest_rate'), validators=[Optional(), NumberRange(min=0, message=trans('financial_health_interest_rate_positive'))])
+    submit = SubmitField(trans('financial_health_submit'))
 
     def validate_debt(self, field):
         if field.data is not None:
@@ -66,7 +66,7 @@ class Step3Form(FlaskForm):
                 field.data = float(cleaned_data) if cleaned_data else None
             except (ValueError, TypeError):
                 g.log.error(f"Invalid debt input: {field.data}")
-                raise ValidationError(trans('debt_invalid'))
+                raise ValidationError(trans('financial_health_debt_invalid'))
 
     def validate_interest_rate(self, field):
         if field.data is not None:
@@ -75,7 +75,7 @@ class Step3Form(FlaskForm):
                 field.data = float(cleaned_data) if cleaned_data else None
             except (ValueError, TypeError):
                 g.log.error(f"Invalid interest rate input: {field.data}")
-                raise ValidationError(trans('interest_rate_invalid'))
+                raise ValidationError(trans('financial_health_interest_rate_invalid'))
 
 @financial_health_bp.route('/step1', methods=['GET', 'POST'])
 def step1():
@@ -90,13 +90,13 @@ def step1():
             g.log.debug(f"Received POST data: {request.form}")
             if not form.validate_on_submit():
                 g.log.warning(f"Form validation failed: {form.errors}")
-                flash(trans("form_errors", lang=lang), "danger")
+                flash(trans("financial_health_form_errors"), "danger")
                 return render_template('health_score_step1.html', form=form, trans=trans, lang=lang)
             
             form_data = form.data.copy()
             if form_data.get('email') and not isinstance(form_data['email'], str):
                 g.log.error(f"Invalid email type: {type(form_data['email'])}")
-                raise ValueError(trans("email_must_be_string", lang=lang))
+                raise ValueError(trans("financial_health_email_must_be_string"))
             session['health_step1'] = form_data
             g.log.debug(f"Validated form data: {form_data}")
 
@@ -110,11 +110,11 @@ def step1():
                     g.log.info(f"Step1 form data appended to storage with record ID {record_id} for session {session['sid']}")
                 else:
                     g.log.error("Failed to append Step1 data to storage")
-                    flash(trans("save_data_error", lang=lang), "danger")
+                    flash(trans("financial_health_save_data_error"), "danger")
                     return render_template('health_score_step1.html', form=form, trans=trans, lang=lang), 500
             except Exception as storage_error:
                 g.log.exception(f"Failed to append to JSON storage: {str(storage_error)}")
-                flash(trans("save_data_error", lang=lang), "danger")
+                flash(trans("financial_health_save_data_error"), "danger")
                 return render_template('health_score_step1.html', form=form, trans=trans, lang=lang), 500
 
             g.log.debug(f"Step1 form data saved to session: {form_data}")
@@ -122,7 +122,7 @@ def step1():
         return render_template('health_score_step1.html', form=form, trans=trans, lang=lang)
     except Exception as e:
         g.log.exception(f"Error in step1: {str(e)}")
-        flash(trans("error_personal_info", lang=lang), "danger")
+        flash(trans("financial_health_error_personal_info"), "danger")
         return render_template('health_score_step1.html', form=form, trans=trans, lang=lang), 500
 
 @financial_health_bp.route('/step2', methods=['GET', 'POST'])
@@ -137,7 +137,7 @@ def step2():
         if request.method == 'POST':
             if not form.validate_on_submit():
                 g.log.warning(f"Form validation failed: {form.errors}")
-                flash(trans("form_errors", lang=lang), "danger")
+                flash(trans("financial_health_form_errors"), "danger")
                 return render_template('health_score_step2.html', form=form, trans=trans, lang=lang)
             session['health_step2'] = {
                 'income': float(form.income.data),
@@ -154,11 +154,11 @@ def step2():
                     g.log.info(f"Step2 form data appended to storage with record ID {record_id} for session {session['sid']}")
                 else:
                     g.log.error("Failed to append Step2 data to storage")
-                    flash(trans("save_data_error", lang=lang), "danger")
+                    flash(trans("financial_health_save_data_error"), "danger")
                     return render_template('health_score_step2.html', form=form, trans=trans, lang=lang), 500
             except Exception as storage_error:
                 g.log.exception(f"Failed to append to JSON storage: {str(storage_error)}")
-                flash(trans("save_data_error", lang=lang), "danger")
+                flash(trans("financial_health_save_data_error"), "danger")
                 return render_template('health_score_step2.html', form=form, trans=trans, lang=lang), 500
 
             g.log.debug(f"Step2 form data saved to session: {session['health_step2']}")
@@ -166,7 +166,7 @@ def step2():
         return render_template('health_score_step2.html', form=form, trans=trans, lang=lang)
     except Exception as e:
         g.log.exception(f"Error in step2: {str(e)}")
-        flash(trans("error_income_expenses", lang=lang), "danger")
+        flash(trans("financial_health_error_income_expenses"), "danger")
         return render_template('health_score_step2.html', form=form, trans=trans, lang=lang), 500
 
 @financial_health_bp.route('/step3', methods=['GET', 'POST'])
@@ -181,7 +181,7 @@ def step3():
         if request.method == 'POST':
             if not form.validate_on_submit():
                 g.log.warning(f"Form validation failed: {form.errors}")
-                flash(trans("form_errors", lang=lang), "danger")
+                flash(trans("financial_health_form_errors"), "danger")
                 return render_template('health_score_step3.html', form=form, trans=trans, lang=lang)
 
             data = {
@@ -202,7 +202,7 @@ def step3():
 
             if income <= 0:
                 g.log.error("Income is zero or negative, cannot calculate financial health metrics")
-                flash(trans("income_zero_error", lang=lang), "danger")
+                flash(trans("financial_health_income_zero_error"), "danger")
                 return render_template('health_score_step3.html', form=form, trans=trans, lang=lang), 500
 
             g.log.info("Calculating financial health metrics")
@@ -212,7 +212,7 @@ def step3():
                 interest_burden = (interest_rate * debt / 100) if debt > 0 else 0
             except ZeroDivisionError as zde:
                 g.log.error(f"ZeroDivisionError during metric calculation: {str(zde)}")
-                flash(trans("calculation_error", lang=lang), "danger")
+                flash(trans("financial_health_calculation_error"), "danger")
                 return render_template('health_score_step3.html', form=form, trans=trans, lang=lang), 500
 
             score = 100
@@ -226,18 +226,18 @@ def step3():
             score = max(0, min(100, round(score)))
             g.log.debug(f"Calculated score: {score}")
 
-            status = (trans("status_excellent", lang=lang) if score >= 80 else
-                      trans("status_good", lang=lang) if score >= 60 else
-                      trans("status_needs_improvement", lang=lang))
+            status = (trans("financial_health_status_excellent") if score >= 80 else
+                      trans("financial_health_status_good") if score >= 60 else
+                      trans("financial_health_status_needs_improvement"))
             badges = []
             if score >= 80:
-                badges.append(trans("badge_financial_star", lang=lang))
+                badges.append(trans("financial_health_badge_financial_star"))
             if debt_to_income < 20:
-                badges.append(trans("badge_debt_manager", lang=lang))
+                badges.append(trans("financial_health_badge_debt_manager"))
             if savings_rate >= 20:
-                badges.append(trans("badge_savings_pro", lang=lang))
+                badges.append(trans("financial_health_badge_savings_pro"))
             if interest_burden == 0 and debt > 0:
-                badges.append(trans("badge_interest_free", lang=lang))
+                badges.append(trans("financial_health_badge_interest_free"))
             g.log.debug(f"Status: {status}, Badges: {badges}")
 
             record = {
@@ -267,11 +267,11 @@ def step3():
                     g.log.info(f"Step3 final record appended to storage with record ID {record_id} for session {session['sid']}")
                 else:
                     g.log.error("Failed to append Step3 final record to storage")
-                    flash(trans("save_final_error", lang=lang), "danger")
+                    flash(trans("financial_health_save_final_error"), "danger")
                     return render_template('health_score_step3.html', form=form, trans=trans, lang=lang), 500
             except Exception as storage_error:
                 g.log.exception(f"Failed to append to JSON storage: {str(storage_error)}")
-                flash(trans("save_final_error", lang=lang), "danger")
+                flash(trans("financial_health_save_final_error"), "danger")
                 return render_template('health_score_step3.html', form=form, trans=trans, lang=lang), 500
 
             g.log.debug(f"Session contents after save: {dict(session)}")
@@ -283,7 +283,7 @@ def step3():
                 try:
                     send_email(
                         to_email=email,
-                        subject=trans("financial_health_report", lang=lang),
+                        subject=trans("financial_health_financial_health_report"),
                         template_name="health_score_email.html",
                         data={
                             "first_name": record["first_name"],
@@ -304,17 +304,17 @@ def step3():
                     )
                 except Exception as email_error:
                     g.log.error(f"Failed to send email: {str(email_error)}")
-                    flash(trans("email_failed", lang=lang), "warning")
+                    flash(trans("financial_health_email_failed"), "warning")
 
             session.pop('health_step1', None)
             session.pop('health_step2', None)
             g.log.info("Financial health assessment completed successfully")
-            flash(trans("health_completed_success", lang=lang), "success")
+            flash(trans("financial_health_health_completed_success"), "success")
             return redirect(url_for('financial_health.dashboard'))
         return render_template('health_score_step3.html', form=form, trans=trans, lang=lang)
     except Exception as e:
         g.log.exception(f"Unexpected error in step3: {str(e)}")
-        flash(trans("unexpected_error", lang=lang), "danger")
+        flash(trans("financial_health_unexpected_error"), "danger")
         return render_template('health_score_step3.html', form=form, trans=trans, lang=lang), 500
 
 @financial_health_bp.route('/dashboard', methods=['GET', 'POST'])
@@ -468,38 +468,38 @@ def dashboard():
         # Generate insights and tips
         insights = []
         tips = [
-            trans("tip_track_expenses", lang=lang),
-            trans("tip_ajo_savings", lang=lang),
-            trans("tip_pay_debts", lang=lang),
-            trans("tip_plan_expenses", lang=lang)
+            trans("financial_health_tip_track_expenses"),
+            trans("financial_health_tip_ajo_savings"),
+            trans("financial_health_tip_pay_debts"),
+            trans("financial_health_tip_plan_expenses")
         ]
         
         if latest_record:
             try:
                 if latest_record.get('debt_to_income', 0) > 40:
-                    insights.append(trans("insight_high_debt", lang=lang))
+                    insights.append(trans("financial_health_insight_high_debt"))
                 if latest_record.get('savings_rate', 0) < 0:
-                    insights.append(trans("insight_negative_savings", lang=lang))
+                    insights.append(trans("financial_health_insight_negative_savings"))
                 elif latest_record.get('savings_rate', 0) >= 20:
-                    insights.append(trans("insight_good_savings", lang=lang))
+                    insights.append(trans("financial_health_insight_good_savings"))
                 if latest_record.get('interest_burden', 0) > 10:
-                    insights.append(trans("insight_high_interest", lang=lang))
+                    insights.append(trans("financial_health_insight_high_interest"))
                 
                 if total_users >= 5:
                     if rank <= total_users * 0.1:
-                        insights.append(trans("insight_top_10", lang=lang))
+                        insights.append(trans("financial_health_insight_top_10"))
                     elif rank <= total_users * 0.3:
-                        insights.append(trans("insight_top_30", lang=lang))
+                        insights.append(trans("financial_health_insight_top_30"))
                     else:
-                        insights.append(trans("insight_below_30", lang=lang))
+                        insights.append(trans("financial_health_insight_below_30"))
                 else:
-                    insights.append(trans("insight_not_enough_users", lang=lang))
+                    insights.append(trans("financial_health_insight_not_enough_users"))
 
             except Exception as insight_error:
                 g.log.exception(f"Error generating insights: {str(insight_error)}")
-                insights.append(trans("insight_data_issues", lang=lang))
+                insights.append(trans("financial_health_insight_data_issues"))
         else:
-            insights.append(trans("insight_no_data", lang=lang))
+            insights.append(trans("financial_health_insight_no_data"))
 
         # Load course progress for the "My Courses" card
         progress_records = []
@@ -522,17 +522,17 @@ def dashboard():
         )
     except Exception as e:
         g.log.exception(f"Critical error in dashboard: {str(e)}")
-        flash(trans("dashboard_load_error", lang=lang), "danger")
+        flash(trans("financial_health_dashboard_load_error"), "danger")
         return render_template(
             'health_score_dashboard.html',
             records=[],
             latest_record={},
-            insights=[trans("insight_no_data", lang=lang)],
+            insights=[trans("financial_health_insight_no_data")],
             tips=[
-                trans("tip_track_expenses", lang=lang),
-                trans("tip_ajo_savings", lang=lang),
-                trans("tip_pay_debts", lang=lang),
-                trans("tip_plan_expenses", lang=lang)
+                trans("financial_health_tip_track_expenses"),
+                trans("financial_health_tip_ajo_savings"),
+                trans("financial_health_tip_pay_debts"),
+                trans("financial_health_tip_plan_expenses")
             ],
             rank=0,
             total_users=0,
