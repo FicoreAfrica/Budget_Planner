@@ -6,6 +6,9 @@ COURSES_TRANSLATIONS = {
         'courses_start_course': 'Start Course',
         'courses_progress': 'Progress',
         'courses_back_to_courses': 'Back to Courses',
+        'courses_course_budgeting_101_title': "Budgeting 101",
+        'courses_course_financial_quiz_title': "Financial Personality Quiz",
+        'courses_course_savings_basics_title': "Savings Basics",
         'courses_my_courses': 'My Courses',
         'courses_complete_lesson': 'Complete Lesson',
         # Dynamic: See note below for how to add dynamic keys like courses_basic_course, courses_intro_lesson1, etc.
@@ -197,6 +200,9 @@ COURSES_TRANSLATIONS = {
         'courses_progress': 'Ci gaba',
         'courses_back_to_courses': 'Komawa Kwasuna',
         'courses_complete_lesson': 'Kammala Darasi',
+        'courses_course_budgeting_101_title': "Kasafin Kuɗi 101",
+        'courses_course_financial_quiz_title': "Gwajin Halayen Kuɗi",
+        'courses_course_savings_basics_title': "Asalin Ajiya",
         # Dynamic: See note below for how to add dynamic keys like courses_basic_course, courses_intro_lesson1, etc.
         # Example dynamic keys for sample courses/lessons, add more as needed for your catalog:
         'courses_basic_course': 'Ilmin Kuɗi na Asali',
