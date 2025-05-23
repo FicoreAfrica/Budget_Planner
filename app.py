@@ -333,7 +333,7 @@ app.register_blueprint(budget_bp)
 app.register_blueprint(quiz_bp)
 app.register_blueprint(bill_bp)
 app.register_blueprint(net_worth_bp)
-app.register_blueprint(emERGENCY_fund_bp)
+app.register_blueprint(emergency_fund_bp)
 app.register_blueprint(courses_bp)
 
 if __name__ == '__main__':
