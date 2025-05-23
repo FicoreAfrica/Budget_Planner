@@ -185,6 +185,7 @@ def index():
         log.error(f"Error retrieving courses: {str(e)}")
         courses = []
         flash(trans('core_error_message'), 'danger')
+        print("Index route accessed")  # Should appear in your console/logs
     # --- FIX: Provide sample_courses for the featured section ---
     sample_courses = [
         {
