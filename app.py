@@ -28,8 +28,11 @@ except ImportError:
 
 try:
     from translations import trans, get_translations
+    # Debug: Verify translations are loaded
+    sample_key = 'core_welcome_to_score'
+    logging.debug(f"Translations loaded. Sample trans('{sample_key}', 'en') = {trans(sample_key, 'en')}")
 except ImportError as e:
-    logging.error(f"Translations import failed: {str(e)}. Using fallback translation functions.")
+    logging.error(f"Translations import failed: {str(e)}. Using fallback translation functions.", exc_info=True)
     def trans(key, lang=None):
         logging.warning(f"Fallback trans function used for key={key}, lang={lang}")
         return key
@@ -40,7 +43,15 @@ except ImportError as e:
 root_logger = logging.getLogger('ficore_app')
 root_logger.setLevel(logging.DEBUG)
 
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s [session: %(session_id)s]')
+# Custom formatter to safely handle session_id
+class SessionFormatter(logging.Formatter):
+    def format(self, record):
+        # Ensure session_id is available in the record
+        if not hasattr(record, 'session_id'):
+            record.session_id = getattr(record, 'session_id', 'no-session-id')
+        return super().format(record)
+
+formatter = SessionFormatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s [session: %(session_id)s]')
 
 os.makedirs('data', exist_ok=True)
 
@@ -56,12 +67,50 @@ root_logger.addHandler(console_handler)
 
 class SessionAdapter(logging.LoggerAdapter):
     def process(self, msg, kwargs):
+        # Ensure 'extra' exists in kwargs
         kwargs['extra'] = kwargs.get('extra', {})
+        # Add session_id to the extra dict
         if has_request_context() and 'sid' in session:
             kwargs['extra']['session_id'] = session.get('sid', 'unknown')
         else:
             kwargs['extra']['session_id'] = 'no-request-context'
         return msg, kwargs
+
+    def debug(self, msg, *args, **kwargs):
+        # Ensure session_id is set in the record
+        if 'extra' not in kwargs:
+            kwargs['extra'] = {}
+        if 'session_id' not in kwargs['extra']:
+            kwargs['extra']['session_id'] = 'no-session-id'
+        super().debug(msg, *args, **kwargs)
+
+    def info(self, msg, *args, **kwargs):
+        if 'extra' not in kwargs:
+            kwargs['extra'] = {}
+        if 'session_id' not in kwargs['extra']:
+            kwargs['extra']['session_id'] = 'no-session-id'
+        super().info(msg, *args, **kwargs)
+
+    def warning(self, msg, *args, **kwargs):
+        if 'extra' not in kwargs:
+            kwargs['extra'] = {}
+        if 'session_id' not in kwargs['extra']:
+            kwargs['extra']['session_id'] = 'no-session-id'
+        super().warning(msg, *args, **kwargs)
+
+    def error(self, msg, *args, **kwargs):
+        if 'extra' not in kwargs:
+            kwargs['extra'] = {}
+        if 'session_id' not in kwargs['extra']:
+            kwargs['extra']['session_id'] = 'no-session-id'
+        super().error(msg, *args, **kwargs)
+
+    def exception(self, msg, *args, **kwargs):
+        if 'extra' not in kwargs:
+            kwargs['extra'] = {}
+        if 'session_id' not in kwargs['extra']:
+            kwargs['extra']['session_id'] = 'no-session-id'
+        super().exception(msg, *args, **kwargs)
 
 log = SessionAdapter(root_logger, {})
 
@@ -179,7 +228,9 @@ def before_request_setup():
 def inject_translations():
     lang = session.get('lang', 'en')
     def context_trans(key):
-        return trans(key, lang=lang)
+        translated = trans(key, lang=lang)
+        log.debug(f"Translating key='{key}' in lang='{lang}' to '{translated}'")
+        return translated
     log.debug("Injecting translations and context variables")
     return dict(
         trans=context_trans,
