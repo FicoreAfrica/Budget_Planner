@@ -11,93 +11,43 @@ import random
 
 quiz_bp = Blueprint('quiz', __name__)
 
-QUESTION_POOL = [
-    {
-        'key': 'track_expenses',
-        'label': 'How often do you track your expenses, such as daily purchases or subscriptions like DSTv?',
-        'tooltip': 'Consider how frequently you monitor your spending, including small purchases like airtime or larger ones like rent.',
-        'placeholder': 'e.g., I use an app like PiggyVest to track daily expenses'
-    },
-    {
-        'key': 'save_regularly',
-        'label': 'How often do you save money, such as through Ajo/Esusu/Adashe or a savings account?',
-        'tooltip': 'Think about whether you consistently set aside money, like contributing to a thrift group or saving in a bank.',
-        'placeholder': 'e.g., I save ₦10,000 monthly in my OPay account'
-    },
-    {
-        'key': 'spend_non_essentials',
-        'label': 'How often do you spend on non-essential items, like eating out or buying new clothes?',
-        'tooltip': 'Reflect on your spending habits for things you don’t need, such as weekend outings or gadgets.',
-        'placeholder': 'e.g., I buy new shoes every few months'
-    },
-    {
-        'key': 'plan_expenses',
-        'label': 'How often do you plan your expenses, such as budgeting for rent or school fees?',
-        'tooltip': 'Consider whether you create a budget for monthly expenses like transport or household costs.',
-        'placeholder': 'e.g., I budget for my children’s school fees every term'
-    },
-    {
-        'key': 'impulse_purchases',
-        'label': 'How often do you make impulse purchases, like buying items on Jumia without planning?',
-        'tooltip': 'Think about unplanned purchases, such as buying a phone accessory you saw online.',
-        'placeholder': 'e.g., I sometimes buy snacks on my way home'
-    },
-    {
-        'key': 'use_budgeting_tools',
-        'label': 'How often do you use budgeting tools or apps, like Moniepoint or Excel, to manage your finances?',
-        'tooltip': 'Consider whether you use apps or spreadsheets to organize your income and expenses.',
-        'placeholder': 'e.g., I use Cowrywise to plan my savings'
-    },
-    {
-        'key': 'invest_money',
-        'label': 'How often do you invest money, such as in farming, stocks, or real estate?',
-        'tooltip': 'Reflect on whether you put money into investments like cooperative shares or land purchases.',
-        'placeholder': 'e.g., I invest in a friend’s poultry farm'
-    },
-    {
-        'key': 'emergency_fund',
-        'label': 'How often do you contribute to an emergency fund for unexpected expenses like medical bills?',
-        'tooltip': 'Think about whether you save for emergencies, such as car repairs or hospital visits.',
-        'placeholder': 'e.g., I keep ₦50,000 in a separate GTBank account'
-    },
-    {
-        'key': 'set_financial_goals',
-        'label': 'How often do you set financial goals, like saving for a car or starting a business?',
-        'tooltip': 'Consider whether you plan for big purchases or long-term goals, like opening a shop.',
-        'placeholder': 'e.g., I’m saving to buy a used Toyota Corolla'
-    },
-    {
-        'key': 'seek_financial_advice',
-        'label': 'How often do you seek financial advice, such as from a mentor or financial apps like Risevest?',
-        'tooltip': 'Reflect on whether you consult experts or use apps for financial guidance.',
-        'placeholder': 'e.g., I follow financial tips on Nairaland'
-    }
+QUESTION_KEYS = [
+    'track_expenses',
+    'save_regularly',
+    'spend_non_essentials',
+    'plan_expenses',
+    'impulse_purchases',
+    'use_budgeting_tools',
+    'invest_money',
+    'emergency_fund',
+    'set_financial_goals',
+    'seek_financial_advice'
 ]
 
 class Step1Form(FlaskForm):
-    first_name = StringField('First Name', validators=[DataRequired(message='quiz_first_name_required')])
-    email = StringField('Email', validators=[Optional(), Email(message='quiz_email_invalid')])
-    send_email = BooleanField('Send Email')
-    submit = SubmitField('Start Quiz')
+    first_name = StringField(trans('quiz_first_name'), validators=[DataRequired(message=trans('quiz_first_name_required'))])
+    email = StringField(trans('quiz_email'), validators=[Optional(), Email(message=trans('quiz_email_invalid'))])
+    send_email = BooleanField(trans('quiz_send_email'))
+    submit = SubmitField(trans('quiz_start_quiz'))
 
 class Step2Form(FlaskForm):
     def __init__(self, questions, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for q in questions:
             setattr(self, q['key'], SelectField(
-                q['label'],
+                trans(f'quiz_{q["key"]}_label'),
                 choices=[
-                    ('', 'Select an answer'),
-                    ('always', 'Always'),
-                    ('often', 'Often'),
-                    ('sometimes', 'Sometimes'),
-                    ('never', 'Never')
+                    ('', trans('quiz_select_answer')),
+                    ('always', trans('quiz_always')),
+                    ('often', trans('quiz_often')),
+                    ('sometimes', trans('quiz_sometimes')),
+                    ('never', trans('quiz_never'))
                 ],
-                validators=[DataRequired(message='quiz_answer_required')]
+                validators=[DataRequired(message=trans('quiz_answer_required'))]
             ))
         # Set the submit button label dynamically based on form_type
         form_type = kwargs.get('form_type', '')
-        self.submit = SubmitField('Continue' if 'step2a' in form_type else 'See Results')
+        self.submit = SubmitField(trans('quiz_continue') if 'step2a' in form_type else trans('quiz_see_results'))
 
 @quiz_bp.route('/step1', methods=['GET', 'POST'])
 def step1():
@@ -131,7 +81,7 @@ def step1():
         return render_template('quiz_step1.html', form=form, course_id=course_id)
     except Exception as e:
         current_app.logger.exception(f"Error in quiz.step1: {str(e)}")
-        flash('quiz_error_personal_info', 'danger')
+        flash(trans('quiz_error_personal_info'), 'danger')
         return render_template('quiz_step1.html', form=form, course_id=course_id)
 
 @quiz_bp.route('/step2a', methods=['GET', 'POST'])
@@ -140,8 +90,16 @@ def step2a():
         session['sid'] = str(uuid.uuid4())
     course_id = request.args.get('course_id', 'financial_quiz')
     if 'quiz_questions' not in session:
-        session['quiz_questions'] = random.sample(QUESTION_POOL, 10)
-    questions = session['quiz_questions'][:5]
+        session['quiz_questions'] = random.sample(QUESTION_KEYS, 10)
+    question_keys = session['quiz_questions'][:5]
+    questions = [
+        {
+            'key': key,
+            'label': trans(f'quiz_{key}_label'),
+            'tooltip': trans(f'quiz_{key}_tooltip'),
+            'placeholder': trans(f'quiz_{key}_placeholder')
+        } for key in question_keys
+    ]
     form = Step2Form(questions, form_type='step2a')
     try:
         if request.method == 'POST' and form.validate_on_submit():
@@ -160,7 +118,7 @@ def step2a():
         return render_template('quiz_step2a.html', form=form, questions=questions, course_id=course_id)
     except Exception as e:
         current_app.logger.exception(f"Error in quiz.step2a: {str(e)}")
-        flash('quiz_error_quiz_answers', 'danger')
+        flash(trans('quiz_error_quiz_answers'), 'danger')
         return render_template('quiz_step2a.html', form=form, questions=questions, course_id=course_id)
 
 @quiz_bp.route('/step2b', methods=['GET', 'POST'])
@@ -169,8 +127,16 @@ def step2b():
         session['sid'] = str(uuid.uuid4())
     course_id = request.args.get('course_id', 'financial_quiz')
     if 'quiz_questions' not in session:
-        session['quiz_questions'] = random.sample(QUESTION_POOL, 10)
-    questions = session['quiz_questions'][5:]
+        session['quiz_questions'] = random.sample(QUESTION_KEYS, 10)
+    question_keys = session['quiz_questions'][5:]
+    questions = [
+        {
+            'key': key,
+            'label': trans(f'quiz_{key}_label'),
+            'tooltip': trans(f'quiz_{key}_tooltip'),
+            'placeholder': trans(f'quiz_{key}_placeholder')
+        } for key in question_keys
+    ]
     form = Step2Form(questions, form_type='step2b')
     try:
         if request.method == 'POST' and form.validate_on_submit():
@@ -181,20 +147,20 @@ def step2b():
                 for v in answers.values()
             )
             personality = (
-                'Planner' if score >= 24 else
-                'Saver' if score >= 18 else
-                'Balanced' if score >= 12 else
-                'Spender'
+                trans('quiz_personality_planner') if score >= 24 else
+                trans('quiz_personality_saver') if score >= 18 else
+                trans('quiz_personality_balanced') if score >= 12 else
+                trans('quiz_personality_spender')
             )
             badges = []
             if score >= 24:
-                badges.append('Financial Guru')
+                badges.append(trans('quiz_badge_financial_guru'))
             if score >= 18:
-                badges.append('Savings Star')
+                badges.append(trans('quiz_badge_savings_star'))
             if answers.get('avoid_debt') in ['always', 'often']:
-                badges.append('Debt Dodger')
+                badges.append(trans('quiz_badge_debt_dodger'))
             if answers.get('set_financial_goals') in ['always', 'often']:
-                badges.append('Goal Setter')
+                badges.append(trans('quiz_badge_goal_setter'))
             
             quiz_storage = current_app.config['STORAGE_MANAGERS']['quiz']
             record = {
@@ -216,7 +182,7 @@ def step2b():
             if send_email_flag and email:
                 send_email(
                     to_email=email,
-                    subject='quiz_results_subject',
+                    subject=trans('quiz_results_subject'),
                     template_name="quiz_email.html",
                     data={
                         "first_name": record["data"]["first_name"],
@@ -250,12 +216,12 @@ def step2b():
             session.pop('quiz_step1', None)
             session.pop('quiz_step2a', None)
             session.pop('quiz_questions', None)
-            flash('quiz_completed_success', 'success')
+            flash(trans('quiz_completed_success'), 'success')
             return redirect(url_for('quiz.results', course_id=course_id))
         return render_template('quiz_step2b.html', form=form, questions=questions, course_id=course_id)
     except Exception as e:
         current_app.logger.exception(f"Error in quiz.step2b: {str(e)}")
-        flash('quiz_error_quiz_answers', 'danger')
+        flash(trans('quiz_error_quiz_answers'), 'danger')
         return render_template('quiz_step2b.html', form=form, questions=questions, course_id=course_id)
 
 @quiz_bp.route('/results', methods=['GET', 'POST'])
@@ -271,22 +237,22 @@ def results():
         
         insights = []
         tips = [
-            'quiz_tip_automate_savings',
-            'quiz_tip_ajo_savings',
-            'quiz_tip_learn_skills',
-            'quiz_tip_track_expenses'
+            trans('quiz_tip_automate_savings'),
+            trans('quiz_tip_ajo_savings'),
+            trans('quiz_tip_learn_skills'),
+            trans('quiz_tip_track_expenses')
         ]
         if latest_record:
-            if latest_record.get('personality') == 'Spender':
-                insights.append('quiz_insight_high_spending')
-                tips.append('quiz_tip_use_budgeting_app')
+            if latest_record.get('personality') == trans('quiz_personality_spender'):
+                insights.append(trans('quiz_insight_high_spending'))
+                tips.append(trans('quiz_tip_use_budgeting_app'))
             if latest_record.get('score', 0) < 18:
-                insights.append('quiz_insight_low_discipline')
+                insights.append(trans('quiz_insight_low_discipline'))
             if latest_record.get('answers', {}).get('emergency_fund') in ['never', 'sometimes']:
-                insights.append('quiz_insight_no_emergency_fund')
-                tips.append('quiz_tip_emergency_fund')
+                insights.append(trans('quiz_insight_no_emergency_fund'))
+                tips.append(trans('quiz_tip_emergency_fund'))
             if latest_record.get('answers', {}).get('invest_money') in ['always', 'often']:
-                insights.append('quiz_insight_good_investment')
+                insights.append(trans('quiz_insight_good_investment'))
         
         return render_template(
             'quiz_results.html',
@@ -298,17 +264,17 @@ def results():
         )
     except Exception as e:
         current_app.logger.exception(f"Error in quiz.results: {str(e)}")
-        flash('quiz_error_loading_results', 'danger')
+        flash(trans('quiz_error_loading_results'), 'danger')
         return render_template(
             'quiz_results.html',
             records=[],
             latest_record={},
             insights=[],
             tips=[
-                'quiz_tip_automate_savings',
-                'quiz_tip_ajo_savings',
-                'quiz_tip_learn_skills',
-                'quiz_tip_track_expenses'
+                trans('quiz_tip_automate_savings'),
+                trans('quiz_tip_ajo_savings'),
+                trans('quiz_tip_learn_skills'),
+                trans('quiz_tip_track_expenses')
             ],
             course_id=course_id
         )
