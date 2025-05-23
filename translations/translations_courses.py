@@ -1,6 +1,19 @@
 COURSES_TRANSLATIONS = {
     'en': {
         'course_financial_courses': 'Financial Courses',
+        # --- MISSING KEYS FROM TEMPLATES ---
+        'courses_financial_courses': 'Financial Courses',
+        'courses_start_course': 'Start Course',
+        'courses_progress': 'Progress',
+        'courses_back_to_courses': 'Back to Courses',
+        'courses_complete_lesson': 'Complete Lesson',
+        # Dynamic: See note below for how to add dynamic keys like courses_basic_course, courses_intro_lesson1, etc.
+        # Example dynamic keys for sample courses/lessons, add more as needed for your catalog:
+        'courses_basic_course': 'Basic Financial Literacy',
+        'courses_intermediate_course': 'Intermediate Budgeting Skills',
+        'courses_advanced_course': 'Advanced Investment Strategies',
+        'courses_basic_lesson1': 'Introduction to Budgeting',
+        'courses_basic_lesson1_content': 'Learn what a budget is and why it is important',
         'course_explore_courses': 'Explore Courses',
         'course_start_course': 'Start Course',
         'course_continue_course': 'Continue Course',
@@ -176,6 +189,19 @@ COURSES_TRANSLATIONS = {
         'courses_improve_literacy': 'Samun damar kwasuna don haɓaka ilimin kuɗin ka',
         'courses_recommended_learning': 'Koyon da Aka Shawarta',
         'courses_learn_budgeting': 'Koyi tushen ƙirƙirar da sarrafa kasafin kuɗi.',
+        # --- MISSING KEYS FROM TEMPLATES ---
+        'courses_financial_courses': 'Kwasunan Kuɗi',
+        'courses_start_course': 'Fara Kwas',
+        'courses_progress': 'Ci gaba',
+        'courses_back_to_courses': 'Komawa Kwasuna',
+        'courses_complete_lesson': 'Kammala Darasi',
+        # Dynamic: See note below for how to add dynamic keys like courses_basic_course, courses_intro_lesson1, etc.
+        # Example dynamic keys for sample courses/lessons, add more as needed for your catalog:
+        'courses_basic_course': 'Ilmin Kuɗi na Asali',
+        'courses_intermediate_course': 'Ƙwarewar Kasafin Kuɗi na Matsakaici',
+        'courses_advanced_course': 'Dabarun Zuba Jari na Gaba',
+        'courses_basic_lesson1': 'Gabatarwa ga Kasafin Kuɗi',
+        'courses_basic_lesson1_content': 'Koyi menene kasafin kuɗi da muhimmancinsa.',
         'courses_free_course': 'Kwas na kyauta',
         'courses_premium_course': 'Kwas na musamman'
     }
