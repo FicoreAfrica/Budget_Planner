@@ -3,8 +3,12 @@ from json_store import JsonStorage
 import os
 from datetime import datetime
 import pandas as pd
-from translations import trans
-
+try:
+    from app import trans  # Import trans from app.py instead
+except ImportError:
+    def trans(key, lang=None):
+        return key  # Fallback to return the key as the translation
+        
 courses_bp = Blueprint('courses', __name__, url_prefix='/courses')
 
 COURSES_FILE = os.path.join('data', 'courses.json')
