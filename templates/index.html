@@ -36,7 +36,7 @@
                     <div class="card-body">
                         <h3 class="card-title">{{ trans('quiz_personality_quiz') | default('Personality Quiz') }}</h3>
                         <p class="card-text">{{ trans('quiz_assess_literacy') | default('Answer questions to assess financial literacy') }}</p>
-                        <a href="{{ url_for('quiz.step1') }}" class="btn btn-primary" aria-label="{{ trans('quiz_start_personality_quiz') | default('Start Personality Quiz') }}">{{ trans('core_start') | default('Start') }}</a>
+                        <a href="{{ url_for('quiz.step1', course_id='financial_quiz') }}" class="btn btn-primary" aria-label="{{ trans('quiz_start_personality_quiz') | default('Start Personality Quiz') }}">{{ trans('core_start') | default('Start') }}</a>
                     </div>
                 </div>
             </div>
@@ -141,7 +141,40 @@
         </ul>
     </section>
     <section class="about-section text-center my-5">
-        {{ trans('core_about_ficore_africa') | safe }}
+        <h2>{{ trans('core_about_ficore_africa') | default('About Ficore Africa: Featured Courses to Boost Your Financial Literacy') }}</h2>
+        <div class="featured-courses-section">
+            <p>{{ trans('courses_explore_courses') | default('Explore our courses to improve your financial literacy!') }}</p>
+            <div class="courses-grid row">
+                {% for course in courses %}
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h3 class="card-title">{{ course.title_ha if lang == 'ha' else course.title_en }}</h3>
+                            <p class="card-text">
+                                {% if course.id == 'budgeting_101' %}
+                                    {{ trans('courses_learn_budgeting') | default('Learn the basics of creating and managing a budget.') }}
+                                {% elif course.id == 'financial_quiz' %}
+                                    {{ trans('quiz_assess_personality') | default('Take a quiz to discover your financial personality.') }}
+                                {% endif %}
+                                <br>
+                                {% if course.is_premium %}
+                                    {{ trans('courses_premium_course') | default('Premium course') }}
+                                {% else %}
+                                    {{ trans('courses_free_course') | default('Free course') }}
+                                {% endif %}
+                            </p>
+                            <a href="{{ url_for('courses.course_page', course_id=course.id) }}" 
+                               class="btn btn-primary" 
+                               aria-label="{{ trans('courses_start_course') | default('Start Course') }} {{ course.title_ha if lang == 'ha' else course.title_en }}">
+                               {{ trans('core_start') | default('Start') }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <a href="{{ url_for('courses.course_catalog') }}" class="btn btn-primary mt-3">{{ trans('course_view_all_courses') | default('View All Courses') }}</a>
+        </div>
     </section>
 </div>
 {% endblock %}
