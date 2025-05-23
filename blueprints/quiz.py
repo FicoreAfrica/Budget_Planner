@@ -82,7 +82,7 @@ class Step1Form(FlaskForm):
 
 class Step2Form(FlaskForm):
     def __init__(self, questions, *args, **kwargs):
-        super(Step2Form, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         for q in questions:
             setattr(self, q['key'], SelectField(
                 q['label'],
@@ -95,7 +95,9 @@ class Step2Form(FlaskForm):
                 ],
                 validators=[DataRequired(message='quiz_answer_required')]
             ))
-    submit = SubmitField('Continue' if 'step2a' in kwargs.get('form_type', '') else 'See Results')
+        # Set the submit button label dynamically based on form_type
+        form_type = kwargs.get('form_type', '')
+        self.submit = SubmitField('Continue' if 'step2a' in form_type else 'See Results')
 
 @quiz_bp.route('/step1', methods=['GET', 'POST'])
 def step1():
