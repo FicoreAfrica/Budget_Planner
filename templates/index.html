@@ -67,6 +67,16 @@
                     </div>
                 </div>
             </div>
+            <!-- New Courses Card -->
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h3 class="card-title">{{ trans('courses_learning_hub') | default('Learning Hub') }}</h3>
+                        <p class="card-text">{{ trans('courses_improve_literacy') | default('Access courses to boost your financial literacy') }}</p>
+                        <a href="{{ url_for('courses.course_catalog') }}" class="btn btn-primary" aria-label="{{ trans('courses_start_learning') | default('Start Learning Hub') }}">{{ trans('core_start') | default('Start') }}</a>
+                    </div>
+                </div>
+            </div>
         </div>
         <div class="recommended-learning my-5">
             <h2 class="text-center"><i class="fas fa-book"></i> {{ trans('courses_recommended_learning') | default('Recommended Learning') }}</h2>
@@ -131,8 +141,7 @@
         </ul>
     </section>
     <section class="about-section text-center my-5">
-        <h2>{{ trans('core_about_ficore_africa') | default('About Ficore Africa') }}</h2>
-        <p>{{ trans('core_empowering_financial_growth') | default('Empowering financial growth across Africa since 2025') }}</p>
+        {{ trans('core_about_ficore_africa') | safe }}
     </section>
 </div>
 {% endblock %}
