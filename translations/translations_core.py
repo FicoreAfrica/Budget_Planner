@@ -57,7 +57,7 @@ CORE_TRANSLATIONS = {
         'core_return_to_home': 'Return to Home',
         'core_form_processing_error': 'Form processing error. Please try again.',
         'core_correct_errors_below': 'Please correct the errors below.',
-        'core_about_ficore_africa': '''
+        'core_courses_ficore_africa': '''
             <section class="featured-courses-section text-center my-5">
                 <h2>Featured Courses</h2>
                 <p>Boost your financial literacy with these top courses:</p>
@@ -153,7 +153,7 @@ CORE_TRANSLATIONS = {
         'core_localized_africa': 'An keɓance don Afrika',
         'core_empowers_literacy': 'Yana Ƙarfafa Ilimin Kuɗi',
         'core_actionable_insights': 'Yana ba da fahimta mai aiki don ingantaccen yanke shawara na kuɗi',
-        'core_about_ficore_africa': '''
+        'core_courses_ficore_africa': '''
             <section class="featured-courses-section text-center my-5">
                 <h2>Featured Courses</h2>
                 <p>Haɓaka ilimin kuɗin ku tare da waɗannan manyan darussan:</p>
