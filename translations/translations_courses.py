@@ -80,7 +80,13 @@ COURSES_TRANSLATIONS = {
         'course_error_loading_course_data': 'Error loading course data',
         'course_error_completing_lesson': 'Error completing lesson',
         'course_course_enrollment_successful': 'Course enrollment successful',
-        'course_lesson_completed': 'Lesson completed'
+        'course_lesson_completed': 'Lesson completed',
+        'courses_learning_hub': 'Learning Hub',
+        'courses_improve_literacy': 'Access courses to boost your financial literacy',
+        'courses_recommended_learning': 'Recommended Learning',
+        'courses_learn_budgeting': 'Learn the basics of creating and managing a budget.',
+        'courses_free_course': 'Free course',
+        'courses_premium_course': 'Premium course'
     },
     'ha': {
         'course_financial_courses': 'Kwasunan Kuɗi',
@@ -163,6 +169,12 @@ COURSES_TRANSLATIONS = {
         'course_error_loading_course_data': 'Kuskure wajen loda bayanan kwas',
         'course_error_completing_lesson': 'Kuskure wajen kammala darasi',
         'course_course_enrollment_successful': 'Shigar kwas ya yi nasara',
-        'course_lesson_completed': 'An kammala darasi'
+        'course_lesson_completed': 'An kammala darasi',
+        'courses_learning_hub': 'Hub na Koyo',
+        'courses_improve_literacy': 'Samun damar kwasuna don haɓaka ilimin kuɗin ka',
+        'courses_recommended_learning': 'Koyon da Aka Shawarta',
+        'courses_learn_budgeting': 'Koyi tushen ƙirƙirar da sarrafa kasafin kuɗi.',
+        'courses_free_course': 'Kwas na kyauta',
+        'courses_premium_course': 'Kwas na musamman'
     }
 }
