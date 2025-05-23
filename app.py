@@ -28,21 +28,13 @@ except ImportError:
 
 try:
     from translations import trans, get_translations
-    from translations.core import CORE_TRANSLATIONS as translations_core
-    from translations.dashboard import DASHBOARD_TRANSLATIONS as translations_dashboard
-    from translations.financial_health import FINANCIAL_HEALTH_TRANSLATIONS as translations_financial_health
-    from translations.budget import BUDGET_TRANSLATIONS as translations_budget
-    from translations.quiz import QUIZ_TRANSLATIONS as translations_quiz
-    from translations.bill import BILL_TRANSLATIONS as translations_bill
-    from translations.net_worth import NET_WORTH_TRANSLATIONS as translations_net_worth
-    from translations.emergency_fund import EMERGENCY_FUND_TRANSLATIONS as translations_emergency_fund
-    from translations.courses import COURSES_TRANSLATIONS as translations_courses
-    from translations.mailersend import MAILERSEND_TRANSLATIONS as translations_mailersend
 except ImportError as e:
     logging.error(f"Translations import failed: {str(e)}. Using fallback translation functions.")
     def trans(key, lang=None):
+        logging.warning(f"Fallback trans function used for key={key}, lang={lang}")
         return key
     def get_translations(lang):
+        logging.warning(f"Fallback get_translations function used for lang={lang}")
         return {}
 
 root_logger = logging.getLogger('ficore_app')
@@ -234,7 +226,7 @@ def index():
     except Exception as e:
         log.error(f"Error retrieving courses: {str(e)}", exc_info=True)
         courses = []
-        flash(trans("error_message", lang=lang), "danger")
+        flash(trans("core_error_message"), "danger")
     return render_template('index.html', t=trans, courses=courses, lang=lang)
 
 @app.route('/set_language/<lang>')
@@ -243,7 +235,10 @@ def set_language(lang):
     session['lang'] = lang if lang in valid_langs else 'en'
     lang = session['lang']
     log.info(f"Language set to {lang}")
-    flash(trans('language_changed', lang=lang) if lang in valid_langs else trans('invalid_language', lang=lang))
+    if lang in valid_langs:
+        flash(trans('core_language_changed'))
+    else:
+        flash(trans('core_invalid_language'))
     return redirect(request.referrer or url_for('index'))
 
 @app.route('/favicon.ico')
@@ -257,6 +252,14 @@ def general_dashboard():
     log.info("Serving general_dashboard")
     lang = session.get('lang', 'en')
     data = {}
+    expected_keys = {
+        'score': None,
+        'surplus_deficit': None,
+        'personality': None,
+        'bills': [],
+        'net_worth': None,
+        'savings_gap': None
+    }
     for tool, storage in app.config['STORAGE_MANAGERS'].items():
         try:
             if storage is None:
@@ -264,10 +267,7 @@ def general_dashboard():
                 if tool == 'courses':
                     data[tool] = []
                 else:
-                    data[tool] = {
-                        'score': None, 'surplus_deficit': None, 'personality': None,
-                        'bills': [], 'net_worth': None, 'savings_gap': None
-                    }
+                    data[tool] = expected_keys.copy()
                 continue
             records = storage.filter_by_session(session['sid'])
             if tool == 'courses':
@@ -276,24 +276,21 @@ def general_dashboard():
                 if records:
                     latest_record_raw = records[-1]['data']
                     if 'step' in latest_record_raw:
-                        data[tool] = latest_record_raw.get('data', {})
+                        record_data = latest_record_raw.get('data', {})
                     else:
-                        data[tool] = latest_record_raw
+                        record_data = latest_record_raw
+                    # Ensure all expected keys are present
+                    data[tool] = expected_keys.copy()
+                    data[tool].update({k: record_data.get(k, v) for k, v in expected_keys.items()})
                 else:
-                    data[tool] = {
-                        'score': None, 'surplus_deficit': None, 'personality': None,
-                        'bills': [], 'net_worth': None, 'savings_gap': None
-                    }
+                    data[tool] = expected_keys.copy()
             log.debug(f"Data for {tool}: {data[tool]}")
         except Exception as e:
             log.exception(f"Error fetching data for {tool} in general_dashboard: {str(e)}")
             if tool == 'courses':
                 data[tool] = []
             else:
-                data[tool] = {
-                    'score': None, 'surplus_deficit': None, 'personality': None,
-                    'bills': [], 'net_worth': None, 'savings_gap': None
-                }
+                data[tool] = expected_keys.copy()
     return render_template('general_dashboard.html', data=data, t=trans, lang=lang)
 
 @app.route('/logout')
@@ -301,42 +298,42 @@ def logout():
     log.info("Logging out user")
     lang = session.get('lang', 'en')
     session.clear()
-    flash(trans('logged_out', lang=lang))
+    flash(trans('core_logged_out'))
     return redirect(url_for('index'))
 
 @app.errorhandler(Exception)
 def handle_global_error(e):
     lang = session.get('lang', 'en')
     log.exception(f"Global error handler caught exception: {str(e)}")
-    flash(trans("error_message", lang=lang), "danger")
-    return render_template('500.html', error=trans('error_message', lang=lang), t=trans, lang=lang), 500
+    flash(trans("core_error_message"), "danger")
+    return render_template('500.html', error=trans('core_error_message'), t=trans, lang=lang), 500
 
 @app.errorhandler(CSRFError)
 def handle_csrf_error(e):
     lang = session.get('lang', 'en')
     log.error(f"CSRF Error: {str(e)}", exc_info=True)
-    flash(trans("csrf_error", lang=lang), "danger")
-    return render_template('500.html', error=trans('csrf_error', lang=lang), t=trans, lang=lang), 400
+    flash(trans("core_csrf_error"), "danger")
+    return render_template('500.html', error=trans('core_csrf_error'), t=trans, lang=lang), 400
 
 @app.errorhandler(404)
 def page_not_found(e):
     lang = session.get('lang', 'en')
     log.error(f"404 Error: {str(e)}", exc_info=True)
-    return render_template('404.html', error=trans('page_not_found', lang=lang), t=trans, lang=lang), 404
+    return render_template('404.html', error=trans('core_page_not_found'), t=trans, lang=lang), 404
 
 @app.errorhandler(500)
 def internal_server_error(e):
     lang = session.get('lang', 'en')
     log.error(f"500 Error: {str(e)}", exc_info=True)
-    flash(trans("error_message", lang=lang), "danger")
-    return render_template('500.html', error=trans('error_message', lang=lang), t=trans, lang=lang), 500
+    flash(trans("core_error_message"), "danger")
+    return render_template('500.html', error=trans('core_error_message'), t=trans, lang=lang), 500
 
 app.register_blueprint(financial_health_bp)
 app.register_blueprint(budget_bp)
 app.register_blueprint(quiz_bp)
 app.register_blueprint(bill_bp)
 app.register_blueprint(net_worth_bp)
-app.register_blueprint(emergency_fund_bp)
+app.register_blueprint(emERGENCY_fund_bp)
 app.register_blueprint(courses_bp)
 
 if __name__ == '__main__':
