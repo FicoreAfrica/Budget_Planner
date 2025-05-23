@@ -21,15 +21,15 @@ emergency_fund_storage = JsonStorage('data/emergency_fund.json')
 
 # Forms for emergency fund steps
 class Step1Form(FlaskForm):
-    first_name = StringField(trans('first_name'), validators=[DataRequired(message=trans('first_name_required'))])
-    email = StringField(trans('email'), validators=[Optional(), Email(message=trans('email_invalid'))])
-    send_email = BooleanField(trans('send_email'))
-    monthly_expenses = FloatField(trans('monthly_expenses'), validators=[DataRequired(message=trans('monthly_expenses_required')), NumberRange(min=0, max=10000000000, message=trans('expenses_range'))])
-    submit = SubmitField(trans('continue_to_savings'))
+    first_name = StringField(trans('emergency_fund_first_name'), validators=[DataRequired(message=trans('emergency_fund_first_name_required'))])
+    email = StringField(trans('emergency_fund_email'), validators=[Optional(), Email(message=trans('emergency_fund_email_invalid'))])
+    send_email = BooleanField(trans('emergency_fund_send_email'))
+    monthly_expenses = FloatField(trans('emergency_fund_monthly_expenses'), validators=[DataRequired(message=trans('emergency_fund_monthly_expenses_required')), NumberRange(min=0, max=10000000000, message=trans('emergency_fund_expenses_range'))])
+    submit = SubmitField(trans('emergency_fund_continue_to_savings'))
 
 class Step2Form(FlaskForm):
-    current_savings = FloatField(trans('current_savings'), validators=[DataRequired(message=trans('current_savings_required')), NumberRange(min=0, max=10000000000, message=trans('savings_range'))])
-    submit = SubmitField(trans('calculate_emergency_fund'))
+    current_savings = FloatField(trans('emergency_fund_current_savings'), validators=[DataRequired(message=trans('emergency_fund_current_savings_required')), NumberRange(min=0, max=10000000000, message=trans('emergency_fund_savings_range'))])
+    submit = SubmitField(trans('emergency_fund_calculate_emergency_fund'))
 
 @emergency_fund_bp.route('/step1', methods=['GET', 'POST'])
 def step1():
@@ -46,7 +46,7 @@ def step1():
         return render_template('emergency_fund_step1.html', form=form, trans=trans, lang=lang)
     except Exception as e:
         logging.exception(f"Error in emergency_fund.step1: {str(e)}")
-        flash(trans("error_personal_info", lang=lang), "danger")
+        flash(trans("emergency_fund_error_personal_info"), "danger")
         return render_template('emergency_fund_step1.html', form=form, trans=trans, lang=lang)
 
 @emergency_fund_bp.route('/step2', methods=['GET', 'POST'])
@@ -69,11 +69,11 @@ def step2():
             # Assign badges
             badges = []
             if current_savings >= target_savings_6m:
-                badges.append(trans("badge_fund_master", lang=lang))
+                badges.append(trans("emergency_fund_badge_fund_master"))
             if current_savings >= target_savings_3m:
-                badges.append(trans("badge_fund_builder", lang=lang))
+                badges.append(trans("emergency_fund_badge_fund_builder"))
             if current_savings > 0:
-                badges.append(trans("badge_savings_pro", lang=lang))
+                badges.append(trans("emergency_fund_badge_savings_pro"))
             # Store record
             record = {
                 "id": str(uuid.uuid4()),
@@ -98,7 +98,7 @@ def step2():
             if send_email_flag and email:
                 send_email(
                     to_email=email,
-                    subject=trans("emergency_fund_plan", lang=lang),
+                    subject=trans("emergency_fund_plan"),
                     template_name="emergency_fund_email.html",
                     data={
                         "first_name": record["data"]["first_name"],
@@ -115,12 +115,12 @@ def step2():
                     lang=lang
                 )
             session.pop('emergency_fund_step1', None)
-            flash(trans("emergency_fund_completed_success", lang=lang), "success")
+            flash(trans("emergency_fund_emergency_fund_completed_success"), "success")
             return redirect(url_for('emergency_fund.dashboard'))
         return render_template('emergency_fund_step2.html', form=form, trans=trans, lang=lang)
     except Exception as e:
         logging.exception(f"Error in emergency_fund.step2: {str(e)}")
-        flash(trans("emergency_fund_process_error", lang=lang), "danger")
+        flash(trans("emergency_fund_emergency_fund_process_error"), "danger")
         return render_template('emergency_fund_step2.html', form=form, trans=trans, lang=lang)
 
 @emergency_fund_bp.route('/dashboard', methods=['GET', 'POST'])
@@ -136,18 +136,18 @@ def dashboard():
         # Generate insights and tips
         insights = []
         tips = [
-            trans("tip_automate_savings", lang=lang),
-            trans("tip_ajo_savings", lang=lang),
-            trans("tip_track_expenses", lang=lang),
-            trans("tip_monthly_savings_goals", lang=lang)
+            trans("emergency_fund_tip_automate_savings"),
+            trans("emergency_fund_tip_ajo_savings"),
+            trans("emergency_fund_tip_track_expenses"),
+            trans("emergency_fund_tip_monthly_savings_goals")
         ]
         if latest_record:
             if latest_record.get('savings_gap_6m', 0) > 0:
-                insights.append(trans("insight_below_6m_target", lang=lang))
+                insights.append(trans("emergency_fund_insight_below_6m_target"))
             if latest_record.get('current_savings', 0) == 0:
-                insights.append(trans("insight_no_savings", lang=lang))
+                insights.append(trans("emergency_fund_insight_no_savings"))
             if latest_record.get('current_savings', 0) >= latest_record.get('target_savings_6m', 0):
-                insights.append(trans("insight_6m_covered", lang=lang))
+                insights.append(trans("emergency_fund_insight_6m_covered"))
         return render_template(
             'emergency_fund_dashboard.html',
             records=records,
@@ -159,17 +159,17 @@ def dashboard():
         )
     except Exception as e:
         logging.exception(f"Error in emergency_fund.dashboard: {str(e)}")
-        flash(trans("dashboard_load_error", lang=lang), "danger")
+        flash(trans("emergency_fund_dashboard_load_error"), "danger")
         return render_template(
             'emergency_fund_dashboard.html',
             records=[],
             latest_record={},
             insights=[],
             tips=[
-                trans("tip_automate_savings", lang=lang),
-                trans("tip_ajo_savings", lang=lang),
-                trans("tip_track_expenses", lang=lang),
-                trans("tip_monthly_savings_goals", lang=lang)
+                trans("emergency_fund_tip_automate_savings"),
+                trans("emergency_fund_tip_ajo_savings"),
+                trans("emergency_fund_tip_track_expenses"),
+                trans("emergency_fund_tip_monthly_savings_goals")
             ],
             trans=trans,
             lang=lang
