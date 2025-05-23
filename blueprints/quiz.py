@@ -75,8 +75,8 @@ QUESTION_POOL = [
 ]
 
 class Step1Form(FlaskForm):
-    first_name = StringField('First Name', validators=[DataRequired(message='First name is required')])
-    email = StringField('Email', validators=[Optional(), Email(message='Valid email is required')])
+    first_name = StringField('First Name', validators=[DataRequired(message='quiz_first_name_required')])
+    email = StringField('Email', validators=[Optional(), Email(message='quiz_email_invalid')])
     send_email = BooleanField('Send Email')
     submit = SubmitField('Start Quiz')
 
@@ -93,7 +93,7 @@ class Step2Form(FlaskForm):
                     ('sometimes', 'Sometimes'),
                     ('never', 'Never')
                 ],
-                validators=[DataRequired(message=f'Answer required for {q["label"]}')]
+                validators=[DataRequired(message='quiz_answer_required')]
             ))
     submit = SubmitField('Continue' if 'step2a' in kwargs.get('form_type', '') else 'See Results')
 
@@ -129,7 +129,7 @@ def step1():
         return render_template('quiz_step1.html', form=form, course_id=course_id)
     except Exception as e:
         current_app.logger.exception(f"Error in quiz.step1: {str(e)}")
-        flash('Error processing personal information', 'danger')
+        flash('quiz_error_personal_info', 'danger')
         return render_template('quiz_step1.html', form=form, course_id=course_id)
 
 @quiz_bp.route('/step2a', methods=['GET', 'POST'])
@@ -158,7 +158,7 @@ def step2a():
         return render_template('quiz_step2a.html', form=form, questions=questions, course_id=course_id)
     except Exception as e:
         current_app.logger.exception(f"Error in quiz.step2a: {str(e)}")
-        flash('Error processing quiz answers', 'danger')
+        flash('quiz_error_quiz_answers', 'danger')
         return render_template('quiz_step2a.html', form=form, questions=questions, course_id=course_id)
 
 @quiz_bp.route('/step2b', methods=['GET', 'POST'])
@@ -214,7 +214,7 @@ def step2b():
             if send_email_flag and email:
                 send_email(
                     to_email=email,
-                    subject='Your Financial Personality Quiz Results',
+                    subject='quiz_results_subject',
                     template_name="quiz_email.html",
                     data={
                         "first_name": record["data"]["first_name"],
@@ -248,12 +248,12 @@ def step2b():
             session.pop('quiz_step1', None)
             session.pop('quiz_step2a', None)
             session.pop('quiz_questions', None)
-            flash('Quiz completed successfully', 'success')
+            flash('quiz_completed_success', 'success')
             return redirect(url_for('quiz.results', course_id=course_id))
         return render_template('quiz_step2b.html', form=form, questions=questions, course_id=course_id)
     except Exception as e:
         current_app.logger.exception(f"Error in quiz.step2b: {str(e)}")
-        flash('Error processing quiz answers', 'danger')
+        flash('quiz_error_quiz_answers', 'danger')
         return render_template('quiz_step2b.html', form=form, questions=questions, course_id=course_id)
 
 @quiz_bp.route('/results', methods=['GET', 'POST'])
@@ -269,22 +269,22 @@ def results():
         
         insights = []
         tips = [
-            'Automate your savings with apps like PiggyVest or Cowrywise.',
-            'Join an Ajo/Esusu/Adashe group to build a savings habit.',
-            'Learn financial skills through free resources like YouTube or Nairaland.',
-            'Track expenses using a notebook or apps like Moniepoint.'
+            'quiz_tip_automate_savings',
+            'quiz_tip_ajo_savings',
+            'quiz_tip_learn_skills',
+            'quiz_tip_track_expenses'
         ]
         if latest_record:
             if latest_record.get('personality') == 'Spender':
-                insights.append('Your spending habits may benefit from stricter budgeting.')
-                tips.append('Use a budgeting app like BudgetBakers to control spending.')
+                insights.append('quiz_insight_high_spending')
+                tips.append('quiz_tip_use_budgeting_app')
             if latest_record.get('score', 0) < 18:
-                insights.append('Your financial discipline could use some improvement.')
+                insights.append('quiz_insight_low_discipline')
             if latest_record.get('answers', {}).get('emergency_fund') in ['never', 'sometimes']:
-                insights.append('You may not have an emergency fund, which is critical for unexpected expenses.')
-                tips.append('Start an emergency fund with as little as ₦5,000 monthly.')
+                insights.append('quiz_insight_no_emergency_fund')
+                tips.append('quiz_tip_emergency_fund')
             if latest_record.get('answers', {}).get('invest_money') in ['always', 'often']:
-                insights.append('Your investment habits are strong, contributing to wealth building.')
+                insights.append('quiz_insight_good_investment')
         
         return render_template(
             'quiz_results.html',
@@ -296,17 +296,17 @@ def results():
         )
     except Exception as e:
         current_app.logger.exception(f"Error in quiz.results: {str(e)}")
-        flash('Error loading quiz results', 'danger')
+        flash('quiz_error_loading_results', 'danger')
         return render_template(
             'quiz_results.html',
             records=[],
             latest_record={},
             insights=[],
             tips=[
-                'Automate your savings with apps like PiggyVest or Cowrywise.',
-                'Join an Ajo/Esusu/Adashe group to build a savings habit.',
-                'Learn financial skills through free resources like YouTube or Nairaland.',
-                'Track expenses using a notebook or apps like Moniepoint.'
+                'quiz_tip_automate_savings',
+                'quiz_tip_ajo_savings',
+                'quiz_tip_learn_skills',
+                'quiz_tip_track_expenses'
             ],
             course_id=course_id
         )
