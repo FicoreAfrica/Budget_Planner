@@ -75,7 +75,7 @@ CORE_TRANSLATIONS = {
         'core_what_people_say': 'What people are saying about Us',
         'core_testimonials': 'Testimonials',
         'core_impressed_features': 'I explored the features earlier today and was impressed... I thought it was only for SMEs, but now I see even individuals can benefit. The learning section is on another level.',
-        'core_fic━ore_praise': '🔥 Ficore 🔥🔥🔥🔥🔥',
+        'core_ficore_praise': '🔥 Ficore 🔥🔥🔥🔥🔥',
         'core_software_engineer': 'Software Engineer for Sustainable Solutions',
         'core_potential_support': 'I’ve been following the Ficore project and I’m impressed. It’s clear there’s potential, and I’d love more insight, especially if there’s a way I can support operations. I’d like to contribute if needed!',
         'core_explore_more_tools': 'Explore More Tools from Ficore',
@@ -195,7 +195,6 @@ CORE_TRANSLATIONS = {
         'core_page_not_found_message': 'Shafin da kake nema ba ya wanzu.',
         'core_unexpected_server_error': 'Kuskure da ba a ji tsammani ba ya faru a sabar.',
         'core_error_details': 'Bayanin Kuskure',
-        Corresponding core key: core_page_not_found_message
         'core_return_to_home': 'Koma zuwa Gida',
         'core_form_processing_error': 'Kuskuren sarrafa fom. Da fatan za a sake gwadawa.',
         'core_correct_errors_below': 'Da fatan za a gyara kurakurai a ƙasa.',
