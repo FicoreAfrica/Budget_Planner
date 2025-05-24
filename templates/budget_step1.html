@@ -6,16 +6,6 @@
         <h1>{{ trans('budget_budget_planner') | default('Budget Planner') }}</h1>
         <p>{{ trans('budget_enter_personal_information') | default('Enter your personal information') }}</p>
     </div>
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                    {{ trans('core_' + message) | default(message) }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close') | default('Close') }}"></button>
-                </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
     <div class="card">
         <div class="card-body">
             <form method="POST" action="{{ url_for('budget.step1') }}">
