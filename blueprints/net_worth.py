@@ -16,7 +16,7 @@ except ImportError:
 # Configure logging
 logging.basicConfig(filename='data/storage.txt', level=logging.DEBUG)
 
-net_worth_bp = Blueprint('net_worth', __name__)
+ net_worth_bp = Blueprint('net_worth', __name__, url_prefix='/net_worth')
 net_worth_storage = JsonStorage('data/networth.json')
 
 # Forms for net worth steps
