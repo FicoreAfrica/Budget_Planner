@@ -115,7 +115,7 @@ COURSES_TRANSLATIONS = {
         'courses_premium_course': 'Premium course'
     },
     'ha': {
-        'course_financial_courses': 'Kwasunan Kuɗi',
+        'course_financial_courses': 'Kwasunan Ilimin Kuɗi',
         'course_explore_courses': 'Bincika Kwasuna',
         'course_start_course': 'Fara Kwas',
         'course_continue_course': 'Ci gaba da Kwas',
