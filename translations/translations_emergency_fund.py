@@ -4,6 +4,11 @@ EMERGENCY_FUND_TRANSLATIONS = {
         # --- MISSING KEYS FROM TEMPLATES ---
         'emergency_fund_send_email': 'Send Email',
         'emergency_fund_send_email_tooltip': 'Check to receive email summary',
+        'emergency_fund_emergency_fund_calculator': 'Emergency Fund Calculator',
+        'emergency_fund_recommended_fund': 'Recommended Fund',
+        'emergency_fund_savings_gap': 'Savings Gap',
+        'emergency_fund_go_emergency_fund': 'Go to Emergency Fund',
+        'emergency_fund_increase_savings': 'Increase savings to meet your emergency fund needs.',
         'emergency_fund_monthly_expenses_placeholder': 'e.g., 50,000',
         'emergency_fund_monthly_expenses_tooltip': 'Expenses like food, transport, data subscriptions',
         'emergency_fund_current_savings_placeholder': 'e.g., 100,000',
@@ -202,6 +207,11 @@ EMERGENCY_FUND_TRANSLATIONS = {
         'emergency_fund_error_processing_details': 'Kuskure wajen sarrafa bayanan kuɗi',
         'emergency_fund_invalid_numeric_input': 'Shigar da lambar ba daidai ba ga kashe kuɗi ko ajiya',
         'emergency_fund_error_calculating_fund': 'Kuskure wajen ƙididdigar asusun gaggawa',
+        'emergency_fund_emergency_fund_calculator': 'Kalkuleta Asusun Gaggawa',
+        'emergency_fund_recommended_fund': 'Assusun da aka ba da shawara',
+        'emergency_fund_savings_gap': 'Banbancin Ajiya',
+        'emergency_fund_go_emergency_fund': 'Je zuwa Asusun Gaggawa',
+        'emergency_fund_increase_savings': 'Ƙara ajiya don cika buƙatar asusun gaggawa.',
         # --- MISSING KEYS FROM TEMPLATES ---
         'emergency_fund_send_email': 'Aika Imel',
         'emergency_fund_send_email_tooltip': 'Duba don karɓar taƙaitaccen imel',
