@@ -16,7 +16,7 @@ except ImportError:
 # Configure logging
 logging.basicConfig(filename='data/storage.txt', level=logging.DEBUG)
 
-emergency_fund_bp = Blueprint('emergency_fund', __name__)
+emergency_fund_bp = Blueprint('emergency_fund', __name__, url_prefix='/emergency_fund')
 emergency_fund_storage = JsonStorage('data/emergency_fund.json')
 
 # Forms for emergency fund steps
