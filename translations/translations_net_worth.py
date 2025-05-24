@@ -1,6 +1,10 @@
 NET_WORTH_TRANSLATIONS = {
     'en': {
         'net_worth_calculator': 'Net Worth Calculator',
+        'net_worth_net_worth_calculator': 'Net Worth Calculator',
+        'net_worth_net_worth': 'Net Worth',
+        'net_worth_total_assets': 'Total Assets',
+        'net_worth_go_net_worth': 'Go to Net Worth',
         # --- MISSING KEYS FROM TEMPLATES ---
         'net_worth_cash_savings_placeholder': 'e.g., 500,000',
         'net_worth_cash_savings_tooltip': 'Money in bank accounts, cash, Ajo/Esusu/Adashe',
@@ -227,6 +231,10 @@ NET_WORTH_TRANSLATIONS = {
         'net_worth_insight_high_loans': 'Rance mai yawa dangane da kadara. Ka ji da rage aro daga OPay ko GT Bank',
         'net_worth_insight_low_cash_reserves': 'Ƙarancin ajiyar kuɗi. Ƙara ajiya ta hanyar Ajo/Esusu/Adashe don samun kuɗi',
         'net_worth_insight_strong_investment_portfolio': 'Ƙarfin fayil na saka jari! Bincika ƙarin zaɓuɓɓuka kamar tsarin haɗin gwiwa',
+        'net_worth_net_worth_calculator': 'Kalkuleta Darajar Kuɗi',
+        'net_worth_net_worth': 'Darajar Kuɗi',
+        'net_worth_total_assets': 'Jimillar Kadarori',
+        'net_worth_go_net_worth': 'Je zuwa Darajar Kuɗi',
         # --- MISSING KEYS FROM TEMPLATES ---
         'net_worth_cash_savings_placeholder': 'misali, 500,000',
         'net_worth_cash_savings_tooltip': 'Kuɗi a asusun banki, ajiyar hannu, Ajo/Esusu/Adashe',
