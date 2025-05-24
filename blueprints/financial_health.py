@@ -16,7 +16,7 @@ except ImportError:
         
 logger = logging.getLogger(__name__)
 
-financial_health_bp = Blueprint('financial_health', __name__)
+financial_health_bp = Blueprint('financial_health', __name__, url_prefix='/financial_health')
 financial_health_storage = JsonStorage('data/financial_health.json')
 progress_storage = JsonStorage('data/user_progress.json')
 
