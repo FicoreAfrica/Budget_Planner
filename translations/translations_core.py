@@ -2,6 +2,7 @@ CORE_TRANSLATIONS = {
     'en': {
         'core_home': 'Home',
         'core_back_to_home': 'Back to Home',
+        'core_viewl_all_courses': 'Click to View All Courses',
         'core_welcome_to_score': 'Welcome to Score',
         'core_error_message': 'An error occurred',
         'core_csrf_error': 'CSRF token missing or invalid',
@@ -336,6 +337,7 @@ CORE_TRANSLATIONS = {
         'core_featured_courses' : 'Zaɓin edita wanda aka keɓance muku',
         'core_dear': 'Mai girma',
         'core_created_at': 'An Ƙirƙira A',
+        'core_viewl_all_courses': 'Duba Jadawalin Kwasa-Kwasai',
         'core_date': 'Kwanan wata',
         'core_contact_us': 'Tuntuɓe Mu',
         'core_provide_feedback': 'Bayar da Ra/ayi',
