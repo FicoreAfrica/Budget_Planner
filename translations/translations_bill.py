@@ -1,4 +1,4 @@
-translations = {
+TRANSLATIONS = {
     'en': {
         'bill_bill_planner': 'Bill Planner',
         'bill_total_bills': 'Total Bills',
