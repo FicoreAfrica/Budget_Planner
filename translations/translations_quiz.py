@@ -6,6 +6,10 @@ QUIZ_TRANSLATIONS = {
         'quiz_answer_questions_for_personality': 'Answer these questions to discover your financial personality',
         'quiz_send_email_tooltip': 'Check to receive email with quiz results',
         'quiz_send_email': 'Send Email',
+        'quiz_personality_quiz': 'Personality Quiz',
+        'quiz_personality': 'Personality',
+        'quiz_not_completed': 'Quiz not completed.',
+        'quiz_go_personality_quiz': 'Go to Personality Quiz',
 
         # --- Likely Missing or Dynamic Keys (examples for dynamic) ---
         # For each quiz question, tooltip, and placeholder, add keys like:
@@ -417,6 +421,10 @@ QUIZ_TRANSLATIONS = {
         'quiz_tooltip_example': 'Bayani mai taimako ga misalin tambaya',
         'quiz_placeholder_example': 'misali, Amsa',
         'quiz_select_answer_required': 'Da fatan za a zaɓi amsa',
+        'quiz_personality_quiz': 'Gwajin Halayya',
+        'quiz_personality': 'Halayya',
+        'quiz_not_completed': 'Ba a kammala gwaji ba.',
+        'quiz_go_personality_quiz': 'Je zuwa Gwajin Halayya',
 
         # --- Likely Core/Other Module Keys ---
         'core_first_name': 'Sunan Farko',
