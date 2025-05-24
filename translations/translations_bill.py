@@ -1,7 +1,13 @@
 BILL_TRANSLATIONS = {
     'en': {
         # General Bill Fields
-        'bill_bill_planner': "Bill Planner",
+        'bill_bill_planner': 'Bill Planner',
+        'bill_bill_planner': 'Bill Planner',
+        'bill_total_bills': 'Total Bills',
+        'bill_unpaid_bills': 'Unpaid Bills',
+        'bill_no_bills': 'No bills added.',
+        'bill_go_bill_planner': 'Go to Bill Planner',
+        'bill_pay_bills': 'Pay outstanding bills to avoid penalties.',
         'bill_bill_name': "Bill Name",
         'bill_bill_name_required': "Bill name is required",
         'bill_bill_name_placeholder': "e.g., NEPA, MTN Data, Ajo Contribution",
@@ -246,6 +252,12 @@ BILL_TRANSLATIONS = {
         # Other status keys (for inline status)
         'bill_pending': "Ana Jira",
         'bill_overdue': "Ya Wuce Lokaci",
+        'bill_bill_planner': 'Tsarin Biyan Kuɗi',
+        'bill_total_bills': 'Jimillar Kuɗaɗen Biyan',
+        'bill_unpaid_bills': 'Kuɗin da ba a biya ba',
+        'bill_no_bills': 'Ba a ƙara wani biyan kuɗi ba.',
+        'bill_go_bill_planner': 'Je zuwa Tsarin Biyan Kuɗi',
+        'bill_pay_bills': 'Bi kuɗaɗen da suka rage don gujewa tara.',
         'bill_paid': "An Biya",
         'bill_unpaid': "Ba a Biya Ba",
         # Error and Status Messages
