@@ -6,16 +6,6 @@
         <h1>{{ trans('emergency_fund_calculator') | default('Emergency Fund Calculator') }}</h1>
         <p>{{ trans('emergency_fund_plan_emergency_fund') | default('Plan your emergency fund with Ficore Africa') }}</p>
     </div>
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                    {{ trans('core_' + message) | default(message) }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close') | default('Close') }}"></button>
-                </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
     <div class="card">
         <div class="card-body">
             <form method="POST" action="{{ url_for('emergency_fund.step1') }}">
