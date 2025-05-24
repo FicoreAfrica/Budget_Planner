@@ -189,7 +189,7 @@ CORE_TRANSLATIONS = {
         'core_invalid_language': 'Harshe mara inganci',
         'core_logged_out': 'An fitar da kai',
         'core_ficore_africa': 'Ficore Afrika',
-        'core_welcome_to_ficore': 'Barka da Zuwa Ficore',
+        'core_welcome_to_ficore': 'Barka da Zuwa Shafin Ficore Africa!',
         'core_ficore_africa_logo': 'Logo na Ficore Afrika',
         'core_change_language': 'Canza Harshe',
         'core_toggle_navigation': 'Togglin Kewayawa',
