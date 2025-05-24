@@ -14,7 +14,7 @@ except ImportError:
     def trans(key, lang=None):
         return key  # Fallback to return the key as the translation
 
-quiz_bp = Blueprint('quiz', __name__)
+quiz_bp = Blueprint('quiz', __name__, url_prefix='/quiz')
 
 QUESTION_KEYS = [
     'track_expenses',
