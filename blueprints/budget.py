@@ -16,7 +16,7 @@ except ImportError:
 # Configure logging
 logging.basicConfig(filename='data/storage.txt', level=logging.DEBUG)
 
-budget_bp = Blueprint('budget', __name__)
+budget_bp = Blueprint('budget', __name__, url_prefix='/budget')
 budget_storage = JsonStorage('data/budget.json')
 
 # Forms for budget steps
