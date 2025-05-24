@@ -22,16 +22,6 @@
         <h1>{{ trans('net_worth_dashboard') | default('Net Worth Dashboard') }}</h1>
         <p>{{ trans('net_worth_personalized_net_worth_summary') | default('Your personalized net worth summary') }}</p>
     </div>
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                    {{ trans('core_' + message) | default(message) }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close') | default('Close') }}"></button>
-                </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
     {% if latest_record %}
         <div class="card mb-4">
             <div class="card-body">
