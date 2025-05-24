@@ -55,6 +55,17 @@
     {% block extra_head %}{% endblock %}
 </head>
 <body>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ trans('core_' + message) | default(message) }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close') | default('Close') }}"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
     <!-- Header Message -->
     <div class="header-message">
         {{ trans('core_welcome_to_ficore') | default('Welcome to Ficore Africa Tools Suite: Use Ficore to Track your income, net worth, budgets, and bills, to grow your money with confidence.') }}
@@ -99,18 +110,6 @@
 
     <!-- Main Content -->
     <div class="content">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <div class="container mt-3">
-                    {% for category, message in messages %}
-                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                            {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close') | default('Close') }}"></button>
-                        </div>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        {% endwith %}
         {% block content %}{% endblock %}
     </div>
 
