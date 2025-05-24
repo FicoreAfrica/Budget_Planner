@@ -16,7 +16,7 @@ except ImportError:
 # Configure logging
 logging.basicConfig(filename='data/storage.txt', level=logging.DEBUG)
 
-bill_bp = Blueprint('bill', __name__)
+bill_bp = Blueprint('bill', __name__, url_prefix='/bill')
 bill_storage = JsonStorage('data/bills.json')
 
 class BillForm(FlaskForm):
