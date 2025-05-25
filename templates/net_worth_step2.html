@@ -30,17 +30,17 @@
                 {{ form.csrf_token }}
                 <div class="mb-3">
                     <label class="form-label">{{ trans('net_worth_cash_and_savings') | default('Cash & Savings') }}</label>
-                    {{ form.cash_savings(class="form-control number-input", placeholder=trans('net_worth_cash_savings_placeholder') | default('e.g., 500,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('net_worth_cash_savings_tooltip') | default('Money in bank accounts, cash, Ajo/Esusu/Adashe'), 'type': 'text', 'aria-describedby': 'cash_savings_help'}) }}
+                    {{ form.cash_savings(class="form-control number-input", placeholder=trans('net_worth_cash_savings_placeholder') | default('e.g., 500,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('net_worth_cash_savings_tooltip') | default('Money in bank accounts, cash, Ajo/Esusu/Adashe')}) }}
                     <div class="invalid-feedback">{{ trans('net_worth_cash_savings_required') | default('Cash & Savings is required') }}</div>
                 </div>
                 <div class="mb-3">
                     <label class="form-label">{{ trans('net_worth_investments') | default('Investments') }}</label>
-                    {{ form.investments(class="form-control number-input", placeholder=trans('net_worth_investments_placeholder') | default('e.g., 1,000,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('net_worth_investments_tooltip') | default('Value of stocks, bonds, farming, or other investments'), 'type': 'text', 'aria-describedby': 'investments_help'}) }}
+                    {{ form.investments(class="form-control number-input", placeholder=trans('net_worth_investments_placeholder') | default('e.g., 1,000,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('net_worth_investments_tooltip') | default('Value of stocks, bonds, farming, or other investments')}) }}
                     <div class="invalid-feedback">{{ trans('net_worth_investments_required') | default('Investments is required') }}</div>
                 </div>
                 <div class="mb-3">
                     <label class="form-label">{{ trans('net_worth_physical_property') | default('Physical Property') }}</label>
-                    {{ form.property(class="form-control number-input", placeholder=trans('net_worth_property_placeholder') | default('e.g., 5,000,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('net_worth_property_tooltip') | default('Value of houses, real estate, or land you own'), 'type': 'text', 'aria-describedby': 'property_help'}) }}
+                    {{ form.property(class="form-control number-input", placeholder=trans('net_worth_property_placeholder') | default('e.g., 5,000,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('net_worth_property_tooltip') | default('Value of houses, real estate, or land you own')}) }}
                     <div class="invalid-feedback">{{ trans('net_worth_physical_property_required') | default('Physical Property is required') }}</div>
                 </div>
                 <div class="d-flex justify-content-between">
