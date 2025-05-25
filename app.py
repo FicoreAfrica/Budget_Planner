@@ -15,7 +15,7 @@ from blueprints.bill import bill_bp
 from blueprints.net_worth import net_worth_bp
 from blueprints.emergency_fund import emergency_fund_bp
 from blueprints.courses import courses_bp
-from blueprints.learning_hub import learning_hub_bp  # <-- NEW BLUEPRINT for Learning Hub
+from blueprints.learning_hub import learning_hub_bp
 from json_store import JsonStorage
 import gspread
 from google.oauth2.service_account import Credentials
@@ -59,7 +59,22 @@ if not app.secret_key:
 session_dir = os.environ.get('SESSION_DIR', 'data/sessions')
 if os.environ.get('RENDER'):
     session_dir = '/opt/render/project/src/data/sessions'
-os.makedirs(session_dir, exist_ok=True)  # Ensure the sessions directory exists
+
+# Robustly create the session directory
+try:
+    if os.path.exists(session_dir):
+        if not os.path.isdir(session_dir):
+            log.error(f"Session path {session_dir} exists but is not a directory. Attempting to remove and recreate.")
+            os.remove(session_dir)  # Remove the file/symlink
+            os.makedirs(session_dir, exist_ok=True)
+            log.info(f"Created session directory at {session_dir}")
+    else:
+        os.makedirs(session_dir, exist_ok=True)
+        log.info(f"Created session directory at {session_dir}")
+except Exception as e:
+    log.error(f"Failed to create session directory {session_dir}: {str(e)}")
+    raise RuntimeError(f"Cannot proceed without session directory: {str(e)}")
+
 app.config['SESSION_FILE_DIR'] = session_dir
 app.config['SESSION_TYPE'] = 'filesystem'
 app.config['SESSION_PERMANENT'] = True
@@ -186,8 +201,7 @@ def index():
         log.error(f"Error retrieving courses: {str(e)}")
         courses = []
         flash(trans('core_error_message'), 'danger')
-        print("Index route accessed")  # Should appear in your console/logs
-    # --- FIX: Provide sample_courses for the featured section ---
+        print("Index route accessed")
     sample_courses = [
         {
             'id': 'budgeting_101',
@@ -204,14 +218,13 @@ def index():
             'title_key': 'courses_course_savings_basics_title',
             'title_en': 'Savings Basics'
         }
-        # Add more sample courses as needed
     ]
     return render_template(
         'index.html',
         t=trans,
         courses=courses,
         lang=lang,
-        sample_courses=sample_courses  # <---- THIS FIXES THE FEATURED SECTION
+        sample_courses=sample_courses
     )
 
 @app.route('/set_language/<lang>')
@@ -329,7 +342,7 @@ app.register_blueprint(bill_bp)
 app.register_blueprint(net_worth_bp)
 app.register_blueprint(emergency_fund_bp)
 app.register_blueprint(courses_bp)
-app.register_blueprint(learning_hub_bp)  # <-- NEW BLUEPRINT for Learning Hub
+app.register_blueprint(learning_hub_bp)
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=10000)
