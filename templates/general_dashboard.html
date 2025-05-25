@@ -130,7 +130,7 @@
                         <p>{{ trans('quiz_personality') | default('Personality') }}: {{ trans('quiz_' + data.quiz.personality) | default(data.quiz.personality) }}</p>
                         <p>{{ trans('core_score') | default('Score') }}: {{ data.quiz.score | format_number }} / 10</p>
                     {% else %}
-                        <p>{{ trans('quiz_not_completed') | default('No bills added.') }}</p>
+                        <p>{{ trans('quiz_not_completed') | default('Quiz not completed.') }}</p>
                     {% endif %}
                     <a href="{{ url_for('quiz.step1') }}" 
                        class="btn btn-primary"
@@ -180,9 +180,9 @@
             <div class="card h-100">
                 <div class="card-body">
                     <h3>{{ trans('emergency_fund_emergency_fund_calculator') | default('Emergency Fund Calculator') }}</h3>
-                    {% if data.emergency_fund.recommended_fund %}
-                        <p>{{ trans('emergency_fund_recommended_fund') | default('Recommended Fund') }}: ₦{{ data.emergency_fund.recommended_fund | format_number }}</p>
-                        <p>{{ trans('emergency_fund_savings_gap') | default('Savings Gap') }}: ₦{{ data.emergency_fund.savings_gap | format_number }}</p>
+                    {% if data.emergency_fund.savings_gap is not none %}
+                        <p>{{ trans('emergency_fund_target_savings_6_months') | default('Target Savings (6 Months)') }}: ₦{{ data.emergency_fund.target_savings_6m | format_number }}</p>
+                        <p>{{ trans('emergency_fund_savings_gap_6_months') | default('Savings Gap (6 Months)') }}: ₦{{ data.emergency_fund.savings_gap_6m | format_number }}</p>
                     {% else %}
                         <p>{{ trans('core_not_calculated') | default('Not yet calculated.') }}</p>
                     {% endif %}
@@ -235,6 +235,61 @@
                 </div>
             </div>
         </div>
+        <!-- Add Learning Hub Progress -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h3>{{ trans('learninghub_dashboard') | default('Learning Hub Progress') }}</h3>
+                    {% if data.learning_progress %}
+                        {% set total_lessons = 0 %}
+                        {% set completed_lessons = 0 %}
+                        {% for course_id, progress in data.learning_progress.items() %}
+                            {% set course = none %}
+                            {% for c in courses_data %}
+                                {% if c.id == course_id %}
+                                    {% set course = c %}
+                                {% endif %}
+                            {% endfor %}
+                            {% if course %}
+                                {% set lessons = 0 %}
+                                {% for module in course.modules %}
+                                    {% set lessons = lessons + module.lessons | length %}
+                                {% endfor %}
+                                {% set completed = progress.lessons_completed | length %}
+                                {% set total_lessons = total_lessons + lessons %}
+                                {% set completed_lessons = completed_lessons + completed %}
+                                <p>
+                                    <strong>{{ trans(course.title_key) | default('Course') }}:</strong>
+                                    {{ completed }}/{{ lessons }} {{ trans('learninghub_lessons_completed') | default('Lessons Completed') }}
+                                </p>
+                            {% endif %}
+                        {% endfor %}
+                        {% if total_lessons > 0 %}
+                            {% set progress_percent = (completed_lessons / total_lessons * 100) | round(1) %}
+                            <div class="progress mb-2">
+                                <div class="progress-bar bg-success" 
+                                     role="progressbar" 
+                                     style="width: {{ progress_percent }}%" 
+                                     aria-valuenow="{{ progress_percent }}" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100">
+                                    {{ progress_percent }}%
+                                </div>
+                            </div>
+                        {% else %}
+                            <p>{{ trans('learninghub_no_progress') | default('You haven’t started any lessons yet.') }}</p>
+                        {% endif %}
+                    {% else %}
+                        <p>{{ trans('learninghub_no_progress') | default('You haven’t started any lessons yet.') }}</p>
+                    {% endif %}
+                    <a href="{{ url_for('learning_hub.courses') }}" 
+                       class="btn btn-primary"
+                       aria-label="{{ trans('learninghub_browse_courses') | default('Browse Courses') }}">
+                        <i class="fas fa-book"></i> {{ trans('learninghub_browse_courses') | default('Browse Courses') }}
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
     <div class="card mb-4">
         <div class="card-body">
@@ -254,11 +309,14 @@
                 {% if data.bills.bills and data.bills.unpaid_amount > 0 %}
                     <li>{{ trans('bill_pay_bills') | default('Pay outstanding bills to avoid penalties.') }}</li>
                 {% endif %}
-                {% if data.emergency_fund.savings_gap and data.emergency_fund.savings_gap > 0 %}
+                {% if data.emergency_fund.savings_gap is not none and data.emergency_fund.savings_gap_6m > 0 %}
                     <li>{{ trans('emergency_fund_increase_savings') | default('Increase savings to meet your emergency fund needs.') }}</li>
                 {% endif %}
                 {% if not data.courses %}
                     <li>{{ trans('courses_start_budgeting_course') | default('Start the Budgeting Basics course to improve financial skills.') }}</li>
+                {% endif %}
+                {% if not data.learning_progress %}
+                    <li>{{ trans('learninghub_start_course') | default('Start a course in the Learning Hub to boost your financial knowledge.') }}</li>
                 {% endif %}
                 <li>{{ trans('core_update_data') | default('Regularly update your financial data for accurate insights.') }}</li>
             </ul>
@@ -271,14 +329,14 @@
         // Ensure data is valid and fallback to 0 if undefined/null
         const financialHealthScore = {{ data.financial_health.score if data.financial_health.score else 0 }};
         const netWorth = {{ (data.net_worth.net_worth / 1000000) if data.net_worth.net_worth else 0 }};
-        const emergencyFundGap = {{ (data.emergency_fund.savings_gap / 1000000) if data.emergency_fund.savings_gap else 0 }};
+        const emergencyFundGap = {{ (data.emergency_fund.savings_gap_6m / 1000000) if data.emergency_fund.savings_gap_6m is not none else 0 }};
         new Chart(ctx, {
             type: 'bar',
             data: {
                 labels: [
                     "{{ trans('financial_health_financial_health_score') | default('Financial Health') }}",
                     "{{ trans('net_worth_net_worth') | default('Net Worth') }} (₦M)",
-                    "{{ trans('emergency_fund_savings_gap') | default('Emergency Fund Gap') }} (₦M)"
+                    "{{ trans('emergency_fund_savings_gap_6_months') | default('Emergency Fund Gap (6 Months)') }} (₦M)"
                 ],
                 datasets: [{
                     label: "{{ trans('core_financial_metrics') | default('Financial Metrics') }}",
