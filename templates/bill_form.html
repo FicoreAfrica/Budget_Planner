@@ -16,22 +16,22 @@
           </div>
           <div class="mb-3">
             <label for="email" class="form-label">{{ trans('core_email') | default('Email') }}</label>
-            {{ form.email(class="form-control", placeholder=trans('core_email_placeholder') | default('e.g., chukwuma@example.com'), **{'data-bs-toggle': 'tooltip', 'title': trans('core_email_tooltip') | default('Enter your email to receive reminders')}) }}
+            {{ form.email(class="form-control", placeholder=trans('core_email_placeholder') | default('e.g., chukwuma@example.com'), **{'data-bs-toggle': 'tooltip', 'title': trans('core_email_tooltip') | default('Enter your email address')}) }}
             <div class="invalid-feedback">{{ trans('core_email_required') | default('Valid email is required') }}</div>
           </div>
           <div class="mb-3">
             <label for="bill_name" class="form-label">{{ trans('bill_bill_name') | default('Bill Name') }}</label>
-            {{ form.bill_name(class="form-control", placeholder=trans('bill_bill_name_placeholder') | default('e.g., NEPA, MTN Data, Ajo Contribution'), **{'data-bs-toggle': 'tooltip', 'title': trans('bill_bill_name_tooltip') | default('Enter the name of the bill or expense, e.g., NEPA, MTN Data, Ajo Contribution')}) }}
+            {{ form.bill_name(class="form-control", placeholder=trans('bill_bill_name_placeholder') | default('e.g., NEPA, MTN Data, Ajo Contribution'), **{'data-bs-toggle': 'tooltip', 'title': trans('bill_bill_name_tooltip') | default('Enter the name of the bill')}) }}
             <div class="invalid-feedback">{{ trans('bill_bill_name_required') | default('Bill name is required') }}</div>
           </div>
           <div class="mb-3">
             <label for="amount" class="form-label">{{ trans('bill_amount') | default('Amount') }}</label>
-            {{ form.amount(class="form-control", placeholder=trans('bill_amount_placeholder') | default('e.g., ₦5000'), **{'data-bs-toggle': 'tooltip', 'title': trans('bill_amount_tooltip') | default('Enter the amount in Naira, e.g., ₦5,000 for MTN Data')}) }}
+            {{ form.amount(class="form-control", id="amountInput", placeholder=trans('bill_amount_placeholder') | default('e.g., ₦5000'), **{'data-bs-toggle': 'tooltip', 'title': trans('bill_amount_tooltip') | default('Enter the amount in Naira, e.g., ₦5,000 for MTN Data')}) }}
             <div class="invalid-feedback">{{ trans('bill_amount_required') | default('Valid amount is required') }}</div>
           </div>
           <div class="mb-3">
             <label for="due_date" class="form-label">{{ trans('bill_due_date') | default('Due Date') }}</label>
-            {{ form.due_date(class="form-control", placeholder=trans('bill_due_date_placeholder') | default('YYYY-MM-DD'), **{'data-bs-toggle': 'tooltip', 'title': trans('bill_due_date_tooltip') | default('Enter the due date in YYYY-MM-DD format')}) }}
+            {{ form.due_date(class="form-control", type="date", placeholder=trans('bill_due_date_placeholder') | default('YYYY-MM-DD'), **{'data-bs-toggle': 'tooltip', 'title': trans('bill_due_date_tooltip') | default('Enter the due date in YYYY-MM-DD format')}) }}
             <div class="invalid-feedback">{{ trans('bill_due_date_required') | default('Valid due date is required') }}</div>
           </div>
           <div class="mb-3">
@@ -58,4 +58,37 @@
       </div>
     </div>
   </div>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+// Format amount with commas as you type
+function formatNumberInput(input) {
+    const format = (val) => {
+        let clean = val.replace(/[^0-9.]/g, '');
+        if (!clean) return '';
+        let parts = clean.split('.');
+        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        return parts.join('.');
+    };
+
+    input.addEventListener('input', function(e) {
+        let cursor = input.selectionStart;
+        let oldLength = input.value.length;
+        input.value = format(input.value);
+        let newLength = input.value.length;
+        input.setSelectionRange(cursor + (newLength - oldLength), cursor + (newLength - oldLength));
+    });
+}
+
+// Strip commas before submitting the form
+document.querySelector('form').addEventListener('submit', function() {
+    const amt = document.getElementById('amountInput');
+    if (amt) amt.value = amt.value.replace(/,/g, '');
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    var amt = document.getElementById('amountInput');
+    if (amt) formatNumberInput(amt);
+});
+</script>
 {% endblock %}

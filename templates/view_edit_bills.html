@@ -106,12 +106,12 @@
           </div>
           <div class="mb-3">
             <label class="form-label">{{ trans('bill_amount') | default('Amount') }}</label>
-            {{ form.amount(class="form-control", placeholder=trans('bill_amount_placeholder') | default('e.g., ₦5000'), value=request.form.amount or '') }}
+            {{ form.amount(class="form-control", id="editAmountInput", placeholder=trans('bill_amount_placeholder') | default('e.g., ₦5000'), value=request.form.amount or '') }}
             <div class="invalid-feedback">{{ trans('bill_amount_required') | default('Valid amount is required') }}</div>
           </div>
           <div class="mb-3">
             <label class="form-label">{{ trans('bill_due_date') | default('Due Date (YYYY-MM-DD)') }}</label>
-            {{ form.due_date(class="form-control", placeholder=trans('bill_due_date_placeholder') | default('YYYY-MM-DD'), value=request.form.due_date or '') }}
+            {{ form.due_date(class="form-control", type="date", placeholder=trans('bill_due_date_placeholder') | default('YYYY-MM-DD'), value=request.form.due_date or '') }}
             <div class="invalid-feedback">{{ trans('bill_due_date_required') | default('Valid due date is required') }}</div>
           </div>
           <div class="mb-3">
@@ -138,4 +138,41 @@
       <a href="{{ url_for('bill.dashboard') }}" class="btn btn-primary">{{ trans('bill_go_to_dashboard') | default('Go to Dashboard') }}</a>
     </div>
   </div>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+// Format amount field (commas) as user types in edit form
+function formatNumberInput(input) {
+    const format = (val) => {
+        let clean = val.replace(/[^0-9.]/g, '');
+        if (!clean) return '';
+        let parts = clean.split('.');
+        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        return parts.join('.');
+    };
+
+    input.addEventListener('input', function(e) {
+        let cursor = input.selectionStart;
+        let oldLength = input.value.length;
+        input.value = format(input.value);
+        let newLength = input.value.length;
+        input.setSelectionRange(cursor + (newLength - oldLength), cursor + (newLength - oldLength));
+    });
+}
+
+// Strip commas before submitting the edit form
+document.addEventListener('DOMContentLoaded', function() {
+    var amt = document.getElementById('editAmountInput');
+    if (amt) formatNumberInput(amt);
+
+    // Prevent commas before submitting
+    var editForm = document.querySelector('form[action="{{ url_for('bill.view_edit') }}"]');
+    if (editForm) {
+        editForm.addEventListener('submit', function() {
+            var ea = document.getElementById('editAmountInput');
+            if (ea) ea.value = ea.value.replace(/,/g, '');
+        });
+    }
+});
+</script>
 {% endblock %}
