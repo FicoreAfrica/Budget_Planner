@@ -17,7 +17,7 @@ LEARNING_HUB_TRANSLATIONS = {
         "learninghub_quiz_income_opt_investment": "Investment",
         "learninghub_quiz_income_opt_other": "Other",
         # General UI
-        "learninghub_courses": "Financial Courses",
+        "learninghub_courses": "Learning Hub & Courses",
         "learninghub_modules": "Modules",
         "learninghub_lessons_completed": "Lessons completed",
         "learninghub_start_course": "Start Course",
