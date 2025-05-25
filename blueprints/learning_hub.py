@@ -1,15 +1,7 @@
 from flask import Blueprint, render_template, session, request, redirect, url_for, flash
-try:
-    from app import trans  # Import trans from app.py instead
-except ImportError:
-    def trans(key, lang=None):
-        return key  # Fallback to return the key as the translation
+from translations import trans  # Import the global trans function
 
 learning_hub_bp = Blueprint('learning_hub', __name__)
-
-def trans(key):
-    lang = session.get("lang", "en")
-    return LEARNING_HUB_TRANSLATIONS.get(lang, {}).get(key, key)
 
 courses_data = {
     "budgeting-101": {
@@ -57,25 +49,35 @@ quizzes_data = {
 }
 
 def get_progress():
-    return session.setdefault('learning_progress', {})
+    try:
+        return session.setdefault('learning_progress', {})
+    except Exception as e:
+        # Log the error and return a default empty dict
+        print(f"Error accessing session['learning_progress']: {str(e)}")
+        return {}
 
 def save_progress():
-    session.modified = True
+    try:
+        session.modified = True
+    except Exception as e:
+        print(f"Error saving session: {str(e)}")
 
 def course_lookup(course_id):
     return courses_data.get(course_id)
 
 def lesson_lookup(course, lesson_id):
+    if not course or 'modules' not in course:
+        return None, None
     for module in course['modules']:
-        for lesson in module['lessons']:
-            if lesson['id'] == lesson_id:
+        for lesson in module.get('lessons', []):
+            if lesson.get('id') == lesson_id:
                 return lesson, module
     return None, None
 
 @learning_hub_bp.route('/courses')
 def courses():
     progress = get_progress()
-    return render_template('courses.html', courses=courses_data, progress=progress, trans=trans)
+    return render_template('courses.html', courses=courses_data, progress=progress)
 
 @learning_hub_bp.route('/courses/<course_id>')
 def course_overview(course_id):
@@ -84,7 +86,7 @@ def course_overview(course_id):
         flash(trans("learninghub_course_not_found"), "danger")
         return redirect(url_for('learning_hub.courses'))
     progress = get_progress().get(course_id, {})
-    return render_template('course_overview.html', course=course, progress=progress, trans=trans)
+    return render_template('course_overview.html', course=course, progress=progress)
 
 @learning_hub_bp.route('/courses/<course_id>/lesson/<lesson_id>', methods=['GET', 'POST'])
 def lesson(course_id, lesson_id):
@@ -110,7 +112,7 @@ def lesson(course_id, lesson_id):
         found = False
         for m in course['modules']:
             for l in m['lessons']:
-                if found:
+                if found and l.get('id'):
                     next_lesson_id = l['id']
                     break
                 if l['id'] == lesson_id:
@@ -122,7 +124,7 @@ def lesson(course_id, lesson_id):
         else:
             flash(trans("learninghub_lesson_done"), "success")
             return redirect(url_for('learning_hub.course_overview', course_id=course_id))
-    return render_template('lesson.html', course=course, lesson=lesson, module=module, progress=course_progress, trans=trans)
+    return render_template('lesson.html', course=course, lesson=lesson, module=module, progress=course_progress)
 
 @learning_hub_bp.route('/courses/<course_id>/quiz/<quiz_id>', methods=['GET', 'POST'])
 def quiz(course_id, quiz_id):
@@ -138,7 +140,7 @@ def quiz(course_id, quiz_id):
     course_progress = progress.setdefault(course_id, {'lessons_completed': [], 'quiz_scores': {}, 'current_lesson': None})
 
     if request.method == 'POST':
-        answers = request.form
+        answers = request.form.to_dict()
         score = 0
         for i, q in enumerate(quiz['questions']):
             user_answer = answers.get(f'q{i}')
@@ -148,7 +150,7 @@ def quiz(course_id, quiz_id):
         save_progress()
         flash(f"{trans('learninghub_quiz_completed')} {score}/{len(quiz['questions'])}", "success")
         return redirect(url_for('learning_hub.course_overview', course_id=course_id))
-    return render_template('quiz.html', course=course, quiz=quiz, trans=trans)
+    return render_template('quiz.html', course=course, quiz=quiz)
 
 @learning_hub_bp.route('/dashboard')
 def dashboard():
@@ -156,8 +158,8 @@ def dashboard():
     progress_summary = []
     for course_id, course in courses_data.items():
         cp = progress.get(course_id, {})
-        lessons_total = sum(len(m['lessons']) for m in course['modules'])
+        lessons_total = sum(len(m.get('lessons', [])) for m in course['modules'])
         completed = len(cp.get('lessons_completed', []))
         percent = int((completed / lessons_total) * 100) if lessons_total > 0 else 0
         progress_summary.append({'course': course, 'completed': completed, 'total': lessons_total, 'percent': percent})
-    return render_template('dashboard.html', progress_summary=progress_summary, trans=trans)
+    return render_template('dashboard.html', progress_summary=progress_summary)
