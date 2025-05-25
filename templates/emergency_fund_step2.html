@@ -12,7 +12,7 @@
                 {{ form.csrf_token }}
                 <div class="mb-3">
                     <label class="form-label">{{ trans('emergency_fund_current_savings') | default('Current Savings') }}</label>
-                    {{ form.current_savings(class="form-control", placeholder=trans('emergency_fund_current_savings_placeholder') | default('e.g., 100,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('emergency_fund_current_savings_tooltip') | default('Savings in bank accounts, Ajo/Esusu/Adashe, or apps like PiggyVest'), 'aria-describedby': 'current_savings_help'}) }}
+                    {{ form.current_savings(class="form-control number-input", placeholder=trans('emergency_fund_current_savings_placeholder') | default('e.g., 100,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('emergency_fund_current_savings_tooltip') | default('Savings in bank accounts, Ajo/Esusu/Adashe, or apps like PiggyVest')}) }}
                     <div class="invalid-feedback">{{ trans('emergency_fund_current_savings_required') | default('Current savings are required') }}</div>
                 </div>
                 <div class="d-flex justify-content-between">
@@ -26,19 +26,49 @@
 {% endblock %}
 {% block extra_scripts %}
 <script>
-    document.querySelector('form').addEventListener('submit', function() {
-        document.querySelectorAll('.form-control').forEach(input => input.classList.add('was-validated'));
-    });
-    document.querySelectorAll('input[type="number"]').forEach(input => {
-        input.addEventListener('input', () => {
+    // Comma-formatting for .number-input fields
+    document.querySelectorAll('.number-input').forEach(input => {
+        input.addEventListener('input', (e) => {
+            let cursorPosition = input.selectionStart;
             let value = input.value.replace(/,/g, '');
-            if (value > 10000000000) {
-                input.value = '10,000,000,000';
+            if (!value) return;
+            if (parseFloat(value) > 10000000000) {
+                value = '10000000000';
                 alert('{{ trans('core_input_cannot_exceed_10_billion') | default('Input cannot exceed ₦10 billion') }}');
-            } else if (value) {
-                input.value = parseFloat(value).toLocaleString('en-NG');
+            }
+            let formatted = parseFloat(value).toLocaleString('en-NG', { maximumFractionDigits: 0 });
+            input.value = formatted;
+            input.setSelectionRange(formatted.length, formatted.length);
+        });
+        input.addEventListener('paste', (e) => {
+            e.preventDefault();
+            let pasted = (e.clipboardData || window.clipboardData).getData('text');
+            let clean = pasted.replace(/[^0-9.]/g, '');
+            input.value = parseFloat(clean).toLocaleString('en-NG');
+        });
+        input.addEventListener('blur', () => {
+            if (input.value) {
+                input.value = parseFloat(input.value.replace(/,/g, '')).toLocaleString('en-NG');
             }
         });
+    });
+
+    document.querySelector('form').addEventListener('submit', function(e) {
+        let valid = true;
+        document.querySelectorAll('.number-input').forEach(input => {
+            let value = input.value.replace(/,/g, '');
+            if (!value || isNaN(parseFloat(value))) {
+                input.classList.add('is-invalid');
+                valid = false;
+            } else {
+                input.classList.remove('is-invalid');
+                input.value = parseFloat(value).toString();
+            }
+        });
+        if (!valid) {
+            e.preventDefault();
+            alert('{{ trans('core_please_enter_valid_numbers') | default('Please enter valid numbers') }}');
+        }
     });
 </script>
 {% endblock %}

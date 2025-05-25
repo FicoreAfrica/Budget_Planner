@@ -60,10 +60,10 @@
                                 datasets: [{
                                     label: '{{ trans('emergency_fund_metrics') | default('Emergency Fund Metrics') }}',
                                     data: [
-                                        {{ latest_record.monthly_expenses | format_number }},
-                                        {{ latest_record.current_savings | format_number }},
-                                        {{ latest_record.target_savings_3m | format_number }},
-                                        {{ latest_record.target_savings_6m | format_number }}
+                                        {{ latest_record.monthly_expenses }},
+                                        {{ latest_record.current_savings }},
+                                        {{ latest_record.target_savings_3m }},
+                                        {{ latest_record.target_savings_6m }}
                                     ],
                                     backgroundColor: ['#dc3545', '#2E7D32', '#0288D1', '#1E7F71']
                                 }]
@@ -102,7 +102,7 @@
         </div>
         <div class="card tips">
             <div class="card-body">
-                <h3>{{ trans('emergency_fund_tips_for_building_fund') | default('Tips for Building Your Fund') }}</h3>
+                <h3>{{ trans('emergency_fund_tips_for_building') | default('Tips for Building Your Fund') }}</h3>
                 {% for tip in tips %}
                     <p>{{ trans('emergency_fund_' + tip) | default(tip) }}</p>
                 {% endfor %}

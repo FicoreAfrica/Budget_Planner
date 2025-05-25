@@ -26,7 +26,7 @@
                 </div>
                 <div class="mb-3">
                     <label class="form-label">{{ trans('emergency_fund_monthly_expenses') | default('Monthly Expenses') }}</label>
-                    {{ form.monthly_expenses(class="form-control", placeholder=trans('emergency_fund_monthly_expenses_placeholder') | default('e.g., 50,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('emergency_fund_monthly_expenses_tooltip') | default('Expenses like food, transport, data subscriptions'), 'aria-describedby': 'monthly_expenses_help'}) }}
+                    {{ form.monthly_expenses(class="form-control number-input", placeholder=trans('emergency_fund_monthly_expenses_placeholder') | default('e.g., 50,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('emergency_fund_monthly_expenses_tooltip') | default('Expenses like food, transport, data subscriptions')}) }}
                     <div class="invalid-feedback">{{ trans('emergency_fund_monthly_expenses_required') | default('Monthly expenses are required') }}</div>
                 </div>
                 <button type="submit" class="btn btn-primary">{{ trans('emergency_fund_continue_to_savings') | default('Continue to Savings') }}</button>
@@ -37,8 +37,50 @@
 {% endblock %}
 {% block extra_scripts %}
 <script>
-    document.querySelector('form').addEventListener('submit', function() {
-        document.querySelectorAll('.form-control').forEach(input => input.classList.add('was-validated'));
+    // Apply comma-formatting to all .number-input elements in real-time
+    document.querySelectorAll('.number-input').forEach(input => {
+        input.addEventListener('input', (e) => {
+            let cursorPosition = input.selectionStart;
+            let value = input.value.replace(/,/g, '');
+            if (!value) return;
+            if (parseFloat(value) > 10000000000) {
+                value = '10000000000';
+                alert('{{ trans('core_input_cannot_exceed_10_billion') | default('Input cannot exceed ₦10 billion') }}');
+            }
+            let formatted = parseFloat(value).toLocaleString('en-NG', { maximumFractionDigits: 0 });
+            input.value = formatted;
+            // Try to retain cursor position
+            input.setSelectionRange(formatted.length, formatted.length);
+        });
+        input.addEventListener('paste', (e) => {
+            e.preventDefault();
+            let pasted = (e.clipboardData || window.clipboardData).getData('text');
+            let clean = pasted.replace(/[^0-9.]/g, '');
+            input.value = parseFloat(clean).toLocaleString('en-NG');
+        });
+        input.addEventListener('blur', () => {
+            if (input.value) {
+                input.value = parseFloat(input.value.replace(/,/g, '')).toLocaleString('en-NG');
+            }
+        });
+    });
+
+    document.querySelector('form').addEventListener('submit', function(e) {
+        let valid = true;
+        document.querySelectorAll('.number-input').forEach(input => {
+            let value = input.value.replace(/,/g, '');
+            if (!value || isNaN(parseFloat(value))) {
+                input.classList.add('is-invalid');
+                valid = false;
+            } else {
+                input.classList.remove('is-invalid');
+                input.value = parseFloat(value).toString();
+            }
+        });
+        if (!valid) {
+            e.preventDefault();
+            alert('{{ trans('core_please_enter_valid_numbers') | default('Please enter valid numbers') }}');
+        }
     });
 </script>
 {% endblock %}
