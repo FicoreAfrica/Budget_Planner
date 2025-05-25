@@ -138,7 +138,7 @@ EMERGENCY_FUND_TRANSLATIONS = {
         'core_please_enter_valid_numbers': 'Da fatan za a shigar da lambobin da suka dace',
         'core_input_cannot_exceed_10_billion': 'Shigar bai kamata ya wuce ₦10 biliyan ba',
         'core_back': 'Baya',
-        'emergency_fund_goal': 'Gina hanyar tsaron kanku tare da tsara asusun ku na bukatun gaggawa!',,
+        'emergency_fund_goal': 'Gina hanyar tsaron kanku tare da tsara asusun ku na bukatun gaggawa!',
         'core_hello': 'Sannu',
         'core_created_at': 'An Ƙirƙira A',
         'core_close': 'Rufe',
