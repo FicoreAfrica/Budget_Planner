@@ -14,7 +14,6 @@ from blueprints.quiz import quiz_bp
 from blueprints.bill import bill_bp
 from blueprints.net_worth import net_worth_bp
 from blueprints.emergency_fund import emergency_fund_bp
-from blueprints.courses import courses_bp
 from blueprints.learning_hub import learning_hub_bp
 from json_store import JsonStorage
 import gspread
@@ -114,8 +113,6 @@ def init_storage_managers():
         ('bills', 'data/bills.json'),
         ('net_worth', 'data/networth.json'),
         ('emergency_fund', 'data/emergency_fund.json'),
-        ('courses', 'data/courses.json'),
-        ('user_progress', 'data/user_progress.json')
     ]
     for tool, path in tools:
         try:
