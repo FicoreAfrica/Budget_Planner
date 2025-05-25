@@ -24,6 +24,7 @@ translation_modules = [
     ('translations_financial_health', 'FINANCIAL_HEALTH_TRANSLATIONS'),
     ('translations_net_worth', 'NET_WORTH_TRANSLATIONS'),
     ('translations_core', 'CORE_TRANSLATIONS'),
+    ('translations_learning_hub', 'LEARNING_HUB_TRANSLATIONS'),  # <-- Added Learning Hub
 ]
 
 # Mapping of key prefixes to their respective modules
@@ -38,6 +39,7 @@ KEY_PREFIX_TO_MODULE = {
     'financial_health_': 'translations_financial_health',
     'net_worth_': 'translations_net_worth',
     'core_': 'translations_core',
+    'learninghub_': 'translations_learning_hub',  # <-- Added Learning Hub
 }
 
 # Dynamically import each translation module and combine translations
@@ -71,19 +73,19 @@ def trans(key: str, lang: str = None, **kwargs: Any) -> str:
             lang = session.get('lang', 'en')
         else:
             lang = 'en'  # Default to English during initialization or outside request context
-    
+
     # Debug logging for the translation request
     session_id = session.get('session_id', 'no-session-id') if has_request_context() else 'no-session-id'
     logger.debug(f"Translation request: key={key}, lang={lang} [session: {session_id}]")
-    
+
     # Validate language
     if lang not in TRANSLATIONS:
         logger.warning(f"Language {lang} not found in translations, falling back to 'en' [session: {session_id}]")
         lang = 'en'
-    
+
     # Get the translation, falling back to English, then the key itself
     translation = TRANSLATIONS.get(lang, {}).get(key, TRANSLATIONS['en'].get(key, key))
-    
+
     # Check if the translation is the key itself (indicating a missing translation)
     if translation == key:
         # Determine which module should define this key based on its prefix
@@ -93,7 +95,7 @@ def trans(key: str, lang: str = None, **kwargs: Any) -> str:
                 expected_module = module
                 break
         logger.warning(f"Missing translation for key={key} in lang={lang}, expected in module {expected_module} [session: {session_id}]")
-    
+
     # Log the translation result
     logger.debug(f"Translation result: key={key}, lang={lang}, result={translation} [session: {session_id}]")
 
@@ -115,9 +117,9 @@ def get_translations(lang: str = None) -> Dict[str, str]:
             lang = session.get('lang', 'en')
         else:
             lang = 'en'  # Default to English during initialization or outside request context
-    
+
     if lang not in TRANSLATIONS:
         logger.warning(f"Language {lang} not found, returning English translations")
         lang = 'en'
-    
+
     return TRANSLATIONS[lang]
