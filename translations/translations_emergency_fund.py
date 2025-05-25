@@ -3,7 +3,7 @@ EMERGENCY_FUND_TRANSLATIONS = {
         'emergency_fund_calculator': 'Emergency Fund Calculator',
         'emergency_fund_plan_emergency_fund': 'Plan your emergency fund with Ficore Africa',
         'emergency_fund_first_name': 'First Name',
-        'emergency_fund_goal: 'Aims to cover 3-6 months of expenses for financial security'
+        'emergency_fund_goal: 'Aims to cover 3-6 months of expenses for financial security',
         'emergency_fund_first_name_required': 'First name is required',
         'emergency_fund_email': 'Email',
         'emergency_fund_email_invalid': 'Enter a valid email address',
@@ -138,6 +138,7 @@ EMERGENCY_FUND_TRANSLATIONS = {
         'core_please_enter_valid_numbers': 'Da fatan za a shigar da lambobin da suka dace',
         'core_input_cannot_exceed_10_billion': 'Shigar bai kamata ya wuce ₦10 biliyan ba',
         'core_back': 'Baya',
+        'emergency_fund_goal: 'Gina hanyar tsaron kanku tare da tsara asusun ku na bukatun gaggawa!',,
         'core_hello': 'Sannu',
         'core_created_at': 'An Ƙirƙira A',
         'core_close': 'Rufe',
