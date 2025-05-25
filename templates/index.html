@@ -61,8 +61,8 @@
             <div class="col-md-4 mb-4">
                 <div class="card h-100">
                     <div class="card-body">
-                        <h3 class="card-title">{{ trans('emergency_fund_emergency_fund_calculator') | default('Emergency Fund Calculator') }}</h3>
-                        <p class="card-text">{{ trans('emergency_fund_emergency_fund_goal') | default('Aims to cover 3-6 months of expenses for financial security') }}</p>
+                        <h3 class="card-title">{{ trans('emergency_fund_calculator') | default('Emergency Fund Calculator') }}</h3>
+                        <p class="card-text">{{ trans('emergency_fund_goal') | default('Aims to cover 3-6 months of expenses for financial security') }}</p>
                         <a href="{{ url_for('emergency_fund.step1') }}" class="btn btn-primary" aria-label="{{ trans('emergency_fund_start_emergency_fund') | default('Start Emergency Fund Calculator') }}">{{ trans('core_start') | default('Start') }}</a>
                     </div>
                 </div>
@@ -118,7 +118,7 @@
                     {% for course in sample_courses %}
                         <li class="list-group-item">
                             <i class="fas fa-book"></i>
-                            {{ trans('courses_' + course.title_key) | default(course.title_en) }}
+                            {{ trans(course.title_key) | default(course.title_en) }}
                         </li>
                     {% endfor %}
                 </ul>
@@ -130,17 +130,17 @@
             <div class="row">
                 <div class="col-md-4">
                     <div class="testimonial text-center">
-                        <i class="fas fa-quote-left"></i> {{ trans('core_impressed_features') | default('I explored the features earlier today and was impressed... I thought it was only for SMEs, but it works for anyone who wants to manage their finances better!') }} — <span class="name">Ficore User</span>
+                        <i class="fas fa-quote-left"></i> {{ trans('core_impressed_features') | default('I explored the features earlier today and was impressed... I thought it was only for SMEs, but I see value for individuals too!') }} — <span class="name">Aisha Musa</span>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="testimonial text-center">
-                        <i class="fas fa-quote-left"></i> {{ trans('core_ficore_praise') | default('🔥 Ficore 🔥🔥🔥🔥🔥') }} — <span class="name">Abubakar Abdulkadir</span>, {{ trans('core_product_manager') | default('Product Manager') }}
+                        <i class="fas fa-quote-left"></i> {{ trans('core_ficore_praise') | default('🔥 Ficore 🔥🔥🔥🔥🔥') }} — <span class="name">Abubakar Abdulkadir</span>, {{ trans('core_financial_consultant') | default('Financial Consultant') }}
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="testimonial text-center">
-                        <i class="fas fa-quote-left"></i> {{ trans('core_potential_support') | default('I’ve been following the Ficore project and I’m impressed. It’s clear there’s potential, and the support for African contexts is much needed.') }} — <span class="name">Adaobi N.</span>
+                        <i class="fas fa-quote-left"></i> {{ trans('core_potential_support') | default('I’ve been following the Ficore project and I’m impressed. It’s clear there’s potential, and I look forward to supporting.') }} — <span class="name">Samuel Okoro</span>
                     </div>
                 </div>
             </div>
