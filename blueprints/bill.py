@@ -19,11 +19,16 @@ logging.basicConfig(filename='data/storage.txt', level=logging.DEBUG)
 bill_bp = Blueprint('bill', __name__, url_prefix='/bill')
 bill_storage = JsonStorage('data/bills.json')
 
+def strip_commas(value):
+    if isinstance(value, str):
+        return value.replace(',', '')
+    return value
+
 class BillForm(FlaskForm):
     first_name = StringField('First Name', validators=[DataRequired(message=trans('bill_first_name_required'))])
     email = StringField('Email', validators=[DataRequired(message=trans('bill_email_required')), Email()])
     bill_name = StringField('Bill Name', validators=[DataRequired(message=trans('bill_bill_name_required'))])
-    amount = FloatField('Amount', validators=[DataRequired(message=trans('bill_amount_required')), NumberRange(min=0, max=10000000000)])
+    amount = FloatField('Amount', validators=[DataRequired(message=trans('bill_amount_required')), NumberRange(min=0, max=10000000000)], filters=[strip_commas])
     due_date = StringField('Due Date (YYYY-MM-DD)', validators=[DataRequired(message=trans('bill_due_date_required'))])
     frequency = SelectField('Frequency', choices=[
         ('one-time', trans('bill_frequency_one_time')),
@@ -70,8 +75,9 @@ def form():
                 # Validate due date
                 try:
                     due_date = datetime.strptime(data['due_date'], '%Y-%m-%d').date()
+                    # User should be able to set today or a future date (not a past date)
                     if due_date < date.today():
-                        flash(trans("bill_due_date_future"), "danger")
+                        flash(trans("bill_due_date_future_validation"), "danger")
                         logging.error("Due date in the past in bill.form")
                         return redirect(url_for('bill.form'))
                 except ValueError:
@@ -242,7 +248,7 @@ def view_edit():
                         try:
                             due_date = datetime.strptime(data['due_date'], '%Y-%m-%d').date()
                             if due_date < date.today():
-                                flash(trans("bill_due_date_future"), "danger")
+                                flash(trans("bill_due_date_future_validation"), "danger")
                                 logging.error("Due date in the past in bill.view_edit")
                                 return redirect(url_for('bill.view_edit'))
                         except ValueError:
