@@ -12,23 +12,41 @@ try:
 except ImportError:
     def trans(key, lang=None):
         return key  # Fallback to return the key as the translation
-        
+
 # Configure logging
 logging.basicConfig(filename='data/storage.txt', level=logging.DEBUG)
 
 emergency_fund_bp = Blueprint('emergency_fund', __name__, url_prefix='/emergency_fund')
 emergency_fund_storage = JsonStorage('data/emergency_fund.json')
 
+# Helper
+def strip_commas(value):
+    if isinstance(value, str):
+        return value.replace(',', '')
+    return value
+
 # Forms for emergency fund steps
 class Step1Form(FlaskForm):
     first_name = StringField(trans('emergency_fund_first_name'), validators=[DataRequired(message=trans('emergency_fund_first_name_required'))])
     email = StringField(trans('emergency_fund_email'), validators=[Optional(), Email(message=trans('emergency_fund_email_invalid'))])
     send_email = BooleanField(trans('emergency_fund_send_email'))
-    monthly_expenses = FloatField(trans('emergency_fund_monthly_expenses'), validators=[DataRequired(message=trans('emergency_fund_monthly_expenses_required')), NumberRange(min=0, max=10000000000, message=trans('emergency_fund_expenses_range'))])
+    monthly_expenses = FloatField(trans('emergency_fund_monthly_expenses'),
+        validators=[
+            DataRequired(message=trans('emergency_fund_monthly_expenses_required')),
+            NumberRange(min=0, max=10000000000, message=trans('emergency_fund_monthly_expenses_max'))
+        ],
+        filters=[strip_commas]
+    )
     submit = SubmitField(trans('emergency_fund_continue_to_savings'))
 
 class Step2Form(FlaskForm):
-    current_savings = FloatField(trans('emergency_fund_current_savings'), validators=[DataRequired(message=trans('emergency_fund_current_savings_required')), NumberRange(min=0, max=10000000000, message=trans('emergency_fund_savings_range'))])
+    current_savings = FloatField(trans('emergency_fund_current_savings'),
+        validators=[
+            DataRequired(message=trans('emergency_fund_current_savings_required')),
+            NumberRange(min=0, max=10000000000, message=trans('emergency_fund_current_savings_max'))
+        ],
+        filters=[strip_commas]
+    )
     submit = SubmitField(trans('emergency_fund_calculate_emergency_fund'))
 
 @emergency_fund_bp.route('/step1', methods=['GET', 'POST'])
@@ -69,11 +87,11 @@ def step2():
             # Assign badges
             badges = []
             if current_savings >= target_savings_6m:
-                badges.append(trans("emergency_fund_badge_fund_master"))
+                badges.append('Fund Master')
             if current_savings >= target_savings_3m:
-                badges.append(trans("emergency_fund_badge_fund_builder"))
+                badges.append('Fund Builder')
             if current_savings > 0:
-                badges.append(trans("emergency_fund_badge_savings_pro"))
+                badges.append('Savings Pro')
             # Store record
             record = {
                 "id": str(uuid.uuid4()),
@@ -125,12 +143,28 @@ def step2():
 
 @emergency_fund_bp.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
-    """Display emergency fund dashboard."""
+    """Display emergency fund dashboard with fallback: session first, then email."""
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
     lang = session.get('lang', 'en')
     try:
+        # 1. Try by session
         user_data = emergency_fund_storage.filter_by_session(session['sid'])
+        if not user_data:
+            # 2. Fallback: try by email stored in last step1
+            email = None
+            if 'emergency_fund_step1' in session:
+                email = session['emergency_fund_step1'].get('email')
+            # Or search for email in all stored records for this session
+            if not email:
+                # Try to guess from any previous record (user might have submitted before)
+                all_records = emergency_fund_storage.read_all()
+                for rec in all_records[::-1]:  # search from latest
+                    if rec.get('session_id') == session['sid'] and 'email' in rec.get('data', {}):
+                        email = rec['data']['email']
+                        break
+            if email:
+                user_data = emergency_fund_storage.filter_by_email(email)
         records = [(record["id"], record["data"]) for record in user_data]
         latest_record = records[-1][1] if records else {}
         # Generate insights and tips
