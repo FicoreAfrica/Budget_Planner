@@ -1,6 +1,7 @@
 EMERGENCY_FUND_TRANSLATIONS = {
     'en': {
-        # ...existing keys...
+        'emergency_fund_calculator': 'Emergency Fund Calculator',
+        'emergency_fund_plan_emergency_fund': 'Plan your emergency fund with Ficore Africa',
         'emergency_fund_first_name': 'First Name',
         'emergency_fund_first_name_required': 'First name is required',
         'emergency_fund_email': 'Email',
@@ -22,7 +23,6 @@ EMERGENCY_FUND_TRANSLATIONS = {
         'emergency_fund_error_personal_info': 'Error saving personal information.',
         'emergency_fund_emergency_fund_process_error': 'Error calculating your emergency fund. Please try again.',
         'emergency_fund_emergency_fund_completed_success': 'Emergency fund assessment completed successfully.',
-        # Insights/tips (example, ensure all referenced are present)
         'emergency_fund_tip_automate_savings': 'Automate your savings using apps like PiggyVest or Cowrywise.',
         'emergency_fund_tip_ajo_savings': 'Join Ajo/Esusu/Adashe groups for disciplined saving habits.',
         'emergency_fund_tip_track_expenses': 'Track your expenses monthly to identify savings opportunities.',
@@ -30,12 +30,30 @@ EMERGENCY_FUND_TRANSLATIONS = {
         'emergency_fund_insight_below_6m_target': 'You have not yet reached your 6-month emergency fund target.',
         'emergency_fund_insight_no_savings': 'You have no current savings. Start by putting aside a small amount each month.',
         'emergency_fund_insight_6m_covered': 'Congratulations! Your savings cover 6 months of expenses.',
-        # Badges (for dashboard/email)
         'emergency_fund_fund_master': 'Fund Master',
         'emergency_fund_fund_builder': 'Fund Builder',
         'emergency_fund_savings_pro': 'Savings Pro',
         'emergency_fund_no_badges_earned_yet': 'No badges earned yet',
-        # Core (for form errors/labels)
+        'emergency_fund_dashboard': 'Emergency Fund Dashboard',
+        'emergency_fund_summary': 'Your emergency fund summary',
+        'emergency_fund_your_emergency_fund': 'Your Emergency Fund',
+        'emergency_fund_target_savings_3_months': 'Target Savings (3 Months)',
+        'emergency_fund_target_savings_6_months': 'Target Savings (6 Months)',
+        'emergency_fund_savings_gap_3_months': 'Savings Gap (3 Months)',
+        'emergency_fund_savings_gap_6_months': 'Savings Gap (6 Months)',
+        'emergency_fund_fund_metrics': 'Fund Metrics',
+        'emergency_fund_badges': 'Badges',
+        'emergency_fund_insights': 'Insights',
+        'emergency_fund_tips_for_building': 'Tips for Building Your Fund',
+        'emergency_fund_call_to_actions': 'Call to Actions',
+        'emergency_fund_recalculate_fund': 'Recalculate Fund',
+        'budget_create_budget': 'Create Budget',
+        'net_worth_calculate_net_worth': 'Calculate Net Worth',
+        'emergency_fund_previous_fund_calculations': 'Previous Fund Calculations',
+        'emergency_fund_no_previous_calculations': 'No previous calculations',
+        'emergency_fund_no_fund_data_available': 'No fund data available',
+        'emergency_fund_start_calculator': 'Start Calculator',
+        'emergency_fund_enter_current_savings': 'Enter your current savings',
         'core_first_name': 'First Name',
         'core_first_name_placeholder': 'e.g., Khadijah, Amina, Maryam',
         'core_first_name_tooltip': 'Enter your first name',
@@ -51,10 +69,11 @@ EMERGENCY_FUND_TRANSLATIONS = {
         'core_created_at': 'Created At',
         'core_close': 'Close',
         'core_user': 'User',
-        # ...other existing keys...
+        'emergency_fund_plan': 'Emergency Fund Plan'
     },
     'ha': {
-        # ...existing keys...
+        'emergency_fund_calculator': 'Ƙididdigar Asusun Gaggawa',
+        'emergency_fund_plan_emergency_fund': 'Shirya asusun gaggawa tare da Ficore Africa',
         'emergency_fund_first_name': 'Sunan Farko',
         'emergency_fund_first_name_required': 'Ana buƙatar sunan farko',
         'emergency_fund_email': 'Imel',
@@ -76,7 +95,6 @@ EMERGENCY_FUND_TRANSLATIONS = {
         'emergency_fund_error_personal_info': 'An samu kuskure wajen adana bayanan mutum.',
         'emergency_fund_emergency_fund_process_error': 'An samu kuskure wajen ƙididdige asusun gaggawa. Da fatan za a sake gwadawa.',
         'emergency_fund_emergency_fund_completed_success': 'An kammala ƙididdigar asusun gaggawa cikin nasara.',
-        # Insights/tips (example, ensure all referenced are present)
         'emergency_fund_tip_automate_savings': 'Yi amfani da manhajojin ajiya kamar PiggyVest ko Cowrywise don ajiya ta atomatik.',
         'emergency_fund_tip_ajo_savings': 'Shiga ƙungiyar Ajo/Esusu/Adashe don horo a ajiya.',
         'emergency_fund_tip_track_expenses': 'Bibiyar kashe kuɗin ka na wata-wata don gano damar ajiya.',
@@ -84,12 +102,30 @@ EMERGENCY_FUND_TRANSLATIONS = {
         'emergency_fund_insight_below_6m_target': 'Ba ka kai matsayin asusun gaggawa na watanni 6 ba tukuna.',
         'emergency_fund_insight_no_savings': 'Ba ka da ajiya na yanzu. Fara da adana kaɗan a kowane wata.',
         'emergency_fund_insight_6m_covered': 'Taya murna! Ajiya naka ya isar da kashe kuɗin watanni 6.',
-        # Badges (for dashboard/email)
         'emergency_fund_fund_master': 'Gwarzon Asusun',
         'emergency_fund_fund_builder': 'Mai Gina Asusun',
         'emergency_fund_savings_pro': 'Gwarzon Ajiya',
         'emergency_fund_no_badges_earned_yet': 'Ba a sami alamomi ba tukuna',
-        # Core (for form errors/labels)
+        'emergency_fund_dashboard': 'Allon Asusun Gaggawa',
+        'emergency_fund_summary': 'Taƙaitaccen asusun gaggawa naka',
+        'emergency_fund_your_emergency_fund': 'Asusun Gaggawa Naka',
+        'emergency_fund_target_savings_3_months': 'Manufa ta Ajiya (Wata 3)',
+        'emergency_fund_target_savings_6_months': 'Manufa ta Ajiya (Wata 6)',
+        'emergency_fund_savings_gap_3_months': 'Babu Ajiya (Wata 3)',
+        'emergency_fund_savings_gap_6_months': 'Babu Ajiya (Wata 6)',
+        'emergency_fund_fund_metrics': 'Ma,aunin Asusun',
+        'emergency_fund_badges': 'Alamomi',
+        'emergency_fund_insights': 'Hanyoyin Gani',
+        'emergency_fund_tips_for_building': 'Tushe don Gina Asusunka',
+        'emergency_fund_call_to_actions': 'Kira zuwa Ayyuka',
+        'emergency_fund_recalculate_fund': 'Sake Ƙididdige Asusun',
+        'budget_create_budget': 'Ƙirƙiri Kasafin Kuɗi',
+        'net_worth_calculate_net_worth': 'Ƙididdige Darajar Net',
+        'emergency_fund_previous_fund_calculations': 'Ƙididdigar Asusun da Ta Gabata',
+        'emergency_fund_no_previous_calculations': 'Babu ƙididdiga da ta gabata',
+        'emergency_fund_no_fund_data_available': 'Babu bayanan asusu da ake da su',
+        'emergency_fund_start_calculator': 'Fara Ƙididdiga',
+        'emergency_fund_enter_current_savings': 'Shigar da ajiya na yanzu',
         'core_first_name': 'Sunan Farko',
         'core_first_name_placeholder': 'misali, Khadijah, Amina, Maryam',
         'core_first_name_tooltip': 'Shigar da sunan ka na farko',
@@ -105,6 +141,6 @@ EMERGENCY_FUND_TRANSLATIONS = {
         'core_created_at': 'An Ƙirƙira A',
         'core_close': 'Rufe',
         'core_user': 'Mai amfani',
-        # ...other existing keys...
+        'emergency_fund_plan': 'Shirye-shiryen Asusun Gaggawa'
     }
 }
