@@ -26,15 +26,32 @@
 {% endblock %}
 {% block extra_scripts %}
 <script>
-    const incomeInput = document.querySelector('input[name="income"]');
-    incomeInput.addEventListener('input', function() {
-        let value = this.value.replace(/,/g, '');
-        if (value > 10000000000) {
-            this.value = '10,000,000,000';
-            alert('{{ trans('budget_input_cannot_exceed_10_billion') | default('Input cannot exceed ₦10 billion') }}');
-        } else if (value) {
-            this.value = parseFloat(value).toLocaleString('en-NG');
-        }
+// Format input with commas as you type
+function formatNumberInput(input) {
+    const format = (val) => {
+        let clean = val.replace(/[^0-9.]/g, '');
+        if (!clean) return '';
+        let parts = clean.split('.');
+        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        return parts.join('.');
+    };
+
+    input.addEventListener('input', function(e) {
+        let cursor = input.selectionStart;
+        let oldLength = input.value.length;
+        input.value = format(input.value);
+        let newLength = input.value.length;
+        input.setSelectionRange(cursor + (newLength - oldLength), cursor + (newLength - oldLength));
     });
+}
+
+// Strip commas before submitting the form
+document.querySelector('form').addEventListener('submit', function() {
+    document.querySelectorAll('input[type="text"], input[type="number"]').forEach(function(input) {
+        input.value = input.value.replace(/,/g, '');
+    });
+});
+
+document.querySelectorAll('input[type="text"], input[type="number"]').forEach(formatNumberInput);
 </script>
 {% endblock %}
