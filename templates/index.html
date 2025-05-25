@@ -18,7 +18,7 @@
                     <div class="card-body">
                         <h3 class="card-title">{{ trans('financial_health_financial_health_score') | default('Financial Health Score') }}</h3>
                         <p class="card-text">{{ trans('financial_health_evaluate_finances') | default('Evaluates income, expenses, and debt for a health score') }}</p>
-                        <a href="{{ url_for('financial_health.step1') }}" class="btn btn-primary" aria-label="{{ trans('financial_health_start_financial_health') | default('Start Financial Health Score Assessment') }}">{{ trans('core_start') | default('Start') }}</a>
+                        <a href="{{ url_for('financial_health.step1') }}" class="btn btn-primary" aria-label="{{ trans('financial_health_start_financial_health') | default('Start Financial Health Score') }}">{{ trans('core_start') | default('Start') }}</a>
                     </div>
                 </div>
             </div>
@@ -67,12 +67,13 @@
                     </div>
                 </div>
             </div>
+            <!-- UPDATED LEARNING HUB CARD -->
             <div class="col-md-4 mb-4">
                 <div class="card h-100">
                     <div class="card-body">
-                        <h3 class="card-title">{{ trans('courses_learning_hub') | default('Learning Hub') }}</h3>
-                        <p class="card-text">{{ trans('courses_improve_literacy') | default('Access courses to boost your financial literacy') }}</p>
-                        <a href="{{ url_for('courses.course_catalog') }}" class="btn btn-primary" aria-label="{{ trans('courses_start_learning') | default('Start Learning Hub') }}">{{ trans('core_start') | default('Start') }}</a>
+                        <h3 class="card-title">{{ trans('learninghub_courses') }}</h3>
+                        <p class="card-text">{{ trans('learninghub_dashboard') }}</p>
+                        <a href="{{ url_for('learning_hub.courses') }}" class="btn btn-primary" aria-label="{{ trans('learninghub_start_course') }}">{{ trans('core_start') | default('Start') }}</a>
                     </div>
                 </div>
             </div>
@@ -99,8 +100,8 @@
                                     {{ trans('courses_free_course') | default('Free course') }}
                                 {% endif %}
                             </p>
-                            <a href="{{ url_for('courses.course_page', course_id=course.id) }}" 
-                               class="btn btn-primary" 
+                            <a href="{{ url_for('courses.course_page', course_id=course.id) }}"
+                               class="btn btn-primary"
                                aria-label="{{ trans('courses_start_course') | default('Start Course') }} {{ course.title_ha if lang == 'ha' else course.title_en }}">
                                {{ trans('core_start') | default('Start') }}
                             </a>
@@ -129,17 +130,17 @@
             <div class="row">
                 <div class="col-md-4">
                     <div class="testimonial text-center">
-                        <i class="fas fa-quote-left"></i> {{ trans('core_impressed_features') | default('I explored the features earlier today and was impressed... I thought it was only for SMEs, but even individuals can benefit. The learning section is on another level.') }} — <span class="name">Maisarata Uqubatu</span>
+                        <i class="fas fa-quote-left"></i> {{ trans('core_impressed_features') | default('I explored the features earlier today and was impressed... I thought it was only for SMEs, but it works for anyone who wants to manage their finances better!') }} — <span class="name">Ficore User</span>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="testimonial text-center">
-                        <i class="fas fa-quote-left"></i> {{ trans('core_ficore_praise') | default('🔥 Ficore 🔥🔥🔥🔥🔥') }} — <span class="name">Abubakar Abdulkadir</span>, {{ trans('core_software_engineer') | default('Software Engineer for Sustainable Solutions') }}
+                        <i class="fas fa-quote-left"></i> {{ trans('core_ficore_praise') | default('🔥 Ficore 🔥🔥🔥🔥🔥') }} — <span class="name">Abubakar Abdulkadir</span>, {{ trans('core_product_manager') | default('Product Manager') }}
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="testimonial text-center">
-                        <i class="fas fa-quote-left"></i> {{ trans('core_potential_support') | default('I’ve been following the Ficore project and I’m impressed. It’s clear there’s potential, and I’m curious to know more—especially if there’s a customer support channel included. I’d love to contribute if needed!') }} — <span class="name">Aminu Sani Usman</span>
+                        <i class="fas fa-quote-left"></i> {{ trans('core_potential_support') | default('I’ve been following the Ficore project and I’m impressed. It’s clear there’s potential, and the support for African contexts is much needed.') }} — <span class="name">Adaobi N.</span>
                     </div>
                 </div>
             </div>
