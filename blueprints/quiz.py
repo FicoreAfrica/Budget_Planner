@@ -35,24 +35,28 @@ class Step1Form(FlaskForm):
     send_email = BooleanField(trans('quiz_send_email'))
     submit = SubmitField(trans('quiz_start_quiz'))
 
-class Step2Form(FlaskForm):
-    def __init__(self, questions, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        for q in questions:
-            setattr(self, q['key'], SelectField(
-                trans(f'quiz_{q["key"]}_label'),
-                choices=[
-                    ('', trans('quiz_select_answer')),
-                    ('always', trans('quiz_always')),
-                    ('often', trans('quiz_often')),
-                    ('sometimes', trans('quiz_sometimes')),
-                    ('never', trans('quiz_never'))
-                ],
-                validators=[DataRequired(message=trans('quiz_answer_required'))]
-            ))
-        # Set the submit button label dynamically based on form_type
-        form_type = kwargs.get('form_type', '')
-        self.submit = SubmitField(trans('quiz_continue') if 'step2a' in form_type else trans('quiz_see_results'))
+def make_step2_form(questions, form_type='step2a'):
+    """
+    Dynamically creates a WTForms form class for quiz steps 2a and 2b.
+    """
+    fields = {}
+    for q in questions:
+        fields[q['key']] = SelectField(
+            label=q['label'],
+            choices=[
+                ('', trans('quiz_select_answer')),
+                ('always', trans('quiz_always')),
+                ('often', trans('quiz_often')),
+                ('sometimes', trans('quiz_sometimes')),
+                ('never', trans('quiz_never'))
+            ],
+            validators=[DataRequired(message=trans('quiz_answer_required'))],
+            description=q.get('tooltip', '')
+        )
+    submit_label = trans('quiz_continue') if 'step2a' in form_type else trans('quiz_see_results')
+    fields['submit'] = SubmitField(submit_label)
+    Step2FormClass = type('Step2Form', (FlaskForm,), fields)
+    return Step2FormClass()
 
 @quiz_bp.route('/step1', methods=['GET', 'POST'])
 def step1():
@@ -100,7 +104,7 @@ def step2a():
             'placeholder': trans(f'quiz_{key}_placeholder')
         } for key in question_keys
     ]
-    form = Step2Form(questions, form_type='step2a')
+    form = make_step2_form(questions, form_type='step2a')
     if request.method == 'POST' and form.validate_on_submit():
         session['quiz_step2a'] = {q['key']: getattr(form, q['key']).data for q in questions}
         current_app.logger.debug(f"Quiz step2a form data: {session['quiz_step2a']}")
@@ -132,7 +136,7 @@ def step2b():
             'placeholder': trans(f'quiz_{key}_placeholder')
         } for key in question_keys
     ]
-    form = Step2Form(questions, form_type='step2b')
+    form = make_step2_form(questions, form_type='step2b')
     if request.method == 'POST' and form.validate_on_submit():
         answers = session.get('quiz_step2a', {})
         answers.update({q['key']: getattr(form, q['key']).data for q in questions})
@@ -140,22 +144,25 @@ def step2b():
             3 if v == 'always' else 2 if v == 'often' else 1 if v == 'sometimes' else 0
             for v in answers.values()
         )
-        personality = (
-            trans('quiz_personality_planner') if score >= 24 else
-            trans('quiz_personality_saver') if score >= 18 else
-            trans('quiz_personality_balanced') if score >= 12 else
-            trans('quiz_personality_spender')
-        )
+        # PERSONALITY: don't translate the string here, store a raw value
+        if score >= 24:
+            personality_key = 'Planner'
+        elif score >= 18:
+            personality_key = 'Saver'
+        elif score >= 12:
+            personality_key = 'Balanced'
+        else:
+            personality_key = 'Spender'
         badges = []
         if score >= 24:
-            badges.append(trans('quiz_badge_financial_guru'))
+            badges.append('Financial Guru')
         if score >= 18:
-            badges.append(trans('quiz_badge_savings_star'))
+            badges.append('Savings Star')
         if answers.get('avoid_debt') in ['always', 'often']:
-            badges.append(trans('quiz_badge_debt_dodger'))
+            badges.append('Debt Dodger')
         if answers.get('set_financial_goals') in ['always', 'often']:
-            badges.append(trans('quiz_badge_goal_setter'))
-        
+            badges.append('Goal Setter')
+
         quiz_storage = current_app.config['STORAGE_MANAGERS']['quiz']
         record = {
             "id": str(uuid.uuid4()),
@@ -164,7 +171,7 @@ def step2b():
                 "email": session.get('quiz_step1', {}).get('email', ''),
                 "answers": answers,
                 "score": score,
-                "personality": personality,
+                "personality": personality_key,
                 "badges": badges,
                 "created_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             }
@@ -172,7 +179,7 @@ def step2b():
         email = session.get('quiz_step1', {}).get('email')
         send_email_flag = session.get('quiz_step1', {}).get('send_email', False)
         quiz_storage.append(record, user_email=email, session_id=session['sid'])
-        
+
         if send_email_flag and email:
             send_email(
                 to_email=email,
@@ -181,13 +188,13 @@ def step2b():
                 data={
                     "first_name": record["data"]["first_name"],
                     "score": score,
-                    "personality": personality,
+                    "personality": personality_key,
                     "badges": badges,
                     "created_at": record["data"]["created_at"],
                     "cta_url": url_for('quiz.results', _external=True)
                 }
             )
-        
+
         progress_storage = current_app.config['STORAGE_MANAGERS']['user_progress']
         progress = progress_storage.filter_by_session(session['sid'])
         course_progress = next((p for p in progress if p['data'].get('course_id') == course_id), None)
@@ -205,7 +212,7 @@ def step2b():
                 course_progress['data']['progress_percentage'] = (len(course_progress['data']['completed_lessons']) / 4) * 100
                 course_progress['data']['last_updated'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 progress_storage.update_by_id(course_progress['id'], course_progress['data'])
-        
+
         current_app.logger.info(f"Quiz lesson 2 (step2b) completed for course {course_id} by session {session['sid']}")
         session.pop('quiz_step1', None)
         session.pop('quiz_step2a', None)
@@ -224,7 +231,7 @@ def results():
         user_data = quiz_storage.filter_by_session(session['sid'])
         records = [(record["id"], record["data"]) for record in user_data]
         latest_record = records[-1][1] if records else {}
-        
+
         insights = []
         tips = [
             trans('quiz_tip_automate_savings'),
@@ -233,7 +240,7 @@ def results():
             trans('quiz_tip_track_expenses')
         ]
         if latest_record:
-            if latest_record.get('personality') == trans('quiz_personality_spender'):
+            if latest_record.get('personality') == 'Spender':
                 insights.append(trans('quiz_insight_high_spending'))
                 tips.append(trans('quiz_tip_use_budgeting_app'))
             if latest_record.get('score', 0) < 18:
@@ -243,7 +250,7 @@ def results():
                 tips.append(trans('quiz_tip_emergency_fund'))
             if latest_record.get('answers', {}).get('invest_money') in ['always', 'often']:
                 insights.append(trans('quiz_insight_good_investment'))
-        
+
         return render_template(
             'quiz_results.html',
             records=records,
