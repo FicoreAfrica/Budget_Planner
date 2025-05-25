@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <div class="header">
+        <h1>{{ trans('learninghub_courses') }}</h1>
+    </div>
+    <div class="row mt-4">
+        {% for course_id, course in courses.items() %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">{{ trans(course.title_key) }}</h5>
+                    <p class="card-text">
+                        {{ trans(course.desc_key) }}
+                        <br>
+                        {% set cp = progress.get(course_id, {}) %}
+                        {% if cp.lessons_completed %}
+                            <span class="badge bg-success">
+                                {{ cp.lessons_completed|length }}/
+                                {{
+                                    course['modules']|sum(attribute='lessons'|length)
+                                }}
+                                {{ trans('learninghub_lessons_completed') }}
+                            </span>
+                        {% endif %}
+                    </p>
+                    <a href="{{ url_for('learning_hub.course_overview', course_id=course_id) }}" class="btn btn-primary">
+                        {{ trans('learninghub_start_course') }}
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
