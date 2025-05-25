@@ -482,7 +482,7 @@ FINANCIAL_HEALTH_TRANSLATIONS = {
         'financial_health_monthly_income': 'Kudaden Shiga na Wata',
         'financial_health_user_type_business': 'Kasuwanci',
         'financial_health_go_financial_health': 'Je zuwa Lafiyar Kuɗi',
-        'financial_health_improve_health': 'Inganta lafiyar kuɗinka ta hanyar duba kasafinka tare da makin lafiyarsu!'.',
+        'financial_health_improve_health': 'Inganta lafiyar kuɗinka ta hanyar duba kasafinka tare da makin lafiyarsu!',
         'financial_health_insights': 'Hasashen Kuɗi',
         'financial_health_interest_rate_placeholder': 'misali, 5',
         'financial_health_interest_rate_tooltip': 'Matsakaicin ƙimar Kudin Ruwa akan basussuka (% a kowace shekara)',
