@@ -1,5 +1,9 @@
 from flask import Blueprint, render_template, session, request, redirect, url_for, flash
-from translations.translations_learning_hub import LEARNING_HUB_TRANSLATIONS
+try:
+    from app import trans  # Import trans from app.py instead
+except ImportError:
+    def trans(key, lang=None):
+        return key  # Fallback to return the key as the translation
 
 learning_hub_bp = Blueprint('learning_hub', __name__)
 
