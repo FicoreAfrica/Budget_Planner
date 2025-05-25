@@ -31,12 +31,16 @@
                 <div class="mb-3">
                     <label class="form-label">{{ trans('core_first_name') | default('First Name') }}</label>
                     {{ form.first_name(class="form-control", placeholder=trans('core_first_name_placeholder') | default('e.g., Muhammad, Bashir, Umar'), **{'data-bs-toggle': 'tooltip', 'title': trans('core_first_name_tooltip') | default('Enter your first name'), 'aria-describedby': 'first_name_help'}) }}
-                    <div class="invalid-feedback">{{ trans('core_first_name_required') | default('First name is required') }}</div>
+                    {% for error in form.first_name.errors %}
+                        <div class="invalid-feedback">{{ trans(error) | default(error) }}</div>
+                    {% endfor %}
                 </div>
                 <div class="mb-3">
                     <label class="form-label">{{ trans('core_email') | default('Email') }}</label>
                     {{ form.email(class="form-control", placeholder=trans('core_email_placeholder') | default('e.g., muhammad@example.com'), **{'data-bs-toggle': 'tooltip', 'title': trans('core_email_tooltip') | default('Enter your email to receive quiz results'), 'aria-describedby': 'email_help'}) }}
-                    <div class="invalid-feedback">{{ trans('core_email_required') | default('Valid email is required') }}</div>
+                    {% for error in form.email.errors %}
+                        <div class="invalid-feedback">{{ trans(error) | default(error) }}</div>
+                    {% endfor %}
                 </div>
                 <div class="mb-3 form-check">
                     {{ form.send_email(class="form-check-input", **{'data-bs-toggle': 'tooltip', 'title': trans('quiz_send_email_tooltip') | default('Check to receive email with quiz results'), 'aria-describedby': 'send_email_help'}) }}
