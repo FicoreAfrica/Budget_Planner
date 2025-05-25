@@ -8,6 +8,7 @@ from datetime import datetime
 import logging
 import uuid
 import random
+
 try:
     from app import trans  # Import trans from app.py instead
 except ImportError:
@@ -26,7 +27,8 @@ QUESTION_KEYS = [
     'invest_money',
     'emergency_fund',
     'set_financial_goals',
-    'seek_financial_advice'
+    'seek_financial_advice',
+    'avoid_debt'
 ]
 
 class Step1Form(FlaskForm):
@@ -139,7 +141,10 @@ def step2b():
     form = make_step2_form(questions, form_type='step2b')
     if request.method == 'POST' and form.validate_on_submit():
         answers = session.get('quiz_step2a', {})
-        answers.update({q['key']: getattr(form, q['key']).data for q in questions})
+        answers.update({q['key']: getattr(form, q['key']).data for q in questions if getattr(form, q['key']).data})
+        if len(answers) != 10:
+            flash(trans('quiz_incomplete_answers'), 'danger')
+            return redirect(url_for('quiz.step2a', course_id=course_id))
         score = sum(
             3 if v == 'always' else 2 if v == 'often' else 1 if v == 'sometimes' else 0
             for v in answers.values()
@@ -181,19 +186,22 @@ def step2b():
         quiz_storage.append(record, user_email=email, session_id=session['sid'])
 
         if send_email_flag and email:
-            send_email(
-                to_email=email,
-                subject=trans('quiz_results_subject'),
-                template_name="quiz_email.html",
-                data={
-                    "first_name": record["data"]["first_name"],
-                    "score": score,
-                    "personality": personality_key,
-                    "badges": badges,
-                    "created_at": record["data"]["created_at"],
-                    "cta_url": url_for('quiz.results', _external=True)
-                }
-            )
+            try:
+                send_email(
+                    to_email=email,
+                    subject=trans('quiz_results_subject'),
+                    template_name="quiz_email.html",
+                    data={
+                        "first_name": record["data"]["first_name"],
+                        "score": score,
+                        "personality": personality_key,
+                        "badges": badges,
+                        "created_at": record["data"]["created_at"],
+                        "cta_url": url_for('quiz.results', _external=True)
+                    }
+                )
+            except Exception as e:
+                current_app.logger.error(f"Email sending failed: {str(e)}")
 
         progress_storage = current_app.config['STORAGE_MANAGERS']['user_progress']
         progress = progress_storage.filter_by_session(session['sid'])
