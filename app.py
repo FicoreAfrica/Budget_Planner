@@ -59,7 +59,7 @@ if not app.secret_key:
 session_dir = os.environ.get('SESSION_DIR', 'data/sessions')
 if os.environ.get('RENDER'):
     session_dir = '/opt/render/project/src/data/sessions'
-os.makedirs(session_dir, exist_ok=True)
+os.makedirs(session_dir, exist_ok=True)  # Ensure the sessions directory exists
 app.config['SESSION_FILE_DIR'] = session_dir
 app.config['SESSION_TYPE'] = 'filesystem'
 app.config['SESSION_PERMANENT'] = True
