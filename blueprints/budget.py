@@ -19,6 +19,12 @@ logging.basicConfig(filename='data/storage.txt', level=logging.DEBUG)
 budget_bp = Blueprint('budget', __name__, url_prefix='/budget')
 budget_storage = JsonStorage('data/budget.json')
 
+# -- Utility filter for all FloatFields --
+def strip_commas(value):
+    if isinstance(value, str):
+        return value.replace(',', '')
+    return value
+
 # Forms for budget steps
 class Step1Form(FlaskForm):
     first_name = StringField(trans('budget_first_name'), validators=[DataRequired(message=trans('budget_first_name_required'))])
@@ -27,20 +33,55 @@ class Step1Form(FlaskForm):
     submit = SubmitField(trans('budget_next'))
 
 class Step2Form(FlaskForm):
-    income = FloatField(trans('budget_monthly_income'), validators=[DataRequired(message=trans('budget_income_required')), NumberRange(min=0, max=10000000000, message=trans('budget_income_max'))])
+    income = FloatField(
+        trans('budget_monthly_income'),
+        validators=[
+            DataRequired(message=trans('budget_income_required')),
+            NumberRange(min=0, max=10000000000, message=trans('budget_income_max'))
+        ],
+        filters=[strip_commas]
+    )
     submit = SubmitField(trans('budget_next'))
 
 class Step3Form(FlaskForm):
-    housing = FloatField(trans('budget_housing_rent'), validators=[DataRequired(message=trans('budget_housing_required')), NumberRange(min=0, message=trans('budget_amount_positive'))])
-    food = FloatField(trans('budget_food'), validators=[DataRequired(message=trans('budget_food_required')), NumberRange(min=0, message=trans('budget_amount_positive'))])
-    transport = FloatField(trans('budget_transport'), validators=[DataRequired(message=trans('budget_transport_required')), NumberRange(min=0, message=trans('budget_amount_positive'))])
-    dependents = FloatField(trans('budget_dependents_support'), validators=[DataRequired(message=trans('budget_dependents_required')), NumberRange(min=0, message=trans('budget_amount_positive'))])
-    miscellaneous = FloatField(trans('budget_miscellaneous'), validators=[DataRequired(message=trans('budget_miscellaneous_required')), NumberRange(min=0, message=trans('budget_amount_positive'))])
-    others = FloatField(trans('budget_others'), validators=[DataRequired(message=trans('budget_others_required')), NumberRange(min=0, message=trans('budget_amount_positive'))])
+    housing = FloatField(
+        trans('budget_housing_rent'),
+        validators=[DataRequired(message=trans('budget_housing_required')), NumberRange(min=0, message=trans('budget_amount_positive'))],
+        filters=[strip_commas]
+    )
+    food = FloatField(
+        trans('budget_food'),
+        validators=[DataRequired(message=trans('budget_food_required')), NumberRange(min=0, message=trans('budget_amount_positive'))],
+        filters=[strip_commas]
+    )
+    transport = FloatField(
+        trans('budget_transport'),
+        validators=[DataRequired(message=trans('budget_transport_required')), NumberRange(min=0, message=trans('budget_amount_positive'))],
+        filters=[strip_commas]
+    )
+    dependents = FloatField(
+        trans('budget_dependents_support'),
+        validators=[DataRequired(message=trans('budget_dependents_required')), NumberRange(min=0, message=trans('budget_amount_positive'))],
+        filters=[strip_commas]
+    )
+    miscellaneous = FloatField(
+        trans('budget_miscellaneous'),
+        validators=[DataRequired(message=trans('budget_miscellaneous_required')), NumberRange(min=0, message=trans('budget_amount_positive'))],
+        filters=[strip_commas]
+    )
+    others = FloatField(
+        trans('budget_others'),
+        validators=[DataRequired(message=trans('budget_others_required')), NumberRange(min=0, message=trans('budget_amount_positive'))],
+        filters=[strip_commas]
+    )
     submit = SubmitField(trans('budget_next'))
 
 class Step4Form(FlaskForm):
-    savings_goal = FloatField(trans('budget_savings_goal'), validators=[DataRequired(message=trans('budget_savings_goal_required')), NumberRange(min=0, message=trans('budget_amount_positive'))])
+    savings_goal = FloatField(
+        trans('budget_savings_goal'),
+        validators=[DataRequired(message=trans('budget_savings_goal_required')), NumberRange(min=0, message=trans('budget_amount_positive'))],
+        filters=[strip_commas]
+    )
     submit = SubmitField(trans('budget_submit'))
 
 @budget_bp.route('/step1', methods=['GET', 'POST'])
@@ -184,11 +225,11 @@ def dashboard():
         user_data = budget_storage.filter_by_session(session['sid'])
         budgets = [(record["id"], record["data"]) for record in user_data]
         latest_budget = budgets[-1][1] if budgets else {}
-        
+
         if request.method == 'POST':
             action = request.form.get('action')
             budget_id = request.form.get('budget_id')
-            
+
             if action == 'delete':
                 try:
                     if budget_storage.delete_by_id(budget_id):
@@ -201,7 +242,7 @@ def dashboard():
                     logging.exception(f"Error deleting budget item: {str(e)}")
                     flash(trans("budget_budget_delete_error"), "danger")
                     return redirect(url_for('budget.dashboard'))
-        
+
         # Calculate insights and tips
         tips = [
             trans("budget_tip_track_expenses"),
