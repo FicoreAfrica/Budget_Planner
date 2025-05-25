@@ -15,6 +15,7 @@ from blueprints.bill import bill_bp
 from blueprints.net_worth import net_worth_bp
 from blueprints.emergency_fund import emergency_fund_bp
 from blueprints.courses import courses_bp
+from blueprints.learning_hub import learning_hub_bp  # <-- NEW BLUEPRINT for Learning Hub
 from json_store import JsonStorage
 import gspread
 from google.oauth2.service_account import Credentials
@@ -190,17 +191,17 @@ def index():
     sample_courses = [
         {
             'id': 'budgeting_101',
-            'title_key': 'course_budgeting_101_title',
+            'title_key': 'courses_course_budgeting_101_title',
             'title_en': 'Budgeting 101'
         },
         {
             'id': 'financial_quiz',
-            'title_key': 'course_financial_quiz_title',
+            'title_key': 'courses_course_financial_quiz_title',
             'title_en': 'Financial Personality Quiz'
         },
         {
             'id': 'savings_basics',
-            'title_key': 'course_savings_basics_title',
+            'title_key': 'courses_course_savings_basics_title',
             'title_en': 'Savings Basics'
         }
         # Add more sample courses as needed
@@ -212,6 +213,7 @@ def index():
         lang=lang,
         sample_courses=sample_courses  # <---- THIS FIXES THE FEATURED SECTION
     )
+
 @app.route('/set_language/<lang>')
 @session_required
 def set_language(lang):
@@ -248,7 +250,7 @@ def general_dashboard():
                 continue
             records = storage.filter_by_session(session['sid'])
             if tool == 'courses':
-                data[tool] = [ рекорд['data'] for record in records]
+                data[tool] = [record['data'] for record in records]
             else:
                 if records:
                     latest_record_raw = records[-1]['data']
@@ -261,6 +263,9 @@ def general_dashboard():
         except Exception as e:
             log.exception(f"Error fetching data for {tool}: {str(e)}")
             data[tool] = [] if tool == 'courses' else expected_keys.copy()
+    # Learning Hub Progress (for MVP, session only)
+    learning_progress = session.get('learning_progress', {})
+    data['learning_progress'] = learning_progress if isinstance(learning_progress, dict) else {}
     return render_template('general_dashboard.html', data=data, t=trans, lang=lang)
 
 @app.route('/logout')
@@ -324,6 +329,7 @@ app.register_blueprint(bill_bp)
 app.register_blueprint(net_worth_bp)
 app.register_blueprint(emergency_fund_bp)
 app.register_blueprint(courses_bp)
+app.register_blueprint(learning_hub_bp)  # <-- NEW BLUEPRINT for Learning Hub
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=10000)
