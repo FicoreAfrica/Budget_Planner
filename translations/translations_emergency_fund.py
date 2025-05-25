@@ -3,7 +3,7 @@ EMERGENCY_FUND_TRANSLATIONS = {
         'emergency_fund_calculator': 'Emergency Fund Calculator',
         'emergency_fund_plan_emergency_fund': 'Plan your emergency fund with Ficore Africa',
         'emergency_fund_first_name': 'First Name',
-        'emergency_fund_goal': 'Aims to cover 3-6 months of expenses for financial security',
+        'emergency_fund_goal': 'Aims to cover 3-6 months of expenses for Safety Net and Financial Security',
         'emergency_fund_first_name_required': 'First name is required',
         'emergency_fund_email': 'Email',
         'emergency_fund_email_invalid': 'Enter a valid email address',
