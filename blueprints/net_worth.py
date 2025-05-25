@@ -12,12 +12,18 @@ try:
 except ImportError:
     def trans(key, lang=None):
         return key  # Fallback to return the key as the translation
-        
+
 # Configure logging
 logging.basicConfig(filename='data/storage.txt', level=logging.DEBUG)
 
 net_worth_bp = Blueprint('net_worth', __name__, url_prefix='/net_worth')
 net_worth_storage = JsonStorage('data/networth.json')
+
+# Helper to strip commas from float input (for comma-separated numbers)
+def strip_commas(value):
+    if isinstance(value, str):
+        return value.replace(',', '')
+    return value
 
 # Forms for net worth steps
 class Step1Form(FlaskForm):
@@ -27,13 +33,38 @@ class Step1Form(FlaskForm):
     submit = SubmitField(trans('net_worth_next'))
 
 class Step2Form(FlaskForm):
-    cash_savings = FloatField(trans('net_worth_cash_savings'), validators=[DataRequired(message=trans('net_worth_cash_savings_required')), NumberRange(min=0, max=10000000000, message=trans('net_worth_cash_savings_max'))])
-    investments = FloatField(trans('net_worth_investments'), validators=[DataRequired(message=trans('net_worth_investments_required')), NumberRange(min=0, max=10000000000, message=trans('net_worth_investments_max'))])
-    property = FloatField(trans('net_worth_property'), validators=[DataRequired(message=trans('net_worth_property_required')), NumberRange(min=0, max=10000000000, message=trans('net_worth_property_max'))])
+    cash_savings = FloatField(
+        trans('net_worth_cash_savings'),
+        validators=[
+            DataRequired(message=trans('net_worth_cash_savings_required')),
+            NumberRange(min=0, max=10000000000, message=trans('net_worth_cash_savings_max'))
+        ],
+        filters=[strip_commas]
+    )
+    investments = FloatField(
+        trans('net_worth_investments'),
+        validators=[
+            DataRequired(message=trans('net_worth_investments_required')),
+            NumberRange(min=0, max=10000000000, message=trans('net_worth_investments_max'))
+        ],
+        filters=[strip_commas]
+    )
+    property = FloatField(
+        trans('net_worth_property'),
+        validators=[
+            DataRequired(message=trans('net_worth_property_required')),
+            NumberRange(min=0, max=10000000000, message=trans('net_worth_property_max'))
+        ],
+        filters=[strip_commas]
+    )
     submit = SubmitField(trans('net_worth_next'))
 
 class Step3Form(FlaskForm):
-    loans = FloatField(trans('net_worth_loans'), validators=[Optional(), NumberRange(min=0, max=10000000000, message=trans('net_worth_loans_max'))])
+    loans = FloatField(
+        trans('net_worth_loans'),
+        validators=[Optional(), NumberRange(min=0, max=10000000000, message=trans('net_worth_loans_max'))],
+        filters=[strip_commas]
+    )
     submit = SubmitField(trans('net_worth_submit'))
 
 @net_worth_bp.route('/step1', methods=['GET', 'POST'])
@@ -95,16 +126,16 @@ def step3():
             total_liabilities = loans
             net_worth = total_assets - total_liabilities
             
-            # Assign badges
+            # Assign badges (store raw badge names for translation in template)
             badges = []
             if net_worth > 0:
-                badges.append(trans("net_worth_badge_wealth_builder"))
+                badges.append('Wealth Builder')
             if total_liabilities == 0:
-                badges.append(trans("net_worth_badge_debt_free"))
+                badges.append('Debt Free')
             if cash_savings >= total_assets * 0.3:
-                badges.append(trans("net_worth_badge_savings_champion"))
+                badges.append('Savings Champion')
             if property >= total_assets * 0.5:
-                badges.append(trans("net_worth_badge_property_mogul"))
+                badges.append('Property Mogul')
             
             # Store record
             record = {
@@ -162,33 +193,45 @@ def step3():
 
 @net_worth_bp.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
-    """Display net worth dashboard."""
+    """Display net worth dashboard. If no session data, fallback to latest record by email if possible."""
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
     lang = session.get('lang', 'en')
+
+    user_data = net_worth_storage.filter_by_session(session['sid'])
+    # Fallback: if no records for session, try using email from any previous record
+    records = [(record["id"], record["data"]) for record in user_data]
+    latest_record = records[-1][1] if records else {}
+
+    # Extra fallback: try to get by email if available and session data is empty
+    if not latest_record:
+        email = session.get('net_worth_email') or session.get('net_worth_step1', {}).get('email')
+        if email:
+            # Get all records matching the email
+            all_records = net_worth_storage.read_all()
+            filtered = [(rec["id"], rec["data"]) for rec in all_records if rec.get("data", {}).get("email") == email]
+            records = filtered
+            latest_record = records[-1][1] if records else {}
+
+    # Generate insights and tips
+    insights = []
+    tips = [
+        trans("net_worth_tip_track_ajo"),
+        trans("net_worth_tip_review_property"),
+        trans("net_worth_tip_pay_loans_early"),
+        trans("net_worth_tip_diversify_investments")
+    ]
+    if latest_record:
+        if latest_record.get('total_liabilities', 0) > latest_record.get('total_assets', 0) * 0.5:
+            insights.append(trans("net_worth_insight_high_loans"))
+        if latest_record.get('cash_savings', 0) < latest_record.get('total_assets', 0) * 0.1:
+            insights.append(trans("net_worth_insight_low_cash"))
+        if latest_record.get('investments', 0) >= latest_record.get('total_assets', 0) * 0.3:
+            insights.append(trans("net_worth_insight_strong_investments"))
+        if latest_record.get('net_worth', 0) <= 0:
+            insights.append(trans("net_worth_insight_negative_net_worth"))
+
     try:
-        user_data = net_worth_storage.filter_by_session(session['sid'])
-        records = [(record["id"], record["data"]) for record in user_data]
-        latest_record = records[-1][1] if records else {}
-        
-        # Generate insights and tips
-        insights = []
-        tips = [
-            trans("net_worth_tip_track_ajo"),
-            trans("net_worth_tip_review_property"),
-            trans("net_worth_tip_pay_loans_early"),
-            trans("net_worth_tip_diversify_investments")
-        ]
-        if latest_record:
-            if latest_record.get('total_liabilities', 0) > latest_record.get('total_assets', 0) * 0.5:
-                insights.append(trans("net_worth_insight_high_loans"))
-            if latest_record.get('cash_savings', 0) < latest_record.get('total_assets', 0) * 0.1:
-                insights.append(trans("net_worth_insight_low_cash"))
-            if latest_record.get('investments', 0) >= latest_record.get('total_assets', 0) * 0.3:
-                insights.append(trans("net_worth_insight_strong_investments"))
-            if latest_record.get('net_worth', 0) <= 0:
-                insights.append(trans("net_worth_insight_negative_net_worth"))
-        
         return render_template(
             'net_worth_dashboard.html',
             records=records,
