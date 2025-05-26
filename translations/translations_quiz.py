@@ -381,7 +381,7 @@ QUIZ_TRANSLATIONS = {
         'quiz_your_financial_personality': 'Halin Kuɗin Ka',
         'quiz_habits': 'Al’adu',
         'quiz_personalized_tip': 'Shawara ta Keɓaɓɓu',
-        'quiz_quiz_summary': 'Taƙaitaccen Gwaji 'quizaya',
+        'quiz_quiz_summary': 'Taƙaitaccen Bayanan Gwaji',
         'quiz_explorer_budget_planner': 'Kayan Binciken',
         'quiz_explore_financial_health_tool': 'Bincika Kayan Lafiyar Kuɗi',
         'quiz_share_on_whatsapp': 'Raba a WhatsApp',
