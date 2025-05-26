@@ -116,6 +116,41 @@ def create_app():
             'courses': JsonStorage('data/courses.json', logger_instance=log),
         }
 
+        # Initialize courses.json if empty
+        courses_storage = app.config['STORAGE_MANAGERS']['courses']
+        try:
+            courses = courses_storage.read_all()
+            if not courses:
+                log.warning("Courses storage is empty. Initializing with default courses.")
+                default_courses = [
+                    {
+                        'id': 'budgeting_101',
+                        'title_key': 'learninghub_course_budgeting101_title',
+                        'title_en': 'Budgeting 101',
+                        'title_ha': 'Tsarin Kasafin Kuɗi 101',
+                        'is_premium': False
+                    },
+                    {
+                        'id': 'financial_quiz',
+                        'title_key': 'courses_course_financial_quiz_title',
+                        'title_en': 'Financial Personality Quiz',
+                        'title_ha': 'Tambayar Halin Kuɗi',
+                        'is_premium': False
+                    },
+                    {
+                        'id': 'savings_basics',
+                        'title_key': 'courses_course_savings_basics_title',
+                        'title_en': 'Savings Basics',
+                        'title_ha': 'Tushen Ajiya',
+                        'is_premium': False
+                    }
+                ]
+                for course in default_courses:
+                    courses_storage.create(course)
+                log.info("Initialized courses.json with default courses.")
+        except Exception as e:
+            log.error(f"Error initializing courses storage: {str(e)}")
+
     # Initialize quiz questions
     with app.app_context():
         init_quiz_questions(app)
@@ -184,30 +219,39 @@ def create_app():
         lang = session.get('lang', 'en')
         log.info("Serving index page")
         courses_storage = app.config['STORAGE_MANAGERS']['courses']
-        try:
-            courses = courses_storage.read_all() if courses_storage else []
-            log.debug(f"Retrieved {len(courses)} courses")
-        except Exception as e:
-            log.error(f"Error retrieving courses: {str(e)}")
-            courses = []
-            flash(trans('core_error_message'), 'danger')
         sample_courses = [
             {
                 'id': 'budgeting_101',
                 'title_key': 'learninghub_course_budgeting101_title',
-                'title_en': 'Budgeting 101'
+                'title_en': 'Budgeting 101',
+                'title_ha': 'Tsarin Kasafin Kuɗi 101',
+                'is_premium': False
             },
             {
                 'id': 'financial_quiz',
                 'title_key': 'courses_course_financial_quiz_title',
-                'title_en': 'Financial Personality Quiz'
+                'title_en': 'Financial Personality Quiz',
+                'title_ha': 'Tambayar Halin Kuɗi',
+                'is_premium': False
             },
             {
                 'id': 'savings_basics',
                 'title_key': 'courses_course_savings_basics_title',
-                'title_en': 'Savings Basics'
+                'title_en': 'Savings Basics',
+                'title_ha': 'Tushen Ajiya',
+                'is_premium': False
             }
         ]
+        try:
+            courses = courses_storage.read_all() if courses_storage else []
+            log.debug(f"Retrieved {len(courses)} courses from storage")
+            if not courses:
+                log.warning("No courses found in storage. Using sample_courses.")
+                courses = sample_courses
+        except Exception as e:
+            log.error(f"Error retrieving courses: {str(e)}")
+            courses = sample_courses
+            flash(trans('core_error_message'), 'danger')
         return render_template(
             'index.html',
             t=trans,
