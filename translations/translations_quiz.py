@@ -386,7 +386,7 @@ QUIZ_TRANSLATIONS = {
         'quiz_explore_financial_health_tool': 'Bincika Kayan Lafiyar Kuɗi',
         'quiz_share_on_whatsapp': 'Raba a WhatsApp',
         'quiz_share_on_twitter': 'Raba a Twitter',
-        'quiz_learn_how_to_be_a_planner': 'Koyi Yadda Ake Zama 'Mai Tsarawa',
+        'quiz_learn_how_to_be_a_planner': 'Koyi Yadda Ake Zama Mai Tsarawa',
         'quiz_receive_email_report': 'Karɓi Rahoton Imel',
         'quiz_previous': 'Na Baya',
         'quiz_progress': 'Gaba',
