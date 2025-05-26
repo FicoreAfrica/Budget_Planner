@@ -22,7 +22,7 @@
                     <div class="mb-3">
                         <label class="form-label">{{ trans('quiz_' + question.key + '_label') | default(question.label) }}</label>
                         {{ getattr(form, question.key)(class="form-select", **{'data-bs-toggle': 'tooltip', 'title': trans('quiz_' + question.key + '_tooltip') | default(question.tooltip), 'aria-describedby': question.key + '_help'}) }}
-                        <small class="form-text text-muted">{{ trans(f'quiz_{question.key}_placeholder') | default(question.placeholder) }}</small>
+                        <small class="form-text text-muted">{{ trans('quiz_' + question.key + '_placeholder') | default(question.placeholder) }}</small>
                         {% for error in getattr(form, question.key).errors %}
                             <div class="invalid-feedback">{{ trans(error) | default(error) }}</div>
                         {% endfor %}
