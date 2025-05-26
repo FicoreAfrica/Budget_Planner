@@ -4,6 +4,10 @@ QUIZ_TRANSLATIONS = {
         'quiz_track_expenses_label_en': 'Do you track your expenses?',
         'quiz_track_expenses_tooltip_en': 'E.g., recording daily spending on food, transport, or data subscriptions using apps like Flowdiary or notebooks',
         'quiz_track_expenses_placeholder_en': 'Select how often you track expenses',
+        'quiz_yes': 'Yes',
+        'quiz_no': 'No',
+        'Yes': 'Yes',
+        'No': 'No',
         'quiz_save_regularly_label_en': 'Do you save regularly?',
         'quiz_save_regularly_tooltip_en': 'E.g., contributing to Ajo/Esusu/Adashe or using savings platforms like PiggyVest or Cowrywise',
         'quiz_save_regularly_placeholder_en': 'Select how often you save',
@@ -410,6 +414,10 @@ QUIZ_TRANSLATIONS = {
         'quiz_receive_email_report_ha': 'Karɓi Rahoton Imel',
         'quiz_previous_ha': 'Na Baya',
         'quiz_progress_ha': 'Ci gaba',
+        'quiz_yes': 'Eh',
+        'quiz_no': 'A,a',
+        'Yes': 'Eh',
+        'No': 'A,a',
 
         # Tips and insights (from second dictionary)
         'quiz_tip_automate_savings_ha': 'Yi amfani da manhajojin kamar PiggyVest ko Cowrywise don ajiya ta atomatik.',
