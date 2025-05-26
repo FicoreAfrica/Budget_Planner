@@ -1,4 +1,4 @@
-from flask import Blueprint, request, session, redirect, url_for, render_template, flash
+from flask import Blueprint, request, session, redirect, url_for, render_template, flash, current_app
 from flask_wtf import FlaskForm
 from wtforms import StringField, FloatField, BooleanField, SubmitField
 from wtforms.validators import DataRequired, NumberRange, Optional, Email
@@ -8,24 +8,26 @@ from datetime import datetime
 import logging
 import uuid
 try:
-    from app import trans  # Import trans from app.py instead
+    from app import trans
 except ImportError:
     def trans(key, lang=None):
-        return key  # Fallback to return the key as the translation
+        return key
 
 # Configure logging
 logging.basicConfig(filename='data/storage.txt', level=logging.DEBUG)
 
 budget_bp = Blueprint('budget', __name__, url_prefix='/budget')
-budget_storage = JsonStorage('data/budget.json')
 
-# -- Utility filter for all FloatFields --
+def init_budget_storage(app):
+    """Initialize budget_storage within app context."""
+    with app.app_context():
+        return JsonStorage('data/budget.json', logger_instance=app.logger)
+
 def strip_commas(value):
     if isinstance(value, str):
         return value.replace(',', '')
     return value
 
-# Forms for budget steps
 class Step1Form(FlaskForm):
     first_name = StringField(trans('budget_first_name'), validators=[DataRequired(message=trans('budget_first_name_required'))])
     email = StringField(trans('budget_email'), validators=[Optional(), Email(message=trans('budget_email_invalid'))])
@@ -86,7 +88,6 @@ class Step4Form(FlaskForm):
 
 @budget_bp.route('/step1', methods=['GET', 'POST'])
 def step1():
-    """Handle budget step 1 form (personal info)."""
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
     lang = session.get('lang', 'en')
@@ -94,17 +95,16 @@ def step1():
     try:
         if request.method == 'POST' and form.validate_on_submit():
             session['budget_step1'] = form.data
-            logging.debug(f"Budget step1 form data: {form.data}")
+            current_app.logger.debug(f"Budget step1 form data: {form.data}")
             return redirect(url_for('budget.step2'))
         return render_template('budget_step1.html', form=form, trans=trans, lang=lang)
     except Exception as e:
-        logging.exception(f"Error in budget.step1: {str(e)}")
+        current_app.logger.exception(f"Error in budget.step1: {str(e)}")
         flash(trans("budget_error_personal_info"), "danger")
         return render_template('budget_step1.html', form=form, trans=trans, lang=lang)
 
 @budget_bp.route('/step2', methods=['GET', 'POST'])
 def step2():
-    """Handle budget step 2 form (income)."""
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
     lang = session.get('lang', 'en')
@@ -112,17 +112,16 @@ def step2():
     try:
         if request.method == 'POST' and form.validate_on_submit():
             session['budget_step2'] = form.data
-            logging.debug(f"Budget step2 form data: {form.data}")
+            current_app.logger.debug(f"Budget step2 form data: {form.data}")
             return redirect(url_for('budget.step3'))
         return render_template('budget_step2.html', form=form, trans=trans, lang=lang)
     except Exception as e:
-        logging.exception(f"Error in budget.step2: {str(e)}")
+        current_app.logger.exception(f"Error in budget.step2: {str(e)}")
         flash(trans("budget_error_income_invalid"), "danger")
         return render_template('budget_step2.html', form=form, trans=trans, lang=lang)
 
 @budget_bp.route('/step3', methods=['GET', 'POST'])
 def step3():
-    """Handle budget step 3 form (expenses)."""
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
     lang = session.get('lang', 'en')
@@ -130,17 +129,16 @@ def step3():
     try:
         if request.method == 'POST' and form.validate_on_submit():
             session['budget_step3'] = form.data
-            logging.debug(f"Budget step3 form data: {form.data}")
+            current_app.logger.debug(f"Budget step3 form data: {form.data}")
             return redirect(url_for('budget.step4'))
         return render_template('budget_step3.html', form=form, trans=trans, lang=lang)
     except Exception as e:
-        logging.exception(f"Error in budget.step3: {str(e)}")
+        current_app.logger.exception(f"Error in budget.step3: {str(e)}")
         flash(trans("budget_error_expenses_invalid"), "danger")
         return render_template('budget_step3.html', form=form, trans=trans, lang=lang)
 
 @budget_bp.route('/step4', methods=['GET', 'POST'])
 def step4():
-    """Handle budget step 4 form (savings goal) and calculate budget."""
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
     lang = session.get('lang', 'en')
@@ -181,6 +179,7 @@ def step4():
             }
             email = step1_data.get('email')
             send_email_flag = step1_data.get('send_email', False)
+            budget_storage = current_app.config['STORAGE_MANAGERS']['budget']
             budget_storage.append(record, user_email=email, session_id=session['sid'])
             if send_email_flag and email:
                 send_email(
@@ -211,17 +210,17 @@ def step4():
             return redirect(url_for('budget.dashboard'))
         return render_template('budget_step4.html', form=form, trans=trans, lang=lang)
     except Exception as e:
-        logging.exception(f"Error in budget.step4: {str(e)}")
+        current_app.logger.exception(f"Error in budget.step4: {str(e)}")
         flash(trans("budget_budget_process_error"), "danger")
         return render_template('budget_step4.html', form=form, trans=trans, lang=lang)
 
 @budget_bp.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
-    """Display budget dashboard with delete functionality."""
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
     lang = session.get('lang', 'en')
     try:
+        budget_storage = current_app.config['STORAGE_MANAGERS']['budget']
         user_data = budget_storage.filter_by_session(session['sid'])
         budgets = [(record["id"], record["data"]) for record in user_data]
         latest_budget = budgets[-1][1] if budgets else {}
@@ -236,14 +235,13 @@ def dashboard():
                         flash(trans("budget_budget_deleted_success"), "success")
                     else:
                         flash(trans("budget_budget_delete_failed"), "danger")
-                        logging.error(f"Failed to delete budget ID {budget_id}")
+                        current_app.logger.error(f"Failed to delete budget ID {budget_id}")
                     return redirect(url_for('budget.dashboard'))
                 except Exception as e:
-                    logging.exception(f"Error deleting budget item: {str(e)}")
+                    current_app.logger.exception(f"Error deleting budget item: {str(e)}")
                     flash(trans("budget_budget_delete_error"), "danger")
                     return redirect(url_for('budget.dashboard'))
 
-        # Calculate insights and tips
         tips = [
             trans("budget_tip_track_expenses"),
             trans("budget_tip_ajo_savings"),
@@ -268,7 +266,7 @@ def dashboard():
             lang=lang
         )
     except Exception as e:
-        logging.exception(f"Error in budget.dashboard: {str(e)}")
+        current_app.logger.exception(f"Error in budget.dashboard: {str(e)}")
         flash(trans("budget_dashboard_load_error"), "danger")
         return render_template(
             'budget_dashboard.html',
