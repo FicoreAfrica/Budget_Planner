@@ -23,7 +23,7 @@ translation_modules = [
     ('translations_financial_health', 'FINANCIAL_HEALTH_TRANSLATIONS'),
     ('translations_net_worth', 'NET_WORTH_TRANSLATIONS'),
     ('translations_core', 'CORE_TRANSLATIONS'),
-    ('translations_learning_hub', 'LEARNING_HUB_TRANSLATIONS'),  # <-- Added Learning Hub
+    ('translations_learning_hub', 'LEARNING_HUB_TRANSLATIONS'),
 ]
 
 # Mapping of key prefixes to their respective modules
@@ -37,7 +37,7 @@ KEY_PREFIX_TO_MODULE = {
     'financial_health_': 'translations_financial_health',
     'net_worth_': 'translations_net_worth',
     'core_': 'translations_core',
-    'learninghub_': 'translations_learning_hub',  # <-- Added Learning Hub
+    'learninghub_': 'translations_learning_hub',
 }
 
 # Dynamically import each translation module and combine translations
@@ -65,12 +65,9 @@ def trans(key: str, lang: str = None, **kwargs: Any) -> str:
     Logs a warning if the key is not found in the expected module.
     Supports string formatting with kwargs.
     """
-    # Default to 'en' if lang is None and we're not in a request context
+    # Default to 'en' if lang is None, ensuring no session access outside request context
     if lang is None:
-        if has_request_context():
-            lang = session.get('lang', 'en')
-        else:
-            lang = 'en'  # Default to English during initialization or outside request context
+        lang = session.get('lang', 'en') if has_request_context() else 'en'
 
     # Debug logging for the translation request
     session_id = session.get('session_id', 'no-session-id') if has_request_context() else 'no-session-id'
@@ -109,12 +106,9 @@ def get_translations(lang: str = None) -> Dict[str, str]:
     Return the combined translations dictionary for the specified language.
     Falls back to English if the language is not found.
     """
-    # Default to 'en' if lang is None and we're not in a request context
+    # Default to 'en' if lang is None, ensuring no session access outside request context
     if lang is None:
-        if has_request_context():
-            lang = session.get('lang', 'en')
-        else:
-            lang = 'en'  # Default to English during initialization or outside request context
+        lang = session.get('lang', 'en') if has_request_context() else 'en'
 
     if lang not in TRANSLATIONS:
         logger.warning(f"Language {lang} not found, returning English translations")
