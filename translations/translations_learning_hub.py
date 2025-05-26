@@ -1,11 +1,11 @@
 LEARNING_HUB_TRANSLATIONS = {
     'en': {
         # Course Titles & Descriptions
-        'learninghub_course_budget_title': 'Budgeting for Beginners',
-        'learninghub_course_budget_desc': 'Learn the basics of creating and managing a budget.',
-        'courses_course_financial_quiz_title': 'Tambayoyin Halin Kuɗi',
-        'courses_course_financial_quiz_desc': 'Gano halin kuɗin ku tare da wannan tambaya mai ma’amala.',
-        'courses_course_savings_basics_desc': 'Fahimci ainihin hanyoyin adana kuɗi yadda ya kamata.',
+        'learninghub_course_budgeting101_title': 'Budgeting 101',
+        'learninghub_course_budgeting101_desc': 'Learn the basics of budgeting and financial planning.',
+        'courses_course_financial_quiz_title': 'Financial Personality Quiz',
+        'courses_course_financial_quiz_desc': 'Discover your financial personality with this interactive quiz.',
+        'courses_course_savings_basics_desc': 'Understand the fundamentals of saving money effectively.',
         'courses_course_budgeting_101_title': 'Budgeting 101',
         'courses_course_financial_quiz': 'Financial Personality Quiz',
         'courses_course_savings_basics_title': 'Savings Basics',
