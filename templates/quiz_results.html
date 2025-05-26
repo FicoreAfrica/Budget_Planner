@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% block title %}{{ trans('quiz_financial_personality_dashboard') | default('Financial Personality Dashboard') }}{% endblock %}
 {% block extra_head %}
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.com/npm/chart.js@4.4.4/dist/chart.umd.min.css">
+    <script src="https://cdn.jsdelivr.com/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
     <style>
         .badge {
             padding: 0.5rem 1rem;
@@ -27,7 +27,7 @@
             {% for category, message in messages %}
                 <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
                     {{ trans('core_' + message) | default(message) }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close') | default('Close') }}"></button>
+                    <button type="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close') | default('Close') }}"></button>
                 </div>
             {% endfor %}
         {% endif %}
@@ -37,9 +37,9 @@
             <div class="card-body">
                 <h2>{{ trans('core_hello') | default('Hello') }} {{ latest_record.first_name | default(trans('core_user') | default('User')) }}, {{ trans('quiz_your_personality') | default('Your Personality') }}: {{ trans('quiz_' + latest_record.personality.lower()) | default(latest_record.personality) }}</h2>
                 <p><strong>{{ trans('quiz_score') | default('Score') }}:</strong> {{ latest_record.score | default(0) }} / 30</p>
-                <p>
+                <p>'
                     {% if latest_record.personality == 'Planner' %}
-                        {{ trans('quiz_planner_description') | default('You are disciplined and plan your finances carefully, using tools like PiggyVest and setting clear goals.') }}
+                        {{ trans('quiz_plans_description') | default('You are disciplined and plan your finances carefully, using tools like PiggyVest and setting clear goals.') }}
                     {% elif latest_record.personality == 'Saver' %}
                         {{ trans('quiz_saver_description') | default('You prioritize saving, often using Ajo/Esusu/Adashe, and are cautious with spending.') }}
                     {% elif latest_record.personality == 'Balanced' %}
@@ -93,7 +93,7 @@
                     {% for badge in latest_record.badges %}
                         <span class="badge bg-{{ 'success' if badge == 'Financial Guru' else 'primary' if badge == 'Savings Star' else 'info' if badge == 'Debt Dodger' else 'warning' if badge == 'Goal Setter' else 'secondary' }}">
                             <i class="fas fa-{{ 'trophy' if badge == 'Financial Guru' else 'star' if badge == 'Savings Star' else 'check-circle' if badge == 'Debt Dodger' else 'bullseye' }}"></i>
-                            {{ trans('quiz_' + badge.lower().replace(' ', '_')) | default(badge) }}
+                            {{ trans(badge.lower().replace(' ', '_')) | default(badge) }}
                         </span>
                     {% endfor %}
                 {% else %}
@@ -107,7 +107,7 @@
             </div>
             <div class="card-body">
                 {% for insight in insights %}
-                    <p>{{ trans('quiz_' + insight) | default(insight) }}</p>
+                    <p>{{ trans('quiz_insight_' + insight) | default(insight) }}</p>
                 {% endfor %}
                 {% if not insights %}
                     <p>{{ trans('quiz_no_insights_available') | default('No insights available') }}</p>
@@ -120,7 +120,7 @@
             </div>
             <div class="card-body">
                 {% for tip in tips %}
-                    <p>{{ trans('quiz_' + tip) | default(tip) }}</p>
+                    <p>{{ trans('quiz_tip_' + tip) | default(tip) }}</p>
                 {% endfor %}
             </div>
         </div>
@@ -138,8 +138,8 @@
                 {% else %}
                     <a href="{{ url_for('quiz.step1') }}" class="btn btn-primary">{{ trans('quiz_retake_quiz') | default('Retake Quiz') }}</a>
                 {% endif %}
-                <a href="{{ url_for('budget.step1') }}" class="btn btn-secondary">{{ trans('budget_create_budget') | default('Create Budget') }}</a>
-                <a href="{{ url_for('net_worth.step1') }}" class="btn btn-secondary">{{ trans('net_worth_calculate_net_worth') | default('Calculate Net Worth') }}</a>
+                <a href="{{ url_for('budget.step1') }}" class="btn btn-secondary">{{ trans('quiz_create_budget') | default('Create Budget') }}</a>
+                <a href="{{ url_for('net_worth.step1') }}" class="btn btn-secondary">{{ trans('quiz_calculate_net_worth') | default('Calculate Net Worth') }}</a>
             </div>
         </div>
         <div class="card mb-4">
