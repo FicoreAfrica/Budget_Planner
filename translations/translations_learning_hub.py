@@ -7,6 +7,11 @@ LEARNING_HUB_TRANSLATIONS = {
         'courses_course_budgeting_101_title_en': 'Budgeting 101',
         'courses_course_financial_quiz_title_en': 'Financial Personality Quiz',
         'courses_course_savings_basics_title_en': 'Savings Basics',
+        'courses_course_budgeting_101_title': 'Budgeting 101',
+        'courses_course_financial_quiz_title': 'Financial Personality Quiz',
+        'courses_course_savings_basics_title': 'Savings Basics',
+        'courses_course_quiz_desc': 'Discover your financial personality.',
+        'courses_course_savings_desc': 'Learn effective saving strategies.',
 
         # Core translations (from app.py context)
         'core_view_all_courses_en': 'View All Courses',
@@ -100,6 +105,11 @@ LEARNING_HUB_TRANSLATIONS = {
         'core_csrf_error_ha': 'Alamar CSRF mara inganci. Da fatan za a sake gwadawa.',
         'core_page_not_found_ha': 'Ba a sami shafin ba.',
         'core_logged_out_ha': 'An fice ka daga shiga.',
+        'courses_course_budgeting_101_title': 'Tsarin Kasafin Kuɗi 101',
+        'courses_course_financial_quiz_title': 'Tambayar Halin Kuɗi',
+        'courses_course_savings_basics_title': 'Tushen Ajiya',
+        'courses_course_quiz_desc': 'Gano halin kuɗin ku.',
+        'courses_course_savings_desc': 'Koyon dabarun ajiya masu inganci.',
         # Errors
         "learninghub_course_not_found": "Ba a samo kwas ba",
         "learninghub_lesson_not_found": "Ba a samo darasi ba",
