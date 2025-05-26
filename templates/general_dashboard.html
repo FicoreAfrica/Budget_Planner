@@ -200,7 +200,7 @@
                     <h3>{{ trans('courses_my_courses') | default('My Courses') }}</h3>
                     {% set user_progress = namespace(progress=[]) %}
                     {% for record in data.courses %}
-                        {% if record.course_id == 'budgeting_101' %}
+                        {% if record.course_id == 'budgeting-101' %}
                             {% set user_progress.progress = record %}
                         {% endif %}
                     {% endfor %}
@@ -219,14 +219,14 @@
                                 {{ user_progress.progress.progress_percentage | default(0) }}%
                             </div>
                         </div>
-                        <a href="{{ url_for('courses.course_page', course_id='budgeting_101') }}" 
+                        <a href="{{ url_for('learning_hub.course_overview', course_id='budgeting-101') }}" 
                            class="btn btn-primary"
                            aria-label="{{ trans('courses_continue_budgeting') | default('Continue Budgeting Basics Course') }}">
                             <i class="fas fa-play"></i> {{ trans('courses_continue_course') | default('Continue Course') }}
                         </a>
                     {% else %}
                         <p>{{ trans('courses_no_course_progress') | default('You haven’t started any courses yet.') }}</p>
-                        <a href="{{ url_for('courses.course_page', course_id='budgeting_101') }}" 
+                        <a href="{{ url_for('learning_hub.course_overview', course_id='budgeting-101') }}" 
                            class="btn btn-primary"
                            aria-label="{{ trans('courses_start_budgeting_course') | default('Start Budgeting Basics Course') }}">
                             <i class="fas fa-book"></i> {{ trans('courses_start_budgeting_course') | default('Start Budgeting Basics') }}
