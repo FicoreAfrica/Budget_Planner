@@ -4,6 +4,7 @@ CORE_TRANSLATIONS = {
         'core_back_to_home': 'Back to Home',
         'core_viewl_all_courses': 'Click to View All Courses',
         'core_welcome_to_score': 'Welcome to Score',
+        'core_error': 'An unexpected error occurred. Please try again.',
         # --------- CORE ---------
         'core_financial_dashboard': 'Financial Dashboard',
         'core_financial_overview': 'Your comprehensive financial overview with Ficore Africa.',
@@ -346,6 +347,7 @@ CORE_TRANSLATIONS = {
         'core_score': 'Maki',
         'core_status': 'Matsayi',
         'core_not_calculated': 'Ba a ƙididdige ba tukuna.',
+        'core_error': 'Kuskuren da ba a zata ba ya faru. Sake gwadawa.',
         'core_progress': 'Ci gaba',
         'core_metrics_overview': 'Dubin Jimillar Alamomin Kuɗi',
         'core_metrics_chart': 'Jadawalin Alamomin Kuɗi',
