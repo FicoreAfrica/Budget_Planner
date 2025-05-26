@@ -77,7 +77,7 @@ def lesson_lookup(course, lesson_id):
 @learning_hub_bp.route('/courses')
 def courses():
     progress = get_progress()
-    return render_template('courses.html', courses=courses_data, progress=progress)
+    return render_template('learning_hub_courses.html', courses=courses_data, progress=progress)
 
 @learning_hub_bp.route('/courses/<course_id>')
 def course_overview(course_id):
@@ -86,7 +86,7 @@ def course_overview(course_id):
         flash(trans("learninghub_course_not_found"), "danger")
         return redirect(url_for('learning_hub.courses'))
     progress = get_progress().get(course_id, {})
-    return render_template('course_overview.html', course=course, progress=progress)
+    return render_template('learning_hub_course_overview.html', course=course, progress=progress)
 
 @learning_hub_bp.route('/courses/<course_id>/lesson/<lesson_id>', methods=['GET', 'POST'])
 def lesson(course_id, lesson_id):
@@ -124,7 +124,7 @@ def lesson(course_id, lesson_id):
         else:
             flash(trans("learninghub_lesson_done"), "success")
             return redirect(url_for('learning_hub.course_overview', course_id=course_id))
-    return render_template('lesson.html', course=course, lesson=lesson, module=module, progress=course_progress)
+    return render_template('learning_hub_lesson.html', course=course, lesson=lesson, module=module, progress=course_progress)
 
 @learning_hub_bp.route('/courses/<course_id>/quiz/<quiz_id>', methods=['GET', 'POST'])
 def quiz(course_id, quiz_id):
@@ -150,7 +150,7 @@ def quiz(course_id, quiz_id):
         save_progress()
         flash(f"{trans('learninghub_quiz_completed')} {score}/{len(quiz['questions'])}", "success")
         return redirect(url_for('learning_hub.course_overview', course_id=course_id))
-    return render_template('quiz.html', course=course, quiz=quiz)
+    return render_template('learning_hub_quiz.html', course=course, quiz=quiz)
 
 @learning_hub_bp.route('/dashboard')
 def dashboard():
@@ -162,4 +162,4 @@ def dashboard():
         completed = len(cp.get('lessons_completed', []))
         percent = int((completed / lessons_total) * 100) if lessons_total > 0 else 0
         progress_summary.append({'course': course, 'completed': completed, 'total': lessons_total, 'percent': percent})
-    return render_template('dashboard.html', progress_summary=progress_summary)
+    return render_template('learning_hub_dashboard.html', progress_summary=progress_summary)
