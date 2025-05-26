@@ -14,6 +14,16 @@
         <h1>{{ trans('quiz_financial_personality_quiz') | default('Financial Personality Quiz') }}</h1>
         <p>{{ trans('quiz_answer_questions_for_personality') | default('Answer these questions to discover your financial personality') }}</p>
     </div>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ trans('core_' + message) | default(message) }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close') | default('Close') }}"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
     <div class="card">
         <div class="card-body">
             <form method="POST" action="{{ url_for('quiz.step2a', course_id=course_id) }}">
@@ -21,9 +31,9 @@
                 {% for question in questions %}
                     <div class="mb-3">
                         <label class="form-label">{{ trans('quiz_' + question.key + '_label') | default(question.label) }}</label>
-                        {{ getattr(form, question.key)(class="form-select", **{'data-bs-toggle': 'tooltip', 'title': trans('quiz_' + question.key + '_tooltip') | default(question.tooltip), 'aria-describedby': question.key + '_help'}) }}
-                        <small class="form-text text-muted">{{ trans('quiz_' + question.key + '_placeholder') | default(question.placeholder) }}</small>
-                        {% for error in getattr(form, question.key).errors %}
+                        {{ form[question.id](class="form-select", **{'data-bs-toggle': 'tooltip', 'title': trans('quiz_' + question.key + '_tooltip') | default(question.tooltip), 'aria-describedby': 'help_' + question.key}) }}
+                        <small class="form-text text-muted" id="help_{{ question.key }}">{{ trans('quiz_' + question.key + '_placeholder') | default(question.placeholder) }}</small>
+                        {% for error in form[question.id].errors %}
                             <div class="invalid-feedback">{{ trans(error) | default(error) }}</div>
                         {% endfor %}
                     </div>
