@@ -4,8 +4,8 @@ from translations import trans  # Import the global trans function
 learning_hub_bp = Blueprint('learning_hub', __name__)
 
 courses_data = {
-    "budgeting-101": {
-        "id": "budgeting-101",
+    "budgeting_101": {
+        "id": "budgeting_101",
         "title_key": "learninghub_course_budgeting101_title",
         "desc_key": "learninghub_course_budgeting101_desc",
         "modules": [
@@ -14,15 +14,53 @@ courses_data = {
                 "title_key": "learninghub_module_income_title",
                 "lessons": [
                     {
-                        "id": "budgeting-101-module-1-lesson-1",
+                        "id": "budgeting_101-module-1-lesson-1",
                         "title_key": "learninghub_lesson_income_sources_title",
                         "content_key": "learninghub_lesson_income_sources_content",
                         "quiz_id": "quiz-1-1"
                     },
                     {
-                        "id": "budgeting-101-module-1-lesson-2",
+                        "id": "budgeting_101-module-1-lesson-2",
                         "title_key": "learninghub_lesson_net_income_title",
                         "content_key": "learninghub_lesson_net_income_content",
+                        "quiz_id": None
+                    }
+                ]
+            }
+        ]
+    },
+    "financial_quiz": {
+        "id": "financial_quiz",
+        "title_key": "courses_course_financial_quiz_title",
+        "desc_key": "courses_course_financial_quiz_desc",
+        "modules": [
+            {
+                "id": "module-1",
+                "title_key": "learninghub_module_quiz_title",
+                "lessons": [
+                    {
+                        "id": "financial_quiz-module-1-lesson-1",
+                        "title_key": "learninghub_lesson_quiz_intro_title",
+                        "content_key": "learninghub_lesson_quiz_intro_content",
+                        "quiz_id": "quiz-financial-1"
+                    }
+                ]
+            }
+        ]
+    },
+    "savings_basics": {
+        "id": "savings_basics",
+        "title_key": "courses_course_savings_basics_title",
+        "desc_key": "courses_course_savings_basics_desc",
+        "modules": [
+            {
+                "id": "module-1",
+                "title_key": "learninghub_module_savings_title",
+                "lessons": [
+                    {
+                        "id": "savings_basics-module-1-lesson-1",
+                        "title_key": "learninghub_lesson_savings_strategies_title",
+                        "content_key": "learninghub_lesson_savings_strategies_content",
                         "quiz_id": None
                     }
                 ]
@@ -45,6 +83,20 @@ quizzes_data = {
                 "answer_key": "learninghub_quiz_income_opt_salary"
             }
         ]
+    },
+    "quiz-financial-1": {
+        "questions": [
+            {
+                "question_key": "learninghub_quiz_financial_q1",
+                "options_keys": [
+                    "learninghub_quiz_financial_opt_a",
+                    "learninghub_quiz_financial_opt_b",
+                    "learninghub_quiz_financial_opt_c",
+                    "learninghub_quiz_financial_opt_d"
+                ],
+                "answer_key": "learninghub_quiz_financial_opt_a"
+            }
+        ]
     }
 }
 
@@ -52,7 +104,6 @@ def get_progress():
     try:
         return session.setdefault('learning_progress', {})
     except Exception as e:
-        # Log the error and return a default empty dict
         print(f"Error accessing session['learning_progress']: {str(e)}")
         return {}
 
