@@ -30,9 +30,9 @@
                 {{ form.csrf_token }}
                 {% for question in questions %}
                     <div class="mb-3">
-                        <label class="form-label">{{ trans('quiz_' + question.key + '_label') | default(question.label) }}</label>
-                        {{ form[question.id](class="form-select", **{'data-bs-toggle': 'tooltip', 'title': trans('quiz_' + question.key + '_tooltip') | default(question.tooltip), 'aria-describedby': 'help_' + question.key}) }}
-                        <small class="form-text text-muted" id="help_{{ question.key }}">{{ trans('quiz_' + question.key + '_placeholder') | default(question.placeholder) }}</small>
+                        <label class="form-label">{{ trans('quiz_' + question.key + '_label') | default(question.label | default('Question')) }}</label>
+                        {{ form[question.id](class="form-select", **{'data-bs-toggle': 'tooltip', 'title': trans('quiz_' + question.key + '_tooltip') | default(question.tooltip | default('Select an option to answer this question')), 'aria-describedby': 'help_' + question.key}) }}
+                        <small class="form-text text-muted" id="help_{{ question.key }}">{{ trans('quiz_' + question.key + '_placeholder') | default(question.placeholder | default('Select an option')) }}</small>
                         {% for error in form[question.id].errors %}
                             <div class="invalid-feedback">{{ trans(error) | default(error) }}</div>
                         {% endfor %}
