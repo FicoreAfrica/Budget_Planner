@@ -11,8 +11,6 @@ LEARNING_HUB_TRANSLATIONS = {
         'courses_course_savings_basics_title': 'Savings Basics',
         'courses_course_quiz_desc': 'Discover your financial personality.',
         'courses_course_savings_desc': 'Learn effective saving strategies.',
-        'learninghub_course_budgeting101_title': 'Budgeting 101',
-        'learninghub_course_budgeting101_desc': 'Learn the basics of budgeting and financial planning.',
 
         # Core UI Translations
         'core_why_ficore': 'Why Ficore Africa?',
