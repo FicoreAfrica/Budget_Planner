@@ -8,6 +8,8 @@ LEARNING_HUB_TRANSLATIONS = {
         'courses_course_savings_basics_title': 'Savings Basics',
         'courses_course_quiz_desc': 'Discover your financial personality.',
         'courses_course_savings_desc': 'Learn effective saving strategies.',
+        'learninghub_course_budgeting101_title': 'Budgeting 101',
+        'learninghub_course_budgeting101_desc': 'Learn the basics of budgeting and financial planning.',
 
         # Core UI Translations
         'core_why_ficore': 'Why Ficore Africa?',
@@ -145,6 +147,8 @@ LEARNING_HUB_TRANSLATIONS = {
         'learninghub_quiz_completed': 'An kammala gwaji. Maki:',
         'learninghub_course_not_found': 'Ba a samo kwas ba',
         'learninghub_lesson_not_found': 'Ba a samo darasi ba',
+        'learninghub_course_budgeting101_title': 'Tsarin Kasafin Kuɗi 101',
+        'learninghub_course_budgeting101_desc': 'Koyi ainihin tsarin kasafin kuɗi da shirin kuɗi.',
         'learninghub_quiz_not_found': 'Ba a samo gwaji ba'
     }
 }
