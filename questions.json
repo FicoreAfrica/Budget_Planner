@@ -1,0 +1,92 @@
+[
+    {
+        "text": "impulse_purchases",
+        "options": ["Yes", "No"],
+        "type": "multiple",
+        "required": true,
+        "weight": 1,
+        "positive_answers": ["No"],
+        "negative_answers": ["Yes"]
+    },
+    {
+        "text": "spend_non_essentials",
+        "options": ["Yes", "No"],
+        "type": "multiple",
+        "required": true,
+        "weight": 1,
+        "positive_answers": ["No"],
+        "negative_answers": ["Yes"]
+    },
+    {
+        "text": "use_budgeting_tools",
+        "options": ["Yes", "No"],
+        "type": "multiple",
+        "required": true,
+        "weight": 1,
+        "positive_answers": ["Yes"],
+        "negative_answers": ["No"]
+    },
+    {
+        "text": "save_regularly",
+        "options": ["Yes", "No"],
+        "type": "multiple",
+        "required": true,
+        "weight": 1,
+        "positive_answers": ["Yes"],
+        "negative_answers": ["No"]
+    },
+    {
+        "text": "invest_money",
+        "options": ["Yes", "No"],
+        "type": "multiple",
+        "required": true,
+        "weight": 1,
+        "positive_answers": ["Yes"],
+        "negative_answers": ["No"]
+    },
+    {
+        "text": "track_expenses",
+        "options": ["Yes", "No"],
+        "type": "multiple",
+        "required": true,
+        "weight": 1,
+        "positive_answers": ["Yes"],
+        "negative_answers": ["No"]
+    },
+    {
+        "text": "emergency_fund",
+        "options": ["Yes", "No"],
+        "type": "multiple",
+        "required": true,
+        "weight": 1,
+        "positive_answers": ["Yes"],
+        "negative_answers": ["No"]
+    },
+    {
+        "text": "plan_expenses",
+        "options": ["Yes", "No"],
+        "type": "multiple",
+        "required": true,
+        "weight": 1,
+        "positive_answers": ["Yes"],
+        "negative_answers": ["No"]
+    },
+    {
+        "text": "set_financial_goals",
+        "options": ["Yes", "No"],
+        "type": "multiple",
+        "required": true,
+        "weight": 1,
+        "positive_answers": ["Yes"],
+        "negative_answers": ["No"]
+    },
+    {
+        "text": "seek_financial_advice",
+        "options": ["Yes", "No"],
+        "type": "multiple",
+        "required": true,
+        "weight": 1,
+        "positive_answers": ["Yes"],
+        "negative_answers": ["No"]
+    }
+]
