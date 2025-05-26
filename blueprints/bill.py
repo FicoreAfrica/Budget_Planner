@@ -1,4 +1,4 @@
-from flask import Blueprint, request, session, redirect, url_for, render_template, flash
+from flask import Blueprint, request, session, redirect, url_for, render_template, flash, current_app
 from flask_wtf import FlaskForm
 from wtforms import StringField, FloatField, SelectField, BooleanField, SubmitField
 from wtforms.validators import DataRequired, NumberRange, Email
@@ -8,16 +8,20 @@ from datetime import datetime, date, timedelta
 import logging
 import uuid
 try:
-    from app import trans  # Import trans from app.py instead
+    from app import trans
 except ImportError:
     def trans(key, lang=None):
-        return key  # Fallback to return the key as the translation
+        return key
 
 # Configure logging
 logging.basicConfig(filename='data/storage.txt', level=logging.DEBUG)
 
 bill_bp = Blueprint('bill', __name__, url_prefix='/bill')
-bill_storage = JsonStorage('data/bills.json')
+
+def init_bill_storage(app):
+    """Initialize bill_storage within app context."""
+    with app.app_context():
+        return JsonStorage('data/bills.json', logger_instance=app.logger)
 
 def strip_commas(value):
     if isinstance(value, str):
@@ -63,7 +67,6 @@ class BillForm(FlaskForm):
 
 @bill_bp.route('/form', methods=['GET', 'POST'])
 def form():
-    """Handle bill creation form."""
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
     lang = session.get('lang', 'en')
@@ -72,20 +75,17 @@ def form():
         if request.method == 'POST' and form.validate_on_submit():
             try:
                 data = form.data
-                # Validate due date
                 try:
                     due_date = datetime.strptime(data['due_date'], '%Y-%m-%d').date()
-                    # User should be able to set today or a future date (not a past date)
                     if due_date < date.today():
                         flash(trans("bill_due_date_future_validation"), "danger")
-                        logging.error("Due date in the past in bill.form")
+                        current_app.logger.error("Due date in the past in bill.form")
                         return redirect(url_for('bill.form'))
                 except ValueError:
                     flash(trans("bill_due_date_format_invalid"), "danger")
-                    logging.error("Invalid due date format in bill.form")
+                    current_app.logger.error("Invalid due date format in bill.form")
                     return redirect(url_for('bill.form'))
 
-                # Compute dynamic status
                 status = data['status']
                 if status not in ['paid', 'pending'] and due_date < date.today():
                     status = 'overdue'
@@ -101,6 +101,7 @@ def form():
                         "status": status
                     }
                 }
+                bill_storage = current_app.config['STORAGE_MANAGERS']['bills']
                 bill_storage.append(record, user_email=data['email'], session_id=session['sid'])
                 if data['send_email'] and data['email']:
                     send_email(
@@ -121,25 +122,24 @@ def form():
                 flash(trans("bill_bill_added_success"), "success")
                 return redirect(url_for('bill.view_edit'))
             except Exception as e:
-                logging.exception(f"Error processing bill form: {str(e)}")
+                current_app.logger.exception(f"Error processing bill form: {str(e)}")
                 flash(trans("bill_bill_add_error"), "danger")
                 return redirect(url_for('bill.form'))
         return render_template('bill_form.html', form=form, trans=trans, lang=lang)
     except Exception as e:
-        logging.exception(f"Template rendering error in bill.form: {str(e)}")
+        current_app.logger.exception(f"Template rendering error in bill.form: {str(e)}")
         flash(trans("bill_bill_form_load_error"), "danger")
         return redirect(url_for('index'))
 
 @bill_bp.route('/dashboard')
 def dashboard():
-    """Display user's bills with enhanced details."""
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
     lang = session.get('lang', 'en')
     try:
+        bill_storage = current_app.config['STORAGE_MANAGERS']['bills']
         user_data = bill_storage.filter_by_session(session['sid'])
         bills = [record["data"] for record in user_data]
-        # Compute statistics
         paid_count = sum(1 for bill in bills if bill['status'] == 'paid')
         unpaid_count = sum(1 for bill in bills if bill['status'] == 'unpaid')
         overdue_count = sum(1 for bill in bills if bill['status'] == 'overdue')
@@ -149,20 +149,17 @@ def dashboard():
         total_overdue = sum(bill['amount'] for bill in bills if bill['status'] == 'overdue')
         total_bills = sum(bill['amount'] for bill in bills)
 
-        # Spending by category
         categories = {}
         for bill in bills:
             cat = bill['category']
             categories[cat] = categories.get(cat, 0) + bill['amount']
 
-        # Bills due
         today = date.today()
         due_today = [b for b in bills if b['due_date'] == today.strftime('%Y-%m-%d')]
         due_week = [b for b in bills if today <= datetime.strptime(b['due_date'], '%Y-%m-%d').date() <= (today + timedelta(days=7))]
         due_month = [b for b in bills if today <= datetime.strptime(b['due_date'], '%Y-%m-%d').date() <= (today + timedelta(days=30))]
         upcoming_bills = [b for b in bills if today < datetime.strptime(b['due_date'], '%Y-%m-%d').date()]
 
-        # Nigeria-specific tips
         tips = [
             trans("bill_tip_pay_early"),
             trans("bill_tip_energy_efficient"),
@@ -192,7 +189,7 @@ def dashboard():
             lang=lang
         )
     except Exception as e:
-        logging.exception(f"Error in bill.dashboard: {str(e)}")
+        current_app.logger.exception(f"Error in bill.dashboard: {str(e)}")
         flash(trans("bill_dashboard_load_error"), "danger")
         try:
             return render_template(
@@ -222,17 +219,17 @@ def dashboard():
                 lang=lang
             )
         except Exception as render_e:
-            logging.exception(f"Template rendering error in bill.dashboard: {str(render_e)}")
+            current_app.logger.exception(f"Template rendering error in bill.dashboard: {str(render_e)}")
             flash(trans("bill_dashboard_template_error"), "danger")
             return redirect(url_for('index'))
 
 @bill_bp.route('/view_edit', methods=['GET', 'POST'])
 def view_edit():
-    """Handle bill viewing, editing, and deletion."""
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
     lang = session.get('lang', 'en')
     try:
+        bill_storage = current_app.config['STORAGE_MANAGERS']['bills']
         user_data = bill_storage.filter_by_session(session['sid'])
         bills = [(record["id"], record["data"]) for record in user_data]
         form = BillForm()
@@ -249,11 +246,11 @@ def view_edit():
                             due_date = datetime.strptime(data['due_date'], '%Y-%m-%d').date()
                             if due_date < date.today():
                                 flash(trans("bill_due_date_future_validation"), "danger")
-                                logging.error("Due date in the past in bill.view_edit")
+                                current_app.logger.error("Due date in the past in bill.view_edit")
                                 return redirect(url_for('bill.view_edit'))
                         except ValueError:
                             flash(trans("bill_due_date_format_invalid"), "danger")
-                            logging.error("Invalid due date format in bill.view_edit")
+                            current_app.logger.error("Invalid due date format in bill.view_edit")
                             return redirect(url_for('bill.view_edit'))
 
                         status = data['status']
@@ -275,9 +272,9 @@ def view_edit():
                             flash(trans("bill_bill_updated_success"), "success")
                         else:
                             flash(trans("bill_bill_update_failed"), "danger")
-                            logging.error(f"Failed to update bill ID {bill_id}")
+                            current_app.logger.error(f"Failed to update bill ID {bill_id}")
                     except Exception as e:
-                        logging.exception(f"Error in bill.view_edit (edit): {str(e)}")
+                        current_app.logger.exception(f"Error in bill.view_edit (edit): {str(e)}")
                         flash(trans("bill_bill_update_error"), "danger")
                     return redirect(url_for('bill.view_edit'))
 
@@ -287,10 +284,10 @@ def view_edit():
                         flash(trans("bill_bill_deleted_success"), "success")
                     else:
                         flash(trans("bill_bill_delete_failed"), "danger")
-                        logging.error(f"Failed to delete bill ID {bill_id}")
+                        current_app.logger.error(f"Failed to delete bill ID {bill_id}")
                     return redirect(url_for('bill.view_edit'))
                 except Exception as e:
-                    logging.exception(f"Error in bill.view_edit (delete): {str(e)}")
+                    current_app.logger.exception(f"Error in bill.view_edit (delete): {str(e)}")
                     flash(trans("bill_bill_delete_error"), "danger")
                     return redirect(url_for('bill.view_edit'))
 
@@ -305,23 +302,23 @@ def view_edit():
                             flash(trans("bill_bill_status_toggled"), "success")
                         else:
                             flash(trans("bill_bill_status_toggle_failed"), "danger")
-                            logging.error(f"Failed to toggle status for bill ID {bill_id}")
+                            current_app.logger.error(f"Failed to toggle status for bill ID {bill_id}")
                     else:
                         flash(trans("bill_bill_not_found"), "danger")
-                        logging.error(f"Bill ID {bill_id} not found")
+                        current_app.logger.error(f"Bill ID {bill_id} not found")
                     return redirect(url_for('bill.view_edit'))
                 except Exception as e:
-                    logging.exception(f"Error in bill.view_edit (toggle_status): {str(e)}")
+                    current_app.logger.exception(f"Error in bill.view_edit (toggle_status): {str(e)}")
                     flash(trans("bill_bill_status_toggle_error"), "danger")
                     return redirect(url_for('bill.view_edit'))
 
         return render_template('view_edit_bills.html', bills=bills, form=form, trans=trans, lang=lang)
     except Exception as e:
-        logging.exception(f"Error in bill.view_edit: {str(e)}")
+        current_app.logger.exception(f"Error in bill.view_edit: {str(e)}")
         flash(trans("bill_bills_load_error"), "danger")
         try:
             return render_template('view_edit_bills.html', bills=[], form=BillForm(), trans=trans, lang=lang)
         except Exception as render_e:
-            logging.exception(f"Template rendering error in bill.view_edit: {str(render_e)}")
+            current_app.logger.exception(f"Template rendering error in bill.view_edit: {str(render_e)}")
             flash(trans("bill_view_edit_template_error"), "danger")
             return redirect(url_for('index'))
