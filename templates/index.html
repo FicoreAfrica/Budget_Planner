@@ -82,11 +82,12 @@
             <h2 class="text-center"><i class="fas fa-book"></i> {{ trans('courses_recommended_learning') | default('Recommended Learning') }}</h2>
             <p class="text-center">{{ trans('courses_explore_courses') | default('Explore our courses to improve your financial literacy!') }}</p>
             <div class="courses-grid row">
+                {% if courses %}
                 {% for course in courses %}
                 <div class="col-md-4 mb-4">
                     <div class="card h-100">
                         <div class="card-body">
-                            <h3 class="card-title">{{ course.title_ha if lang == 'ha' else course.title_en }}</h3>
+                            <h3 class="card-title">{{ trans(course.title_key) }}</h3>
                             <p class="card-text">
                                 {% if course.id == 'budgeting_101' %}
                                     {{ trans('courses_learn_budgeting') | default('Learn the basics of creating and managing a budget.') }}
@@ -96,7 +97,7 @@
                                     {{ trans('courses_learn_savings') | default('Learn strategies to save effectively.') }}
                                 {% endif %}
                                 <br>
-                                {% if course.is_premium %}
+                                {% if course.is_premium' in course %}
                                     {{ trans('courses_premium_course') | default('Premium course') }}
                                 {% else %}
                                     {{ trans('courses_free_course') | default('Free course') }}
@@ -104,53 +105,66 @@
                             </p>
                             <a href="{{ url_for('learning_hub.course_overview', course_id=course.id) }}"
                                class="btn btn-primary"
-                               aria-label="{{ trans('courses_start_course') | default('Start Course') }} {{ course.title_ha if lang == 'ha' else course.title_en }}">
-                               {{ trans('core_start') | default('Start') }}
+                               aria-label="{{ trans('courses_start_course') | default('Start Course') }} {{ trans(course.title_key) }}">
+                                {{ trans('core_start') | default('Start') }}
                             </a>
                         </div>
                     </div>
                 </div>
                 {% endfor %}
+                {% else %}
+                <p class="text-center">{{ trans('learninghub_course_not_found | default('No courses available at the moment.') }}</p>
+                <a href="{{ url_for('learning_hub.courses') }}" class="btn btn-primary">{{ trans('core_view_all_courses') | default('View All Courses') }}</a>
+                {% endif %}
             </div>
-            <!-- Integrated Featured Courses -->
-            <div class="featured-courses-section text-center my-5">
-                <h3 class="mb-3">{{ trans('core_featured_courses') | default('Featured Courses') }}</h3>
-                <p class="lead mb-4">{{ trans('core_boost_literacy') | default('Boost your financial literacy with these top courses:') }}</p>
-                <ul class="why-list list-group-unstyled mb-4">
-                    {% for course in courses %}
-                    <li class="list-group-item">
+        <!-- Integrated Featured Courses -->
+        <div class="featured-courses-section text-center my-5">
+            <h3 class="mb-3">{{ trans('core_featured_courses') | default('Featured Courses') }}</h3>
+            <p class="lead mb-4">{{ trans('core_boost_literacy') | default('Boost your financial literacy with these top courses:') }}</p>
+            <ul class="list-group-unstyled mb-4">
+                {% if courses %}
+                {% for course in courses %}
+                    <li class="course-item">
                         <i class="fas fa-book"></i>
                         {{ trans(course.title_key) | default(course.title_en) }}
                     </li>
-                    {% endfor %}
-                </ul>
-                <a href="{{ url_for('learning_hub.courses') }}" class="btn btn-primary mt-3">{{ trans('core_view_all_courses') | default('View All Courses') }}</a>
-            </div>
+                {% endfor %}
+                {% else %}
+                    <li class="course-item">
+                        <p class="text-center">{{ trans('learninghub_course_not_found') | default('No featured courses available at the moment.') }}</p>
+                    </li>
+                {% endif %}
+            </ul>
+            <a href="{{ url_for('learning_hub.courses') }}" class="btn btn-primary mt-3">{{ trans('core_view_all_courses') | default('View All Courses') }}</a>
         </div>
-        <div class="testimonials-section my-5">
-            <h2 class="text-center"><i class="fas fa-quote-left"></i> {{ trans('core_testimonials') | default('What people are Saying about Us') }}</h2>
-            <div class="row">
-                <div class="col-md-4">
-                    <div class="testimonial text-center">
-                        <i class="fas fa-quote-left"></i> {{ trans('core_impressed_features') | default('I explored the features earlier today and was impressed... I thought it was only for SMEs, but I see value for individuals too!') }} — <span class="name">Maisarata U</span>
-                    </div>
+    </div>
+    <div class="testimonials-section my-5">
+        <h2 class="text-center"><i class="fas fa-quote-left"></i> {{ trans('core_testimonials') | default('What People Are Saying About Us') }}</h2>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="testimonial text-center">
+                    <i class="fas fa-quote-left"></i>
+                    {{ trans('core_impressed_features') | default('I explored the features earlier today and was impressed... I thought it was only for SMEs, but I see value for individuals too!') }} — <span class="name">Maisarata U</span>
                 </div>
-                <div class="col-md-4">
-                    <div class="testimonial text-center">
-                        <i class="fas fa-quote-left"></i> {{ trans('core_ficore_praise') | default('🔥 Ficore 🔥🔥🔥🔥🔥') }} — <span class="name">Abubakar Abdulkadir</span>, {{ trans('core_software_engineer') | default('Software Engineer for Sustainable Solutions') }}
-                    </div>
+            </div>
+            <div class="col-md-4">
+                <div class="testimonial text-center">
+                    <i class="fas fa-quote-left"></i>
+                    {{ trans('core_ficore_praise') | default('🔥 Ficore 🔥🔥🔥🔥🔥') }} — <span class="name">Abubakar Abdulkadir</span>, {{ trans('core_software_engineer') | default('Software Engineer for Sustainable Solutions') }}
                 </div>
-                <div class="col-md-4">
-                    <div class="testimonial text-center">
-                        <i class="fas fa-quote-left"></i> {{ trans('core_potential_support') | default('I’ve been following the Ficore project and I’m impressed. It’s clear there’s potential, and I look forward to supporting.') }} — <span class="name">Aminu Sani Usman</span>
-                    </div>
+            </div>
+            <div class="col-md-4">
+                <div class="testimonial text-center">
+                    <i class="fas fa-quote-left"></i>
+                    {{ trans('core_potential_support') | default('I’ve been following the Ficore project and I’m impressed. It’s clear there’s potential, and I look forward to supporting.') }} — <span class="name">Aminu Sani Usman</span>
+                </div>
                 </div>
             </div>
         </div>
     </section>
     <section class="why-section my-5">
         <h2 class="text-center">{{ trans('core_why_ficore') | default('Why Ficore Africa?') }}</h2>
-        <ul class="why-list list-unstyled">
+        <ul class="list-unstyled">
             <li><i class="fas fa-check-circle"></i> {{ trans('core_localized') | default('Localized for Africa with support for Naira and regional financial contexts') }}</li>
             <li><i class="fas fa-check-circle"></i> {{ trans('core_empowers') | default('Empowers financial literacy with easy-to-use tools') }}</li>
             <li><i class="fas fa-check-circle"></i> {{ trans('core_actionable') | default('Provides actionable insights for better financial decisions') }}</li>
