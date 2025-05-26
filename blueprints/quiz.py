@@ -78,7 +78,7 @@ class QuizForm(FlaskForm):
         with current_app.app_context():
             current_app.logger.debug(f"Initializing QuizForm with questions: {[q['id'] for q in self.questions]}")
 
-        if not self.personal_info:
+        if not personal_info:
             for q in self.questions:
                 field_name = q['id']
                 question_key = q.get('key', '')
@@ -436,7 +436,7 @@ def step2b():
             answers = [(QUIZ_QUESTIONS[int(k.split('_')[1]) - 1], v) for k, v in session['quiz_data'].items() if k.startswith('question_')]
             personality, personality_desc, tip = assign_personality(answers, language)
             score = calculate_score(answers)
-            user_df = pd.DataFrame([
+            user_df = pd.DataFrame([{
                 'Timestamp': datetime.utcnow(),
                 'first_name': session['quiz_data'].get('first_name', ''),
                 'email': session['quiz_data'].get('email', ''),
