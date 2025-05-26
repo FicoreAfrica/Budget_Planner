@@ -116,9 +116,14 @@ def create_app():
             'courses': JsonStorage('data/courses.json', logger_instance=log),
         }
 
-        # Initialize courses.json if empty
+        # Initialize courses.json if empty or missing
+        courses_file = '/opt/render/project/src/data/courses.json'
         courses_storage = app.config['STORAGE_MANAGERS']['courses']
         try:
+            if not os.path.exists(courses_file):
+                log.warning("courses.json does not exist. Creating with default courses.")
+                with open(courses_file, 'w') as f:
+                    json.dump([], f)
             courses = courses_storage.read_all()
             if not courses:
                 log.warning("Courses storage is empty. Initializing with default courses.")
@@ -127,14 +132,14 @@ def create_app():
                         'id': 'budgeting_101',
                         'title_key': 'learninghub_course_budgeting101_title',
                         'title_en': 'Budgeting 101',
-                        'title_ha': 'Tsarin Kasafin Kuɗi 101',
+                        'title_ha': 'Tsarin Kasafin Kuḋi',
                         'is_premium': False
                     },
                     {
                         'id': 'financial_quiz',
                         'title_key': 'courses_course_financial_quiz_title',
                         'title_en': 'Financial Personality Quiz',
-                        'title_ha': 'Tambayar Halin Kuɗi',
+                        'title_ha': 'Tambayar Halin Kuḋi',
                         'is_premium': False
                     },
                     {
@@ -148,6 +153,13 @@ def create_app():
                 for course in default_courses:
                     courses_storage.create(course)
                 log.info("Initialized courses.json with default courses.")
+                # Verify write
+                courses = courses_storage.read_all()
+                if len(courses) != len(default_courses):
+                    log.error(f"Failed to verify courses.json initialization. Expected {len(default_courses)} courses, got {len(courses)}.")
+        except PermissionError as e:
+            log.error(f"Permission error initializing courses.json: {str(e)}")
+            raise RuntimeError("Cannot write to courses.json due to permissions.")
         except Exception as e:
             log.error(f"Error initializing courses storage: {str(e)}")
 
@@ -197,7 +209,7 @@ def create_app():
         lang = session.get('lang', 'en')
         def context_trans(key, **kwargs):
             translated = trans(key, lang=lang, **kwargs)
-            log.debug(f"Translating key='{key}' in lang='{lang}' to '{translated}'")
+            log.debug(f"Translating key='{key}' in lang={lang} to '{translated}'")
             return translated
         log.debug("Injecting translations and context variables")
         return {
@@ -224,14 +236,14 @@ def create_app():
                 'id': 'budgeting_101',
                 'title_key': 'learninghub_course_budgeting101_title',
                 'title_en': 'Budgeting 101',
-                'title_ha': 'Tsarin Kasafin Kuɗi 101',
+                'title_ha': 'Tsarin Kasafin Kuḋi',
                 'is_premium': False
             },
             {
                 'id': 'financial_quiz',
                 'title_key': 'courses_course_financial_quiz_title',
                 'title_en': 'Financial Personality Quiz',
-                'title_ha': 'Tambayar Halin Kuɗi',
+                'title_ha': 'Tambayar Halin Kuḋi',
                 'is_premium': False
             },
             {
@@ -251,7 +263,7 @@ def create_app():
         except Exception as e:
             log.error(f"Error retrieving courses: {str(e)}")
             courses = sample_courses
-            flash(trans('core_error_message'), 'danger')
+            flash(trans('core_error'), 'danger')
         return render_template(
             'index.html',
             t=trans,
@@ -278,7 +290,7 @@ def create_app():
     @session_required
     def general_dashboard():
         lang = session.get('lang', 'en')
-        log.info("Serving general_dashboard")
+        log.info("Serving general dashboard")
         data = {}
         expected_keys = {
             'score': None,
@@ -350,20 +362,20 @@ def create_app():
     def handle_global_error(e):
         lang = session.get('lang', 'en')
         log.exception(f"Global error: {str(e)}")
-        flash(trans('core_error_message'), 'danger')
-        return render_template('500.html', error=trans('core_error_message'), t=trans, lang=lang), 500
+        flash(trans('core_error'), 'danger')
+        return render_template('500.html', error=trans('core_error'), t=trans, lang=lang), 500
 
     @app.errorhandler(CSRFError)
     def handle_csrf_error(e):
         lang = session.get('lang', 'en')
-        log.error(f"CSRF Error: {str(e)}")
+        log.error(f"CSRF error: {str(e)}")
         flash(trans('core_csrf_error'), 'danger')
         return render_template('500.html', error=trans('core_csrf_error'), t=trans, lang=lang), 400
 
     @app.errorhandler(404)
     def page_not_found(e):
         lang = session.get('lang', 'en')
-        log.error(f"404 Error: {str(e)}")
+        log.error(f"404 error: {str(e)}")
         return render_template('404.html', error=trans('core_page_not_found'), t=trans, lang=lang), 404
 
     # Register blueprints
