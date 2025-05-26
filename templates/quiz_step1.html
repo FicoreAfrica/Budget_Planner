@@ -48,7 +48,7 @@
                 </div>
                 <div class="d-flex justify-content-between">
                     {% if course_id %}
-                        <a href="{{ url_for('courses.course_catalog') }}" class="btn btn-secondary">{{ trans('courses_back_to_courses') | default('Back to Courses') }}</a>
+                        <a href="{{ url_for('learning_hub.courses') }}" class="btn btn-secondary">{{ trans('courses_back_to_courses') | default('Back to Courses') }}</a>
                     {% endif %}
                     <button type="submit" class="btn btn-primary">{{ trans('quiz_start_quiz') | default('Start Quiz') }}</button>
                 </div>
