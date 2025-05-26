@@ -1,6 +1,7 @@
 import logging
 import os
 import json
+import uuid  # Added to fix NameError
 from datetime import datetime, timedelta
 from flask import Flask, render_template, request, session, redirect, url_for, flash, send_from_directory, has_request_context, g, jsonify
 from flask_session import Session
