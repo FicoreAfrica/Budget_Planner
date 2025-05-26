@@ -3,6 +3,19 @@ LEARNING_HUB_TRANSLATIONS = {
         # Course Titles & Descriptions
         "learninghub_course_budgeting101_title": "Budgeting for Beginners",
         "learninghub_course_budgeting101_desc": "Learn the basics of creating and managing a budget.",
+        # Course titles
+        'courses_course_budgeting_101_title_en': 'Budgeting 101',
+        'courses_course_financial_quiz_title_en': 'Financial Personality Quiz',
+        'courses_course_savings_basics_title_en': 'Savings Basics',
+
+        # Core translations (from app.py context)
+        'core_view_all_courses_en': 'View All Courses',
+        'core_language_changed_en': 'Language changed successfully',
+        'core_invalid_language_en': 'Invalid language selected',
+        'core_error_message_en': 'An error occurred. Please try again.',
+        'core_csrf_error_en': 'Invalid CSRF token. Please try again.',
+        'core_page_not_found_en': 'Page not found.',
+        'core_logged_out_en': 'You have been logged out.',
         # Module Titles
         "learninghub_module_income_title": "Understanding Your Income",
         # Lesson Titles & Content
@@ -74,6 +87,19 @@ LEARNING_HUB_TRANSLATIONS = {
         "learninghub_lesson_marked": "An kammala darasi!",
         "learninghub_lesson_done": "Kun kammala duk darussan a wannan module!",
         "learninghub_quiz_completed": "An kammala gwaji. Maki:",
+        # Course titles
+        'courses_course_budgeting_101_title_ha': 'Tsarin Kasafin Kuɗi 101',
+        'courses_course_financial_quiz_title_ha': 'Gwaji na Hali na Kuɗi',
+        'courses_course_savings_basics_title_ha': 'Tushen Ajiya',
+
+        # Core translations
+        'core_view_all_courses_ha': 'Duba Duk Kwas',
+        'core_language_changed_ha': 'An canza yare cikin nasara',
+        'core_invalid_language_ha': 'An zaɓi yaren da ba daidai ba',
+        'core_error_message_ha': 'An samu kuskure. Da fatan za a sake gwadawa.',
+        'core_csrf_error_ha': 'Alamar CSRF mara inganci. Da fatan za a sake gwadawa.',
+        'core_page_not_found_ha': 'Ba a sami shafin ba.',
+        'core_logged_out_ha': 'An fice ka daga shiga.',
         # Errors
         "learninghub_course_not_found": "Ba a samo kwas ba",
         "learninghub_lesson_not_found": "Ba a samo darasi ba",
