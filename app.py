@@ -1,7 +1,7 @@
 import logging
 import os
 import json
-import uuid  # Added to fix NameError
+import uuid
 from datetime import datetime, timedelta
 from flask import Flask, render_template, request, session, redirect, url_for, flash, send_from_directory, has_request_context, g, jsonify
 from flask_session import Session
@@ -107,13 +107,12 @@ def create_app():
     with app.app_context():
         app.config['STORAGE_MANAGERS'] = {
             'financial_health': JsonStorage('data/financial_health.json', logger_instance=log),
-            'budget': init_budget_storage(app),
+            'budget': JsonStorage('data/budget.json', logger_instance=log),
             'quiz': JsonStorage('data/quiz_data.json', logger_instance=log),
             'bills': init_bill_storage(app),
-            'net_worth': JsonStorage('data/networth.json', logger_instance=log),
-            'emergency_fund': JsonStorage('data/emergency_fund.json', logger_instance=log),
-            'user_progress': JsonStorage('data/user_progress.json', logger_instance=log),
+            'net_worth': JsonStorage('data/courses.json', logger_instance=log),
             'courses': JsonStorage('data/courses.json', logger_instance=log),
+            'user_progress': JsonStorage('data/user_progress.json', logger_instance=log),
         }
 
     # Initialize quiz questions
@@ -136,13 +135,13 @@ def create_app():
         @wraps(f)
         def decorated_function(*args, **kwargs):
             if 'sid' not in session:
-                session['sid'] = str(uuid.uuid4())
+                session['sid'] = str(uuid.uuid4()))
                 log.info(f"New session ID generated: {session['sid']}")
             return f(*args, **kwargs)
         return decorated_function
 
     # Before request setup
-    @app.before_request
+    @app.before_request()
     def before_request_setup():
         if 'sid' not in session:
             session['sid'] = str(uuid.uuid4())
@@ -157,7 +156,7 @@ def create_app():
             g.log.warning("data/storage.txt not found")
 
     # Context processor for translations
-    @app.context_processor
+    @app.context_processor()
     def inject_translations():
         lang = session.get('lang', 'en')
         def context_trans(key, **kwargs):
@@ -194,17 +193,17 @@ def create_app():
         sample_courses = [
             {
                 'id': 'budgeting_101',
-                'title_key': 'courses_course_budgeting_101_title',
-                'title_en': 'Budgeting 101'
+                'title_key': 'learninghub_course_budget_101_title',
+                'title_en': 'Budgeting Basics'
             },
             {
                 'id': 'financial_quiz',
-                'title_key': 'courses_course_financial_quiz_title',
+                'title_key': 'courses_course_financial_quiz',
                 'title_en': 'Financial Personality Quiz'
             },
             {
                 'id': 'savings_basics',
-                'title_key': 'courses_course_savings_basics_title',
+                'title_key': 'courses_course_savings_basics',
                 'title_en': 'Savings Basics'
             }
         ]
@@ -291,17 +290,16 @@ def create_app():
                     status["details"] = f"Storage for {tool} failed to initialize"
                     return jsonify(status), 500
             if app.config['GSPREAD_CLIENT'] is None:
+                log.error(f"Health check failed: {str(e)}")
                 status["status"] = "unhealthy"
                 status["details"] = "Google Sheets client not initialized"
                 return jsonify(status), 500
         except Exception as e:
-            log.error(f"Health check failed: {str(e)}")
             status["status"] = "unhealthy"
             status["details"] = str(e)
             return jsonify(status), 500
         return jsonify(status), 200
 
-    # Error handlers
     @app.errorhandler(Exception)
     def handle_global_error(e):
         lang = session.get('lang', 'en')
