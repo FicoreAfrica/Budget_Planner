@@ -44,7 +44,7 @@
                 </div>
                 <div class="mb-3 form-check">
                     {{ form.send_email(class="form-check-input", **{'data-bs-toggle': 'tooltip', 'title': trans('quiz_send_email_tooltip') | default('Check to receive email with quiz results'), 'aria-describedby': 'send_email_help'}) }}
-                    <label class="form-check-label" for="send_email">{{ trans('quiz_send_email') | default('Send Email') }}</label>
+                    <label class="form-check-label" for="send_email">{{ trans('Send Email') | default('Send Email') }}</label>
                 </div>
                 <div class="d-flex justify-content-between">
                     {% if course_id %}
