@@ -88,10 +88,12 @@
                         <div class="card-body">
                             <h3 class="card-title">{{ course.title_ha if lang == 'ha' else course.title_en }}</h3>
                             <p class="card-text">
-                                {% if course.id == 'budgeting-101' %}
+                                {% if course.id == 'budgeting_101' %}
                                     {{ trans('courses_learn_budgeting') | default('Learn the basics of creating and managing a budget.') }}
                                 {% elif course.id == 'financial_quiz' %}
                                     {{ trans('quiz_assess_personality') | default('Take a quiz to discover your financial personality.') }}
+                                {% elif course.id == 'savings_basics' %}
+                                    {{ trans('courses_learn_savings') | default('Learn strategies to save effectively.') }}
                                 {% endif %}
                                 <br>
                                 {% if course.is_premium %}
@@ -149,9 +151,9 @@
     <section class="why-section my-5">
         <h2 class="text-center">{{ trans('core_why_ficore') | default('Why Ficore Africa?') }}</h2>
         <ul class="why-list list-unstyled">
-            <li><i class="fas fa-check-circle"></i> {{ trans('core_localized_africa') | default('Localized for Africa with support for Naira and regional financial contexts') }}</li>
-            <li><i class="fas fa-check-circle"></i> {{ trans('core_empowers_literacy') | default('Empowers financial literacy with easy-to-use tools') }}</li>
-            <li><i class="fas fa-check-circle"></i> {{ trans('core_actionable_insights') | default('Provides actionable insights for better financial decisions') }}</li>
+            <li><i class="fas fa-check-circle"></i> {{ trans('core_localized') | default('Localized for Africa with support for Naira and regional financial contexts') }}</li>
+            <li><i class="fas fa-check-circle"></i> {{ trans('core_empowers') | default('Empowers financial literacy with easy-to-use tools') }}</li>
+            <li><i class="fas fa-check-circle"></i> {{ trans('core_actionable') | default('Provides actionable insights for better financial decisions') }}</li>
         </ul>
     </section>
 </div>
