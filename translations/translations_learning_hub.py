@@ -106,3 +106,23 @@ LEARNING_HUB_TRANSLATIONS = {
         "learninghub_quiz_not_found": "Ba a samo gwaji ba"
     }
 }
+
+def trans(key, lang='en', default=None):
+    """
+    Retrieve translation for a given key and language.
+    """
+    import logging
+    logger = logging.getLogger('ficore_app.translations')
+    translations = TRANSLATIONS.get(lang, {})
+    result = translations.get(key, default or key)
+    logger.debug(f"Translation request: key={key}, lang={lang}")
+    if result == key and default is None:
+        logger.warning(f"Missing translation for key={key} in lang={lang}, expected in module unknown_module")
+    logger.debug(f"Translation result: key={key}, lang={lang}, result={result}")
+    return result
+
+def get_translations(lang='en'):
+    """
+    Get all translations for a given language.
+    """
+    return TRANSLATIONS.get(lang, {})
