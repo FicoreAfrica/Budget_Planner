@@ -5,6 +5,15 @@ QUIZ_TRANSLATIONS = {
         'quiz_track_expenses_tooltip': 'E.g., recording daily spending on food, transport, or data subscriptions using apps like Flowdiary or notebooks',
         'quiz_track_expenses_placeholder': 'Select how often you track expenses',
         'quiz_save_regularly_label': 'Yes',
+        # Add missing raw question keys (if template uses them directly)
+        'track_expenses': 'Do you track your expenses?',
+        'save_regularly': 'Do you save regularly?',
+        'spend_non_essentials': 'Do you spend on non-essential items?',
+        'plan_expenses': 'Do you plan your expenses?',
+        'impulse_purchases': 'Do you make impulse purchases?',
+        # Add case-sensitive Yes/No for compatibility
+        'Yes': 'Yes',
+        'No': 'No',
         'quiz_save_regularly_label': 'Do you save regularly?',
         'quiz_save_regularly_tooltip': 'E.g., contributing to Ajo/Esusu/Adashe or using savings platforms like PiggyVest or Cowrywise',
         'quiz_save_regularly_placeholder': 'Select how often you save',
@@ -390,6 +399,15 @@ QUIZ_TRANSLATIONS = {
         'quiz_receive_email_report': 'Karɓi Rahoton Imel',
         'quiz_previous': 'Na Baya',
         'quiz_progress': 'Gaba',
+        # Add missing raw question keys
+        'track_expenses': 'Kana bibiyar kashe kuɗin ka?',
+        'save_regularly': 'Kana ajiya akai-akai?',
+        'spend_non_essentials': 'Kana kashe kuɗin ka akan abubuwan da ba dole ba?',
+        'plan_expenses': 'Kana tsara kashe kuɗin ka?',
+        'impulse_purchases': 'Kana yin sayayya ba tare da shiri ba?',
+        # Add case-sensitive Yes/No
+        'Yes': 'Eh',
+        'No': 'A’a',
 
         # Tips and insights
         'quiz_tip_automate_savings': 'Yi amfani da manhajojin kamar PiggyVest ko Cowrywise don ajiya ta atomatik.',
