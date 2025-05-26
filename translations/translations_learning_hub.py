@@ -151,6 +151,9 @@ LEARNING_HUB_TRANSLATIONS = {
         'learninghub_course_not_found': 'Ba a samo kwas ba',
         'learninghub_lesson_not_found': 'Ba a samo darasi ba',
         'learninghub_course_budgeting101_title': 'Tsarin Kasafin Kuɗi 101',
+        'courses_course_financial_quiz_title': 'Tambayoyin Halin Kuɗi',
+        'courses_course_financial_quiz_desc': 'Gano halin kuɗin ku tare da wannan tambaya mai ma’amala.',
+        'courses_course_savings_basics_desc': 'Fahimci ainihin hanyoyin adana kuɗi yadda ya kamata.',
         'learninghub_course_budgeting101_desc': 'Koyi ainihin tsarin kasafin kuɗi da shirin kuɗi.',
         'learninghub_quiz_not_found': 'Ba a samo gwaji ba'
     }
