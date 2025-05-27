@@ -1,4 +1,4 @@
-{
+TRANSLATIONS_BILL = {
     'en': {
         # From previously merged dictionary
         'bill_amount': 'Amount',
