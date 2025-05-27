@@ -4,7 +4,7 @@ from typing import Dict, Any
 
 # Set up logger to match app.py's logging configuration
 logger = logging.getLogger('ficore_app.translations')
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)  # Changed from DEBUG to INFO
 
 # Initialize TRANSLATIONS dictionary
 TRANSLATIONS: Dict[str, Dict[str, str]] = {
