@@ -3,7 +3,7 @@
 <div class="container">
     <div class="header">
         <h1>{{ trans(course.title_key) }}</h1>
-        <h3>{{ trans('learninghub_quiz') }}</h3>
+        <h3>{{ trans('learning_hub_quiz') }}</h3>
     </div>
     <form method="POST">
         {% for i, q in enumerate(quiz.questions) %}
@@ -19,10 +19,10 @@
             </div>
         </div>
         {% endfor %}
-        <button type="submit" class="btn btn-primary mt-4">{{ trans('learninghub_submit') }}</button>
+        <button type="submit" class="btn btn-primary mt-4">{{ trans('learning_hub_submit') }}</button>
     </form>
     <a href="{{ url_for('learning_hub.course_overview', course_id=course.id) }}" class="btn btn-secondary mt-3">
-        {{ trans('learninghub_back_to_course') }}
+        {{ trans('learning_hub_back_to_course') }}
     </a>
 </div>
 {% endblock %}
