@@ -2,7 +2,7 @@
 {% block content %}
 <div class="container">
     <div class="header">
-        <h1>{{ trans('learninghub_dashboard') }}</h1>
+        <h1>{{ trans('learning_hub_dashboard') }}</h1>
     </div>
     <div class="row mt-4">
         {% for item in progress_summary %}
@@ -16,14 +16,14 @@
                     </div>
                     <p>
                         {{ item.completed }}/{{ item.total }}
-                        {{ trans('learninghub_lessons_completed_label') }}
+                        {{ trans('learning_hub_lessons_completed_label') }}
                     </p>
-                    <a href="{{ url_for('learning_hub.course_overview', course_id=item.course.id) }}" class="btn btn-primary">{{ trans('learninghub_continue') }}</a>
+                    <a href="{{ url_for('learning_hub.course_overview', course_id=item.course.id) }}" class="btn btn-primary">{{ trans('learning_hub_continue') }}</a>
                 </div>
             </div>
         </div>
         {% endfor %}
     </div>
-    <a href="{{ url_for('learning_hub.courses') }}" class="btn btn-secondary mt-3">{{ trans('learninghub_browse_courses') }}</a>
+    <a href="{{ url_for('learning_hub.courses') }}" class="btn btn-secondary mt-3">{{ trans('learning_hub_browse_courses') }}</a>
 </div>
 {% endblock %}
