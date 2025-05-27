@@ -209,9 +209,7 @@ def create_app():
         lang = session.get('lang', 'en')
         def context_trans(key, **kwargs):
             translated = trans(key, lang=lang, **kwargs)
-            log.debug(f"Translating key='{key}' in lang={lang} to '{translated}'")
             return translated
-        log.debug("Injecting translations and context variables")
         return {
             'trans': context_trans,
             'current_year': datetime.now().year,
