@@ -3,7 +3,7 @@ LEARNING_HUB_TRANSLATIONS = {
         # Course Titles & Descriptions
         'learning_hub_course_budgeting101_title': 'Budgeting 101',
         'learning_hub_course_budgeting101_desc': 'Learn the basics of budgeting and managing your money.',
-        'learning_hub_course_financial_quiz_title': 'Financial Personality Quiz',
+        'learning_hub_course_financial_quiz_title': 'Financial Quiz',
         'learning_hub_course_financial_quiz_desc': 'Discover your financial personality with this interactive quiz.',
         'learning_hub_course_savings_basics_title': 'Savings Basics',
         'learning_hub_course_savings_basics_desc': 'Understand the fundamentals of saving money effectively.',
@@ -100,7 +100,7 @@ LEARNING_HUB_TRANSLATIONS = {
         # Course Titles & Descriptions
         'learning_hub_course_budgeting101_title': 'Tsarin Kasafin Kuɗi 101',
         'learning_hub_course_budgeting101_desc': 'Koyi ainihin tsarin kasafin kuɗi da shirin kuɗi.',
-        'learning_hub_course_financial_quiz_title': 'Tambayoyin Halin Kuɗi',
+        'learning_hub_course_financial_quiz_title': 'Tambayoyin Halayyar Kuɗi',
         'learning_hub_course_financial_quiz_desc': 'Gano halin kuɗin ku tare da wannan tambaya mai ma’amala.',
         'learning_hub_course_savings_basics_title': 'Asalin Ajiya',
         'learning_hub_course_savings_basics_desc': 'Fahimci ainihin hanyoyin adana kuɗi yadda ya kamata.',
