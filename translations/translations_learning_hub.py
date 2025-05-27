@@ -11,6 +11,14 @@ LEARNING_HUB_TRANSLATIONS = {
         'courses_course_savings_basics_title': 'Savings Basics',
         'courses_course_quiz_desc': 'Discover your financial personality.',
         'courses_course_savings_desc': 'Learn effective saving strategies.',
+        'courses_budgeting': 'Budgeting courses available for learning.',
+            'courses_start_budgeting_course': 'Start the budgeting course.',
+            'courses_continue_budgeting_course': 'Continue your budgeting course.',
+        'courses_recommended_learning': 'Recommended learning courses.',
+            'courses_continue_course': 'Continue your course.',
+            'courses_no_course_progress': 'No progress has been made on courses yet.',
+            'courses_my_courses': 'My Courses',
+            'courses_progress': 'Course Progress',
 
         # Core UI Translations
         'core_why_ficore': 'Why Ficore Africa?',
@@ -153,7 +161,15 @@ LEARNING_HUB_TRANSLATIONS = {
         'courses_course_financial_quiz_desc': 'Gano halin kuɗin ku tare da wannan tambaya mai ma’amala.',
         'courses_course_savings_basics_desc': 'Fahimci ainihin hanyoyin adana kuɗi yadda ya kamata.',
         'learninghub_course_budgeting101_desc': 'Koyi ainihin tsarin kasafin kuɗi da shirin kuɗi.',
-        'learninghub_quiz_not_found': 'Ba a samo gwaji ba'
+        'learninghub_quiz_not_found': 'Ba a samo gwaji ba',
+        'courses_budgeting': 'Kwas ɗin kasafin kuɗi da ake samu don koyo.',
+            'courses_start_budgeting_course': 'Fara kwas ɗin kasafin kuɗi.',
+            'courses_continue_budgeting_course': 'Ci gaba da kwas ɗin kasafin kuɗin ka.',
+        'courses_recommended_learning': 'Kwas ɗin koyo da aka ba da shawara.',
+            'courses_continue_course': 'Ci gaba da kwas ɗin ka.',
+            'courses_no_course_progress': 'Ba a sami ci gaba a kan kwas ɗin ba tukuna.',
+            'courses_my_courses': 'Kwas ɗina',
+            'courses_progress': 'Ci gaban Kwas',
     }
 }
 
