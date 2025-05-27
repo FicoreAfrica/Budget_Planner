@@ -2,7 +2,7 @@ QUIZ_TRANSLATIONS = {
     'en': {
         # Question-specific keys (suffixes removed, using second dictionary's simpler phrasing)
         'quiz_track_expenses_label': 'Do you track your expenses?',
-        'quiz_track_expenses_tooltip': 'E.g., recording daily spending on food, transport, or data subscriptions using apps like Flowdiary or notebooks',
+        'quiz_track_expenses_tooltip': 'E.g., recording daily spending on food, transport, or data subscriptions using apps like Opay or Vizo',
         'quiz_track_expenses_placeholder': 'Select how often you track expenses',
         'quiz_save_regularly_label': 'Yes',
         # Add missing raw question keys (if template uses them directly)
