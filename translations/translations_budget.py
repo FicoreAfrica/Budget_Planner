@@ -149,9 +149,7 @@ BUDGET_TRANSLATIONS = {
         'budget_transport': 'Transport',
         'budget_example_transport': 'e.g. ₦10,000',
         'budget_example_transport_alt': 'e.g., 20,000',
-        'budget_bus_bike_taxi_fuel/transaction/1.0.0" contentType="text/python">
-BUDGET_TRANSLATIONS = {
-    'en': {
+        'budget_bus_bike_taxi_fuel':'Transport by bus, bike, taxi, fuel costs, etc',
         # General Budget Fields
         'budget_summary': 'Budget Summary',
         'budget_summary_description': 'Here is your budget summary',
