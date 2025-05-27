@@ -17,7 +17,7 @@ QUIZ_QUESTIONS = []
 QUESTION_KEYS = [
     'track_expenses', 'save_regularly', 'spend_non_essentials', 'plan_expenses',
     'impulse_purchases', 'use_budgeting_tools', 'invest_money', 'emergency_fund',
-    'set_financial_goals', 'seek_financial_advice'
+    'set_financial_goals', 'seek_financial_advice', 'avoid_debt'
 ]
 
 def init_quiz_questions(app):
