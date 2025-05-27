@@ -37,7 +37,7 @@ KEY_PREFIX_TO_MODULE = {
     'financial_health_': 'translations_financial_health',
     'net_worth_': 'translations_net_worth',
     'core_': 'translations_core',
-    'learninghub_': 'translations_learning_hub',
+    'learning_hub_': 'translations_learning_hub',
 }
 
 # Dynamically import each translation module and combine translations
