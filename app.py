@@ -130,21 +130,21 @@ def create_app():
                 default_courses = [
                     {
                         'id': 'budgeting_101',
-                        'title_key': 'learninghub_course_budgeting101_title',
+                        'title_key': 'learning_hub_course_budgeting101_title',
                         'title_en': 'Budgeting 101',
                         'title_ha': 'Tsarin Kasafin Kuḋi',
                         'is_premium': False
                     },
                     {
                         'id': 'financial_quiz',
-                        'title_key': 'courses_course_financial_quiz_title',
+                        'title_key': 'learning_hub_course_financial_quiz_title',
                         'title_en': 'Financial Personality Quiz',
                         'title_ha': 'Tambayar Halin Kuḋi',
                         'is_premium': False
                     },
                     {
                         'id': 'savings_basics',
-                        'title_key': 'courses_course_savings_basics_title',
+                        'title_key': 'learning_hub_course_savings_basics_title',
                         'title_en': 'Savings Basics',
                         'title_ha': 'Tushen Ajiya',
                         'is_premium': False
@@ -232,21 +232,21 @@ def create_app():
         sample_courses = [
             {
                 'id': 'budgeting_101',
-                'title_key': 'learninghub_course_budgeting101_title',
+                'title_key': 'learning_hub_course_budgeting101_title',
                 'title_en': 'Budgeting 101',
                 'title_ha': 'Tsarin Kasafin Kuḋi',
                 'is_premium': False
             },
             {
                 'id': 'financial_quiz',
-                'title_key': 'courses_course_financial_quiz_title',
+                'title_key': 'quality_hub_course_financial_quiz_title',
                 'title_en': 'Financial Personality Quiz',
                 'title_ha': 'Tambayar Halin Kuḋi',
                 'is_premium': False
             },
             {
                 'id': 'savings_basics',
-                'title_key': 'courses_course_savings_basics_title',
+                'title_key': 'learning_hub_course_savings_basics_title',
                 'title_en': 'Savings Basics',
                 'title_ha': 'Tushen Ajiya',
                 'is_premium': False
