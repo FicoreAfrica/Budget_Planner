@@ -21,7 +21,7 @@ from functools import wraps
 
 # Set up logging
 root_logger = logging.getLogger('ficore_app')
-root_logger.setLevel(logging.DEBUG)
+root_logger.setLevel(logging.INFO)  # Changed from DEBUG to INFO
 
 class SessionFormatter(logging.Formatter):
     def format(self, record):
@@ -32,12 +32,12 @@ formatter = SessionFormatter('%(asctime)s - %(name)s - %(levelname)s - %(message
 
 os.makedirs('data', exist_ok=True)
 file_handler = logging.FileHandler('data/storage.txt')
-file_handler.setLevel(logging.DEBUG)
+file_handler.setLevel(logging.INFO)  # Align with root logger
 file_handler.setFormatter(formatter)
 root_logger.addHandler(file_handler)
 
 console_handler = logging.StreamHandler()
-console_handler.setLevel(logging.DEBUG)
+console_handler.setLevel(logging.INFO)  # Align with root logger
 console_handler.setFormatter(formatter)
 root_logger.addHandler(console_handler)
 
@@ -117,42 +117,38 @@ def create_app():
         }
 
         # Initialize courses.json if empty or missing
-        courses_file = '/opt/render/project/src/data/courses.json'
         courses_storage = app.config['STORAGE_MANAGERS']['courses']
         try:
-            if not os.path.exists(courses_file):
-                log.warning("courses.json does not exist. Creating with default courses.")
-                with open(courses_file, 'w') as f:
-                    json.dump([], f)
             courses = courses_storage.read_all()
             if not courses:
-                log.warning("Courses storage is empty. Initializing with default courses.")
+                log.info("Courses storage is empty. Initializing with default courses.")  # Changed to INFO
                 default_courses = [
                     {
                         'id': 'budgeting_101',
-                        'title_key': 'learning_hub_course_budgeting101_title',
                         'title_en': 'Budgeting 101',
-                        'title_ha': 'Tsarin Kasafin Kuḋi',
-                        'is_premium': False
+                        'title_ha': 'Tsarin Kudi 101',
+                        'description_en': 'Learn the basics of budgeting.',
+                        'description_ha': 'Koyon asalin tsarin kudi.'
                     },
                     {
                         'id': 'financial_quiz',
-                        'title_key': 'learning_hub_course_financial_quiz_title',
-                        'title_en': 'Financial Personality Quiz',
-                        'title_ha': 'Tambayar Halin Kuḋi',
-                        'is_premium': False
+                        'title_en': 'Financial Quiz',
+                        'title_ha': 'Jarabawar Kudi',
+                        'description_en': 'Test your financial knowledge.',
+                        'description_ha': 'Gwada ilimin ku na kudi.'
                     },
                     {
                         'id': 'savings_basics',
-                        'title_key': 'learning_hub_course_savings_basics_title',
                         'title_en': 'Savings Basics',
-                        'title_ha': 'Tushen Ajiya',
-                        'is_premium': False
+                        'title_ha': 'Asalin Tattara Kudi',
+                        'description_en': 'Understand how to save effectively.',
+                        'description_ha': 'Fahimci yadda ake tattara kudi yadda ya kamata.'
                     }
                 ]
-                for course in default_courses:
-                    courses_storage.create(course)
-                log.info("Initialized courses.json with default courses.")
+                if not courses_storage.create(default_courses):
+                    log.error("Failed to initialize courses.json with default courses")
+                    raise RuntimeError("Course initialization failed")
+                log.info(f"Initialized courses.json with {len(default_courses)} default courses")
                 # Verify write
                 courses = courses_storage.read_all()
                 if len(courses) != len(default_courses):
@@ -162,6 +158,7 @@ def create_app():
             raise RuntimeError("Cannot write to courses.json due to permissions.")
         except Exception as e:
             log.error(f"Error initializing courses storage: {str(e)}")
+            raise
 
     # Initialize quiz questions
     with app.app_context():
@@ -198,8 +195,7 @@ def create_app():
             session['lang'] = 'en'
         g.log = log
         g.log.info(f"Request started for path: {request.path}")
-        g.log.debug(f"Current directory: {os.getcwd()}")
-        g.log.debug(f"Directory contents: {os.listdir('.')}")
+        # Removed debug logs for directory contents to reduce verbosity
         if not os.path.exists('data/storage.txt'):
             g.log.warning("data/storage.txt not found")
 
@@ -232,36 +228,36 @@ def create_app():
         sample_courses = [
             {
                 'id': 'budgeting_101',
-                'title_key': 'learning_hub_course_budgeting101_title',
                 'title_en': 'Budgeting 101',
-                'title_ha': 'Tsarin Kasafin Kuḋi',
-                'is_premium': False
+                'title_ha': 'Tsarin Kudi 101',
+                'description_en': 'Learn the basics of budgeting.',
+                'description_ha': 'Koyon asalin tsarin kudi.'
             },
             {
                 'id': 'financial_quiz',
-                'title_key': 'learning_hub_course_financial_quiz_title',
-                'title_en': 'Financial Personality Quiz',
-                'title_ha': 'Tambayar Halin Kuḋi',
-                'is_premium': False
+                'title_en': 'Financial Quiz',
+                'title_ha': 'Jarabawar Kudi',
+                'description_en': 'Test your financial knowledge.',
+                'description_ha': 'Gwada ilimin ku na kudi.'
             },
             {
                 'id': 'savings_basics',
-                'title_key': 'learning_hub_course_savings_basics_title',
                 'title_en': 'Savings Basics',
-                'title_ha': 'Tushen Ajiya',
-                'is_premium': False
+                'title_ha': 'Asalin Tattara Kudi',
+                'description_en': 'Understand how to save effectively.',
+                'description_ha': 'Fahimci yadda ake tattara kudi yadda ya kamata.'
             }
         ]
         try:
             courses = courses_storage.read_all() if courses_storage else []
-            log.debug(f"Retrieved {len(courses)} courses from storage")
+            log.info(f"Retrieved {len(courses)} courses from storage")  # Changed to INFO
             if not courses:
                 log.warning("No courses found in storage. Using sample_courses.")
                 courses = sample_courses
         except Exception as e:
             log.error(f"Error retrieving courses: {str(e)}")
             courses = sample_courses
-            flash(trans('learning_hub_error_message'), 'danger')
+            flash(trans('learning_hub_error_message', default='An error occurred'), 'danger')
         return render_template(
             'index.html',
             t=trans,
@@ -276,12 +272,12 @@ def create_app():
         valid_langs = ['en', 'ha']
         session['lang'] = lang if lang in valid_langs else 'en'
         log.info(f"Language set to {session['lang']}")
-        flash(trans('learning_hub_language_changed') if session['lang'] in valid_langs else trans('learning_hub_invalid_language'))
+        flash(trans('learning_hub_language_changed', default='Language changed') if session['lang'] in valid_langs else trans('learning_hub_invalid_language', default='Invalid language'))
         return redirect(request.referrer or url_for('index'))
 
     @app.route('/favicon.ico')
     def favicon():
-        log.debug("Serving favicon.ico")
+        log.info("Serving favicon.ico")  # Changed to INFO
         return send_from_directory(os.path.join(app.root_path, 'static', 'img'), 'favicon-32x32.png', mimetype='image/png')
 
     @app.route('/general_dashboard')
@@ -306,7 +302,7 @@ def create_app():
                     continue
                 records = storage.filter_by_session(session['sid'])
                 if tool == 'courses':
-                    data[tool] = [record['data'] for record in records]
+                    data[tool] = records  # [record['data'] for record in records]
                 else:
                     if records:
                         latest_record_raw = records[-1]['data']
@@ -315,22 +311,22 @@ def create_app():
                         data[tool].update({k: record_data.get(k, v) for k, v in expected_keys.items()})
                     else:
                         data[tool] = expected_keys.copy()
-                log.debug(f"Data for {tool}: {data[tool]}")
+                log.info(f"Retrieved {len(records)} records for {tool}")  # Changed to INFO
             except Exception as e:
-                log.exception(f"Error fetching data for {tool}: {str(e)}")
+                log.error(f"Error fetching data for {tool}: {str(e)}")
                 data[tool] = [] if tool == 'courses' else expected_keys.copy()
         learning_progress = session.get('learning_progress', {})
         data['learning_progress'] = learning_progress if isinstance(learning_progress, dict) else {}
-        return render_template('general_dashboard.html', data=data, t=trans, lang=lang)
+        return render_template('general_dashboard.html', data=data, t=trans)
 
     @app.route('/logout')
     @session_required
     def logout():
-        log.info("Logging out user")
-        lang = session.get('lang', 'en')
+        log.info(f"Logging out user")
+        lang = session.get('sessionlang, 'en')
         session.clear()
         session['lang'] = lang
-        flash(trans('learning_hub_logged_out'))
+        flash(trans('learning_hub_logged_out_success', default='Successfully logged out'))
         return redirect(url_for('index'))
 
     @app.route('/health')
@@ -339,42 +335,42 @@ def create_app():
         log.info("Health check requested")
         status = {"status": "healthy"}
         try:
-            for tool, storage in app.config['STORAGE_MANAGERS'].items():
+            for tool in app.config['STORAGE_MANAGERS'].items():
                 if storage is None:
                     status["status"] = "unhealthy"
-                    status["details"] = f"Storage for {tool} failed to initialize"
-                    return jsonify(status), 500
-            if app.config['GSPREAD_CLIENT'] is None:
-                status["status"] = "unhealthy"
-                status["details"] = "Google Sheets client not initialized"
-                return jsonify(status), 500
+                    status["error"] = f"Storage for {tool} failed to initialize"
+                    return jsonify(status_error), 400
+                if app.config['GSPREAD_CLIENT'] is None:
+                    status["status"] = "unhealthy"
+                    status["error"] = "Google Sheets client failed to initialize"
+                    return jsonify(status_error), 500
         except Exception as e:
             log.error(f"Health check failed: {str(e)}")
             status["status"] = "unhealthy"
-            status["details"] = str(e)
+            status["error"] = str(e)
             return jsonify(status), 500
         return jsonify(status), 200
 
-    # Error handlers
+    # Error handling
     @app.errorhandler(Exception)
     def handle_global_error(e):
         lang = session.get('lang', 'en')
-        log.exception(f"Global error: {str(e)}")
-        flash(trans('learning_hub_error_message'), 'danger')
-        return render_template('500.html', error=trans('learning_hub_error_message'), t=trans, lang=lang), 500
+        log.error(f"Global error: {str(e)}")
+        flash(trans('global_error_message', default='An unexpected error occurred'), 'danger')
+        return render_template('index.html', error=trans('global_error_message', default='An error occurred'), t=trans, lang=lang), 500
 
     @app.errorhandler(CSRFError)
     def handle_csrf_error(e):
         lang = session.get('lang', 'en')
         log.error(f"CSRF error: {str(e)}")
-        flash(trans('learning_hub_csrf_error'), 'danger')
-        return render_template('500.html', error=trans('learning_hub_csrf_error'), t=trans, lang=lang), 400
+        flash(trans('csrf_error', default='Invalid CSRF token'), 'danger')
+        return render_template('index.html', error=trans('csrf_error', default='Invalid CSRF token'), t=trans, lang=lang), 400
 
     @app.errorhandler(404)
     def page_not_found(e):
         lang = session.get('lang', 'en')
         log.error(f"404 error: {str(e)}")
-        return render_template('404.html', error=trans('learning_hub_page_not_found'), t=trans, lang=lang), 404
+        return render_template('404.html', error=trans('page_not_found', default='Page not found'), t=trans, lang=lang), 404
 
     # Register blueprints
     app.register_blueprint(financial_health_bp)
@@ -390,4 +386,4 @@ def create_app():
 app = create_app()
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=10000)
+    app.run(debug=True, host='127.0.0.1', port=5000)
