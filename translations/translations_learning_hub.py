@@ -194,7 +194,10 @@ LEARNING_HUB_TRANSLATIONS = {
         'learning_hub_continue_course': 'Ci gaba da kwas ɗin ka.',
         'learning_hub_no_course_progress': 'Ba a sami ci gaba a kan kwas ɗin ba tukuna.',
         'learning_hub_my_courses': 'Kwas ɗina',
-        'learning_hub_progress': 'Ci gaban Kwas'
+        'learning_hub_progress': 'Ci gaban Kwas',
+        'courses_free_course': 'Kwas Kyauta',
+        'courses_learn_budgeting':'Ka koyi Tsara Kasafin Kudi (Budgeting)',
+        'courses_learn_savings': 'Ka koyi ilimin ajiya (Savings)',
     }
 }
 
