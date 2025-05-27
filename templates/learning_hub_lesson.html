@@ -9,12 +9,12 @@
         <div class="card-body">
             <p>{{ trans(lesson.content_key) }}</p>
             <form method="POST">
-                <button type="submit" class="btn btn-success">{{ trans('learninghub_mark_complete') }}</button>
+                <button type="submit" class="btn btn-success">{{ trans('learning_hub_mark_complete') }}</button>
             </form>
         </div>
     </div>
     <a href="{{ url_for('learning_hub.course_overview', course_id=course.id) }}" class="btn btn-secondary mt-3">
-        {{ trans('learninghub_back_to_course') }}
+        {{ trans('learning_hub_back_to_course') }}
     </a>
 </div>
 {% endblock %}
