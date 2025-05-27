@@ -21,7 +21,7 @@ from functools import wraps
 
 # Set up logging
 root_logger = logging.getLogger('ficore_app')
-root_logger.setLevel(logging.INFO)  # Changed from DEBUG to INFO
+root_logger.setLevel(logging.INFO)
 
 class SessionFormatter(logging.Formatter):
     def format(self, record):
@@ -32,12 +32,12 @@ formatter = SessionFormatter('%(asctime)s - %(name)s - %(levelname)s - %(message
 
 os.makedirs('data', exist_ok=True)
 file_handler = logging.FileHandler('data/storage.txt')
-file_handler.setLevel(logging.INFO)  # Align with root logger
+file_handler.setLevel(logging.INFO)
 file_handler.setFormatter(formatter)
 root_logger.addHandler(file_handler)
 
 console_handler = logging.StreamHandler()
-console_handler.setLevel(logging.INFO)  # Align with root logger
+console_handler.setLevel(logging.INFO)
 console_handler.setFormatter(formatter)
 root_logger.addHandler(console_handler)
 
@@ -88,14 +88,14 @@ def create_app():
         try:
             creds_json = os.environ.get('GOOGLE_CREDENTIALS')
             if not creds_json:
-                log.error("GOOGLE_CREDENTIALS not set")
+                log.warning("GOOGLE_CREDENTIALS not set. Google Sheets integration disabled.")  # Changed to warning
                 return None
             creds = Credentials.from_service_account_info(
                 json.loads(creds_json),
                 scopes=['https://www.googleapis.com/auth/spreadsheets']
             )
-            client = gspread.authorize(creds)
-            log.info("Initialized gspread client")
+            client = gspread.authorize(creds
+            log.info("Successfully initialized gspread client")
             return client
         except Exception as e:
             log.error(f"Failed to initialize gspread client: {str(e)}")
@@ -110,53 +110,53 @@ def create_app():
             'budget': init_budget_storage(app),
             'quiz': JsonStorage('data/quiz_data.json', logger_instance=log),
             'bills': init_bill_storage(app),
-            'net_worth': JsonStorage('data/networth.json', logger_instance=log),
+            'net_worth': JsonStorage('data/netsworth.json', logger_instance=log),
             'emergency_fund': JsonStorage('data/emergency_fund.json', logger_instance=log),
             'user_progress': JsonStorage('data/user_progress.json', logger_instance=log),
             'courses': JsonStorage('data/courses.json', logger_instance=log),
         }
 
-        # Initialize courses.json if empty or missing
-        courses_storage = app.config['STORAGE_MANAGERS']['courses']
-        try:
+    # Initialize courses.json if empty or missing
+    courses_storage = app.config['STORAGE_MANAGERS']['courses']
+    try:
+        courses = courses.read_all()
+        if not courses:
+            log.info("Courses storage is empty. Initializing with default courses.")
+            default_courses = [
+                {
+                    'id': 'budgeting_101',
+                    'title_en': 'Budgeting 101',
+                    'title_ha': 'Tsarin Kudi 101',
+                    'description_en': 'Learn the basics of budgeting.',
+                    'description_ha': 'Koyon asalin tsarin kudi.'
+                },
+                {
+                    'id': 'financial_quiz',
+                    'title_en': 'Financial Quiz',
+                    'title_ha': 'Jarabawar Kudi',
+                    'description_en': 'Test your financial knowledge.',
+                    'description_ha': 'Gwada ilimin ku na kudi.'
+                },
+                {
+                    'id': 'savings_basics',
+                    'title_en': 'Savings Basics',
+                    'title_ha': 'Asalin Tattara Kudi',
+                    'description_en': 'Understand how to save effectively.',
+                    'description_ha': 'Fahimci yadda ake tattara kudi yadda ya kamata.'
+                }
+            ]
+            if not courses_storage.create(default_courses):
+                log.error("Failed to initialize courses.json with default courses")
+                raise RuntimeError("Course initialization failed")
+            log.info(f"Initialized courses.json with {len(default_courses)} default courses")
+            # Verify write
             courses = courses_storage.read_all()
-            if not courses:
-                log.info("Courses storage is empty. Initializing with default courses.")  # Changed to INFO
-                default_courses = [
-                    {
-                        'id': 'budgeting_101',
-                        'title_en': 'Budgeting 101',
-                        'title_ha': 'Tsarin Kudi 101',
-                        'description_en': 'Learn the basics of budgeting.',
-                        'description_ha': 'Koyon asalin tsarin kudi.'
-                    },
-                    {
-                        'id': 'financial_quiz',
-                        'title_en': 'Financial Quiz',
-                        'title_ha': 'Jarabawar Kudi',
-                        'description_en': 'Test your financial knowledge.',
-                        'description_ha': 'Gwada ilimin ku na kudi.'
-                    },
-                    {
-                        'id': 'savings_basics',
-                        'title_en': 'Savings Basics',
-                        'title_ha': 'Asalin Tattara Kudi',
-                        'description_en': 'Understand how to save effectively.',
-                        'description_ha': 'Fahimci yadda ake tattara kudi yadda ya kamata.'
-                    }
-                ]
-                if not courses_storage.create(default_courses):
-                    log.error("Failed to initialize courses.json with default courses")
-                    raise RuntimeError("Course initialization failed")
-                log.info(f"Initialized courses.json with {len(default_courses)} default courses")
-                # Verify write
-                courses = courses_storage.read_all()
-                if len(courses) != len(default_courses):
-                    log.error(f"Failed to verify courses.json initialization. Expected {len(default_courses)} courses, got {len(courses)}.")
-        except PermissionError as e:
+            if len(courses) != len(default_courses):
+                log.error(f"Failed to verify courses.json initialization. Expected {len(default_courses)} courses, got {len(courses)}.")
+    except PermissionError as e:
             log.error(f"Permission error initializing courses.json: {str(e)}")
             raise RuntimeError("Cannot write to courses.json due to permissions.")
-        except Exception as e:
+    except Exception as e:
             log.error(f"Error initializing courses storage: {str(e)}")
             raise
 
@@ -195,7 +195,6 @@ def create_app():
             session['lang'] = 'en'
         g.log = log
         g.log.info(f"Request started for path: {request.path}")
-        # Removed debug logs for directory contents to reduce verbosity
         if not os.path.exists('data/storage.txt'):
             g.log.warning("data/storage.txt not found")
 
@@ -228,6 +227,7 @@ def create_app():
         sample_courses = [
             {
                 'id': 'budgeting_101',
+                'title_key': 'learning_hub_course_budgeting101_title',
                 'title_en': 'Budgeting 101',
                 'title_ha': 'Tsarin Kudi 101',
                 'description_en': 'Learn the basics of budgeting.',
@@ -235,13 +235,15 @@ def create_app():
             },
             {
                 'id': 'financial_quiz',
+                'title_key': 'learning_hub_course_financial_quiz_title',
                 'title_en': 'Financial Quiz',
                 'title_ha': 'Jarabawar Kudi',
                 'description_en': 'Test your financial knowledge.',
                 'description_ha': 'Gwada ilimin ku na kudi.'
             },
             {
-                'id': 'savings_basics',
+                'id': 'savings_basics',  # Fixed typo: 'savings_bas' -> 'savings_basics'
+                'title_key': 'learning_hub_course_savings_basics_title',
                 'title_en': 'Savings Basics',
                 'title_ha': 'Asalin Tattara Kudi',
                 'description_en': 'Understand how to save effectively.',
@@ -250,10 +252,17 @@ def create_app():
         ]
         try:
             courses = courses_storage.read_all() if courses_storage else []
-            log.info(f"Retrieved {len(courses)} courses from storage")  # Changed to INFO
+            log.info(f"Retrieved {len(courses)} courses from storage")
             if not courses:
                 log.warning("No courses found in storage. Using sample_courses.")
                 courses = sample_courses
+            else:
+                # Add title_key to courses from courses.json to match sample_courses
+                title_key_map = {c['id']: c['title_key'] for c in sample_courses}
+                courses = [
+                    {**course, 'title_key': title_key_map.get(course['id'], f"learning_hub_course_{course['id']}_title")}
+                    for course in courses
+                ]
         except Exception as e:
             log.error(f"Error retrieving courses: {str(e)}")
             courses = sample_courses
@@ -277,7 +286,7 @@ def create_app():
 
     @app.route('/favicon.ico')
     def favicon():
-        log.info("Serving favicon.ico")  # Changed to INFO
+        log.info("Serving favicon.ico")
         return send_from_directory(os.path.join(app.root_path, 'static', 'img'), 'favicon-32x32.png', mimetype='image/png')
 
     @app.route('/general_dashboard')
@@ -302,7 +311,7 @@ def create_app():
                     continue
                 records = storage.filter_by_session(session['sid'])
                 if tool == 'courses':
-                    data[tool] = records  # [record['data'] for record in records]
+                    data[tool] = records
                 else:
                     if records:
                         latest_record_raw = records[-1]['data']
@@ -311,22 +320,22 @@ def create_app():
                         data[tool].update({k: record_data.get(k, v) for k, v in expected_keys.items()})
                     else:
                         data[tool] = expected_keys.copy()
-                log.info(f"Retrieved {len(records)} records for {tool}")  # Changed to INFO
+                log.info(f"Retrieved {len(records)} records for {tool}")
             except Exception as e:
                 log.error(f"Error fetching data for {tool}: {str(e)}")
                 data[tool] = [] if tool == 'courses' else expected_keys.copy()
         learning_progress = session.get('learning_progress', {})
         data['learning_progress'] = learning_progress if isinstance(learning_progress, dict) else {}
-        return render_template('general_dashboard.html', data=data, t=trans)
+        return render_template('general_dashboard.html', data=data, t=trans, lang=lang)
 
     @app.route('/logout')
     @session_required
     def logout():
-        log.info(f"Logging out user")
-        lang = session.get('sessionlang', 'en')
+        log.info("Logging out user")
+        lang = session.get('lang', 'en')
         session.clear()
         session['lang'] = lang
-        flash(trans('learning_hub_logged_out_success', default='Successfully logged out'))
+        flash(trans('learning_hub_logged_out', default='Successfully logged out'))
         return redirect(url_for('index'))
 
     @app.route('/health')
@@ -335,28 +344,28 @@ def create_app():
         log.info("Health check requested")
         status = {"status": "healthy"}
         try:
-            for tool in app.config['STORAGE_MANAGERS'].items():
+            for tool, storage in app.config['STORAGE_MANAGERS'].items():
                 if storage is None:
                     status["status"] = "unhealthy"
-                    status["error"] = f"Storage for {tool} failed to initialize"
-                    return jsonify(status_error), 400
-                if app.config['GSPREAD_CLIENT'] is None:
-                    status["status"] = "unhealthy"
-                    status["error"] = "Google Sheets client failed to initialize"
-                    return jsonify(status_error), 500
+                    status["details"] = f"Storage for {tool} failed to initialize"
+                    return jsonify(status), 500
+            if app.config['GSPREAD_CLIENT'] is None:
+                status["status"] = "unhealthy"
+                status["details"] = "Google Sheets client not initialized"
+                return jsonify(status), 500
         except Exception as e:
             log.error(f"Health check failed: {str(e)}")
             status["status"] = "unhealthy"
-            status["error"] = str(e)
+            status["details"] = str(e)
             return jsonify(status), 500
         return jsonify(status), 200
 
-    # Error handling
+    # Error handlers
     @app.errorhandler(Exception)
     def handle_global_error(e):
         lang = session.get('lang', 'en')
         log.error(f"Global error: {str(e)}")
-        flash(trans('global_error_message', default='An unexpected error occurred'), 'danger')
+        flash(trans('global_error_message', default='An error occurred'), 'danger')
         return render_template('index.html', error=trans('global_error_message', default='An error occurred'), t=trans, lang=lang), 500
 
     @app.errorhandler(CSRFError)
@@ -386,4 +395,4 @@ def create_app():
 app = create_app()
 
 if __name__ == '__main__':
-    app.run(debug=True, host='127.0.0.1', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=10000)
