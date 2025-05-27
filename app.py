@@ -88,14 +88,14 @@ def create_app():
         try:
             creds_json = os.environ.get('GOOGLE_CREDENTIALS')
             if not creds_json:
-                log.warning("GOOGLE_CREDENTIALS not set. Google Sheets integration disabled.")  # Changed to warning
+                log.warning("GOOGLE_CREDENTIALS not set. Google Sheets integration disabled.")
                 return None
             creds = Credentials.from_service_account_info(
                 json.loads(creds_json),
                 scopes=['https://www.googleapis.com/auth/spreadsheets']
             )
             client = gspread.authorize(creds)
-            log.info("Successfully initialized gspread client")
+            log.info("Initialized gspread client")
             return client
         except Exception as e:
             log.error(f"Failed to initialize gspread client: {str(e)}")
@@ -110,53 +110,53 @@ def create_app():
             'budget': init_budget_storage(app),
             'quiz': JsonStorage('data/quiz_data.json', logger_instance=log),
             'bills': init_bill_storage(app),
-            'net_worth': JsonStorage('data/netsworth.json', logger_instance=log),
+            'net_worth': JsonStorage('data/networth.json', logger_instance=log),
             'emergency_fund': JsonStorage('data/emergency_fund.json', logger_instance=log),
             'user_progress': JsonStorage('data/user_progress.json', logger_instance=log),
             'courses': JsonStorage('data/courses.json', logger_instance=log),
         }
 
-    # Initialize courses.json if empty or missing
-    courses_storage = app.config['STORAGE_MANAGERS']['courses']
-    try:
-        courses = courses.read_all()
-        if not courses:
-            log.info("Courses storage is empty. Initializing with default courses.")
-            default_courses = [
-                {
-                    'id': 'budgeting_101',
-                    'title_en': 'Budgeting 101',
-                    'title_ha': 'Tsarin Kudi 101',
-                    'description_en': 'Learn the basics of budgeting.',
-                    'description_ha': 'Koyon asalin tsarin kudi.'
-                },
-                {
-                    'id': 'financial_quiz',
-                    'title_en': 'Financial Quiz',
-                    'title_ha': 'Jarabawar Kudi',
-                    'description_en': 'Test your financial knowledge.',
-                    'description_ha': 'Gwada ilimin ku na kudi.'
-                },
-                {
-                    'id': 'savings_basics',
-                    'title_en': 'Savings Basics',
-                    'title_ha': 'Asalin Tattara Kudi',
-                    'description_en': 'Understand how to save effectively.',
-                    'description_ha': 'Fahimci yadda ake tattara kudi yadda ya kamata.'
-                }
-            ]
-            if not courses_storage.create(default_courses):
-                log.error("Failed to initialize courses.json with default courses")
-                raise RuntimeError("Course initialization failed")
-            log.info(f"Initialized courses.json with {len(default_courses)} default courses")
-            # Verify write
-            courses = courses_storage.read_all()
-            if len(courses) != len(default_courses):
-                log.error(f"Failed to verify courses.json initialization. Expected {len(default_courses)} courses, got {len(courses)}.")
-    except PermissionError as e:
+        # Initialize courses.json if empty or missing
+        courses_storage = app.config['STORAGE_MANAGERS']['courses']
+        try:
+            courses = courses_storage.read_all()  # Fixed: Changed 'courses' to 'courses_storage'
+            if not courses:
+                log.info("Courses storage is empty. Initializing with default courses.")
+                default_courses = [
+                    {
+                        'id': 'budgeting_101',
+                        'title_en': 'Budgeting 101',
+                        'title_ha': 'Tsarin Kudi 101',
+                        'description_en': 'Learn the basics of budgeting.',
+                        'description_ha': 'Koyon asalin tsarin kudi.'
+                    },
+                    {
+                        'id': 'financial_quiz',
+                        'title_en': 'Financial Quiz',
+                        'title_ha': 'Jarabawar Kudi',
+                        'description_en': 'Test your financial knowledge.',
+                        'description_ha': 'Gwada ilimin ku na kudi.'
+                    },
+                    {
+                        'id': 'savings_basics',
+                        'title_en': 'Savings Basics',
+                        'title_ha': 'Asalin Tattara Kudi',
+                        'description_en': 'Understand how to save effectively.',
+                        'description_ha': 'Fahimci yadda ake tattara kudi yadda ya kamata.'
+                    }
+                ]
+                if not courses_storage.create(default_courses):
+                    log.error("Failed to initialize courses.json with default courses")
+                    raise RuntimeError("Course initialization failed")
+                log.info(f"Initialized courses.json with {len(default_courses)} default courses")
+                # Verify write
+                courses = courses_storage.read_all()
+                if len(courses) != len(default_courses):
+                    log.error(f"Failed to verify courses.json initialization. Expected {len(default_courses)} courses, got {len(courses)}.")
+        except PermissionError as e:
             log.error(f"Permission error initializing courses.json: {str(e)}")
             raise RuntimeError("Cannot write to courses.json due to permissions.")
-    except Exception as e:
+        except Exception as e:
             log.error(f"Error initializing courses storage: {str(e)}")
             raise
 
@@ -242,7 +242,7 @@ def create_app():
                 'description_ha': 'Gwada ilimin ku na kudi.'
             },
             {
-                'id': 'savings_basics',  # Fixed typo: 'savings_bas' -> 'savings_basics'
+                'id': 'savings_basics',
                 'title_key': 'learning_hub_course_savings_basics_title',
                 'title_en': 'Savings Basics',
                 'title_ha': 'Asalin Tattara Kudi',
@@ -379,12 +379,13 @@ def create_app():
     def page_not_found(e):
         lang = session.get('lang', 'en')
         log.error(f"404 error: {str(e)}")
-        return render_template('404.html', error=trans('page_not_found', default='Page not found'), t=trans, lang=lang), 404
+        return render_template('404.html')
 
     # Register blueprints
     app.register_blueprint(financial_health_bp)
     app.register_blueprint(budget_bp)
     app.register_blueprint(quiz_bp)
+
     app.register_blueprint(bill_bp)
     app.register_blueprint(net_worth_bp)
     app.register_blueprint(emergency_fund_bp)
@@ -394,5 +395,5 @@ def create_app():
 
 app = create_app()
 
-if __name__ == '__main__':
+if __name__ == '__main__":
     app.run(debug=True, host='0.0.0.0', port=10000)
