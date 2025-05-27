@@ -94,7 +94,7 @@ def create_app():
                 json.loads(creds_json),
                 scopes=['https://www.googleapis.com/auth/spreadsheets']
             )
-            client = gspread.authorize(creds
+            client = gspread.authorize(creds)
             log.info("Successfully initialized gspread client")
             return client
         except Exception as e:
