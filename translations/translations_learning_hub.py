@@ -17,15 +17,15 @@ LEARNING_HUB_TRANSLATIONS = {
         # Modules and Lessons
         'learning_hub_module_income_title': 'Understanding Income',
         'learning_hub_lesson_income_sources_title': 'Sources of Income',
-        'learning_hub_lesson_income_sources_content': 'Learn about different sources where you can earn money.',
+        'learning_hub_lesson_income_sources_content': 'Learn about different sources where you can earn money; explore online platforms like freelancing sites, investment opportunities, and side hustles such as gig work or online businesses.',
         'learning_hub_lesson_net_income_title': 'What is Net Income?',
-        'learning_hub_lesson_net_income_content': 'Understand what net income means after expenses.',
+        'learning_hub_lesson_net_income_content': 'Understand what net income means after expenses; et income involves subtracting all expenses, including taxes and operational costs, from total revenue to determine actual profit.',
         'learning_hub_module_quiz_title': 'Quiz Module',
         'learning_hub_lesson_quiz_intro_title': 'Quiz Introduction',
-        'learning_hub_lesson_quiz_intro_content': 'Instructions for taking the financial quiz.',
+        'learning_hub_lesson_quiz_intro_content': 'Instructions for taking the financial quiz; For the financial quiz, read instructions, tooltips, placeholders, and examples carefully, manage time effectively, and review basic financial concepts beforehand.',
         'learning_hub_module_savings_title': 'Savings Strategies',
         'learning_hub_lesson_savings_strategies_title': 'How to Save Effectively',
-        'learning_hub_lesson_savings_strategies_content': 'Tips and strategies for saving money.',
+        'learning_hub_lesson_savings_strategies_content': 'Tips and strategies for saving money;To save money, create a budget with Ficore Africa, prioritize needs over wants, automate your savings deductions, and shop strategically using discounts or bulk purchases.',
 
         # Quiz Content
         'learning_hub_quiz_income_q1': 'Which of the following is a source of income?',
@@ -114,15 +114,15 @@ LEARNING_HUB_TRANSLATIONS = {
         # Modules and Lessons
         'learning_hub_module_income_title': 'Fahimtar Samun Kuɗi',
         'learning_hub_lesson_income_sources_title': 'Tushen Samun Kuɗi',
-        'learning_hub_lesson_income_sources_content': 'Koyi wuraren da za a iya samun kuɗi daban-daban.',
+        'learning_hub_lesson_income_sources_content': 'Koyi game da hanyoyin samun kuɗi daban-daban; bincika dandamalin kan layi kamar shafukan aikin kwadago, damar saka hannun jari, da ayyukan gefe kamar aikin gig ko kasuwancin kan layi.',
         'learning_hub_lesson_net_income_title': 'Menene Samun Kuɗi Tsantsa?',
-        'learning_hub_lesson_net_income_content': 'Fahimci abin da samun kuɗi tsantsa ke nufi bayan an cire kuɗin kashewa.',
+        'learning_hub_lesson_net_income_content': 'Fahimci abin da ake nufi da net income bayan cire kuɗaɗen aiki; net income ya haɗa da cire duk kuɗaɗen aiki, ciki har da haraji da tsadar aiki, daga jimillar kuɗin shiga don tantance ribar gaske.',
         'learning_hub_module_quiz_title': 'Sashen Jarabawa',
         'learning_hub_lesson_quiz_intro_title': 'Gabatar da Jarabawa',
-        'learning_hub_lesson_quiz_intro_content': 'Umarnin yin jarabawar ilimin kuɗi.',
+        'learning_hub_lesson_quiz_intro_content': 'Umarnin kan jarabawar kuɗi; Don jarabawar kuɗi, karanta umarni, bayanan kula, wuraren zama, da misalai a hankali, jiƙa lokaci yadda ya kamata, kuma sake duba mahimman ra'ayoyin kuɗi kafin a fara.',
         'learning_hub_module_savings_title': 'Dabarun Ajiya',
         'learning_hub_lesson_savings_strategies_title': 'Yadda Za a Yi Ajiya Dace',
-        'learning_hub_lesson_savings_strategies_content': 'Shawarwari da dabaru don ajiye kuɗi.',
+        'learning_hub_lesson_savings_strategies_content': 'Shawarwari da dabarun adana kuɗi; Don adana kuɗi, ƙirƙiri kasafin kuɗi tare da Ficore Africa, fifita buƙatu a kan son rai, sanya cire adanawa ta atomatik, da sayayya cikin dabara ta amfani da ragi ko sayayya a girma.',
 
         # Quiz Content
         'learning_hub_quiz_income_q1': 'Wanne daga cikin waɗannan ne tushen samun kuɗi?',
