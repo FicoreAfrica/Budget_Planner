@@ -3,7 +3,7 @@ QUIZ_TRANSLATIONS = {
         # Core quiz UI and navigation (from transquiz_Version2.py)
         'quiz_personality_quiz': 'Personality Quiz',
         'quiz_start_personality_quiz': 'Start Personality Quiz',
-        'quiz_assess_literacy': 'Answer questions to assess financial literacy',
+        'quiz_assess_personality': 'Answer questions to assess financial personality',
         'quiz_dashboard': 'Quiz Dashboard',
         'quiz_dashboard_load_error': 'Unable to load quiz dashboard. Please try again.',
         'quiz_summary': 'Quiz Summary',
@@ -416,6 +416,7 @@ QUIZ_TRANSLATIONS = {
         'quiz_personality_quiz': 'Gwajin Halayya',
         'quiz_start_personality_quiz': 'Fara Gwajin Halayya',
         'quiz_assess_literacy': 'Amsa tambayoyi don tantance ilimin kuɗi',
+        'quiz_assess_personality': 'Amsa tambayoyi don tantance ilimin kuɗi',
         'quiz_dashboard': 'Allon Gwaji',
         'quiz_dashboard_load_error': 'Ba a iya ɗora allon gwaji ba. Da fatan za a sake gwadawa.',
         'quiz_summary': 'Taƙaitaccen Gwaji',
