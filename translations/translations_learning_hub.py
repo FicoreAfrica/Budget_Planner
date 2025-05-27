@@ -119,7 +119,7 @@ LEARNING_HUB_TRANSLATIONS = {
         'learning_hub_lesson_net_income_content': 'Fahimci abin da ake nufi da net income bayan cire kuɗaɗen aiki; net income ya haɗa da cire duk kuɗaɗen aiki, ciki har da haraji da tsadar aiki, daga jimillar kuɗin shiga don tantance ribar gaske.',
         'learning_hub_module_quiz_title': 'Sashen Jarabawa',
         'learning_hub_lesson_quiz_intro_title': 'Gabatar da Jarabawa',
-        'learning_hub_lesson_quiz_intro_content': 'Umarnin kan jarabawar kuɗi; Don jarabawar kuɗi, karanta umarni, bayanan kula, wuraren zama, da misalai a hankali, jiƙa lokaci yadda ya kamata, kuma sake duba mahimman ra'ayoyin kuɗi kafin a fara.',
+        'learning_hub_lesson_quiz_intro_content': 'Umarnin kan jarabawar kuɗi; Don jarabawar kuɗi, karanta umarni, bayanan kula, wuraren zama, da misalai a hankali, jiƙa lokaci yadda ya kamata, kuma sake duba mahimman ra/ayoyin kuɗi kafin a fara.',
         'learning_hub_module_savings_title': 'Dabarun Ajiya',
         'learning_hub_lesson_savings_strategies_title': 'Yadda Za a Yi Ajiya Dace',
         'learning_hub_lesson_savings_strategies_content': 'Shawarwari da dabarun adana kuɗi; Don adana kuɗi, ƙirƙiri kasafin kuɗi tare da Ficore Africa, fifita buƙatu a kan son rai, sanya cire adanawa ta atomatik, da sayayya cikin dabara ta amfani da ragi ko sayayya a girma.',
