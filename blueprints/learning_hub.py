@@ -6,23 +6,23 @@ learning_hub_bp = Blueprint('learning_hub', __name__)
 courses_data = {
     "budgeting_101": {
         "id": "budgeting_101",
-        "title_key": "learninghub_course_budgeting101_title",
-        "desc_key": "learninghub_course_budgeting101_desc",
+        "title_key": "learning_hub_course_budgeting101_title",
+        "desc_key": "learning_hub_course_budgeting101_desc",
         "modules": [
             {
                 "id": "module-1",
-                "title_key": "learninghub_module_income_title",
+                "title_key": "learning_hub_module_income_title",
                 "lessons": [
                     {
                         "id": "budgeting_101-module-1-lesson-1",
-                        "title_key": "learninghub_lesson_income_sources_title",
-                        "content_key": "learninghub_lesson_income_sources_content",
+                        "title_key": "learning_hub_lesson_income_sources_title",
+                        "content_key": "learning_hub_lesson_income_sources_content",
                         "quiz_id": "quiz-1-1"
                     },
                     {
                         "id": "budgeting_101-module-1-lesson-2",
-                        "title_key": "learninghub_lesson_net_income_title",
-                        "content_key": "learninghub_lesson_net_income_content",
+                        "title_key": "learning_hub_lesson_net_income_title",
+                        "content_key": "learning_hub_lesson_net_income_content",
                         "quiz_id": None
                     }
                 ]
@@ -31,17 +31,17 @@ courses_data = {
     },
     "financial_quiz": {
         "id": "financial_quiz",
-        "title_key": "courses_course_financial_quiz_title",
-        "desc_key": "courses_course_financial_quiz_desc",
+        "title_key": "learning_hub_course_financial_quiz_title",
+        "desc_key": "learning_hub_course_financial_quiz_desc",
         "modules": [
             {
                 "id": "module-1",
-                "title_key": "learninghub_module_quiz_title",
+                "title_key": "learning_hub_module_quiz_title",
                 "lessons": [
                     {
                         "id": "financial_quiz-module-1-lesson-1",
-                        "title_key": "learninghub_lesson_quiz_intro_title",
-                        "content_key": "learninghub_lesson_quiz_intro_content",
+                        "title_key": "learning_hub_lesson_quiz_intro_title",
+                        "content_key": "learning_hub_lesson_quiz_intro_content",
                         "quiz_id": "quiz-financial-1"
                     }
                 ]
@@ -50,17 +50,17 @@ courses_data = {
     },
     "savings_basics": {
         "id": "savings_basics",
-        "title_key": "courses_course_savings_basics_title",
-        "desc_key": "courses_course_savings_basics_desc",
+        "title_key": "learning_hub_course_savings_basics_title",
+        "desc_key": "learning_hub_course_savings_basics_desc",
         "modules": [
             {
                 "id": "module-1",
-                "title_key": "learninghub_module_savings_title",
+                "title_key": "learning_hub_module_savings_title",
                 "lessons": [
                     {
                         "id": "savings_basics-module-1-lesson-1",
-                        "title_key": "learninghub_lesson_savings_strategies_title",
-                        "content_key": "learninghub_lesson_savings_strategies_content",
+                        "title_key": "learning_hub_lesson_savings_strategies_title",
+                        "content_key": "learning_hub_lesson_savings_strategies_content",
                         "quiz_id": None
                     }
                 ]
@@ -73,28 +73,28 @@ quizzes_data = {
     "quiz-1-1": {
         "questions": [
             {
-                "question_key": "learninghub_quiz_income_q1",
+                "question_key": "learning_hub_quiz_income_q1",
                 "options_keys": [
-                    "learninghub_quiz_income_opt_salary",
-                    "learninghub_quiz_income_opt_business",
-                    "learninghub_quiz_income_opt_investment",
-                    "learninghub_quiz_income_opt_other"
+                    "learning_hub_quiz_income_opt_salary",
+                    "learning_hub_quiz_income_opt_business",
+                    "learning_hub_quiz_income_opt_investment",
+                    "learning_hub_quiz_income_opt_other"
                 ],
-                "answer_key": "learninghub_quiz_income_opt_salary"
+                "answer_key": "learning_hub_quiz_income_opt_salary"
             }
         ]
     },
     "quiz-financial-1": {
         "questions": [
             {
-                "question_key": "learninghub_quiz_financial_q1",
+                "question_key": "learning_hub_quiz_financial_q1",
                 "options_keys": [
-                    "learninghub_quiz_financial_opt_a",
-                    "learninghub_quiz_financial_opt_b",
-                    "learninghub_quiz_financial_opt_c",
-                    "learninghub_quiz_financial_opt_d"
+                    "learning_hub_quiz_financial_opt_a",
+                    "learning_hub_quiz_financial_opt_b",
+                    "learning_hub_quiz_financial_opt_c",
+                    "learning_hub_quiz_financial_opt_d"
                 ],
-                "answer_key": "learninghub_quiz_financial_opt_a"
+                "answer_key": "learning_hub_quiz_financial_opt_a"
             }
         ]
     }
@@ -134,7 +134,7 @@ def courses():
 def course_overview(course_id):
     course = course_lookup(course_id)
     if not course:
-        flash(trans("learninghub_course_not_found"), "danger")
+        flash(trans("learning_hub_course_not_found"), "danger")
         return redirect(url_for('learning_hub.courses'))
     progress = get_progress().get(course_id, {})
     return render_template('learning_hub_course_overview.html', course=course, progress=progress)
@@ -143,11 +143,11 @@ def course_overview(course_id):
 def lesson(course_id, lesson_id):
     course = course_lookup(course_id)
     if not course:
-        flash(trans("learninghub_course_not_found"), "danger")
+        flash(trans("learning_hub_course_not_found"), "danger")
         return redirect(url_for('learning_hub.courses'))
     lesson, module = lesson_lookup(course, lesson_id)
     if not lesson:
-        flash(trans("learninghub_lesson_not_found"), "danger")
+        flash(trans("learning_hub_lesson_not_found"), "danger")
         return redirect(url_for('learning_hub.course_overview', course_id=course_id))
 
     progress = get_progress()
@@ -157,7 +157,7 @@ def lesson(course_id, lesson_id):
             course_progress['lessons_completed'].append(lesson_id)
             course_progress['current_lesson'] = lesson_id
             save_progress()
-            flash(trans("learninghub_lesson_marked"), "success")
+            flash(trans("learning_hub_lesson_marked"), "success")
         # Next lesson navigation
         next_lesson_id = None
         found = False
@@ -173,7 +173,7 @@ def lesson(course_id, lesson_id):
         if next_lesson_id:
             return redirect(url_for('learning_hub.lesson', course_id=course_id, lesson_id=next_lesson_id))
         else:
-            flash(trans("learninghub_lesson_done"), "success")
+            flash(trans("learning_hub_lesson_done"), "success")
             return redirect(url_for('learning_hub.course_overview', course_id=course_id))
     return render_template('learning_hub_lesson.html', course=course, lesson=lesson, module=module, progress=course_progress)
 
@@ -181,11 +181,11 @@ def lesson(course_id, lesson_id):
 def quiz(course_id, quiz_id):
     course = course_lookup(course_id)
     if not course:
-        flash(trans("learninghub_course_not_found"), "danger")
+        flash(trans("learning_hub_course_not_found"), "danger")
         return redirect(url_for('learning_hub.courses'))
     quiz = quizzes_data.get(quiz_id)
     if not quiz:
-        flash(trans("learninghub_quiz_not_found"), "danger")
+        flash(trans("learning_hub_quiz_not_found"), "danger")
         return redirect(url_for('learning_hub.course_overview', course_id=course_id))
     progress = get_progress()
     course_progress = progress.setdefault(course_id, {'lessons_completed': [], 'quiz_scores': {}, 'current_lesson': None})
@@ -199,7 +199,7 @@ def quiz(course_id, quiz_id):
                 score += 1
         course_progress['quiz_scores'][quiz_id] = score
         save_progress()
-        flash(f"{trans('learninghub_quiz_completed')} {score}/{len(quiz['questions'])}", "success")
+        flash(f"{trans('learning_hub_quiz_completed')} {score}/{len(quiz['questions'])}", "success")
         return redirect(url_for('learning_hub.course_overview', course_id=course_id))
     return render_template('learning_hub_quiz.html', course=course, quiz=quiz)
 
