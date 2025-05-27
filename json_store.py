@@ -252,3 +252,29 @@ class JsonStorage:
         except Exception as e:
             self.logger.exception(f"Error deleting record {record_id} from {self.filename}: {str(e)}", extra={'session_id': current_session_id})
             return False
+
+def create(self, data):
+    """Initialize the JSON file with the provided data, overwriting any existing content."""
+    current_session_id = session.get('sid', 'unknown') if has_request_context() else 'no-request-context'
+    self.logger.debug(f"Entering create for {self.filename}", extra={'session_id': current_session_id})
+    try:
+        if not isinstance(data, list):
+            self.logger.error(f"Invalid data format for create in {self.filename}: expected list, got {type(data)}", extra={'session_id': current_session_id})
+            raise ValueError(f"Data must be a list, got {type(data)}")
+        
+        # For courses.json, ensure records have required fields
+        if os.path.basename(self.filename) == 'courses.json':
+            for record in data:
+                if not isinstance(record, dict) or not all(key in record for key in ['id', 'title_en', 'title_ha']):
+                    self.logger.error(f"Invalid course record in create for {self.filename}: {record}", extra={'session_id': current_session_id})
+                    raise ValueError(f"Course record missing required keys: {record}")
+
+        if self._write(data):
+            self.logger.info(f"Created {self.filename} with {len(data)} records", extra={'session_id': current_session_id})
+            return True
+        else:
+            self.logger.error(f"Failed to create {self.filename}", extra={'session_id': current_session_id})
+            return False
+    except Exception as e:
+        self.logger.exception(f"Error creating {self.filename}: {str(e)}", extra={'session_id': current_session_id})
+        return False
