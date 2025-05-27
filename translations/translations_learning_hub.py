@@ -13,6 +13,9 @@ LEARNING_HUB_TRANSLATIONS = {
         'learning_hub_lesson_done': 'You have finished all lessons in this course.',
         'learning_hub_quiz_not_found': 'Quiz not found.',
         'learning_hub_quiz_completed': 'Quiz completed!',
+        'courses_free_course': 'Free Course',
+        'courses_learn_budgeting':'Learn about Budgeting',
+        'courses_learn_savings': 'Learn about Savings',
 
         # Modules and Lessons
         'learning_hub_module_income_title': 'Understanding Income',
