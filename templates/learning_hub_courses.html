@@ -2,7 +2,7 @@
 {% block content %}
 <div class="container">
     <div class="header">
-        <h1>{{ trans('learninghub_courses') }}</h1>
+        <h1>{{ trans('learning_hub_courses') }}</h1>
     </div>
     <div class="row mt-4">
         {% for course_id, course in courses.items() %}
@@ -20,12 +20,12 @@
                                 {{
                                     course['modules']|sum(attribute='lessons'|length)
                                 }}
-                                {{ trans('learninghub_lessons_completed') }}
+                                {{ trans('learning_hub_lessons_completed') }}
                             </span>
                         {% endif %}
                     </p>
                     <a href="{{ url_for('learning_hub.course_overview', course_id=course_id) }}" class="btn btn-primary">
-                        {{ trans('learninghub_start_course') }}
+                        {{ trans('learning_hub_start_course') }}
                     </a>
                 </div>
             </div>
