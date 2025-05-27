@@ -82,9 +82,9 @@ class QuizForm(FlaskForm):
             for q in self.questions:
                 field_name = q['id']
                 question_key = q.get('key', '')
-                label_key = f"quiz_{question_key}_label_{language}"
-                tooltip_key = f"quiz_{question_key}_tooltip_{language}"
-                placeholder_key = f"quiz_{question_key}_placeholder_{language}"
+                label_key = f"quiz_{question_key}_label"
+                tooltip_key = f"quiz_{question_key}_tooltip"
+                placeholder_key = f"quiz_{question_key}_placeholder"
                 translated_text = trans(label_key, lang=language, default=q['text'])
                 translated_options = [(opt, trans(opt, lang=language, default=opt)) for opt in q['options']]
                 field = RadioField(
@@ -332,8 +332,8 @@ def step2a():
             'positive_answers': q.get('positive_answers', ['yes']),
             'negative_answers': q.get('negative_answers', ['no']),
             'weight': q.get('weight', 1),
-            'tooltip': trans(f"quiz_{q.get('key', '')}_tooltip_{language}", lang=language, default=''),
-            'placeholder': trans(f"quiz_{q.get('key', '')}_placeholder_{language}", lang=language, default='Select an option')
+            'tooltip': trans(f"quiz_{q.get('key', '')}_tooltip", lang=language, default=''),
+            'placeholder': trans(f"quiz_{q.get('key', '')}_placeholder", lang=language, default='Select an option')
         }
         for q in QUIZ_QUESTIONS[:5]
     ]
@@ -414,8 +414,8 @@ def step2b():
             'positive_answers': q.get('positive_answers', ['yes']),
             'negative_answers': q.get('negative_answers', ['no']),
             'weight': q.get('weight', 1),
-            'tooltip': trans(f"quiz_{q.get('key', '')}_tooltip_{language}", lang=language, default=''),
-            'placeholder': trans(f"quiz_{q.get('key', '')}_placeholder_{language}", lang=language, default='Select an option')
+            'tooltip': trans(f"quiz_{q.get('key', '')}_tooltip", lang=language, default=''),
+            'placeholder': trans(f"quiz_{q.get('key', '')}_placeholder", lang=language, default='Select an option')
         }
         for q in QUIZ_QUESTIONS[5:10]
     ]
