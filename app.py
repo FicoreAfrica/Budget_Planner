@@ -239,7 +239,7 @@ def create_app():
             },
             {
                 'id': 'financial_quiz',
-                'title_key': 'quality_hub_course_financial_quiz_title',
+                'title_key': 'learning_hub_course_financial_quiz_title',
                 'title_en': 'Financial Personality Quiz',
                 'title_ha': 'Tambayar Halin Kuḋi',
                 'is_premium': False
@@ -261,7 +261,7 @@ def create_app():
         except Exception as e:
             log.error(f"Error retrieving courses: {str(e)}")
             courses = sample_courses
-            flash(trans('core_error'), 'danger')
+            flash(trans('learning_hub_error_message'), 'danger')
         return render_template(
             'index.html',
             t=trans,
@@ -276,7 +276,7 @@ def create_app():
         valid_langs = ['en', 'ha']
         session['lang'] = lang if lang in valid_langs else 'en'
         log.info(f"Language set to {session['lang']}")
-        flash(trans('core_language_changed') if session['lang'] in valid_langs else trans('core_invalid_language'))
+        flash(trans('learning_hub_language_changed') if session['lang'] in valid_langs else trans('learning_hub_invalid_language'))
         return redirect(request.referrer or url_for('index'))
 
     @app.route('/favicon.ico')
@@ -330,7 +330,7 @@ def create_app():
         lang = session.get('lang', 'en')
         session.clear()
         session['lang'] = lang
-        flash(trans('core_logged_out'))
+        flash(trans('learning_hub_logged_out'))
         return redirect(url_for('index'))
 
     @app.route('/health')
@@ -360,21 +360,21 @@ def create_app():
     def handle_global_error(e):
         lang = session.get('lang', 'en')
         log.exception(f"Global error: {str(e)}")
-        flash(trans('core_error'), 'danger')
-        return render_template('500.html', error=trans('core_error'), t=trans, lang=lang), 500
+        flash(trans('learning_hub_error_message'), 'danger')
+        return render_template('500.html', error=trans('learning_hub_error_message'), t=trans, lang=lang), 500
 
     @app.errorhandler(CSRFError)
     def handle_csrf_error(e):
         lang = session.get('lang', 'en')
         log.error(f"CSRF error: {str(e)}")
-        flash(trans('core_csrf_error'), 'danger')
-        return render_template('500.html', error=trans('core_csrf_error'), t=trans, lang=lang), 400
+        flash(trans('learning_hub_csrf_error'), 'danger')
+        return render_template('500.html', error=trans('learning_hub_csrf_error'), t=trans, lang=lang), 400
 
     @app.errorhandler(404)
     def page_not_found(e):
         lang = session.get('lang', 'en')
         log.error(f"404 error: {str(e)}")
-        return render_template('404.html', error=trans('core_page_not_found'), t=trans, lang=lang), 404
+        return render_template('404.html', error=trans('learning_hub_page_not_found'), t=trans, lang=lang), 404
 
     # Register blueprints
     app.register_blueprint(financial_health_bp)
