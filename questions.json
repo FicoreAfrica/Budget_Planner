@@ -2,7 +2,7 @@
     {
         "text": "track_expenses",
         "options": ["Yes", "No"],
-        "type": "multiple",
+        "type": "radio",
         "required": true,
         "weight": 1,
         "positive_answers": ["Yes"],
@@ -11,7 +11,7 @@
     {
         "text": "save_regularly",
         "options": ["Yes", "No"],
-        "type": "multiple",
+        "type": "radio",
         "required": true,
         "weight": 1,
         "positive_answers": ["Yes"],
@@ -20,7 +20,7 @@
     {
         "text": "spend_non_essentials",
         "options": ["Yes", "No"],
-        "type": "multiple",
+        "type": "radio",
         "required": true,
         "weight": 1,
         "positive_answers": ["No"],
@@ -29,7 +29,7 @@
     {
         "text": "plan_expenses",
         "options": ["Yes", "No"],
-        "type": "multiple",
+        "type": "radio",
         "required": true,
         "weight": 1,
         "positive_answers": ["Yes"],
@@ -38,7 +38,7 @@
     {
         "text": "impulse_purchases",
         "options": ["Yes", "No"],
-        "type": "multiple",
+        "type": "radio",
         "required": true,
         "weight": 1,
         "positive_answers": ["No"],
@@ -47,7 +47,7 @@
     {
         "text": "use_budgeting_tools",
         "options": ["Yes", "No"],
-        "type": "multiple",
+        "type": "radio",
         "required": true,
         "weight": 1,
         "positive_answers": ["Yes"],
@@ -56,7 +56,7 @@
     {
         "text": "invest_money",
         "options": ["Yes", "No"],
-        "type": "multiple",
+        "type": "radio",
         "required": true,
         "weight": 1,
         "positive_answers": ["Yes"],
@@ -65,7 +65,7 @@
     {
         "text": "emergency_fund",
         "options": ["Yes", "No"],
-        "type": "multiple",
+        "type": "radio",
         "required": true,
         "weight": 1,
         "positive_answers": ["Yes"],
@@ -74,7 +74,7 @@
     {
         "text": "set_financial_goals",
         "options": ["Yes", "No"],
-        "type": "multiple",
+        "type": "radio",
         "required": true,
         "weight": 1,
         "positive_answers": ["Yes"],
@@ -83,7 +83,7 @@
     {
         "text": "seek_financial_advice",
         "options": ["Yes", "No"],
-        "type": "multiple",
+        "type": "radio",
         "required": true,
         "weight": 1,
         "positive_answers": ["Yes"],
@@ -92,7 +92,7 @@
     {
         "text": "avoid_debt",
         "options": ["Yes", "No"],
-        "type": "multiple",
+        "type": "radio",
         "required": true,
         "weight": 1,
         "positive_answers": ["Yes"],
