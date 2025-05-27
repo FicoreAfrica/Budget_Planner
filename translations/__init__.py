@@ -4,7 +4,7 @@ from typing import Dict, Any
 
 # Set up logger to match app.py's logging configuration
 logger = logging.getLogger('ficore_app.translations')
-logger.setLevel(logging.INFO)  # Changed from DEBUG to INFO
+logger.setLevel(logging.INFO)
 
 # Initialize TRANSLATIONS dictionary
 TRANSLATIONS: Dict[str, Dict[str, str]] = {
@@ -38,6 +38,7 @@ KEY_PREFIX_TO_MODULE = {
     'net_worth_': 'translations_net_worth',
     'core_': 'translations_core',
     'learning_hub_': 'translations_learning_hub',
+    '': 'translations_quiz'  # Add generic keys like Yes, No, and Please correct the errors below to translations_quiz
 }
 
 # Dynamically import each translation module and combine translations
@@ -67,10 +68,10 @@ def trans(key: str, lang: str = None, **kwargs: Any) -> str:
     """
     # Default to 'en' if lang is None, ensuring no session access outside request context
     if lang is None:
-        lang = session.get('lang', 'en') if has_request_context() else 'en'
+        lang = session.get('language', 'en') if has_request_context() else 'en'
 
-    # Debug logging for the translation request
-    session_id = session.get('session_id', 'no-session-id') if has_request_context() else 'no-session-id'
+    # Use 'sid' to match quiz blueprint session key
+    session_id = session.get('sid', 'no-session-id') if has_request_context() else 'no-session-id'
     logger.debug(f"Translation request: key={key}, lang={lang} [session: {session_id}]")
 
     # Validate language
@@ -86,7 +87,7 @@ def trans(key: str, lang: str = None, **kwargs: Any) -> str:
         # Determine which module should define this key based on its prefix
         expected_module = 'unknown_module'
         for prefix, module in KEY_PREFIX_TO_MODULE.items():
-            if key.startswith(prefix):
+            if key.startswith(prefix) or (prefix == '' and key in ['Yes', 'No', 'Please correct the errors below']):
                 expected_module = module
                 break
         logger.warning(f"Missing translation for key={key} in lang={lang}, expected in module {expected_module} [session: {session_id}]")
@@ -108,7 +109,7 @@ def get_translations(lang: str = None) -> Dict[str, str]:
     """
     # Default to 'en' if lang is None, ensuring no session access outside request context
     if lang is None:
-        lang = session.get('lang', 'en') if has_request_context() else 'en'
+        lang = session.get('language', 'en') if has_request_context() else 'en'
 
     if lang not in TRANSLATIONS:
         logger.warning(f"Language {lang} not found, returning English translations")
