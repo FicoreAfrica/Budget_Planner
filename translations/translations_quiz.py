@@ -214,7 +214,7 @@ QUIZ_TRANSLATIONS = {
     'ha': {
         # Question-specific keys (suffixes removed)
         'quiz_track_expenses_label': 'Kana bibiyar kashe kuɗin ka?',
-        'quiz_track_expenses_tooltip': 'Misali, rubuta kashe kuɗin yau da kullun akan abinci, sufuri, ko biɗan bayanai ta amfani da manhajojin kamar Flowdiary ko littafan rubutu',
+        'quiz_track_expenses_tooltip': 'Misali, rubuta kashe kuɗin yau da kullun akan abinci, sufuri, ko biɗan bayanai ta amfani da manhajojin kamar Opay ko Vizo',
         'quiz_track_expenses_placeholder': 'Zaɓi sau nawa kake bibiyar kashe kuɗi',
         'quiz_save_regularly_label': 'Kana ajiya akai-akai?',
         'quiz_save_regularly_tooltip': 'Misali, ba da gudummawa ga Ajo/Esusu/Adashe ko amfani da dandamalin ajiya kamar PiggyVest ko Cowrywise',
