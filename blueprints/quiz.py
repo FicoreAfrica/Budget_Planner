@@ -86,7 +86,8 @@ class QuizForm(FlaskForm):
                 tooltip_key = f"quiz_{question_key}_tooltip"
                 placeholder_key = f"quiz_{question_key}_placeholder"
                 translated_text = trans(label_key, lang=language, default=q['text'])
-                translated_options = [(opt, trans(opt, lang=language, default=opt)) for opt in q['options']]
+                # Normalize options to capitalized Yes/No
+                translated_options = [(opt.capitalize(), trans(opt.capitalize(), lang=language, default=opt.capitalize())) for opt in q['options']]
                 field = RadioField(
                     translated_text,
                     validators=[DataRequired() if q.get('required', True) else Optional()],
@@ -103,12 +104,12 @@ class QuizForm(FlaskForm):
                 with current_app.app_context():
                     current_app.logger.debug(f"Added field {field_name} with translated text '{translated_text}'")
 
-        self.first_name.label.text = self.trans.get('First Name', 'First Name')
-        self.email.label.text = self.trans.get('Email', 'Email')
-        self.language.label.text = self.trans.get('Language', 'Language')
-        self.send_email.label.text = self.trans.get('Send Email', 'Send Email')
-        self.submit.label.text = self.trans.get('Next', 'Next')
-        self.back.label.text = self.trans.get('Back', 'Back')
+        self.first_name.label.text = trans('core_first_name', lang=language, default='First Name')
+        self.email.label.text = trans('core_email', lang=language, default='Email')
+        self.language.label.text = trans('Language', lang=language, default='Language')
+        self.send_email.label.text = trans('Send Email', lang=language, default='Send Email')
+        self.submit.label.text = trans('Next', lang=language, default='Next')
+        self.back.label.text = trans('Back', lang=language, default='Back')
 
     def validate(self, extra_validators=None):
         with current_app.app_context():
@@ -123,8 +124,8 @@ class QuizForm(FlaskForm):
 def calculate_score(answers):
     score = 0
     for q, a in answers:
-        positive = q.get('positive_answers', ['yes'])
-        negative = q.get('negative_answers', ['no'])
+        positive = q.get('positive_answers', ['Yes'])
+        negative = q.get('negative_answers', ['No'])
         if a in positive:
             score += 3
         elif a in negative:
@@ -136,8 +137,8 @@ def assign_personality(answers, language='en'):
     score = 0
     for q, a in answers:
         weight = q.get('weight', 1)
-        positive = [trans.get(opt, opt) for opt in q.get('positive_answers', ['yes'])]
-        negative = [trans.get(opt, opt) for opt in q.get('negative_answers', ['no'])]
+        positive = [trans.get(opt.capitalize(), opt.capitalize()) for opt in q.get('positive_answers', ['Yes'])]
+        negative = [trans.get(opt.capitalize(), opt.capitalize()) for opt in q.get('negative_answers', ['No'])]
         if a in positive:
             score += weight
         elif a in negative:
@@ -251,7 +252,7 @@ def step1():
     course_id = request.args.get('course_id', 'financial_quiz')
 
     form = QuizForm(language=language, personal_info=True, formdata=request.form if request.method == 'POST' else None)
-    form.submit.label.text = trans_dict.get('Start Quiz', 'Start Quiz')
+    form.submit.label.text = trans('Start Quiz', lang=language, default='Start Quiz')
 
     if request.method == 'POST':
         if form.validate_on_submit():
@@ -290,7 +291,7 @@ def step1():
         else:
             with current_app.app_context():
                 current_app.logger.error(f"Form validation failed: {form.errors}")
-            flash(trans_dict.get('Please correct the errors below', 'Please correct the errors below'), 'error')
+            flash(trans('Please correct the errors below', lang=language, default='Please correct the errors below'), 'error')
 
     return render_template(
         'quiz_step1.html',
@@ -327,10 +328,10 @@ def step2a():
             'label': trans(q['text'], lang=language, default=q['text']),
             'text': trans(q['text'], lang=language, default=q['text']),
             'type': q['type'],
-            'options': [trans(opt, lang=language, default=opt) for opt in q['options']],
+            'options': [trans(opt.capitalize(), lang=language, default=opt.capitalize()) for opt in q['options']],
             'required': q.get('required', True),
-            'positive_answers': q.get('positive_answers', ['yes']),
-            'negative_answers': q.get('negative_answers', ['no']),
+            'positive_answers': [opt.capitalize() for opt in q.get('positive_answers', ['Yes'])],
+            'negative_answers': [opt.capitalize() for opt in q.get('negative_answers', ['No'])],
             'weight': q.get('weight', 1),
             'tooltip': trans(f"quiz_{q.get('key', '')}_tooltip", lang=language, default=''),
             'placeholder': trans(f"quiz_{q.get('key', '')}_placeholder", lang=language, default='Select an option')
@@ -339,8 +340,8 @@ def step2a():
     ]
 
     form = QuizForm(questions=preprocessed_questions, language=language, personal_info=False, formdata=request.form if request.method == 'POST' else None)
-    form.submit.label.text = trans_dict.get('Continue', 'Continue')
-    form.back.label.text = trans_dict.get('Back', 'Back')
+    form.submit.label.text = trans('Continue', lang=language, default='Continue')
+    form.back.label.text = trans('Back', lang=language, default='Back')
 
     if request.method == 'POST':
         if form.validate_on_submit():
@@ -366,7 +367,7 @@ def step2a():
         else:
             with current_app.app_context():
                 current_app.logger.error(f"Form validation failed: {form.errors}")
-            flash(trans_dict.get('Please correct the errors below', 'Please correct the errors below'), 'error')
+            flash(trans('Please correct the errors below', lang=language, default='Please correct the errors below'), 'error')
 
     if 'quiz_data' in session:
         for q in preprocessed_questions:
@@ -409,10 +410,10 @@ def step2b():
             'label': trans(q['text'], lang=language, default=q['text']),
             'text': trans(q['text'], lang=language, default=q['text']),
             'type': q['type'],
-            'options': [trans(opt, lang=language, default=opt) for opt in q['options']],
+            'options': [trans(opt.capitalize(), lang=language, default=opt.capitalize()) for opt in q['options']],
             'required': q.get('required', True),
-            'positive_answers': q.get('positive_answers', ['yes']),
-            'negative_answers': q.get('negative_answers', ['no']),
+            'positive_answers': [opt.capitalize() for opt in q.get('positive_answers', ['Yes'])],
+            'negative_answers': [opt.capitalize() for opt in q.get('negative_answers', ['No'])],
             'weight': q.get('weight', 1),
             'tooltip': trans(f"quiz_{q.get('key', '')}_tooltip", lang=language, default=''),
             'placeholder': trans(f"quiz_{q.get('key', '')}_placeholder", lang=language, default='Select an option')
@@ -421,8 +422,8 @@ def step2b():
     ]
 
     form = QuizForm(questions=preprocessed_questions, language=language, personal_info=False, formdata=request.form if request.method == 'POST' else None)
-    form.submit.label.text = trans_dict.get('See Results', 'See Results')
-    form.back.label.text = trans_dict.get('Back', 'Back')
+    form.submit.label.text = trans('See Results', lang=language, default='See Results')
+    form.back.label.text = trans('Back', lang=language, default='Back')
 
     if request.method == 'POST':
         if form.validate_on_submit():
@@ -468,7 +469,7 @@ def step2b():
             ]
 
             if not storage_managers['sheets'].append_to_sheet(data, storage_managers['PREDETERMINED_HEADERS_QUIZ'], 'Quiz'):
-                flash(trans_dict.get('Google Sheets Error', 'Google Sheets Error'), 'error')
+                flash(trans('Google Sheets Error', lang=language, default='Google Sheets Error'), 'error')
                 return redirect(url_for('quiz.step2b', course_id=course_id))
 
             progress_storage = current_app.config['STORAGE_MANAGERS']['user_progress']
@@ -515,14 +516,14 @@ def step2b():
                     target=send_quiz_email_async,
                     args=(current_app._get_current_object(), session['quiz_data']['email'], session['quiz_data']['first_name'], personality, personality_desc, tip, language)
                 ).start()
-                flash(trans_dict.get('Check Inbox', 'Check Inbox'), 'success')
+                flash(trans('Check Inbox', lang=language, default='Check Inbox'), 'success')
 
-            flash(trans_dict.get('Submission Success', 'Submission Success'), 'success')
+            flash(trans('Submission Success', lang=language, default='Submission Success'), 'success')
             return redirect(url_for('quiz.results', course_id=course_id))
         else:
             with current_app.app_context():
                 current_app.logger.error(f"Form validation failed: {form.errors}")
-            flash(trans_dict.get('Please correct the errors below', 'Please correct the errors below'), 'error')
+            flash(trans('Please correct the errors below', lang=language, default='Please correct the errors below'), 'error')
 
     if 'quiz_data' in session:
         for q in preprocessed_questions:
@@ -552,7 +553,7 @@ def results():
     results = session.get('quiz_results', {})
 
     if not results:
-        flash(trans_dict.get('Session Expired', 'Session Expired'), 'error')
+        flash(trans('Session Expired', lang=language, default='Session Expired'), 'error')
         return redirect(url_for('quiz.step1', course_id=course_id))
 
     session.pop('quiz_data', None)
