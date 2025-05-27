@@ -13,10 +13,7 @@ LEARNING_HUB_TRANSLATIONS = {
         'learning_hub_lesson_done': 'You have finished all lessons in this course.',
         'learning_hub_quiz_not_found': 'Quiz not found.',
         'learning_hub_quiz_completed': 'Quiz completed!',
-        'courses_free_course': 'Free Course',
-        'courses_learn_budgeting':'Learn about Budgeting',
-        'courses_learn_savings': 'Learn about Savings',
-
+        
         # Modules and Lessons
         'learning_hub_module_income_title': 'Understanding Income',
         'learning_hub_lesson_income_sources_title': 'Sources of Income',
@@ -195,9 +192,7 @@ LEARNING_HUB_TRANSLATIONS = {
         'learning_hub_no_course_progress': 'Ba a sami ci gaba a kan kwas ɗin ba tukuna.',
         'learning_hub_my_courses': 'Kwas ɗina',
         'learning_hub_progress': 'Ci gaban Kwas',
-        'courses_free_course': 'Kwas Kyauta',
-        'courses_learn_budgeting':'Ka koyi Tsara Kasafin Kudi (Budgeting)',
-        'courses_learn_savings': 'Ka koyi ilimin ajiya (Savings)',
+        
     }
 }
 
