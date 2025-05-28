@@ -1,0 +1,33 @@
+[
+  {
+    "name": "Financial Guru",
+    "translation_key": "badge_financial_guru",
+    "criteria": {
+      "personality": "Planner",
+      "min_score": 6
+    }
+  },
+  {
+    "name": "Savings Star",
+    "translation_key": "badge_savings_star",
+    "criteria": {
+      "personality": "Saver",
+      "min_score": 2
+    }
+  },
+  {
+    "name": "First Quiz Completed!",
+    "translation_key": "badge_first_quiz_completed",
+    "criteria": {
+      "min_quizzes": 1
+    }
+  },
+  {
+    "name": "Needs Guidance!",
+    "translation_key": "badge_needs_guidance",
+    "criteria": {
+      "personality": "Avoider",
+      "min_total_users": 10
+    }
+  }
+]
