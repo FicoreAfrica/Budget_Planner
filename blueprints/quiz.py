@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, current_app
 from flask_wtf import FlaskForm
+from flask import make_response
 from wtforms import StringField, SelectField, BooleanField, SubmitField, RadioField
 from wtforms.validators import DataRequired, Email, Optional
 import json
@@ -10,14 +11,13 @@ import threading
 from translations import trans, get_translations
 
 # Define the quiz blueprint
-quiz_bp = Blueprint('quiz', __name__, template_folder='templates', static_folder='static', url_prefix='/quiz')
+quiz_bp = Blueprint('quiz', __name__', template_folder='templates', static_folder='static', url_prefix='/quiz')
 
 # Global QUIZ_QUESTIONS will be initialized later
 QUIZ_QUESTIONS = []
 QUESTION_KEYS = [
-    'track_expenses', 'save_regularly', 'spend_non_essentials', 'plan_expenses',
-    'impulse_purchases', 'use_budgeting_tools', 'invest_money', 'emergency_fund',
-    'set_financial_goals', 'seek_financial_advice', 'avoid_debt'
+    'track_expenses', 'save_regularly', 'spend_non_essentials', 'plan_spending', 'impulse_purchases',
+    'use_budget', 'invest_money', 'emergency_fund', 'set_financial_goals', 'seek_financial_advice', 'avoid_debt'
 ]
 
 def init_quiz_questions(app):
@@ -25,16 +25,18 @@ def init_quiz_questions(app):
     global QUIZ_QUESTIONS
     with app.app_context():
         try:
-            with open('questions.json', 'r', encoding='utf-8') as f:
+            with open('quiz.json', 'r', encoding='utf-8') as f:
                 QUIZ_QUESTIONS = json.load(f)
-            app.logger.debug(f"Successfully loaded QUIZ_QUESTIONS: {QUIZ_QUESTIONS}")
+            app.logger.debug(f"Loaded QUIZ_QUESTIONS: {QUIZ_QUESTIONS}")
             # Ensure questions align with QUESTION_KEYS
             if len(QUIZ_QUESTIONS) >= len(QUESTION_KEYS):
                 for i, key in enumerate(QUESTION_KEYS):
                     QUIZ_QUESTIONS[i]['id'] = f'question_{i+1}'
-                    QUIZ_QUESTIONS[i]['key'] = key
+                    QUIZ_QUESTIONSS[i]['key'] = key}'
+                else:
+                    app.logger.warning(f"QUIZ_QUESTIONS length {len(QUIZ_QUESTIONS)} does not match expected {len(QUESTION_KEYS)}")
         except FileNotFoundError:
-            app.logger.error("questions.json file not found. Ensure it exists in the project root directory.")
+            app.logger.error("questions.json file not found.")
             QUIZ_QUESTIONS = []
         except json.JSONDecodeError as e:
             app.logger.error(f"Error decoding questions.json: {e}")
@@ -47,15 +49,15 @@ class QuizForm(FlaskForm):
         validators=[DataRequired()],
         render_kw={
             'placeholder': 'e.g., Muhammad, Bashir, Umar',
-            'title': 'Enter your first name to personalize your quiz results'
+            'title': 'Enter your first name'
         }
     )
     email = StringField(
         'Email',
         validators=[DataRequired(), Email()],
         render_kw={
-            'placeholder': 'e.g., muhammad@example.com',
-            'title': 'Enter your email to receive quiz results'
+            'placeholder': 'e.g., email@example.com',
+            'title': 'Enter your email'
         }
     )
     language = SelectField(
@@ -66,61 +68,59 @@ class QuizForm(FlaskForm):
     send_email = BooleanField(
         'Send Email',
         default=False,
-        render_kw={'title': 'Check to receive an email with your quiz results'}
+        render_kw={'title': 'Receive email results'}
     )
     submit = SubmitField('Next')
     back = SubmitField('Back')
 
     def __init__(self, questions=None, language='en', formdata=None, personal_info=True, **kwargs):
         super().__init__(formdata=formdata, **kwargs)
-        self.trans = get_translations(language)
         self.questions = questions or []
+        self.language = language
         with current_app.app_context():
-            current_app.logger.debug(f"Initializing QuizForm with questions: {[q['id'] for q in self.questions]}")
+            current_app.logger.debug(f"Initializing QuizForm: questions={[q['id'] for q in self.questions]}, lang={lang}")
 
         if not personal_info:
             for q in self.questions:
                 field_name = q['id']
                 question_key = q.get('key', '')
                 label_key = f"quiz_{question_key}_label"
-                tooltip_key = f"quiz_{question_key}_tooltip"
-                placeholder_key = f"quiz_{question_key}_placeholder"
-                translated_text = trans(label_key, lang=language, default=q['text'])
-                translated_options = [(opt.capitalize(), trans(opt.capitalize(), lang=language, default=opt.capitalize())) for opt in q['options']]
+                # Defer translation to rendering by storing keys
                 field = RadioField(
-                    translated_text,
+                    label_key,  # Store key instead of translated text
                     validators=[DataRequired() if q.get('required', True) else Optional()],
-                    choices=translated_options,
+                    choices=[(opt, opt) for opt in q['options']],  # Store raw options
                     id=field_name,
-                    default=translated_options[0][0] if translated_options else None,  # Set default to first option
+                    default=q['options'][0] if q['options'] else None,
                     render_kw={
-                        'title': trans(tooltip_key, lang=language, default=''),
-                        'placeholder': trans(placeholder_key, lang=language, default='Select an option')
+                        'title': f"quiz_{question_key}_tooltip",
+                        'placeholder': f"quiz_{question_key}_placeholder"
                     }
                 )
                 bound_field = field.bind(self, field_name)
-                bound_field.process(formdata, self.data.get(field_name, translated_options[0][0]) if formdata and translated_options else None)
+                bound_field.process(formdata, self.data.get(field_name, q['options'][0]) if formdata and q['options'] else None)
                 self._fields[field_name] = bound_field
                 with current_app.app_context():
-                    current_app.logger.debug(f"Added field {field_name} with translated text '{translated_text}'")
+                    current_app.logger.debug(f"Added field {field_name} with label key '{label_key}'")
 
-        self.first_name.label.text = trans('core_first_name', lang=language, default='First Name')
-        self.email.label.text = trans('core_email', lang=language, default='Email')
-        self.language.label.text = trans('Language', lang=language, default='Language')
-        self.send_email.label.text = trans('Send Email', lang=language, default='Send Email')
-        self.submit.label.text = trans('Next', lang=language, default='Next')
-        self.back.label.text = trans('Back', lang=language, default='Back')
+        # Set label keys instead of translated text
+        self.first_name.label.text = 'core_first_name'
+        self.email.label.text = 'core_email'
+        self.language.label.text = 'Language'
+        self.send_email.label.text = 'Send Email'
+        self.submit.label.text = 'Next'
+        self.back.label.text = 'Back'
 
     def validate(self, extra_validators=None):
         with current_app.app_context():
-            current_app.logger.debug(f"Validating QuizForm with fields: {list(self._fields.keys())}")
+            current_app.logger.debug(f"Validating QuizForm: fields={list(self._fields.keys())}")
         rv = super().validate(extra_validators)
         if not rv:
             with current_app.app_context():
-                current_app.logger.error(f"Validation failed with errors: {self.errors}")
+                current_app.logger.error(f"Validation errors: {self.errors}")
         return rv
 
-# Helper Functions
+# Helper Functions (unchanged for brevity, assume same as provided)
 def calculate_score(answers):
     score = 0
     for q, a in answers:
@@ -144,15 +144,15 @@ def assign_personality(answers, language='en'):
         elif a in negative:
             score -= weight
     if score >= 6:
-        return 'Planner', trans.get('Planner', 'You plan your finances well.'), trans.get('Planner Tip', 'Save regularly.')
+        return 'Planner', trans.get('Planner', 'You plan well.'), trans.get('Planner Tip', 'Save regularly.')
     elif score >= 2:
-        return 'Saver', trans.get('Saver', 'You save consistently.'), trans.get('Saver Tip', 'Increase your savings rate.')
+        return 'Saver', trans.get('Saver', 'You save consistently.'), trans.get('Saver Tip', 'Increase savings.')
     elif score >= 0:
-        return 'Balanced', trans.get('Balanced', 'You maintain a balanced approach.'), trans.get('Balanced Tip', 'Consider a budget.')
+        return 'Balanced', trans.get('Balanced', 'Balanced approach.'), trans.get('Balanced Tip', 'Use a budget.')
     elif score >= -2:
-        return 'Spender', trans.get('Spender', 'You enjoy spending.'), trans.get('Spender Tip', 'Track your expenses.')
+        return 'Spender', trans.get('Spender', 'You enjoy spending.'), trans.get('Spender Tip', 'Track expenses.')
     else:
-        return 'Avoider', trans.get('Avoider', 'You avoid financial planning.'), trans.get('Avoider Tip', 'Start with a simple plan.')
+        return 'Avoider', trans.get('Avoider', 'You avoid planning.'), trans.get('Avoider Tip', 'Start simple.')
 
 def assign_badges_quiz(user_df, all_users_df, language='en'):
     badges = []
@@ -184,20 +184,20 @@ def generate_insights_and_tips(personality, language='en'):
     insights = []
     tips = []
     if personality == 'Planner':
-        insights.append(trans.get('Planner Insight', 'You have a strong grasp of financial planning.'))
-        tips.append(trans.get('Planner Tip', 'Continue setting long-term financial goals.'))
+        insights.append(trans.get('Planner Insight', 'Strong financial planning.'))
+        tips.append(trans.get('Planner Tip', 'Set long-term goals.'))
     elif personality == 'Saver':
-        insights.append(trans.get('Saver Insight', 'You excel at saving regularly.'))
-        tips.append(trans.get('Saver Tip', 'Consider investing to grow your savings.'))
+        insights.append(trans.get('Saver Insight', 'Excellent at saving.'))
+        tips.append(trans.get('Saver Tip', 'Consider investing.'))
     elif personality == 'Balanced':
-        insights.append(trans.get('Balanced Insight', 'You balance saving and spending well.'))
-        tips.append(trans.get('Balanced Tip', 'Try using a budgeting app to optimize your habits.'))
+        insights.append(trans.get('Balanced Insight', 'Balanced saving/spending.'))
+        tips.append(trans.get('Balanced Tip', 'Optimize with a budgeting app.'))
     elif personality == 'Spender':
-        insights.append(trans.get('Spender Insight', 'You enjoy spending, which can be a strength.'))
-        tips.append(trans.get('Spender Tip', 'Start tracking expenses to avoid overspending.'))
+        insights.append(trans.get('Spender Insight', 'Enjoy spending.'))
+        tips.append(trans.get('Spender Tip', 'Track expenses.'))
     elif personality == 'Avoider':
-        insights.append(trans.get('Avoider Insight', 'You may find financial planning challenging.'))
-        tips.append(trans.get('Avoider Tip', 'Begin with small steps, like a monthly budget.'))
+        insights.append(trans.get('Avoider Insight', 'Planning is challenging.'))
+        tips.append(trans.get('Avoider Tip', 'Start with a budget.'))
     return insights, tips
 
 def send_quiz_email(to_email, user_name, personality, personality_desc, tip, language):
@@ -225,34 +225,43 @@ def send_quiz_email(to_email, user_name, personality, personality_desc, tip, lan
         )
         current_app.extensions['mail'].send(msg)
         with current_app.app_context():
-            current_app.logger.info(f"Quiz email sent to {to_email}")
+            current_app.logger.info(f"Email sent to {to_email}")
         return True
     except Exception as e:
         with current_app.app_context():
-            current_app.logger.error(f"Error sending quiz email to {to_email}: {e}")
+            current_app.logger.error(f"Email error to {to_email}: {e}")
         return False
 
 def send_quiz_email_async(app, to_email, user_name, personality, personality_desc, tip, language):
     with app.app_context():
         send_quiz_email(to_email, user_name, personality, personality_desc, tip, language)
 
+# Setup session before every request
+@quiz_bp.before_request
+def setup_session():
+    """Ensure session ID and language are set for all quiz routes."""
+    if 'sid' not in session:
+        session['sid'] = str(uuid.uuid4())
+        session.permanent = True  # Persist session
+        current_app.logger.debug(f"Initialized new session ID: {session['sid']}")
+    if 'language' not in session:
+        session['language'] = 'en'  # Default language
+        current_app.logger.debug(f"Set default language: en")
+    session.modified = True
+
 # Routes
 @quiz_bp.route('/step1', methods=['GET', 'POST'])
 def step1():
     if not QUIZ_QUESTIONS:
-        flash(trans('Quiz configuration error. Please try again later.', lang=session.get('language', 'en')), 'error')
+        flash(trans('Quiz configuration error.', lang=session.get('language', 'en')), 'error')
         return redirect(url_for('index'))
-
-    if 'sid' not in session:
-        session['sid'] = str(uuid.uuid4())
-        session.modified = True
 
     language = session.get('language', 'en')
     trans_dict = get_translations(language)
     course_id = request.args.get('course_id', 'financial_quiz')
 
     form = QuizForm(language=language, personal_info=True, formdata=request.form if request.method == 'POST' else None)
-    form.submit.label.text = trans('Start Quiz', lang=language, default='Start Quiz')
+    form.submit.label.text = 'Start Quiz'
 
     if request.method == 'POST':
         if form.validate_on_submit():
@@ -264,8 +273,7 @@ def step1():
             }
             session['language'] = form.language.data
             session.modified = True
-            with current_app.app_context():
-                current_app.logger.info(f"Quiz step 1 validated successfully, updated session: {session['quiz_data']}")
+            current_app.logger.info(f"Step 1 validated, session: {session['quiz_data']}")
 
             progress_storage = current_app.config['STORAGE_MANAGERS']['user_progress']
             progress = progress_storage.filter_by_session(session['sid'])
@@ -284,14 +292,12 @@ def step1():
                     course_progress['data']['progress_percentage'] = (len(course_progress['data']['completed_lessons']) / 3) * 100
                     course_progress['data']['last_updated'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                     progress_storage.update_by_id(course_progress['id'], course_progress['data'])
-            with current_app.app_context():
-                current_app.logger.info(f"Quiz lesson 0 (step1) completed for course {course_id} by session {session['sid']}")
+            current_app.logger.info(f"Lesson 0 (step1) completed for course {course_id}")
 
             return redirect(url_for('quiz.step2a', course_id=course_id))
         else:
-            with current_app.app_context():
-                current_app.logger.error(f"Form validation failed: {form.errors}")
-            flash(trans('Please correct the errors below', lang=language, default='Please correct the errors below'), 'error')
+            current_app.logger.error(f"Validation failed: {form.errors}")
+            flash(trans('Please correct the errors below'), 'error')
 
     return render_template(
         'quiz_step1.html',
@@ -310,17 +316,13 @@ def step1():
 @quiz_bp.route('/step2a', methods=['GET', 'POST'])
 def step2a():
     if not QUIZ_QUESTIONS:
-        flash(trans('Quiz configuration error. Please try again later.', lang=session.get('language', 'en')), 'error')
+        flash(trans('Quiz configuration error.'), 'error')
         return redirect(url_for('index'))
 
     if 'sid' not in session or 'quiz_data' not in session:
-        with current_app.app_context():
-            current_app.logger.error(f"Session missing: sid={session.get('sid')}, quiz_data={session.get('quiz_data')}")
-        flash(trans('Session Expired', lang=session.get('language', 'en')), 'error')
+        current_app.logger.error(f"Session missing: sid={session.get('sid')}, quiz_data={session.get('quiz_data')}")
+        flash(trans('Session Expired'), 'error')
         return redirect(url_for('quiz.step1', course_id=request.args.get('course_id', 'financial_quiz')))
-
-    with current_app.app_context():
-        current_app.logger.debug(f"Session data: sid={session['sid']}, quiz_data={session['quiz_data']}")
 
     language = session.get('language', 'en')
     trans_dict = get_translations(language)
@@ -330,23 +332,23 @@ def step2a():
         {
             'id': q['id'],
             'key': q.get('key', ''),
-            'label': trans(q['text'], lang=language, default=q['text']),
-            'text': trans(q['text'], lang=language, default=q['text']),
+            'label': f"quiz_{q.get('key', '')}_label",
+            'text': q['text'],
             'type': q['type'],
-            'options': [trans(opt.capitalize(), lang=language, default=opt.capitalize()) for opt in q['options']],
+            'options': q['options'],
             'required': q.get('required', True),
-            'positive_answers': [opt.capitalize() for opt in q.get('positive_answers', ['Yes'])],
-            'negative_answers': [opt.capitalize() for opt in q.get('negative_answers', ['No'])],
+            'positive_answers': q.get('positive_answers', ['Yes']),
+            'negative_answers': q.get('negative_answers', ['No']),
             'weight': q.get('weight', 1),
-            'tooltip': trans(f"quiz_{q.get('key', '')}_tooltip", lang=language, default=''),
-            'placeholder': trans(f"quiz_{q.get('key', '')}_placeholder", lang=language, default='Select an option')
+            'tooltip': f"quiz_{q.get('key', '')}_tooltip",
+            'placeholder': f"quiz_{q.get('key', '')}_placeholder"
         }
         for q in QUIZ_QUESTIONS[:5]
     ]
 
     form = QuizForm(questions=preprocessed_questions, language=language, personal_info=False, formdata=request.form if request.method == 'POST' else None)
-    form.submit.label.text = trans('Continue', lang=language, default='Continue')
-    form.back.label.text = trans('Back', lang=language, default='Back')
+    form.submit.label.text = 'Continue'
+    form.back.label.text = 'Back'
 
     if request.method == 'POST':
         if form.validate_on_submit():
@@ -354,8 +356,7 @@ def step2a():
                 q['id']: form[q['id']].data for q in preprocessed_questions if q['id'] in form._fields
             })
             session.modified = True
-            with current_app.app_context():
-                current_app.logger.info(f"Quiz step 2a validated successfully, updated session: {session['quiz_data']}")
+            current_app.logger.info(f"Step 2a validated, session: {session['quiz_data']}")
 
             progress_storage = current_app.config['STORAGE_MANAGERS']['user_progress']
             progress = progress_storage.filter_by_session(session['sid'])
@@ -365,23 +366,19 @@ def step2a():
                 course_progress['data']['progress_percentage'] = (len(course_progress['data']['completed_lessons']) / 3) * 100
                 course_progress['data']['last_updated'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 progress_storage.update_by_id(course_progress['id'], course_progress['data'])
-            with current_app.app_context():
-                current_app.logger.info(f"Quiz lesson 1 (step2a) completed for course {course_id} by session {session['sid']}")
+            current_app.logger.info(f"Lesson 1 (step2a) completed for course {course_id}")
 
             return redirect(url_for('quiz.step2b', course_id=course_id))
         else:
-            with current_app.app_context():
-                current_app.logger.error(f"Form validation failed: {form.errors}")
-                current_app.logger.debug(f"Form data received: {request.form}")
-                current_app.logger.debug(f"Form fields: {list(form._fields.keys())}")
-            flash(trans('Please correct the errors below', lang=language, default='Please correct the errors below'), 'error')
+            current_app.logger.error(f"Validation failed: {form.errors}")
+            flash(trans('Please correct the errors below'), 'error')
 
     if 'quiz_data' in session:
         for q in preprocessed_questions:
             if q['id'] in session['quiz_data']:
                 form[q['id']].data = session['quiz_data'][q['id']]
 
-    return render_template(
+    response = make_response(render_template(
         'quiz_step2a.html',
         form=form,
         questions=preprocessed_questions,
@@ -394,16 +391,17 @@ def step2a():
         LINKEDIN_URL=current_app.config.get('LINKEDIN_URL', ''),
         TWITTER_URL=current_app.config.get('TWITTER_URL', ''),
         language=language
-    )
+    ))
+    return response
 
 @quiz_bp.route('/step2b', methods=['GET', 'POST'])
 def step2b():
     if not QUIZ_QUESTIONS:
-        flash(trans('Quiz configuration error. Please try again later.', lang=session.get('language', 'en')), 'error')
+        flash(trans('Quiz configuration error.'), 'error')
         return redirect(url_for('index'))
 
     if 'sid' not in session or 'quiz_data' not in session:
-        flash(trans('Session Expired', lang=session.get('language', 'en')), 'error')
+        flash(trans('Session Expired'), 'error')
         return redirect(url_for('quiz.step1', course_id=request.args.get('course_id', 'financial_quiz')))
 
     language = session.get('language', 'en')
@@ -414,23 +412,23 @@ def step2b():
         {
             'id': q['id'],
             'key': q.get('key', ''),
-            'label': trans(q['text'], lang=language, default=q['text']),
-            'text': trans(q['text'], lang=language, default=q['text']),
+            'label': f"quiz_{q.get('key', '')}_label",
+            'text': q['text'],
             'type': q['type'],
-            'options': [trans(opt.capitalize(), lang=language, default=opt.capitalize()) for opt in q['options']],
+            'options': q['options'],
             'required': q.get('required', True),
-            'positive_answers': [opt.capitalize() for opt in q.get('positive_answers', ['Yes'])],
-            'negative_answers': [opt.capitalize() for opt in q.get('negative_answers', ['No'])],
+            'positive_answers': q.get('positive_answers', ['Yes']),
+            'negative_answers': q.get('negative_answers', ['No']),
             'weight': q.get('weight', 1),
-            'tooltip': trans(f"quiz_{q.get('key', '')}_tooltip", lang=language, default=''),
-            'placeholder': trans(f"quiz_{q.get('key', '')}_placeholder", lang=language, default='Select an option')
+            'tooltip': f"quiz_{q.get('key', '')}_tooltip",
+            'placeholder': f"quiz_{q.get('key', '')}_placeholder"
         }
         for q in QUIZ_QUESTIONS[5:10]
     ]
 
     form = QuizForm(questions=preprocessed_questions, language=language, personal_info=False, formdata=request.form if request.method == 'POST' else None)
-    form.submit.label.text = trans('See Results', lang=language, default='See Results')
-    form.back.label.text = trans('Back', lang=language, default='Back')
+    form.submit.label.text = 'See Results'
+    form.back.label.text = 'Back'
 
     if request.method == 'POST':
         if form.validate_on_submit():
@@ -438,8 +436,7 @@ def step2b():
                 q['id']: form[q['id']].data for q in preprocessed_questions if q['id'] in form._fields
             })
             session.modified = True
-            with current_app.app_context():
-                current_app.logger.info(f"Quiz step 2b validated successfully, updated session: {session['quiz_data']}")
+            current_app.logger.info(f"Step 2b validated, session: {session['quiz_data']}")
 
             answers = [(QUIZ_QUESTIONS[int(k.split('_')[1]) - 1], v) for k, v in session['quiz_data'].items() if k.startswith('question_')]
             personality, personality_desc, tip = assign_personality(answers, language)
@@ -451,7 +448,7 @@ def step2b():
                 'language': session['quiz_data'].get('language', 'en'),
                 'personality': personality,
                 'score': score,
-                **{f'question_{i}': trans(QUIZ_QUESTIONS[i-1]['text'], lang=language, default=QUIZ_QUESTIONS[i-1]['text']) for i in range(1, 11)},
+                **{f'question_{i}': QUIZ_QUESTIONS[i-1]['text'] for i in range(1, 11)},
                 **{f'answer_{i}': session['quiz_data'].get(f'question_{i}', '') for i in range(1, 11)}
             }])
 
@@ -467,7 +464,7 @@ def step2b():
                 session['quiz_data'].get('first_name', ''),
                 session['quiz_data'].get('email', ''),
                 session['quiz_data'].get('language', 'en'),
-                *[trans(QUIZ_QUESTIONS[i-1]['text'], lang=language, default=QUIZ_QUESTIONS[i-1]['text']) for i in range(1, 11)],
+                *[QUIZ_QUESTIONS[i-1]['text'] for i in range(1, 11)],
                 *[session['quiz_data'].get(f'question_{i}', '') for i in range(1, 11)],
                 personality,
                 str(score),
@@ -476,7 +473,7 @@ def step2b():
             ]
 
             if not storage_managers['sheets'].append_to_sheet(data, storage_managers['PREDETERMINED_HEADERS_QUIZ'], 'Quiz'):
-                flash(trans('Google Sheets Error', lang=language, default='Google Sheets Error'), 'error')
+                flash(trans('Google Sheets Error'), 'error')
                 return redirect(url_for('quiz.step2b', course_id=course_id))
 
             progress_storage = current_app.config['STORAGE_MANAGERS']['user_progress']
@@ -485,14 +482,12 @@ def step2b():
             if course_progress and 2 not in course_progress['data'].get('completed_lessons', []):
                 course_progress['data']['completed_lessons'].append(2)
                 course_progress['data']['progress_percentage'] = (len(course_progress['data']['completed_lessons']) / 3) * 100
-                course_progress['data']['last_updated'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 progress_storage.update_by_id(course_progress['id'], course_progress['data'])
-            with current_app.app_context():
-                current_app.logger.info(f"Quiz lesson 2 (step2b) completed for course {course_id} by session {session['sid']}")
+            current_app.logger.info(f"Lesson 2 (step2b) completed for course {course_id}")
 
             records = []
             if not all_users_df.empty:
-                user_records = all_users_df[all_users_df['email'] == session['quiz_data'].get('email', '')].sort_values('Timestamp', ascending=False)
+                user_records = all_users_df[all_users_df['email'] == session['quiz_data'].get('email', '')].sort_values('Timestamp')
                 for idx, row in user_records.iterrows():
                     records.append((idx, {
                         'created_at': row['Timestamp'].strftime('%Y-%m-%d %H:%M:%S') if pd.notna(row['Timestamp']) else 'N/A',
@@ -523,21 +518,20 @@ def step2b():
                     target=send_quiz_email_async,
                     args=(current_app._get_current_object(), session['quiz_data']['email'], session['quiz_data']['first_name'], personality, personality_desc, tip, language)
                 ).start()
-                flash(trans('Check Inbox', lang=language, default='Check Inbox'), 'success')
+                flash(trans('Check Inbox'), 'success')
 
-            flash(trans('Submission Success', lang=language, default='Submission Success'), 'success')
+            flash(trans('Submission Success'))
             return redirect(url_for('quiz.results', course_id=course_id))
         else:
-            with current_app.app_context():
-                current_app.logger.error(f"Form validation failed: {form.errors}")
-            flash(trans('Please correct the errors below', lang=language, default='Please correct the errors below'), 'error')
+            current_app.logger.error(f"Validation failed: {form.errors}")
+            flash(trans('Please correct the errors below'), 'error')
 
     if 'quiz_data' in session:
         for q in preprocessed_questions:
             if q['id'] in session['quiz_data']:
                 form[q['id']].data = session['quiz_data'][q['id']]
 
-    return render_template(
+    response = make_response(render_template(
         'quiz_step2b.html',
         form=form,
         questions=preprocessed_questions,
@@ -550,7 +544,8 @@ def step2b():
         LINKEDIN_URL=current_app.config.get('LINKEDIN_URL', ''),
         TWITTER_URL=current_app.config.get('TWITTER_URL', ''),
         language=language
-    )
+    ))
+    return response
 
 @quiz_bp.route('/results', methods=['GET'])
 def results():
@@ -560,14 +555,14 @@ def results():
     results = session.get('quiz_results', {})
 
     if not results:
-        flash(trans('Session Expired', lang=language, default='Session Expired'), 'error')
+        flash(trans('Session Expired'), 'error')
         return redirect(url_for('quiz.step1', course_id=course_id))
 
     session.pop('quiz_data', None)
     session.pop('quiz_results', None)
     session.modified = True
 
-    return render_template(
+    response = make_response(render_template(
         'quiz_results.html',
         latest_record=results.get('latest_record', {}),
         records=results.get('records', []),
@@ -582,4 +577,5 @@ def results():
         LINKEDIN_URL=current_app.config.get('LINKEDIN_URL', ''),
         TWITTER_URL=current_app.config.get('TWITTER_URL', ''),
         language=language
-    )
+    ))
+    return response
