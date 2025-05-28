@@ -6,6 +6,9 @@
             max-width: 600px;
             margin: 2rem auto;
         }
+        .form-check-input.is-invalid ~ .invalid-feedback {
+            display: block;
+        }
     </style>
 {% endblock %}
 {% block content %}
@@ -26,21 +29,37 @@
     {% endwith %}
     <div class="card">
         <div class="card-body">
-            <form method="POST" action="{{ url_for('quiz.step2b', course_id=course_id) }}">
+            <form method="POST" action="{{ url_for('quiz.step2a', course_id=course_id) }}">
                 {{ form.csrf_token }}
                 {% for question in questions %}
                     <div class="mb-3">
                         <label class="form-label">{{ trans('quiz_' + question.key + '_label') | default(question.label | default('Question')) }}</label>
-                        {{ form[question.id](class="form-select", **{'data-bs-toggle': 'tooltip', 'title': trans('quiz_' + question.key + '_tooltip') | default(question.tooltip | default('Select an option to answer this question')), 'aria-describedby': 'help_' + question.key}) }}
-                        <small class="form-text text-muted" id="help_{{ question.key }}">{{ trans('quiz_' + question.key + '_placeholder') | default(question.placeholder | default('Select an option')) }}</small>
-                        {% for error in form[question.id].errors %}
-                            <div class="invalid-feedback">{{ trans(error) | default(error) }}</div>
+                        {% for choice in form[question.id].choices %}
+                            <div class="form-check">
+                                <input type="radio" class="form-check-input{{ ' is-invalid' if form[question.id].errors else '' }}" 
+                                       name="{{ question.id }}" 
+                                       value="{{ choice[0] }}" 
+                                       id="{{ question.id }}_{{ loop.index }}"
+                                       {% if form[question.id].data == choice[0] %}checked{% endif %}
+                                       data-bs-toggle="tooltip"
+                                       title="{{ trans('quiz_' + question.key + '_tooltip') | default(question.tooltip | default('Select an option to answer this question')) }}"
+                                       aria-describedby="help_{{ question.key }}">
+                                <label class="form-check-label" for="{{ question.id }}_{{ loop.index }}">{{ choice[1] }}</label>
+                            </div>
                         {% endfor %}
+                        <small class="form-text text-muted" id="help_{{ question.key }}">{{ trans('quiz_' + question.key + '_placeholder') | default(question.placeholder | default('Select an option')) }}</small>
+                        {% if form[question.id].errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form[question.id].errors %}
+                                    {{ trans(error) | default(error) }}<br>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
                     </div>
                 {% endfor %}
                 <div class="d-flex justify-content-between">
-                    <a href="{{ url_for('quiz.step2a', course_id=course_id) }}" class="btn btn-secondary">{{ trans('core_back') | default('Back') }}</a>
-                    <button type="submit" class="btn btn-primary">{{ trans('quiz_see_results') | default('See Results') }}</button>
+                    <a href="{{ url_for('quiz.step1', course_id=course_id) }}" class="btn btn-secondary">{{ trans('core_back') | default('Back') }}</a>
+                    <button type="submit" class="btn btn-primary">{{ trans('quiz_continue') | default('Continue') }}</button>
                 </div>
             </form>
         </div>
