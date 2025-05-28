@@ -84,18 +84,38 @@ class QuizForm(FlaskForm):
             current_app.logger.debug(f"Initializing QuizForm: questions={[q['id'] for q in self.questions]}, language={language}")
 
         # Set translated labels and render_kw for personal info fields
-        self.first_name.label.text = trans('core_first_name', lang=language)
-        self.email.label.text = trans('core_email', lang=language)
-        self.language.label.text = trans('core_language', lang=language)
-        self.send_email.label.text = trans('core_send_email', lang=language)
-        self.submit.label.text = trans('core_submit', lang=language)
-        self.back.label.text = trans('core_back', lang=language)
+        if personal_info:
+            self.first_name.label.text = trans('core_first_name', lang=language)
+            self.email.label.text = trans('core_email', lang=language)
+            self.language.label.text = trans('core_language', lang=language)
+            self.send_email.label.text = trans('core_send_email', lang=language)
+            self.submit.label.text = trans('core_submit', lang=language)
+            self.back.label.text = trans('core_back', lang=language)
 
-        self.first_name.render_kw['placeholder'] = trans('core_first_name_placeholder', lang=language)
-        self.first_name.render_kw['title'] = trans('core_first_name_tooltip', lang=language)
-        self.email.render_kw['placeholder'] = trans('core_email_placeholder', lang=language)
-        self.email.render_kw['title'] = trans('core_email_tooltip', lang=language)
-        self.send_email.render_kw['title'] = trans('core_send_email_tooltip', lang=language)
+            self.first_name.render_kw['placeholder'] = trans('core_first_name_placeholder', lang=language)
+            self.first_name.render_kw['title'] = trans('core_first_name_tooltip', lang=language)
+            self.email.render_kw['placeholder'] = trans('core_email_placeholder', lang=language)
+            self.email.render_kw['title'] = trans('core_email_tooltip', lang=language)
+            self.send_email.render_kw['title'] = trans('core_send_email_tooltip', lang=language)
+        else:
+            # Ensure language and send_email fields are properly initialized
+            self.language = SelectField(
+                trans('core_language', lang=language),
+                choices=[('en', 'English'), ('ha', 'Hausa')],
+                default=language,
+                render_kw={'aria-label': 'Select Language'}
+            )
+            self.send_email = BooleanField(
+                trans('core_send_email', lang=language),
+                default=False,
+                render_kw={'title': trans('core_send_email_tooltip', lang=language), 'aria-label': 'Send Email Checkbox'}
+            )
+            self.language.bind(self, 'language')
+            self.send_email.bind(self, 'send_email')
+            self.language.process(formdata, self.data.get('language', language))
+            self.send_email.process(formdata, self.data.get('send_email', False))
+            self._fields['language'] = self.language
+            self._fields['send_email'] = self.send_email
 
         if not personal_info:
             for q in self.questions:
@@ -125,6 +145,9 @@ class QuizForm(FlaskForm):
                 self._fields[field_name] = bound_field
                 with current_app.app_context():
                     current_app.logger.debug(f"Added field {field_name} with label '{label}' (key: {label_key})")
+
+        with current_app.app_context():
+            current_app.logger.debug(f"Form fields initialized: {list(self._fields.keys())}")
 
     def validate(self, extra_validators=None):
         with current_app.app_context():
@@ -254,7 +277,7 @@ def send_quiz_email(to_email, user_name, personality, personality_desc, tip, lan
                 personality=personality,
                 personality_desc=personality_desc,
                 tip=tip,
-                chart_data=chart_data,
+                data={'created_at': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC'), 'score': calculate_score([(QUIZ_QUESTIONS[int(k.split('_')[1]) - 1], v) for k, v in session.get('quiz_data', {}).items() if k.startswith('question_')], language), 'badges': session.get('quiz_results', {}).get('latest_record', {}).get('badges', [])},
                 base_url=current_app.config.get('BASE_URL', ''),
                 language=language
             )
@@ -379,6 +402,7 @@ def quiz_step(step_num):
         } for q in questions
     ]
 
+    current_app.logger.debug(f"Session quiz_data: {session.get('quiz_data', {})}")
     form = QuizForm(questions=preprocessed_questions, language=language, personal_info=False, formdata=request.form if request.method == 'POST' else None)
     form.submit.label.text = trans('core_see_results' if step_num == len(steps) else 'core_continue', lang=language)
     form.back.label.text = trans('core_back', lang=language)
@@ -386,6 +410,7 @@ def quiz_step(step_num):
     if request.method == 'POST' and form.validate_on_submit():
         session['quiz_data'].update({q['id']: form[q['id']].data for q in preprocessed_questions})
         session['language'] = form.language.data
+        session['quiz_data']['send_email'] = form.send_email.data
         session.modified = True
 
         course_id = request.args.get('course_id', 'financial_quiz')
@@ -481,8 +506,12 @@ def quiz_step(step_num):
 
     if 'quiz_data' in session:
         for q in preprocessed_questions:
-            if q['id'] in session['quiz_data']:
+            if q['id'] in session['quiz_data'] and isinstance(session['quiz_data'][q['id']], str):
                 form[q['id']].data = session['quiz_data'][q['id']]
+        if 'language' in session['quiz_data']:
+            form.language.data = session['quiz_data']['language'] if session['quiz_data']['language'] in ['en', 'ha'] else 'en'
+        if 'send_email' in session['quiz_data']:
+            form.send_email.data = bool(session['quiz_data']['send_email'])
 
     response = make_response(render_template(
         'quiz_step.html',
