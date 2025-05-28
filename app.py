@@ -164,7 +164,11 @@ def create_app():
         init_quiz_questions(app)
 
     # Add custom Jinja2 filter for translations
-    app.jinja_env.filters['trans'] = lambda key, lang=session.get('lang', 'en'), **kwargs: trans(key, lang=lang, **kwargs)
+    app.jinja_env.filters['trans'] = lambda key, **kwargs: trans(
+        key,
+        lang=kwargs.get('lang', session.get('lang', 'en')),
+        **{k: v for k, v in kwargs.items() if k != 'lang'}
+    )
 
     # Template filter for number formatting
     @app.template_filter('format_number')
@@ -193,8 +197,18 @@ def create_app():
         if 'sid' not in session:
             session['sid'] = str(uuid.uuid4())
             log.info(f"New session ID generated: {session['sid']}")
-        if 'lang' not in session:
+        if 'lang' not in session and 'language' not in session:
             session['lang'] = 'en'
+            session['language'] = 'en'
+            log.info("Set default language to 'en' for both session['lang'] and session['language']")
+        elif 'lang' in session and 'language' not in session:
+            session['language'] = session['lang']
+            log.info(f"Synchronized session['language'] to session['lang'] ({session['lang']})")
+        elif 'language' in session and 'lang' not in session:
+            session['lang'] = session['language']
+            log.info(f"Synchronized session['lang'] to session['language'] ({session['language']})")
+        if session.get('lang'):
+            log.warning("Using session['lang'] for language setting; consider migrating to session['language'] for standardization")
         g.log = log
         g.log.info(f"Request started for path: {request.path}")
         if not os.path.exists('data/storage.txt'):
@@ -204,6 +218,8 @@ def create_app():
     @app.context_processor
     def inject_translations():
         lang = session.get('lang', 'en')
+        if lang:
+            log.warning("Context processor using session['lang']; consider migrating to session['language']")
         def context_trans(key, **kwargs):
             translated = trans(key, lang=lang, **kwargs)
             return translated
@@ -224,6 +240,7 @@ def create_app():
     @session_required
     def index():
         lang = session.get('lang', 'en')
+        session['language'] = lang  # Ensure synchronization
         log.info("Serving index page")
         courses_storage = app.config['STORAGE_MANAGERS']['courses']
         sample_courses = [
@@ -267,7 +284,7 @@ def create_app():
         except Exception as e:
             log.error(f"Error retrieving courses: {str(e)}")
             courses = sample_courses
-            flash(trans('learning_hub_error_message', default='An error occurred'), 'danger')
+            flash(trans('learning_hub_error_message', default='An error occurred', lang=lang), 'danger')
         return render_template(
             'index.html',
             t=trans,
@@ -280,9 +297,11 @@ def create_app():
     @session_required
     def set_language(lang):
         valid_langs = ['en', 'ha']
-        session['lang'] = lang if lang in valid_langs else 'en'
-        log.info(f"Language set to {session['lang']}")
-        flash(trans('learning_hub_success_language_updated', default='Language updated successfully') if session['lang'] in valid_langs else trans('Invalid language', default='Invalid language'))
+        new_lang = lang if lang in valid_langs else 'en'
+        session['lang'] = new_lang
+        session['language'] = new_lang
+        log.info(f"Language set to {session['lang']} for both session['lang'] and session['language']")
+        flash(trans('learning_hub_success_language_updated', default='Language updated successfully', lang=new_lang) if new_lang in valid_langs else trans('Invalid language', default='Invalid language', lang=new_lang))
         return redirect(request.referrer or url_for('index'))
 
     @app.route('/favicon.ico')
@@ -294,6 +313,7 @@ def create_app():
     @session_required
     def general_dashboard():
         lang = session.get('lang', 'en')
+        session['language'] = lang  # Ensure synchronization
         log.info("Serving general dashboard")
         data = {}
         expected_keys = {
@@ -336,12 +356,14 @@ def create_app():
         lang = session.get('lang', 'en')
         session.clear()
         session['lang'] = lang
-        flash(trans('learning_hub_success_logout', default='Successfully logged out'))
+        session['language'] = lang
+        flash(trans('learning_hub_success_logout', default='Successfully logged out', lang=lang))
         return redirect(url_for('index'))
 
     @app.route('/health')
     @session_required
     def health():
+        lang = session.get('lang', 'en')
         log.info("Health check requested")
         status = {"status": "healthy"}
         try:
@@ -366,21 +388,21 @@ def create_app():
     def handle_global_error(e):
         lang = session.get('lang', 'en')
         log.error(f"Global error: {str(e)}")
-        flash(trans('global_error_message', default='An error occurred'), 'danger')
-        return render_template('index.html', error=trans('global_error_message', default='An error occurred'), t=trans, lang=lang), 500
+        flash(trans('global_error_message', default='An error occurred', lang=lang), 'danger')
+        return render_template('index.html', error=trans('global_error_message', default='An error occurred', lang=lang), t=trans, lang=lang), 500
 
     @app.errorhandler(CSRFError)
     def handle_csrf_error(e):
         lang = session.get('lang', 'en')
         log.error(f"CSRF error: {str(e)}")
-        flash(trans('csrf_error', default='Invalid CSRF token'), 'danger')
-        return render_template('index.html', error=trans('csrf_error', default='Invalid CSRF token'), t=trans, lang=lang), 400
+        flash(trans('csrf_error', default='Invalid CSRF token', lang=lang), 'danger')
+        return render_template('index.html', error=trans('csrf_error', default='Invalid CSRF token', lang=lang), t=trans, lang=lang), 400
 
     @app.errorhandler(404)
     def page_not_found(e):
         lang = session.get('lang', 'en')
         log.error(f"404 error: {str(e)}")
-        return render_template('404.html')
+        return render_template('404.html', t=trans, lang=lang), 404
 
     # Register blueprints
     app.register_blueprint(financial_health_bp)
