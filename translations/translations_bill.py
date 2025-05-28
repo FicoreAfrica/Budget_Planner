@@ -5,7 +5,6 @@ BILL_TRANSLATIONS = {
         'bill_amount_required': 'Valid amount is required',
         'bill_ajo_esusu_adashe': 'Ajo/Esusu/Adashe',
         'bill_bill_added_success': 'Bill added successfully.',
-        'bill_bill_added_success': 'Bill added successfully.',
         'core_Bill added successfully.': 'Bill added successfully.',  # Added
         'core_all': 'All',
         'bill_bill_add_error': 'Error adding bill',
