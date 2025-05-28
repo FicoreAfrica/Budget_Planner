@@ -83,7 +83,7 @@ class QuizForm(FlaskForm):
         with current_app.app_context():
             current_app.logger.debug(f"Initializing QuizForm: questions={[q['id'] for q in self.questions]}, language={language}")
 
-        # Set translated labels and render_kw for personal info fields
+        # Initialize static fields
         if personal_info:
             self.first_name.label.text = trans('core_first_name', lang=language)
             self.email.label.text = trans('core_email', lang=language)
@@ -98,28 +98,33 @@ class QuizForm(FlaskForm):
             self.email.render_kw['title'] = trans('core_email_tooltip', lang=language)
             self.send_email.render_kw['title'] = trans('core_send_email_tooltip', lang=language)
         else:
-            # Ensure language and send_email fields are properly initialized
-            self.language = SelectField(
-                trans('core_language', lang=language),
-                choices=[('en', 'English'), ('ha', 'Hausa')],
-                default=language,
-                render_kw={'aria-label': 'Select Language'}
-            )
-            self.send_email = BooleanField(
-                trans('core_send_email', lang=language),
-                default=False,
-                render_kw={'title': trans('core_send_email_tooltip', lang=language), 'aria-label': 'Send Email Checkbox'}
-            )
-            self.language.bind(self, 'language')
-            self.send_email.bind(self, 'send_email')
+            # Reinitialize language and send_email to ensure they are WTForms fields
+            if 'language' not in self._fields:
+                self.language = SelectField(
+                    trans('core_language', lang=language),
+                    choices=[('en', 'English'), ('ha', 'Hausa')],
+                    default=language,
+                    render_kw={'aria-label': 'Select Language'}
+                )
+                self.language.bind(self, 'language')
+                self._fields['language'] = self.language
+            if 'send_email' not in self._fields:
+                self.send_email = BooleanField(
+                    trans('core_send_email', lang=language),
+                    default=False,
+                    render_kw={'title': trans('core_send_email_tooltip', lang=language), 'aria-label': 'Send Email Checkbox'}
+                )
+                self.send_email.bind(self, 'send_email')
+                self._fields['send_email'] = self.send_email
             self.language.process(formdata, self.data.get('language', language))
             self.send_email.process(formdata, self.data.get('send_email', False))
-            self._fields['language'] = self.language
-            self._fields['send_email'] = self.send_email
 
+        # Add dynamic question fields
         if not personal_info:
             for q in self.questions:
                 field_name = q['id']
+                if field_name in self._fields:
+                    continue  # Prevent overwriting existing fields
                 question_key = q.get('key', '')
                 label_key = f"quiz_{question_key}_label"
                 tooltip_key = f"quiz_{question_key}_tooltip"
@@ -505,13 +510,23 @@ def quiz_step(step_num):
         return redirect(url_for('quiz.results', course_id=course_id))
 
     if 'quiz_data' in session:
+        current_app.logger.debug(f"Prepopulating form with session quiz_data: {session['quiz_data']}")
         for q in preprocessed_questions:
-            if q['id'] in session['quiz_data'] and isinstance(session['quiz_data'][q['id']], str):
-                form[q['id']].data = session['quiz_data'][q['id']]
-        if 'language' in session['quiz_data']:
-            form.language.data = session['quiz_data']['language'] if session['quiz_data']['language'] in ['en', 'ha'] else 'en'
-        if 'send_email' in session['quiz_data']:
-            form.send_email.data = bool(session['quiz_data']['send_email'])
+            if q['id'] in session['quiz_data']:
+                try:
+                    if isinstance(session['quiz_data'][q['id']], str):
+                        form[q['id']].data = session['quiz_data'][q['id']]
+                    else:
+                        current_app.logger.warning(f"Invalid data type for {q['id']} in session: {type(session['quiz_data'][q['id']])}")
+                except AttributeError:
+                    current_app.logger.warning(f"Field {q['id']} not found in form for pre-population")
+        try:
+            if 'language' in session['quiz_data']:
+                form.language.data = session['quiz_data']['language'] if session['quiz_data']['language'] in ['en', 'ha'] else 'en'
+            if 'send_email' in session['quiz_data']:
+                form.send_email.data = bool(session['quiz_data']['send_email'])
+        except AttributeError as e:
+            current_app.logger.error(f"Error prepopulating language/send_email: {e}")
 
     response = make_response(render_template(
         'quiz_step.html',
