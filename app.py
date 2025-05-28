@@ -166,7 +166,7 @@ def create_app():
     # Add custom Jinja2 filter for translations
     app.jinja_env.filters['trans'] = lambda key, **kwargs: trans(
         key,
-        lang=kwargs.get('lang', session.get('lang', 'en')),
+        lang=kwargs.get('lang', session.get('language', 'en')),
         logger=g.get('log', log) if has_request_context() else log,
         **{k: v for k, v in kwargs.items() if k != 'lang'}
     )
@@ -198,18 +198,9 @@ def create_app():
         if 'sid' not in session:
             session['sid'] = str(uuid.uuid4())
             log.info(f"New session ID generated: {session['sid']}")
-        if 'lang' not in session and 'language' not in session:
-            session['lang'] = 'en'
+        if 'language' not in session:
             session['language'] = 'en'
-            log.info("Set default language to 'en' for both session['lang'] and session['language']")
-        elif 'lang' in session and 'language' not in session:
-            session['language'] = session['lang']
-            log.info(f"Synchronized session['language'] to session['lang'] ({session['lang']})")
-        elif 'language' in session and 'lang' not in session:
-            session['lang'] = session['language']
-            log.info(f"Synchronized session['lang'] to session['language'] ({session['language']})")
-        if session.get('lang'):
-            log.warning("Using session['lang'] for language setting; consider migrating to session['language'] for standardization")
+            log.info("Set default language to 'en'")
         g.log = log
         g.log.info(f"Request started for path: {request.path}")
         if not os.path.exists('data/storage.txt'):
@@ -218,9 +209,7 @@ def create_app():
     # Context processor for translations
     @app.context_processor
     def inject_translations():
-        lang = session.get('lang', 'en')
-        if lang:
-            log.warning("Context processor using session['lang']; consider migrating to session['language']")
+        lang = session.get('language', 'en')
         def context_trans(key, **kwargs):
             translated = trans(key, lang=lang, logger=g.get('log', log), **kwargs)
             return translated
@@ -240,8 +229,7 @@ def create_app():
     @app.route('/')
     @session_required
     def index():
-        lang = session.get('lang', 'en')
-        session['language'] = lang  # Ensure synchronization
+        lang = session.get('language', 'en')
         log.info("Serving index page")
         courses_storage = app.config['STORAGE_MANAGERS']['courses']
         sample_courses = [
@@ -299,9 +287,8 @@ def create_app():
     def set_language(lang):
         valid_langs = ['en', 'ha']
         new_lang = lang if lang in valid_langs else 'en'
-        session['lang'] = new_lang
         session['language'] = new_lang
-        log.info(f"Language set to {session['lang']} for both session['lang'] and session['language']")
+        log.info(f"Language set to {session['language']}")
         flash(trans('learning_hub_success_language_updated', default='Language updated successfully', lang=new_lang) if new_lang in valid_langs else trans('Invalid language', default='Invalid language', lang=new_lang))
         return redirect(request.referrer or url_for('index'))
 
@@ -313,8 +300,7 @@ def create_app():
     @app.route('/general_dashboard')
     @session_required
     def general_dashboard():
-        lang = session.get('lang', 'en')
-        session['language'] = lang  # Ensure synchronization
+        lang = session.get('language', 'en')
         log.info("Serving general dashboard")
         data = {}
         expected_keys = {
@@ -354,9 +340,8 @@ def create_app():
     @session_required
     def logout():
         log.info("Logging out user")
-        lang = session.get('lang', 'en')
+        lang sobreslang = session.get('language', 'en')
         session.clear()
-        session['lang'] = lang
         session['language'] = lang
         flash(trans('learning_hub_success_logout', default='Successfully logged out', lang=lang))
         return redirect(url_for('index'))
@@ -364,7 +349,7 @@ def create_app():
     @app.route('/health')
     @session_required
     def health():
-        lang = session.get('lang', 'en')
+        lang = session.get('language', 'en')
         log.info("Health check requested")
         status = {"status": "healthy"}
         try:
@@ -387,21 +372,21 @@ def create_app():
     # Error handlers
     @app.errorhandler(Exception)
     def handle_global_error(e):
-        lang = session.get('lang', 'en')
+        lang = session.get('language', 'en')
         log.error(f"Global error: {str(e)}")
         flash(trans('global_error_message', default='An error occurred', lang=lang), 'danger')
         return render_template('index.html', error=trans('global_error_message', default='An error occurred', lang=lang), t=trans, lang=lang), 500
 
     @app.errorhandler(CSRFError)
     def handle_csrf_error(e):
-        lang = session.get('lang', 'en')
+        lang = session.get('language', 'en')
         log.error(f"CSRF error: {str(e)}")
         flash(trans('csrf_error', default='Invalid CSRF token', lang=lang), 'danger')
         return render_template('index.html', error=trans('csrf_error', default='Invalid CSRF token', lang=lang), t=trans, lang=lang), 400
 
     @app.errorhandler(404)
     def page_not_found(e):
-        lang = session.get('lang', 'en')
+        lang = session.get('language', 'en')
         log.error(f"404 error: {str(e)}")
         return render_template('404.html', t=trans, lang=lang), 404
 
