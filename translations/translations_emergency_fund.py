@@ -35,12 +35,12 @@ EMERGENCY_FUND_TRANSLATIONS = {
         'emergency_fund_tips_for_building': 'Tips for Building Your Fund',
         'emergency_fund_call_to_actions': 'Call to Actions',
         'emergency_fund_previous_fund_calculations': 'Previous Records',
-        'emergency_fund_no_previous_calculations': 'No previous records',
+        'emergency_fund_no_previous_calculation': 'No previous records',
         'emergency_fund_no_fund_data': 'No fund data available',
         'emergency_fund_start_calculator': 'Start Calculator',
         'emergency_fund_recalculate_fund': 'Recalculate Fund',
         'emergency_fund_first_name': 'First Name',
-        'emergency_fund_first_name_placeholder': 'e.g., Chukwudi, Aisha, Muhammadu',
+        'emergency_fund_first_name_placeholder': 'e.g., Chukwudi, Aisha, Muhammaduhamadu',
         'emergency_fund_first_name_tooltip': 'Your name, like Chukwudi or Aisha',
         'emergency_fund_first_name_example': 'Example: Enter "Muhammadu" if that’s your name',
         'emergency_fund_first_name_required': 'Please enter your first name',
@@ -113,7 +113,9 @@ EMERGENCY_FUND_TRANSLATIONS = {
         'emergency_fund_badge_saver': 'Steady Saver',
         'emergency_fund_badge_fund_master': 'Fund Master',
         'emergency_fund_no_badges': 'No badges earned yet',
-        'emergency_fund_no_badges_earned': 'No badges earned yet'
+        'emergency_fund_no_badges_earned': 'No badges earned yet',
+        'emergency_fund_goal': 'Emergency Fund Goal',
+        'emergency_fund_start_emergency_fund': 'Start Emergency Fund'
     },
     'ha': {
         'core_english': 'Turanci',
@@ -229,6 +231,8 @@ EMERGENCY_FUND_TRANSLATIONS = {
         'emergency_fund_badge_saver': 'Mai ajiya akai-akai',
         'emergency_fund_badge_fund_master': 'Jagoran asusu',
         'emergency_fund_no_badges': 'Babu alamomi a yanzu',
-        'emergency_fund_no_badges_earned': 'Babu alamomin da aka samu a yanzu'
+        'emergency_fund_no_badges_earned': 'Babu alamomin da aka samu a yanzu',
+        'emergency_fund_goal': 'Manufar Asusun Gaggawa',
+        'emergency_fund_start_emergency_fund': 'Fara Asusun Gaggawa'
     }
 }
