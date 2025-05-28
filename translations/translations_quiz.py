@@ -4,6 +4,8 @@ QUIZ_TRANSLATIONS = {
         'quiz_personality_quiz': 'Personality Quiz',
         'quiz_start_personality_quiz': 'Start Personality Quiz',
         'quiz_assess_personality': 'Answer questions to assess financial personality',
+        'Continue': 'Continue',  # Added
+        'Please correct the errors below': 'Please correct the errors below',
         'Language': 'Language',
         'Send Email': 'Send Email',
         'Next': 'Next',
@@ -838,6 +840,8 @@ QUIZ_TRANSLATIONS = {
         'Send Email': 'Aika Imel',
         'Next': 'Na gaba',
         'Back': 'Baya',
-        'Start Quiz': 'Fara Tambayoyi'
+        'Start Quiz': 'Fara Tambayoyi',
+        'Continue': 'Ci gaba',  # Added
+        'Please correct the errors below': 'Da fatan za a gyara kurakuran da ke ƙasa'
     }
 }
