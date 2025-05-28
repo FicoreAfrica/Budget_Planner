@@ -85,7 +85,7 @@ def step2():
     if 'sid' not in session or 'emergency_fund_step1' not in session:
         flash(trans("emergency_fund_missing_step1"), "danger")
         return redirect(url_for('emergency_fund.step1'))
-    lang = Step2Form.get('lang', 'en')
+    lang = session.get('lang', 'en')
     form = Step2Form()
     try:
         if request.method == 'POST' and form.validate_on_submit():
@@ -103,7 +103,7 @@ def step2():
 @emergency_fund_bp.route('/step3', methods=['GET', 'POST'])
 def step3():
     if 'sid' not in session or 'emergency_fund_step2' not in session:
-        flash(trans('emergency_fund_missing_step2'), 'danger')
+        flash(trans("emergency_fund_missing_step2"), "danger")
         return redirect(url_for('emergency_fund.step1'))
     lang = session.get('lang', 'en')
     form = Step3Form()
@@ -124,7 +124,7 @@ def step3():
 @emergency_fund_bp.route('/step4', methods=['GET', 'POST'])
 def step4():
     if 'sid' not in session or 'emergency_fund_step3' not in session:
-        flash(trans('emergency_fund_missing_step3'), 'danger')
+        flash(trans("emergency_fund_missing_step3"), "danger")
         return redirect(url_for('emergency_fund.step1'))
     lang = session.get('lang', 'en')
     form = Step4Form()
@@ -184,7 +184,7 @@ def step4():
                 send_email(
                     to_email=step1_data['email'],
                     subject=trans("emergency_fund_email_subject", lang=step1_data['language']),
-                    template_name="emergency_fund_email.html",
+                    template_name="emails/emergency_fund_email.html",
                     data={
                         "first_name": step1_data['first_name'],
                         "language": step1_data['language'],
@@ -195,8 +195,8 @@ def step4():
                         "dependents": step3_data['dependents'] or 0,
                         "timeline": months,
                         "recommended_months": recommended_months,
-                        "target_amount": target_amount,
-                        "savings_gap": gap,
+                        "target": target_amount,
+                        "gap": gap,
                         "monthly_savings": monthly_savings,
                         "percent_of_income_needed": percent_of_income_needed,
                         "badges": badges,
@@ -205,7 +205,7 @@ def step4():
                     },
                     lang=step1_data['language']
                 )
-            flash(trans("emergency_fund_emergency_fund_completed_success"), "success")
+            flash(trans("emergency_fund_successful"), "success")
             for key in ['emergency_fund_step1', 'emergency_fund_step2', 'emergency_fund_step3']:
                 session.pop(key, None)
             return redirect(url_for('emergency_fund.dashboard'))
@@ -219,13 +219,14 @@ def step4():
 def dashboard():
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
+        logging.debug(f"New session ID created: {session['sid']}")
     lang = session.get('lang', 'en')
     try:
         user_data = emergency_fund_storage.filter_by_session(session['sid'])
         email = None
         if not user_data:
             all_records = emergency_fund_storage.read_all()
-            for rec in all_records[::-1]:
+            for rec in reversed(all_records):
                 if rec.get('session_id') == session['sid'] and 'email' in rec.get('data', {}):
                     email = rec['data']['email']
                     break
@@ -233,54 +234,54 @@ def dashboard():
                 user_data = emergency_fund_storage.filter_by_email(email)
         records = [(record["id"], record["data"]) for record in user_data]
         latest_record = records[-1][1] if records else {}
-        insights = []
+        alerts = []
         if latest_record:
             if latest_record.get('savings_gap', 0) == 0:
-                insights.append(trans("emergency_fund_insight_fully_funded"))
+                alerts.append(trans("emergency_fund_success_fully_funded"))
             else:
-                insights.append(trans("emergency_fund_insight_savings_gap", savings_gap=latest_record.get('savings_gap'), months=latest_record.get('timeline')))
+                alerts.append(trans("emergency_fund_saving_alert", savings=latest_record.get('savings_gap'), alert=latest_record.get('timeline')))
                 if latest_record.get('percent_of_income_needed') and latest_record.get('percent_of_income_needed') > 30:
-                    insights.append(trans("emergency_fund_insight_high_income_percentage"))
+                    alerts.append(trans("emergency_fund_high_income_alert"))
                 if latest_record.get('dependents', 0) > 2:
-                    insights.append(trans("emergency_fund_insight_large_family", recommended_months=latest_record.get('recommended_months')))
-        cross_tool_insights = []
+                    alerts.append(trans('emergency_fund_large_family_alert', alert=latest_record.get('recommended_months')))
+        cross_tools = []
         budget_data = budget_storage.filter_by_session(session['sid']) or (budget_storage.filter_by_email(email) if email else [])
         if budget_data and latest_record and latest_record.get('savings_gap', 0) > 0:
             latest_budget = budget_data[-1]['data']
             if latest_budget.get('monthly_income') and latest_budget.get('monthly_expenses'):
                 savings_possible = latest_budget['monthly_income'] - latest_budget['monthly_expenses']
                 if savings_possible > 0:
-                    cross_tool_insights.append(trans("emergency_fund_cross_tool_savings_possible", amount=savings_possible))
+                    cross_tools.append(trans("emergency_fund_cross_tool_alert", alert=savings_possible))
         return render_template(
             'emergency_fund_dashboard.html',
             records=records,
             latest_record=latest_record,
-            insights=insights,
-            cross_tool_insights=cross_tool_insights,
-            tips=[
-                trans("emergency_fund_tip_automate_savings"),
-                trans("emergency_fund_tip_ajo_savings"),
-                trans("emergency_fund_tip_track_expenses"),
-                trans("emergency_fund_tip_monthly_savings_goals")
+            alerts=alerts,
+            cross_tools=cross_tools,
+            insights=[
+                trans('emergency_fund_automate_savings'),
+                trans('emergency_fund_ajo_saving'),
+                trans('emergency_fund_track'),
+                trans('emergency_fund_monthly_saving')
             ],
             trans=trans,
-            lang=lang
+            language=lang
         )
     except Exception as e:
-        logging.exception(f"Error in emergency_fund.dashboard: {str(e)}")
-        flash(trans("emergency_fund_dashboard_load_error"), "danger")
+        logging.exception(f"Error in dashboard: {str(e)}")
+        flash(trans("error_loading_dashboard"), "danger")
         return render_template(
             'emergency_fund_dashboard.html',
             records=[],
             latest_record={},
-            insights=[],
-            cross_tool_insights=[],
-            tips=[
-                trans("emergency_fund_tip_automate_savings"),
-                trans("emergency_fund_tip_ajo_savings"),
-                trans("emergency_fund_tip_track_expenses"),
-                trans("emergency_fund_tip_monthly_savings_goals")
+            alerts=[],
+            cross_tools=[],
+            insights=[
+                trans('emergency_fund_automate_savings'),
+                trans('emergency_fund_ajo_saving'),
+                trans('emergency_fund_track'),
+                trans('emergency_fund_monthly_saving')
             ],
             trans=trans,
-            lang=lang
+            language=lang
         )
