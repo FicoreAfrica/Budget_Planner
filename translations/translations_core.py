@@ -6,6 +6,7 @@ CORE_TRANSLATIONS = {
         'core_welcome_to_score': 'Welcome to Score',
         'core_error': 'An unexpected error occurred. Please try again.',
         'core_input_cannot_exceed_10_billion': 'Input value cannot exceed 10 billion.',
+        'Quiz configuration error.': 'Quiz configuration error. Please try again later.',
         'global_error_message': 'An unexpected error occurred',
         'core_ficore_africa': 'FiCore Africa',
         'core_home': 'Home',
@@ -485,6 +486,7 @@ CORE_TRANSLATIONS = {
         'core_provide_feedback': 'Ba da Raayi',
         'core_join_waitlist': 'Shiga Jerin Jira',
         'core_book_consultancy': 'Yi Alƙawari',
-        'core_please_complete_all_fields': 'Da fatan za a cika duk filaye'
+        'core_please_complete_all_fields': 'Da fatan za a cika duk filaye',
+        'Quiz configuration error.': 'Quiz configuration error. Please try again later.'
     }
 }
