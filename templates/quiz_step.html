@@ -72,12 +72,12 @@
                     </div>
                 {% endfor %}
                 <div class="mb-3">
-                    <label for="{{ form.language.id }}" class="form-label">{{ trans('core_language') | default('Language') }}</label>
+                    <label for="{{ form.language.id }}" class="form-label">{{ form.language.label.text if form.language.label else trans('core_language') | default('Language') }}</label>
                     {{ form.language(class="form-select", **{'aria-label': 'Select Language'}) }}
                 </div>
                 <div class="mb-3 form-check">
                     {{ form.send_email(class="form-check-input", **{'data-bs-toggle': 'tooltip', 'title': trans('core_send_email_tooltip') | default('Check to receive email with quiz results'), 'aria-describedby': 'send_email_help'}) }}
-                    <label class="form-check-label" for="{{ form.send_email.id }}">{{ trans('core_send_email') | default('Send Email') }}</label>
+                    <label class="form-check-label" for="{{ form.send_email.id }}">{{ form.send_email.label.text if form.send_email.label else trans('core_send_email') | default('Send Email') }}</label>
                 </div>
                 <div class="d-flex justify-content-between">
                     {% if step_num > 1 %}
