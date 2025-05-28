@@ -7,6 +7,7 @@ CORE_TRANSLATIONS = {
         'core_error': 'An unexpected error occurred. Please try again.',
         'core_input_cannot_exceed_10_billion': 'Input value cannot exceed 10 billion.',
         'Quiz configuration error.': 'Quiz configuration error. Please try again later.',
+        'An unexpected error occurred': 'An unexpected error occurred',
         'global_error_message': 'An unexpected error occurred',
         'core_ficore_africa': 'FiCore Africa',
         'core_home': 'Home',
