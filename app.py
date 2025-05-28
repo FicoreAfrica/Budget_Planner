@@ -44,7 +44,7 @@ root_logger.addHandler(console_handler)
 class SessionAdapter(logging.LoggerAdapter):
     def process(self, msg, kwargs):
         kwargs['extra'] = kwargs.get('extra', {})
-        kwargs['extra']['session_id'] = session.get('sid', 'no-session-id') if has_request_context() else 'no-request-context'
+        kwargs['extra']['session_id'] = session.get('sid', 'no-request-context') if has_request_context() else 'no-request-context'
         return msg, kwargs
 
 log = SessionAdapter(root_logger, {})
@@ -119,7 +119,7 @@ def create_app():
         # Initialize courses.json if empty or missing
         courses_storage = app.config['STORAGE_MANAGERS']['courses']
         try:
-            courses = courses_storage.read_all()  # Fixed: Changed 'courses' to 'courses_storage'
+            courses = courses_storage.read_all()
             if not courses:
                 log.info("Courses storage is empty. Initializing with default courses.")
                 default_courses = [
@@ -149,7 +149,6 @@ def create_app():
                     log.error("Failed to initialize courses.json with default courses")
                     raise RuntimeError("Course initialization failed")
                 log.info(f"Initialized courses.json with {len(default_courses)} default courses")
-                # Verify write
                 courses = courses_storage.read_all()
                 if len(courses) != len(default_courses):
                     log.error(f"Failed to verify courses.json initialization. Expected {len(default_courses)} courses, got {len(courses)}.")
@@ -163,6 +162,9 @@ def create_app():
     # Initialize quiz questions
     with app.app_context():
         init_quiz_questions(app)
+
+    # Add custom Jinja2 filter for translations
+    app.jinja_env.filters['trans'] = lambda key, lang=session.get('lang', 'en'), **kwargs: trans(key, lang=lang, **kwargs)
 
     # Template filter for number formatting
     @app.template_filter('format_number')
@@ -257,7 +259,6 @@ def create_app():
                 log.warning("No courses found in storage. Using sample_courses.")
                 courses = sample_courses
             else:
-                # Add title_key to courses from courses.json to match sample_courses
                 title_key_map = {c['id']: c['title_key'] for c in sample_courses}
                 courses = [
                     {**course, 'title_key': title_key_map.get(course['id'], f"learning_hub_course_{course['id']}_title")}
@@ -281,7 +282,7 @@ def create_app():
         valid_langs = ['en', 'ha']
         session['lang'] = lang if lang in valid_langs else 'en'
         log.info(f"Language set to {session['lang']}")
-        flash(trans('learning_hub_language_changed', default='Language changed') if session['lang'] in valid_langs else trans('learning_hub_invalid_language', default='Invalid language'))
+        flash(trans('learning_hub_success_language_updated', default='Language updated successfully') if session['lang'] in valid_langs else trans('Invalid language', default='Invalid language'))
         return redirect(request.referrer or url_for('index'))
 
     @app.route('/favicon.ico')
@@ -335,7 +336,7 @@ def create_app():
         lang = session.get('lang', 'en')
         session.clear()
         session['lang'] = lang
-        flash(trans('learning_hub_logged_out', default='Successfully logged out'))
+        flash(trans('learning_hub_success_logout', default='Successfully logged out'))
         return redirect(url_for('index'))
 
     @app.route('/health')
@@ -385,7 +386,6 @@ def create_app():
     app.register_blueprint(financial_health_bp)
     app.register_blueprint(budget_bp)
     app.register_blueprint(quiz_bp)
-
     app.register_blueprint(bill_bp)
     app.register_blueprint(net_worth_bp)
     app.register_blueprint(emergency_fund_bp)
