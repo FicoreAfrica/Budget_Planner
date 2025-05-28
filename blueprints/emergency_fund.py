@@ -80,7 +80,7 @@ def step1():
         flash(trans("emergency_fund_error_personal_info"), "danger")
         return render_template('emergency_fund_step1.html', form=form, step=1, trans=trans, lang=lang)
 
-@emergency_fund.route('/step2', methods=['GET', 'POST'])
+@emergency_fund_bp.route('/step2', methods=['GET', 'POST'])
 def step2():
     if 'sid' not in session or 'emergency_fund_step1' not in session:
         flash(trans("emergency_fund_missing_step1"), "danger")
