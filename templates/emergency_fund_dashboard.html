@@ -1,50 +1,55 @@
 {% extends "base.html" %}
-{% block title %}{{ trans('emergency_fund_dashboard') | default('Emergency Fund Dashboard') }}{% endblock %}
+{% block title %}{{ trans('emergency_fund_dashboard') | default('Your Fund Dashboard') }}{% endblock %}
 {% block extra_head %}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.min.js"></script>
     <style>
-        .insights p, .tips p {
-            margin-bottom: 15px;
-        }
-        .badge {
-            margin-right: 5px;
-        }
+        .chart-container { max-width: 100%; height: 300px; margin-bottom: 20px; }
+        .insights p, .tips p, .cross-tool-insights p { margin-bottom: 15px; }
+        .badge { margin-right: 5px; }
     </style>
 {% endblock %}
 {% block content %}
 <div class="container">
     <div class="header">
-        <h1>{{ trans('emergency_fund_dashboard') | default('Emergency Fund Dashboard') }}</h1>
-        <p>{{ trans('emergency_fund_summary') | default('Your emergency fund summary') }}</p>
+        <h1>{{ trans('emergency_fund_dashboard') | default('Your Fund Dashboard') }}</h1>
+        <p>{{ trans('emergency_fund_summary') | default('Your Savings Plan Summary') }}</p>
     </div>
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
                 <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                    {{ trans('core_' + message) | default(message) }}
+                    {{ trans(message) | default(message) }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close') | default('Close') }}"></button>
                 </div>
             {% endfor %}
         {% endif %}
     {% endwith %}
     {% if latest_record %}
-        <div class="card">
+        <div class="card mb-3">
             <div class="card-body">
                 <h2>{{ trans('core_hello') | default('Hello') }} {{ latest_record.first_name or trans('core_user') | default('User') }}, {{ trans('emergency_fund_your_emergency_fund') | default('Your Emergency Fund') }}</h2>
                 <p><strong>{{ trans('emergency_fund_monthly_expenses') | default('Monthly Expenses') }}:</strong> ₦{{ latest_record.monthly_expenses | format_number }}</p>
+                <p><strong>{{ trans('emergency_fund_monthly_income') | default('Monthly Income') }}:</strong> {% if latest_record.monthly_income %}₦{{ monthly_record.monthly_income | format_number }}{% else %}{{ trans('core_not_provided') | default('Not provided') }}{% endif %}</p>
                 <p><strong>{{ trans('emergency_fund_current_savings') | default('Current Savings') }}:</strong> ₦{{ latest_record.current_savings | format_number }}</p>
-                <p><strong>{{ trans('emergency_fund_target_savings_3_months') | default('Target Savings (3 Months)') }}:</strong> ₦{{ latest_record.target_savings_3m | format_number }}</p>
-                <p><strong>{{ trans('emergency_fund_target_savings_6_months') | default('Target Savings (6 Months)') }}:</strong> ₦{{ latest_record.target_savings_6m | format_number }}</p>
-                <p><strong>{{ trans('emergency_fund_savings_gap_3_months') | default('Savings Gap (3 Months)') }}:</strong> ₦{{ latest_record.savings_gap_3m | format_number }}</p>
-                <p><strong>{{ trans('emergency_fund_savings_gap_6_months') | default('Savings Gap (6 Months)') }}:</strong> ₦{{ latest_record.savings_gap_6m | format_number }}</p>
+                <p><strong>{{ trans('emergency_fund_risk_tolerance_level') | default('Risk Level') }}:</strong> {{ trans('emergency_fund_risk_tolerance_level_' + latest_record.risk_tolerance_level) | default(latest_record.risk_tolerance_level | capitalize) }}</p>
+                <p><strong>{{ trans('emergency_fund_dependents') | default('Dependents') }}:</strong> {{ latest_record.dependents or 0 }}</p>
+                <p><strong>{{ trans('emergency_fund_timeline') | default('Savings Timeline') }}:</strong> {{ latest_record.timeline }} {{ trans('core_months') | default('Months') }}</p>
+                <p><strong>{{ trans('emergency_fund_recommended_months') | default('Recommended Coverage') }}:</strong> {{ latest_record.recommended_months }} {{ trans('core_months') | default('Months') }}</p>
+                <p><strong>{{ trans('emergency_fund_target_amount') | default('Target Amount') }}:</strong> ₦{{ latest_record.target_amount | format_number }}</p>
+                <p><strong>{{ trans('emergency_fund_savings_gap') | default('Savings Gap') }}:</strong> ₦{{ latest_record.savings_gap | format_number }}</p>
+                {% if latest_record.percent_of_income_needed %}
+                    <p><strong>{{ trans('emergency_fund_percent_of_income_needed') | default('Income Needed') }}:</strong> {{ '%.2f' % latest_record.percent_of_income_needed }}%</p>
+                {% endif %}
                 <p><strong>{{ trans('core_created_at') | default('Created At') }}:</strong> {{ latest_record.created_at }}</p>
             </div>
         </div>
-        <div class="card">
+        <div class="card mb-3">
             <div class="card-body">
                 <h3>{{ trans('emergency_fund_fund_metrics') | default('Fund Metrics') }}</h3>
-                <canvas id="emergencyFundChart"></canvas>
+                <div class="chart-container">
+                    <canvas id="emergencyFundChart"></canvas>
+                </div>
                 <script>
                     document.addEventListener('DOMContentLoaded', function() {
                         const ctx = document.getElementById('emergencyFundChart').getContext('2d');
@@ -53,80 +58,119 @@
                             data: {
                                 labels: [
                                     '{{ trans('emergency_fund_monthly_expenses') | default('Monthly Expenses') }}',
-                                    '{{ trans('emergency_fund_current_savings') | default('Current Savings') }}',
-                                    '{{ trans('emergency_fund_target_savings_3_months') | default('Target Savings (3 Months)') }}',
-                                    '{{ trans('emergency_fund_target_savings_6_months') | default('Target Savings (6 Months)') }}'
+                                    '{{ trans('emergency_fund_current_savings') | default('Savings') }}',
+                                    '{{ trans('emergency_fund_target_amount') | default('Target') }}',
+                                    '{{ trans('emergency_fund_savings_gap') | default('Gap') }}'
                                 ],
                                 datasets: [{
-                                    label: '{{ trans('emergency_fund_metrics') | default('Emergency Fund Metrics') }}',
+                                    label: '{{ trans('emergency_fund_metrics') | default('Fund Metrics') }}',
                                     data: [
                                         {{ latest_record.monthly_expenses }},
                                         {{ latest_record.current_savings }},
-                                        {{ latest_record.target_savings_3m }},
-                                        {{ latest_record.target_savings_6m }}
+                                        {{ latest_record.target_amount }},
+                                        {{ savings_record.savings_gap
                                     ],
-                                    backgroundColor: ['#dc3545', '#2E7D32', '#0288D1', '#1E7F71']
+                                    backgroundColor: ['#dc3545', '#28a745', '#007bff', '#ff9800']
                                 }]
                             },
                             options: {
-                                scales: { y: { beginAtZero: true } },
-                                animation: false
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                scales: { y: { beginAtZero: true } }
                             }
                         });
                     });
                 </script>
             </div>
         </div>
-        <div class="card">
+        <div class="card mb-3">
+            <div class="card-body">
+                <h3>{{ trans('emergency_fund_savings_progress') | default('Savings Progress') }}</h3>
+                <div class="chart-container">
+                    <canvas id="savingsProgressChart"></canvas>
+                </div>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const ctx = document.getElementById('savingsProgressChart').getContext('2d');
+                        new Chart(ctx, {
+                            type: 'line',
+                            data: {
+                                labels: Array.from({length: {{ latest_record.timeline }}}, (_, i) => `Month ${i+1}`),
+                                datasets: [{
+                                    label: '{{ trans('emergency_fund_monthly_savings_needed') | default('Monthly Savings Needed') }}',
+                                    data: Array({{ latest_record.timeline }}).fill({{ latest_record.monthly_savings }}),
+                                    borderColor: '#007bff',
+                                    fill: false
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                scales: { y: { beginAtZero: true } }
+                            }
+                        });
+                    });
+                </script>
+            </div>
+        </div>
+        <div class="card mb-3">
             <div class="card-body">
                 <h3>{{ trans('emergency_fund_badges') | default('Badges') }}</h3>
                 {% if latest_record.badges %}
                     {% for badge in latest_record.badges %}
-                        <span class="badge bg-{{ 'success' if badge == 'Fund Master' else 'primary' if badge == 'Fund Builder' else 'info' }} mb-2">
-                            <i class="fas fa-{{ 'trophy' if badge == 'Fund Master' else 'star' if badge == 'Fund Builder' else 'check-circle' }}"></i>
-                            {{ trans('emergency_fund_' + badge.lower().replace(' ', '_')) | default(badge) }}
+                        <span class="badge bg-{{ 'success' if badge == 'Fund Master' else 'primary' if badge == 'Planner' else 'info' if badge == 'Protector' else 'warning' }} mb-1">
+                            <i class="fas fa-{{ 'trophy' if badge == 'Fund Master' else 'star' if badge == 'Planner' else 'shield-alt' if badge == 'Protector' else 'check-circle' }}"></i>
+                            {{ trans('badge_' + badge.lower().replace(' ', '_')) | default(badge) }}
                         </span>
                     {% endfor %}
                 {% else %}
-                    <p>{{ trans('emergency_fund_no_badges_earned_yet') | default('No badges earned yet') }}</p>
+                    <p>{{ trans('emergency_fund_no_badges_earned') | default('No badges earned') }}</p>
                 {% endif %}
             </div>
         </div>
-        <div class="card insights">
+        <div class="card mb-3 insights">
             <div class="card-body">
                 <h3>{{ trans('emergency_fund_insights') | default('Insights') }}</h3>
                 {% for insight in insights %}
-                    <p>{{ trans('emergency_fund_' + insight) | default(insight) }}</p>
+                    <p>{{ insight }}</p>
                 {% endfor %}
             </div>
         </div>
-        <div class="card tips">
+        <div class="card-body mb-3 cross-tool-insights">
+            <div class="card">
+                <h3>{{ trans('emergency_fund_cross_tool_insights') | default('Budget Insights') }}</h3>
+                {% for insight in cross_tool_insights %}
+                    <p>{{ insight }}</p>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="card mb-3 tips">
             <div class="card-body">
-                <h3>{{ trans('emergency_fund_tips_for_building') | default('Tips for Building Your Fund') }}</h3>
+                <h3>{{ trans('emergency_fund_tips_for_building') | default('Tips to Save') }}</h3>
                 {% for tip in tips %}
-                    <p>{{ trans('emergency_fund_' + tip) | default(tip) }}</p>
+                    <p>{{ tip }}</p>
                 {% endfor %}
             </div>
         </div>
-        <div class="card">
+        <div class="card mb-3">
             <div class="card-body">
-                <h3>{{ trans('emergency_fund_call_to_actions') | default('Call to Actions') }}</h3>
-                <a href="{{ url_for('emergency_fund.step1') }}" class="btn btn-primary">{{ trans('emergency_fund_recalculate_fund') | default('Recalculate Fund') }}</a>
-                <a href="{{ url_for('budget.step1') }}" class="btn btn-secondary">{{ trans('budget_create_budget') | default('Create Budget') }}</a>
-                <a href="{{ url_for('net_worth.step1') }}" class="btn btn-secondary">{{ trans('net_worth_calculate_net_worth') | default('Calculate Net Worth') }}</a>
+                <h3>{{ trans('emergency_fund_call_to_actions') | default('Next Steps') }}</h3>
+                <a href="{{ url_for('emergency_fund.step1') }}" class="btn btn-primary">{{ trans('button_recalculate_fund') | default('Recalculate') }}</a>
+                <a href="{{ url_for('budget.step1') }}" class="btn btn-secondary">{{ trans('budget_action_create_budget') | default('Create Budget') }}</a>
+                <a href="{{ url_for('net_worth.step1') }}" class="btn btn-secondary">{{ trans('button_calculate_net_worth') | default('Net Worth') }}</a>
             </div>
         </div>
         <div class="card">
             <div class="card-body">
-                <h3>{{ trans('emergency_fund_previous_fund_calculations') | default('Previous Fund Calculations') }}</h3>
+                <h3>{{ trans('emergency_fund_history') | default('Past Calculations') }}</h3>
                 {% if records %}
-                    <table class="table table-striped">
+                    <table class="table">
                         <thead>
                             <tr>
-                                <th>{{ trans('core_date') | default('Date') }}</th>
-                                <th>{{ trans('emergency_fund_monthly_expenses') | default('Monthly Expenses') }}</th>
-                                <th>{{ trans('emergency_fund_current_savings') | default('Current Savings') }}</th>
-                                <th>{{ trans('emergency_fund_savings_gap_6_months') | default('Savings Gap (6 Months)') }}</th>
+                                <th>{{ trans('core_date') | default('Date') }}:</th>
+                                <th>{{ trans('emergency_fund_monthly_expenses') | default('Expenses') }}:</th>
+                                <th>{{ trans('emergency_fund_current_savings') | default('Savings') }}):</th>
+                                <th>{{ trans('emergency_fund_savings_gap') | default('Gap') }}):</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -134,20 +178,21 @@
                                 <tr>
                                     <td>{{ record.created_at }}</td>
                                     <td>₦{{ record.monthly_expenses | format_number }}</td>
-                                    <td>₦{{ record.current_savings | format_number }}</td>
-                                    <td>₦{{ record.savings_gap_6m | format_number }}</td>
+                                    <td>₦{{</td> record.current_savings | format_number }}</td>
+                                    <td>₦{{</td> record.savings_gap | format_number }}</td>
                                 </tr>
-                            {% endfor %}
+                            }
+                        {% endfor %}
                         </tbody>
                     </table>
                 {% else %}
-                    <p>{{ trans('emergency_fund_no_previous_calculations') | default('No previous calculations') }}</p>
+                    <p>{{ trans('emergency_fund_no_pprevious_records') | default('No past records') }}</p>
                 {% endif %}
             </div>
         </div>
     {% else %}
-        <p>{{ trans('emergency_fund_no_fund_data_available') | default('No fund data available') }}</p>
-        <a href="{{ url_for('emergency_fund.step1') }}" class="btn btn-primary">{{ trans('emergency_fund_start_calculator') | default('Start Calculator') }}</a>
+        <p class="alert alert-info">{{ trans('emergency_fund_no_fund_data') | default('No fund data yet') }}</p>
+        <a href="{{ url_for('emergency_fund.step1') }}" class="btn btn-primary">{{ trans('begin_calculator') | default('Start Now') }}</a>
     {% endif %}
 </div>
 {% endblock %}
