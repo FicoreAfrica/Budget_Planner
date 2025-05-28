@@ -14,6 +14,7 @@ EMERGENCY_FUND_TRANSLATIONS = {
         'core_close': 'Close',
         'core_next': 'Next',
         'core_back': 'Back',
+        'an_unexpected_error_occurred':'An unexpected error occurred',
         'core_input_cannot_exceed_10_billion': 'Input cannot exceed ₦10 billion',
         'core_please_enter_valid_numbers': 'Please enter valid numbers',
         'emergency_fund_calculator': 'Emergency Fund Calculator',
