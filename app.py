@@ -167,6 +167,7 @@ def create_app():
     app.jinja_env.filters['trans'] = lambda key, **kwargs: trans(
         key,
         lang=kwargs.get('lang', session.get('lang', 'en')),
+        logger=g.get('log', log) if has_request_context() else log,
         **{k: v for k, v in kwargs.items() if k != 'lang'}
     )
 
@@ -221,7 +222,7 @@ def create_app():
         if lang:
             log.warning("Context processor using session['lang']; consider migrating to session['language']")
         def context_trans(key, **kwargs):
-            translated = trans(key, lang=lang, **kwargs)
+            translated = trans(key, lang=lang, logger=g.get('log', log), **kwargs)
             return translated
         return {
             'trans': context_trans,
