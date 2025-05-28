@@ -25,7 +25,7 @@ def init_quiz_questions(app):
     global QUIZ_QUESTIONS
     with app.app_context():
         try:
-            with open('quiz.json', 'r', encoding='utf-8') as f:
+            with open('questions.json', 'r', encoding='utf-8') as f:
                 QUIZ_QUESTIONS = json.load(f)
             app.logger.debug(f"Loaded QUIZ_QUESTIONS: {QUIZ_QUESTIONS}")
             if len(QUIZ_QUESTIONS) != len(QUESTION_KEYS):
@@ -36,10 +36,10 @@ def init_quiz_questions(app):
                 QUIZ_QUESTIONS[i]['id'] = f'question_{i+1}'
                 QUIZ_QUESTIONS[i]['key'] = key
         except FileNotFoundError:
-            app.logger.error("quiz.json file not found.")
+            app.logger.error("questions.json file not found.")
             QUIZ_QUESTIONS = []
         except json.JSONDecodeError as e:
-            app.logger.error(f"Error decoding quiz.json: {e}")
+            app.logger.error(f"Error decoding questions.json: {e}")
             QUIZ_QUESTIONS = []
 
 # Define the QuizForm
