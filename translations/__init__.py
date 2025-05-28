@@ -38,7 +38,7 @@ KEY_PREFIX_TO_MODULE = {
     'net_worth_': 'translations_net_worth',
     'core_': 'translations_core',
     'learning_hub_': 'translations_learning_hub',
-    '': 'translations_quiz'  # Add generic keys like Yes, No, and Please correct the errors below to translations_quiz
+    '': 'translations_core',  # Default to translations_core for generic keys
 }
 
 # Dynamically import each translation module and combine translations
@@ -66,11 +66,11 @@ def trans(key: str, lang: str = None, **kwargs: Any) -> str:
     Logs a warning if the key is not found in the expected module.
     Supports string formatting with kwargs.
     """
-    # Default to 'en' if lang is None, ensuring no session access outside request context
+    # Default to 'en' if lang is None, using 'lang' from session to match bill blueprint
     if lang is None:
-        lang = session.get('language', 'en') if has_request_context() else 'en'
+        lang = session.get('lang', 'en') if has_request_context() else 'en'
 
-    # Use 'sid' to match quiz blueprint session key
+    # Use 'sid' to match bill blueprint session key
     session_id = session.get('sid', 'no-session-id') if has_request_context() else 'no-session-id'
     logger.debug(f"Translation request: key={key}, lang={lang} [session: {session_id}]")
 
@@ -85,12 +85,15 @@ def trans(key: str, lang: str = None, **kwargs: Any) -> str:
     # Check if the translation is the key itself (indicating a missing translation)
     if translation == key:
         # Determine which module should define this key based on its prefix
-        expected_module = 'unknown_module'
+        expected_module = 'translations_core'  # Default to core for generic keys
         for prefix, module in KEY_PREFIX_TO_MODULE.items():
-            if key.startswith(prefix) or (prefix == '' and key in ['Yes', 'No', 'Please correct the errors below']):
+            if key.startswith(prefix):
                 expected_module = module
                 break
-        logger.warning(f"Missing translation for key={key} in lang={lang}, expected in module {expected_module} [session: {session_id}]")
+        logger.warning(
+            f"Missing translation for key={key} in lang={lang}, "
+            f"expected in module {expected_module} [session: {session_id}]"
+        )
 
     # Log the translation result
     logger.debug(f"Translation result: key={key}, lang={lang}, result={translation} [session: {session_id}]")
@@ -107,9 +110,8 @@ def get_translations(lang: str = None) -> Dict[str, str]:
     Return the combined translations dictionary for the specified language.
     Falls back to English if the language is not found.
     """
-    # Default to 'en' if lang is None, ensuring no session access outside request context
     if lang is None:
-        lang = session.get('language', 'en') if has_request_context() else 'en'
+        lang = session.get('lang', 'en') if has_request_context() else 'en'
 
     if lang not in TRANSLATIONS:
         logger.warning(f"Language {lang} not found, returning English translations")
