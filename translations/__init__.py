@@ -8,16 +8,16 @@ logger.setLevel(logging.INFO)
 
 # Explicitly import translation modules
 try:
-    from .translations_core import translations as translations_core
-    from .translations_quiz import translations as translations_quiz
-    from .translations_mailersend import translations as translations_mailersend
-    from .translations_bill import translations as translations_bill
-    from .translations_budget import translations as translations_budget
-    from .translations_dashboard import translations as translations_dashboard
-    from .translations_emergency_fund import translations as translations_emergency_fund
-    from .translations_financial_health import translations as translations_financial_health
-    from .translations_net_worth import translations as translations_net_worth
-    from .translations_learning_hub import translations as translations_learning_hub
+    from .translations_core import CORE_TRANSLATIONS as translations_core
+    from .translations_quiz import QUIZ_TRANSLATIONS as translations_quiz
+    from .translations_mailersend import MAILERSEND_TRANSLATIONS as translations_mailersend
+    from .translations_bill import BILL_TRANSLATIONS as translations_bill
+    from .translations_budget import BUDGET_TRANSLATIONS as translations_budget
+    from .translations_dashboard import DASHBOARD_TRANSLATIONS as translations_dashboard
+    from .translations_emergency_fund import EMERGENCY_FUND_TRANSLATIONS as translations_emergency_fund
+    from .translations_financial_health import FINANCIAL_HEALTH_TRANSLATIONS as translations_financial_health
+    from .translations_net_worth import NET_WORTH_TRANSLATIONS as translations_net_worth
+    from .translations_learning_hub import LEARNING_HUB_TRANSLATIONS as translations_learning_hub
 except ImportError as e:
     logger.error(f"Failed to import translation module: {e}")
     raise
