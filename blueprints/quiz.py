@@ -78,7 +78,7 @@ class QuizForm(FlaskForm):
         self.questions = questions or []
         self.language = language
         with current_app.app_context():
-            current_app.logger.debug(f"Initializing QuizForm: questions={[q['id'] for q in self.questions]}, lang={language}")
+            current_app.logger.debug(f"Initializing QuizForm: questions={[q['id'] for q in self.questions]}, language={language}")
 
         if not personal_info:
             for q in self.questions:
@@ -242,8 +242,7 @@ def setup_session():
         session['sid'] = str(uuid.uuid4())
         session.permanent = True
         current_app.logger.debug(f"Initialized new session ID: {session['sid']}")
-    if 'lang' not in session:
-        session['lang'] = 'en'
+    if 'language' not in session:
         session['language'] = 'en'
         current_app.logger.debug(f"Set default language: en")
     session.modified = True
@@ -252,10 +251,10 @@ def setup_session():
 @quiz_bp.route('/step1', methods=['GET', 'POST'])
 def step1():
     if not QUIZ_QUESTIONS:
-        flash(trans('Quiz configuration error.', lang=session.get('lang', 'en')), 'error')
+        flash(trans('Quiz configuration error.', lang=session.get('language', 'en')), 'error')
         return redirect(url_for('index'))
 
-    language = session.get('lang', 'en')
+    language = session.get('language', 'en')
     trans_dict = get_translations(language)
     course_id = request.args.get('course_id', 'financial_quiz')
 
@@ -270,7 +269,6 @@ def step1():
                 'language': form.language.data,
                 'send_email': form.send_email.data
             }
-            session['lang'] = form.language.data
             session['language'] = form.language.data
             session.modified = True
             current_app.logger.info(f"Step 1 validated, session: {session['quiz_data']}")
@@ -316,15 +314,15 @@ def step1():
 @quiz_bp.route('/step2a', methods=['GET', 'POST'])
 def step2a():
     if not QUIZ_QUESTIONS:
-        flash(trans('Quiz configuration error.', lang=session.get('lang', 'en')), 'error')
+        flash(trans('Quiz configuration error.', lang=session.get('language', 'en')), 'error')
         return redirect(url_for('index'))
 
     if 'sid' not in session or 'quiz_data' not in session:
         current_app.logger.error(f"Session missing: sid={session.get('sid')}, quiz_data={session.get('quiz_data')}")
-        flash(trans('Session Expired', lang=session.get('lang', 'en')), 'error')
+        flash(trans('Session Expired', lang=session.get('language', 'en')), 'error')
         return redirect(url_for('quiz.step1', course_id=request.args.get('course_id', 'financial_quiz')))
 
-    language = session.get('lang', 'en')
+    language = session.get('language', 'en')
     trans_dict = get_translations(language)
     course_id = request.args.get('course_id', 'financial_quiz')
 
@@ -355,7 +353,6 @@ def step2a():
             session['quiz_data'].update({
                 q['id']: form[q['id']].data for q in preprocessed_questions if q['id'] in form._fields
             })
-            session['lang'] = form.language.data
             session['language'] = form.language.data
             session.modified = True
             current_app.logger.info(f"Step 2a validated, session: {session['quiz_data']}")
@@ -399,14 +396,14 @@ def step2a():
 @quiz_bp.route('/step2b', methods=['GET', 'POST'])
 def step2b():
     if not QUIZ_QUESTIONS:
-        flash(trans('Quiz configuration error.', lang=session.get('lang', 'en')), 'error')
+        flash(trans('Quiz configuration error.', lang=session.get('language', 'en')), 'error')
         return redirect(url_for('index'))
 
     if 'sid' not in session or 'quiz_data' not in session:
-        flash(trans('Session Expired', lang=session.get('lang', 'en')), 'error')
+        flash(trans('Session Expired', lang=session.get('language', 'en')), 'error')
         return redirect(url_for('quiz.step1', course_id=request.args.get('course_id', 'financial_quiz')))
 
-    language = session.get('lang', 'en')
+    language = session.get('language', 'en')
     trans_dict = get_translations(language)
     course_id = request.args.get('course_id', 'financial_quiz')
 
@@ -437,7 +434,6 @@ def step2b():
             session['quiz_data'].update({
                 q['id']: form[q['id']].data for q in preprocessed_questions if q['id'] in form._fields
             })
-            session['lang'] = form.language.data
             session['language'] = form.language.data
             session.modified = True
             current_app.logger.info(f"Step 2b validated, session: {session['quiz_data']}")
@@ -553,7 +549,7 @@ def step2b():
 
 @quiz_bp.route('/results', methods=['GET'])
 def results():
-    language = session.get('lang', 'en')
+    language = session.get('language', 'en')
     trans_dict = get_translations(language)
     course_id = request.args.get('course_id', 'financial_quiz')
     results = session.get('quiz_results', {})
@@ -564,7 +560,6 @@ def results():
 
     session.pop('quiz_data', None)
     session.pop('quiz_results', None)
-    session['lang'] = language
     session['language'] = language
     session.modified = True
 
