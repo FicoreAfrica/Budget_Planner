@@ -11,7 +11,7 @@ import threading
 from translations import trans, get_translations
 
 # Define the quiz blueprint
-quiz_bp = Blueprint('quiz', __name__', template_folder='templates', static_folder='static', url_prefix='/quiz')
+quiz_bp = Blueprint('quiz', __name__, template_folder='templates', static_folder='static', url_prefix='/quiz')
 
 # Global QUIZ_QUESTIONS will be initialized later
 QUIZ_QUESTIONS = []
@@ -29,17 +29,18 @@ def init_quiz_questions(app):
                 QUIZ_QUESTIONS = json.load(f)
             app.logger.debug(f"Loaded QUIZ_QUESTIONS: {QUIZ_QUESTIONS}")
             # Ensure questions align with QUESTION_KEYS
-            if len(QUIZ_QUESTIONS) >= len(QUESTION_KEYS):
-                for i, key in enumerate(QUESTION_KEYS):
-                    QUIZ_QUESTIONS[i]['id'] = f'question_{i+1}'
-                    QUIZ_QUESTIONSS[i]['key'] = key}'
-                else:
-                    app.logger.warning(f"QUIZ_QUESTIONS length {len(QUIZ_QUESTIONS)} does not match expected {len(QUESTION_KEYS)}")
+            if len(QUIZ_QUESTIONS) != len(QUESTION_KEYS):
+                app.logger.error(f"QUIZ_QUESTIONS length {len(QUIZ_QUESTIONS)} does not match expected {len(QUESTION_KEYS)}")
+                QUIZ_QUESTIONS = []
+                return
+            for i, key in enumerate(QUESTION_KEYS):
+                QUIZ_QUESTIONS[i]['id'] = f'question_{i+1}'
+                QUIZ_QUESTIONS[i]['key'] = key
         except FileNotFoundError:
-            app.logger.error("questions.json file not found.")
+            app.logger.error("quiz.json file not found.")
             QUIZ_QUESTIONS = []
         except json.JSONDecodeError as e:
-            app.logger.error(f"Error decoding questions.json: {e}")
+            app.logger.error(f"Error decoding quiz.json: {e}")
             QUIZ_QUESTIONS = []
 
 # Define the QuizForm
@@ -85,11 +86,10 @@ class QuizForm(FlaskForm):
                 field_name = q['id']
                 question_key = q.get('key', '')
                 label_key = f"quiz_{question_key}_label"
-                # Defer translation to rendering by storing keys
                 field = RadioField(
-                    label_key,  # Store key instead of translated text
+                    label_key,
                     validators=[DataRequired() if q.get('required', True) else Optional()],
-                    choices=[(opt, opt) for opt in q['options']],  # Store raw options
+                    choices=[(opt, opt) for opt in q['options']],
                     id=field_name,
                     default=q['options'][0] if q['options'] else None,
                     render_kw={
@@ -120,7 +120,7 @@ class QuizForm(FlaskForm):
                 current_app.logger.error(f"Validation errors: {self.errors}")
         return rv
 
-# Helper Functions (unchanged for brevity, assume same as provided)
+# Helper Functions (unchanged for brevity)
 def calculate_score(answers):
     score = 0
     for q, a in answers:
@@ -242,10 +242,10 @@ def setup_session():
     """Ensure session ID and language are set for all quiz routes."""
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
-        session.permanent = True  # Persist session
+        session.permanent = True
         current_app.logger.debug(f"Initialized new session ID: {session['sid']}")
     if 'language' not in session:
-        session['language'] = 'en'  # Default language
+        session['language'] = 'en'
         current_app.logger.debug(f"Set default language: en")
     session.modified = True
 
