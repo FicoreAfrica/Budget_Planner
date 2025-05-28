@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, current_app, make_response
 from flask_wtf import FlaskForm
 from wtforms import StringField, SelectField, BooleanField, SubmitField, RadioField
+from wtforms.fields import Field
 from wtforms.validators import DataRequired, Email, Optional
 import json
 import uuid
@@ -42,6 +43,18 @@ def init_quiz_questions(app):
             app.logger.error(f"Error decoding questions.json: {e}")
             QUIZ_QUESTIONS = []
 
+def validate_session_quiz_data(data):
+    """Validate session quiz_data to ensure correct types."""
+    if not isinstance(data, dict):
+        current_app.logger.warning(f"Invalid session quiz_data type: {type(data)}")
+        return False
+    expected_fields = {'first_name': str, 'email': str, 'language': str, 'send_email': bool}
+    for field, field_type in expected_fields.items():
+        if field in data and not isinstance(data[field], field_type):
+            current_app.logger.warning(f"Invalid type for {field}: expected {field_type}, got {type(data[field])}")
+            return False
+    return True
+
 # Define the QuizForm
 class QuizForm(FlaskForm):
     first_name = StringField(
@@ -79,44 +92,47 @@ class QuizForm(FlaskForm):
     def __init__(self, questions=None, language='en', formdata=None, personal_info=True, **kwargs):
         super().__init__(formdata=formdata, **kwargs)
         self.questions = questions or []
-        self.language = language
+        self.form_language = language  # Store language string separately
         with current_app.app_context():
             current_app.logger.debug(f"Initializing QuizForm: questions={[q['id'] for q in self.questions]}, language={language}")
 
         # Initialize static fields
         if personal_info:
-            self.first_name.label.text = trans('core_first_name', lang=language)
-            self.email.label.text = trans('core_email', lang=language)
-            self.language.label.text = trans('core_language', lang=language)
-            self.send_email.label.text = trans('core_send_email', lang=language)
-            self.submit.label.text = trans('core_submit', lang=language)
-            self.back.label.text = trans('core_back', lang=language)
+            self.first_name.label.text = trans('core_first_name', lang=self.form_language)
+            self.email.label.text = trans('core_email', lang=self.form_language)
+            self.language.label.text = trans('core_language', lang=self.form_language)
+            self.send_email.label.text = trans('core_send_email', lang=self.form_language)
+            self.submit.label.text = trans('core_submit', lang=self.form_language)
+            self.back.label.text = trans('core_back', lang=self.form_language)
 
-            self.first_name.render_kw['placeholder'] = trans('core_first_name_placeholder', lang=language)
-            self.first_name.render_kw['title'] = trans('core_first_name_tooltip', lang=language)
-            self.email.render_kw['placeholder'] = trans('core_email_placeholder', lang=language)
-            self.email.render_kw['title'] = trans('core_email_tooltip', lang=language)
-            self.send_email.render_kw['title'] = trans('core_send_email_tooltip', lang=language)
+            self.first_name.render_kw['placeholder'] = trans('core_first_name_placeholder', lang=self.form_language)
+            self.first_name.render_kw['title'] = trans('core_first_name_tooltip', lang=self.form_language)
+            self.email.render_kw['placeholder'] = trans('core_email_placeholder', lang=self.form_language)
+            self.email.render_kw['title'] = trans('core_email_tooltip', lang=self.form_language)
+            self.send_email.render_kw['title'] = trans('core_send_email_tooltip', lang=self.form_language)
+            # Process fields to ensure proper initialization
+            self.language.process(formdata, self.data.get('language', self.form_language))
+            self.send_email.process(formdata, self.data.get('send_email', False))
         else:
             # Reinitialize language and send_email to ensure they are WTForms fields
             if 'language' not in self._fields:
                 self.language = SelectField(
-                    trans('core_language', lang=language),
+                    trans('core_language', lang=self.form_language),
                     choices=[('en', 'English'), ('ha', 'Hausa')],
-                    default=language,
+                    default=self.form_language,
                     render_kw={'aria-label': 'Select Language'}
                 )
                 self.language.bind(self, 'language')
                 self._fields['language'] = self.language
             if 'send_email' not in self._fields:
                 self.send_email = BooleanField(
-                    trans('core_send_email', lang=language),
+                    trans('core_send_email', lang=self.form_language),
                     default=False,
-                    render_kw={'title': trans('core_send_email_tooltip', lang=language), 'aria-label': 'Send Email Checkbox'}
+                    render_kw={'title': trans('core_send_email_tooltip', lang=self.form_language), 'aria-label': 'Send Email Checkbox'}
                 )
                 self.send_email.bind(self, 'send_email')
                 self._fields['send_email'] = self.send_email
-            self.language.process(formdata, self.data.get('language', language))
+            self.language.process(formdata, self.data.get('language', self.form_language))
             self.send_email.process(formdata, self.data.get('send_email', False))
 
         # Add dynamic question fields
@@ -129,16 +145,16 @@ class QuizForm(FlaskForm):
                 label_key = f"quiz_{question_key}_label"
                 tooltip_key = f"quiz_{question_key}_tooltip"
                 placeholder_key = f"quiz_{question_key}_placeholder"
-                label = trans(label_key, lang=language)
-                tooltip = trans(tooltip_key, lang=language)
-                placeholder = trans(placeholder_key, lang=language)
-                choices = [(trans(opt, lang=language), trans(opt, lang=language)) for opt in q['options']]
+                label = trans(label_key, lang=self.form_language)
+                tooltip = trans(tooltip_key, lang=self.form_language)
+                placeholder = trans(placeholder_key, lang=self.form_language)
+                choices = [(trans(opt, lang=self.form_language), trans(opt, lang=self.form_language)) for opt in q['options']]
                 field = RadioField(
                     label,
                     validators=[DataRequired() if q.get('required', True) else Optional()],
                     choices=choices,
                     id=field_name,
-                    default=trans(q['options'][0], lang=language) if q['options'] else None,
+                    default=trans(q['options'][0], lang=self.form_language) if q['options'] else None,
                     render_kw={
                         'title': tooltip,
                         'placeholder': placeholder,
@@ -146,13 +162,21 @@ class QuizForm(FlaskForm):
                     }
                 )
                 bound_field = field.bind(self, field_name)
-                bound_field.process(formdata, self.data.get(field_name, trans(q['options'][0], lang=language)) if formdata and q['options'] else None)
+                bound_field.process(formdata, self.data.get(field_name, trans(q['options'][0], lang=self.form_language)) if formdata and q['options'] else None)
                 self._fields[field_name] = bound_field
                 with current_app.app_context():
                     current_app.logger.debug(f"Added field {field_name} with label '{label}' (key: {label_key})")
 
+        # Log field types for debugging
         with current_app.app_context():
-            current_app.logger.debug(f"Form fields initialized: {list(self._fields.keys())}")
+            current_app.logger.debug(f"Form fields initialized: {[(k, type(v).__name__) for k, v in self._fields.items()]}")
+
+    def __setattr__(self, name, value):
+        """Prevent overwriting WTForms fields with non-field types."""
+        if name in ('first_name', 'email', 'language', 'send_email', 'submit', 'back') and not isinstance(value, (Field, type(None))):
+            current_app.logger.warning(f"Attempt to overwrite field {name} with {type(value).__name__}")
+            return
+        super().__setattr__(name, value)
 
     def validate(self, extra_validators=None):
         with current_app.app_context():
@@ -325,7 +349,13 @@ def step1():
     trans_dict = get_translations(language)
     course_id = request.args.get('course_id', 'financial_quiz')
 
+    # Clear quiz_data on GET to start fresh
+    if request.method == 'GET' and 'quiz_data' in session:
+        session.pop('quiz_data', None)
+        current_app.logger.debug(f"Cleared quiz_data for new session: {session['sid']}")
+
     form = QuizForm(language=language, personal_info=True, formdata=request.form if request.method == 'POST' else None)
+    current_app.logger.debug(f"Step1 form fields: {[(k, type(v).__name__) for k, v in form._fields.items()]}")
     form.submit.label.text = trans('core_start_quiz', lang=language)
 
     if request.method == 'POST':
@@ -409,6 +439,7 @@ def quiz_step(step_num):
 
     current_app.logger.debug(f"Session quiz_data: {session.get('quiz_data', {})}")
     form = QuizForm(questions=preprocessed_questions, language=language, personal_info=False, formdata=request.form if request.method == 'POST' else None)
+    current_app.logger.debug(f"Quiz step {step_num} form fields: {[(k, type(v).__name__) for k, v in form._fields.items()]}")
     form.submit.label.text = trans('core_see_results' if step_num == len(steps) else 'core_continue', lang=language)
     form.back.label.text = trans('core_back', lang=language)
 
@@ -509,7 +540,7 @@ def quiz_step(step_num):
         flash(trans('submission_success', lang=language))
         return redirect(url_for('quiz.results', course_id=course_id))
 
-    if 'quiz_data' in session:
+    if 'quiz_data' in session and validate_session_quiz_data(session['quiz_data']):
         current_app.logger.debug(f"Prepopulating form with session quiz_data: {session['quiz_data']}")
         for q in preprocessed_questions:
             if q['id'] in session['quiz_data']:
@@ -570,3 +601,9 @@ def results():
         language=language
     ))
     return response
+
+@quiz_bp.errorhandler(Exception)
+def handle_error(e):
+    current_app.logger.error(f"Global error: {str(e)} [session: {session.get('sid', 'unknown')}]", exc_info=True)
+    flash(trans('quiz_config_error', lang=session.get('language', 'en')), 'error')
+    return redirect(url_for('quiz.step1'))
