@@ -6,6 +6,18 @@
             max-width: 600px;
             margin: 2rem auto;
         }
+        .card {
+            border: none;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #1E7F71, #0288D1);
+            border: none;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #1B5E20, #01579B);
+        }
     </style>
 {% endblock %}
 {% block content %}
@@ -17,7 +29,7 @@
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
-                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert" aria-live="assertive">
                     {{ trans('core_' + message) | default(message) }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close') | default('Close') }}"></button>
                 </div>
@@ -29,14 +41,14 @@
             <form method="POST" action="{{ url_for('quiz.step1', course_id=course_id) }}">
                 {{ form.csrf_token }}
                 <div class="mb-3">
-                    <label class="form-label">{{ trans('core_first_name') | default('First Name') }}</label>
+                    <label class="form-label" for="{{ form.first_name.id }}">{{ trans('core_first_name') | default('First Name') }}</label>
                     {{ form.first_name(class="form-control", placeholder=trans('core_first_name_placeholder') | default('e.g., Muhammad, Bashir, Umar'), **{'data-bs-toggle': 'tooltip', 'title': trans('core_first_name_tooltip') | default('Enter your first name'), 'aria-describedby': 'first_name_help'}) }}
                     {% for error in form.first_name.errors %}
                         <div class="invalid-feedback">{{ trans(error) | default(error) }}</div>
                     {% endfor %}
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">{{ trans('core_email') | default('Email') }}</label>
+                    <label class="form-label" for="{{ form.email.id }}">{{ trans('core_email') | default('Email') }}</label>
                     {{ form.email(class="form-control", placeholder=trans('core_email_placeholder') | default('e.g., muhammad@example.com'), **{'data-bs-toggle': 'tooltip', 'title': trans('core_email_tooltip') | default('Enter your email to receive quiz results'), 'aria-describedby': 'email_help'}) }}
                     {% for error in form.email.errors %}
                         <div class="invalid-feedback">{{ trans(error) | default(error) }}</div>
@@ -44,7 +56,7 @@
                 </div>
                 <div class="mb-3 form-check">
                     {{ form.send_email(class="form-check-input", **{'data-bs-toggle': 'tooltip', 'title': trans('quiz_send_email_tooltip') | default('Check to receive email with quiz results'), 'aria-describedby': 'send_email_help'}) }}
-                    <label class="form-check-label" for="send_email">{{ trans('Send Email') | default('Send Email') }}</label>
+                    <label class="form-check-label" for="{{ form.send_email.id }}">{{ trans('core_send_email') | default('Send Email') }}</label>
                 </div>
                 <div class="d-flex justify-content-between">
                     {% if course_id %}
