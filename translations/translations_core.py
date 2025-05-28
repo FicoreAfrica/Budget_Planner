@@ -7,6 +7,14 @@ CORE_TRANSLATIONS = {
         'core_error': 'An unexpected error occurred. Please try again.',
         'core_input_cannot_exceed_10_billion': 'Input value cannot exceed 10 billion.',
         'global_error_message': 'An unexpected error occurred',
+        'Yes': 'Yes',
+        'No': 'No',
+        'Language': 'Language',
+        'Send Email': 'Send Email',
+        'Next': 'Next',
+        'Back': 'Back',
+        'Continue': 'Continue',
+        'Please correct the errors below': 'Please correct the errors below',
             'core_please_enter_valid_numbers': 'Please enter only valid numbers.',
         'core_Please correct the errors below': 'Please correct the errors below.',
         'core_today': 'Today',
@@ -402,5 +410,13 @@ CORE_TRANSLATIONS = {
         # Added missing keys
         'core_internal_server_error': 'Kuskuren Sabar na Ciki',
         'core_something_went_wrong': 'Wani abu ya faru da bai dace ba',
+        'Yes': 'Eh',
+        'No': 'A’a',
+        'Language': 'Yare',
+        'Send Email': 'Aika Imel',
+        'Next': 'Na gaba',
+        'Back': 'Baya',
+        'Continue': 'Ci gaba',
+        'Please correct the errors below': 'Da fatan za a gyara kurakuran da ke ƙasa'
     }
 }
