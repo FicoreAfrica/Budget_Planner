@@ -82,7 +82,7 @@ def step1():
 
 @emergency_fund.route('/step2', methods=['GET', 'POST'])
 def step2():
-    if 'sid' not in session or 'emergency_fund_step1 not in session:
+    if 'sid' not in session or 'emergency_fund_step1' not in session:
         flash(trans("emergency_fund_missing_step1"), "danger")
         return redirect(url_for('emergency_fund.step1'))
     lang = Step2Form.get('lang', 'en')
