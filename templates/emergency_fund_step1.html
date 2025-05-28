@@ -6,81 +6,51 @@
         <h1>{{ trans('emergency_fund_calculator') | default('Emergency Fund Calculator') }}</h1>
         <p>{{ trans('emergency_fund_plan_emergency_fund') | default('Plan your emergency fund with Ficore Africa') }}</p>
     </div>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ trans('core_' + message) | default(message) }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close') | default('Close') }}"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    <div class="progress mb-3">
+        <div class="progress-bar bg-success" role="progressbar" style="width: 25%;" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">Step 1 of 4</div>
+    </div>
     <div class="card">
         <div class="card-body">
+            <h3>{{ trans('emergency_fund_step1_title') | default('Your Information') }}</h3>
             <form method="POST" action="{{ url_for('emergency_fund.step1') }}">
                 {{ form.csrf_token }}
                 <div class="mb-3">
-                    <label class="form-label">{{ trans('core_first_name') | default('First Name') }}</label>
-                    {{ form.first_name(class="form-control", placeholder=trans('core_first_name_placeholder') | default('e.g., Khadijah, Amina, Maryam'), **{'data-bs-toggle': 'tooltip', 'title': trans('core_first_name_tooltip') | default('Enter your first name'), 'aria-describedby': 'first_name_help'}) }}
-                    <div class="invalid-feedback">{{ trans('core_first_name_required') | default('First name is required') }}</div>
+                    <label class="form-label" for="first_name">{{ trans('emergency_fund_first_name') | default('First Name') }}</label>
+                    {{ form.first_name(class="form-control", id="first_name", placeholder=trans('emergency_fund_first_name_placeholder') | default('e.g., Chukwudi, Aisha, Ngozi'), **{'data-bs-toggle': 'tooltip', 'title': trans('emergency_fund_first_name_tooltip') | default('Your name, like Chukwudi or Aisha'), 'aria-describedby': 'firstNameHelp'}) }}
+                    <small id="firstNameHelp" class="form-text text-muted">{{ trans('emergency_fund_first_name_example') | default('Example: Enter "Ngozi" if that’s your name') }}</small>
+                    {% for error in form.first_name.errors %}
+                        <div class="invalid-feedback d-block">{{ trans(error) | default(error) }}</div>
+                    {% endfor %}
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">{{ trans('core_email') | default('Email') }}</label>
-                    {{ form.email(class="form-control", placeholder=trans('core_email_placeholder') | default('e.g., khadijah@example.com'), **{'data-bs-toggle': 'tooltip', 'title': trans('core_email_tooltip') | default('Enter your email to receive fund summary'), 'aria-describedby': 'email_help'}) }}
-                    <div class="invalid-feedback">{{ trans('core_email_required') | default('Valid email is required') }}</div>
-                </div>
-                <div class="mb-3 form-check">
-                    {{ form.send_email(class="form-check-input", **{'data-bs-toggle': 'tooltip', 'title': trans('emergency_fund_send_email_tooltip') | default('Check to receive email summary'), 'aria-describedby': 'send_email_help'}) }}
-                    <label class="form-check-label" for="send_email">{{ trans('emergency_fund_send_email') | default('Send Email') }}</label>
+                    <label class="form-label" for="email">{{ trans('emergency_fund_email') | default('Email') }}</label>
+                    {{ form.email(class="form-control", id="email", placeholder=trans('emergency_fund_email_placeholder') | default('e.g., chukwudi@gmail.com'), **{'data-bs-toggle': 'tooltip', 'title': trans('emergency_fund_email_tooltip') | default('Your email to get your plan (optional)'), 'aria-describedby': 'emailHelp'}) }}
+                    <small id="emailHelp" class="form-text text-muted">{{ trans('emergency_fund_email_example') | default('Example: chukwudi@gmail.com for results') }}</small>
+                    {% for error in form.email.errors %}
+                        <div class="invalid-feedback d-block">{{ trans(error) | default(error) }}</div>
+                    {% endfor %}
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">{{ trans('emergency_fund_monthly_expenses') | default('Monthly Expenses') }}</label>
-                    {{ form.monthly_expenses(class="form-control number-input", placeholder=trans('emergency_fund_monthly_expenses_placeholder') | default('e.g., 50,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('emergency_fund_monthly_expenses_tooltip') | default('Expenses like food, transport, data subscriptions')}) }}
-                    <div class="invalid-feedback">{{ trans('emergency_fund_monthly_expenses_required') | default('Monthly expenses are required') }}</div>
+                    <label class="form-label" for="language">{{ trans('emergency_fund_language') | default('Language') }}</label>
+                    {{ form.language(class="form-select", id="language", **{'data-bs-toggle': 'tooltip', 'title': trans('emergency_fund_language_tooltip') | default('Choose English or Hausa'), 'aria-describedby': 'languageHelp'}) }}
+                    <small id="languageHelp" class="form-text text-muted">{{ trans('emergency_fund_language_example') | default('Example: Select "Hausa" if you prefer Hausa') }}</small>
+                    {% for error in form.language.errors %}
+                        <div class="invalid-feedback d-block">{{ trans(error) | default(error) }}</div>
+                    {% endfor %}
                 </div>
-                <button type="submit" class="btn btn-primary">{{ trans('emergency_fund_continue_to_savings') | default('Continue to Savings') }}</button>
+                <button type="submit" class="btn btn-primary">{{ trans('core_next') | default('Next') }}</button>
             </form>
         </div>
     </div>
 </div>
-{% endblock %}
-{% block extra_scripts %}
-<script>
-    // Apply comma-formatting to all .number-input elements in real-time
-    document.querySelectorAll('.number-input').forEach(input => {
-        input.addEventListener('input', (e) => {
-            let cursorPosition = input.selectionStart;
-            let value = input.value.replace(/,/g, '');
-            if (!value) return;
-            if (parseFloat(value) > 10000000000) {
-                value = '10000000000';
-                alert('{{ trans('core_input_cannot_exceed_10_billion') | default('Input cannot exceed ₦10 billion') }}');
-            }
-            let formatted = parseFloat(value).toLocaleString('en-NG', { maximumFractionDigits: 0 });
-            input.value = formatted;
-            // Try to retain cursor position
-            input.setSelectionRange(formatted.length, formatted.length);
-        });
-        input.addEventListener('paste', (e) => {
-            e.preventDefault();
-            let pasted = (e.clipboardData || window.clipboardData).getData('text');
-            let clean = pasted.replace(/[^0-9.]/g, '');
-            input.value = parseFloat(clean).toLocaleString('en-NG');
-        });
-        input.addEventListener('blur', () => {
-            if (input.value) {
-                input.value = parseFloat(input.value.replace(/,/g, '')).toLocaleString('en-NG');
-            }
-        });
-    });
-
-    document.querySelector('form').addEventListener('submit', function(e) {
-        let valid = true;
-        document.querySelectorAll('.number-input').forEach(input => {
-            let value = input.value.replace(/,/g, '');
-            if (!value || isNaN(parseFloat(value))) {
-                input.classList.add('is-invalid');
-                valid = false;
-            } else {
-                input.classList.remove('is-invalid');
-                input.value = parseFloat(value).toString();
-            }
-        });
-        if (!valid) {
-            e.preventDefault();
-            alert('{{ trans('core_please_enter_valid_numbers') | default('Please enter valid numbers') }}');
-        }
-    });
-</script>
 {% endblock %}
