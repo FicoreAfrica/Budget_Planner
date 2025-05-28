@@ -86,20 +86,20 @@ class QuizForm(FlaskForm):
                 tooltip_key = f"quiz_{question_key}_tooltip"
                 placeholder_key = f"quiz_{question_key}_placeholder"
                 translated_text = trans(label_key, lang=language, default=q['text'])
-                # Normalize options to capitalized Yes/No
                 translated_options = [(opt.capitalize(), trans(opt.capitalize(), lang=language, default=opt.capitalize())) for opt in q['options']]
                 field = RadioField(
                     translated_text,
                     validators=[DataRequired() if q.get('required', True) else Optional()],
                     choices=translated_options,
                     id=field_name,
+                    default=translated_options[0][0] if translated_options else None,  # Set default to first option
                     render_kw={
                         'title': trans(tooltip_key, lang=language, default=''),
                         'placeholder': trans(placeholder_key, lang=language, default='Select an option')
                     }
                 )
                 bound_field = field.bind(self, field_name)
-                bound_field.process(formdata, self.data.get(field_name) if self.data else None)
+                bound_field.process(formdata, self.data.get(field_name, translated_options[0][0]) if formdata and translated_options else None)
                 self._fields[field_name] = bound_field
                 with current_app.app_context():
                     current_app.logger.debug(f"Added field {field_name} with translated text '{translated_text}'")
@@ -314,8 +314,13 @@ def step2a():
         return redirect(url_for('index'))
 
     if 'sid' not in session or 'quiz_data' not in session:
+        with current_app.app_context():
+            current_app.logger.error(f"Session missing: sid={session.get('sid')}, quiz_data={session.get('quiz_data')}")
         flash(trans('Session Expired', lang=session.get('language', 'en')), 'error')
         return redirect(url_for('quiz.step1', course_id=request.args.get('course_id', 'financial_quiz')))
+
+    with current_app.app_context():
+        current_app.logger.debug(f"Session data: sid={session['sid']}, quiz_data={session['quiz_data']}")
 
     language = session.get('language', 'en')
     trans_dict = get_translations(language)
@@ -367,6 +372,8 @@ def step2a():
         else:
             with current_app.app_context():
                 current_app.logger.error(f"Form validation failed: {form.errors}")
+                current_app.logger.debug(f"Form data received: {request.form}")
+                current_app.logger.debug(f"Form fields: {list(form._fields.keys())}")
             flash(trans('Please correct the errors below', lang=language, default='Please correct the errors below'), 'error')
 
     if 'quiz_data' in session:
