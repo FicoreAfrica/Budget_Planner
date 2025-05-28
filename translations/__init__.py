@@ -38,7 +38,6 @@ KEY_PREFIX_TO_MODULE = {
     'net_worth_': 'translations_net_worth',
     'core_': 'translations_core',
     'learning_hub_': 'translations_learning_hub',
-    '': 'translations_core',  # Default to translations_core for generic keys
 }
 
 # Dynamically import each translation module and combine translations
@@ -63,14 +62,14 @@ def trans(key: str, lang: str = None, **kwargs: Any) -> str:
     """
     Translate a key using the appropriate language dictionary.
     Falls back to English or the key itself if translation is missing.
-    Logs a warning if the key is not found in the expected module.
+    Logs a warning if the key is not found in any module.
     Supports string formatting with kwargs.
     """
-    # Default to 'en' if lang is None, using 'lang' from session to match bill blueprint
+    # Default to 'en' if lang is None, using 'lang' from session to match bill/quiz blueprints
     if lang is None:
         lang = session.get('lang', 'en') if has_request_context() else 'en'
 
-    # Use 'sid' to match bill blueprint session key
+    # Use 'sid' to match blueprint session key
     session_id = session.get('sid', 'no-session-id') if has_request_context() else 'no-session-id'
     logger.debug(f"Translation request: key={key}, lang={lang} [session: {session_id}]")
 
@@ -79,21 +78,44 @@ def trans(key: str, lang: str = None, **kwargs: Any) -> str:
         logger.warning(f"Language {lang} not found in translations, falling back to 'en' [session: {session_id}]")
         lang = 'en'
 
-    # Get the translation, falling back to English, then the key itself
-    translation = TRANSLATIONS.get(lang, {}).get(key, TRANSLATIONS['en'].get(key, key))
+    # Get the translation from the combined TRANSLATIONS dictionary
+    translation = TRANSLATIONS.get(lang, {}).get(key, None)
+
+    # If not found, try English as fallback
+    if translation is None:
+        translation = TRANSLATIONS['en'].get(key, key)
 
     # Check if the translation is the key itself (indicating a missing translation)
     if translation == key:
-        # Determine which module should define this key based on its prefix
-        expected_module = 'translations_core'  # Default to core for generic keys
+        # Determine expected module based on prefix
+        expected_module = 'unknown_module'
         for prefix, module in KEY_PREFIX_TO_MODULE.items():
             if key.startswith(prefix):
                 expected_module = module
                 break
-        logger.warning(
-            f"Missing translation for key={key} in lang={lang}, "
-            f"expected in module {expected_module} [session: {session_id}]"
-        )
+        else:
+            # For generic keys (no prefix), check all modules
+            for module_name, _ in translation_modules:
+                try:
+                    module = __import__(f"translations.{module_name}", fromlist=[''])
+                    translations = getattr(module, next(v for n, v in translation_modules if n == module_name))
+                    if key in translations.get(lang, {}):
+                        translation = translations[lang][key]
+                        expected_module = module_name
+                        break
+                    elif key in translations.get('en', {}):
+                        translation = translations['en'][key]
+                        expected_module = module_name
+                        break
+                except (ImportError, AttributeError) as e:
+                    logger.debug(f"Skipped module {module_name} for generic key check: {str(e)}")
+
+        # Log warning if still not found
+        if translation == key:
+            logger.warning(
+                f"Missing translation for key={key} in lang={lang}, "
+                f"expected in module {expected_module} [session: {session_id}]"
+            )
 
     # Log the translation result
     logger.debug(f"Translation result: key={key}, lang={lang}, result={translation} [session: {session_id}]")
