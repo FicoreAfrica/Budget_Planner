@@ -340,7 +340,7 @@ def create_app():
     @session_required
     def logout():
         log.info("Logging out user")
-        lang sobreslang = session.get('language', 'en')
+        lang = session.get('language', 'en')
         session.clear()
         session['language'] = lang
         flash(trans('learning_hub_success_logout', default='Successfully logged out', lang=lang))
