@@ -1,101 +1,112 @@
 [
-    {
-        "text": "track_expenses",
-        "options": ["Yes", "No"],
-        "type": "radio",
-        "required": true,
-        "weight": 1,
-        "positive_answers": ["Yes"],
-        "negative_answers": ["No"]
-    },
-    {
-        "text": "save_regularly",
-        "options": ["Yes", "No"],
-        "type": "radio",
-        "required": true,
-        "weight": 1,
-        "positive_answers": ["Yes"],
-        "negative_answers": ["No"]
-    },
-    {
-        "text": "spend_non_essentials",
-        "options": ["Yes", "No"],
-        "type": "radio",
-        "required": true,
-        "weight": 1,
-        "positive_answers": ["No"],
-        "negative_answers": ["Yes"]
-    },
-    {
-        "text": "plan_expenses",
-        "options": ["Yes", "No"],
-        "type": "radio",
-        "required": true,
-        "weight": 1,
-        "positive_answers": ["Yes"],
-        "negative_answers": ["No"]
-    },
-    {
-        "text": "impulse_purchases",
-        "options": ["Yes", "No"],
-        "type": "radio",
-        "required": true,
-        "weight": 1,
-        "positive_answers": ["No"],
-        "negative_answers": ["Yes"]
-    },
-    {
-        "text": "use_budgeting_tools",
-        "options": ["Yes", "No"],
-        "type": "radio",
-        "required": true,
-        "weight": 1,
-        "positive_answers": ["Yes"],
-        "negative_answers": ["No"]
-    },
-    {
-        "text": "invest_money",
-        "options": ["Yes", "No"],
-        "type": "radio",
-        "required": true,
-        "weight": 1,
-        "positive_answers": ["Yes"],
-        "negative_answers": ["No"]
-    },
-    {
-        "text": "emergency_fund",
-        "options": ["Yes", "No"],
-        "type": "radio",
-        "required": true,
-        "weight": 1,
-        "positive_answers": ["Yes"],
-        "negative_answers": ["No"]
-    },
-    {
-        "text": "set_financial_goals",
-        "options": ["Yes", "No"],
-        "type": "radio",
-        "required": true,
-        "weight": 1,
-        "positive_answers": ["Yes"],
-        "negative_answers": ["No"]
-    },
-    {
-        "text": "seek_financial_advice",
-        "options": ["Yes", "No"],
-        "type": "radio",
-        "required": true,
-        "weight": 1,
-        "positive_answers": ["Yes"],
-        "negative_answers": ["No"]
-    },
-    {
-        "text": "avoid_debt",
-        "options": ["Yes", "No"],
-        "type": "radio",
-        "required": true,
-        "weight": 1,
-        "positive_answers": ["Yes"],
-        "negative_answers": ["No"]
-    }
+  {
+    "id": "question_1",
+    "key": "track_expenses",
+    "text_key": "quiz_track_expenses_label",
+    "type": "single_choice",
+    "options": ["quiz_yes", "quiz_no", "quiz_sometimes"],
+    "required": true,
+    "positive_answers": ["quiz_yes"],
+    "negative_answers": ["quiz_no"],
+    "weight": 1
+  },
+  {
+    "id": "question_2",
+    "key": "save_regularly",
+    "text_key": "quiz_save_regularly_label",
+    "type": "single_choice",
+    "options": ["quiz_yes", "quiz_no", "quiz_sometimes"],
+    "required": true,
+    "positive_answers": ["quiz_yes"],
+    "negative_answers": ["quiz_no"],
+    "weight": 1
+  },
+  {
+    "id": "question_3",
+    "key": "spend_non_essentials",
+    "text_key": "quiz_spend_non_essentials_label",
+    "type": "single_choice",
+    "options": ["quiz_yes", "quiz_no", "quiz_sometimes"],
+    "required": true,
+    "positive_answers": ["quiz_no"],
+    "negative_answers": ["quiz_yes"],
+    "weight": 1
+  },
+  {
+    "id": "question_4",
+    "key": "plan_spending",
+    "text_key": "quiz_plan_spending_label",
+    "type": "single_choice",
+    "options": ["quiz_yes", "quiz_no", "quiz_sometimes"],
+    "required": true,
+    "positive_answers": ["quiz_yes"],
+    "negative_answers": ["quiz_no"],
+    "weight": 1
+  },
+  {
+    "id": "question_5",
+    "key": "impulse_purchases",
+    "text_key": "quiz_impulse_purchases_label",
+    "type": "single_choice",
+    "options": ["quiz_yes", "quiz_no", "quiz_sometimes"],
+    "required": true,
+    "positive_answers": ["quiz_no"],
+    "negative_answers": ["quiz_yes"],
+    "weight": 1
+  },
+  {
+    "id": "question_6",
+    "key": "use_budget",
+    "text_key": "quiz_use_budget_label",
+    "type": "single_choice",
+    "options": ["quiz_yes", "quiz_no", "quiz_sometimes"],
+    "required": true,
+    "positive_answers": ["quiz_yes"],
+    "negative_answers": ["quiz_no"],
+    "weight": 1
+  },
+  {
+    "id": "question_7",
+    "key": "invest_money",
+    "text_key": "quiz_invest_money_label",
+    "type": "single_choice",
+    "options": ["quiz_yes", "quiz_no", "quiz_sometimes"],
+    "required": true,
+    "positive_answers": ["quiz_yes"],
+    "negative_answers": ["quiz_no"],
+    "weight": 1
+  },
+  {
+    "id": "question_8",
+    "key": "emergency_fund",
+    "text_key": "quiz_emergency_fund_label",
+    "type": "single_choice",
+    "options": ["quiz_yes", "quiz_no", "quiz_sometimes"],
+    "required": true,
+    "positive_answers": ["quiz_yes"],
+    "negative_answers": ["quiz_no"],
+    "weight": 1
+  },
+  {
+    "id": "question_9",
+    "key": "set_financial_goals",
+    "text_key": "quiz_set_financial_goals_label",
+    "type": "single_choice",
+    "options": ["quiz_yes", "quiz_no", "quiz_sometimes"],
+    "required": true,
+    "positive_answers": ["quiz_yes"],
+    "negative_answers": ["quiz_no"],
+    "weight": 1
+  },
+  {
+    "id": "question_10",
+    "key": "seek_financial_advice",
+    "text_key": "quiz_seek_financial_advice_label",
+    "type": "single_choice",
+    "options": ["quiz_yes", "quiz_no", "quiz_sometimes"],
+    "required": true,
+    "positive_answers": ["quiz_yes"],
+    "negative_answers": ["quiz_no"],
+    "weight": 1
+  }
 ]
