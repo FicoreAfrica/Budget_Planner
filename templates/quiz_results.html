@@ -2,8 +2,17 @@
 {% block title %}{{ trans('quiz_financial_personality_dashboard') | default('Financial Personality Dashboard') }}{% endblock %}
 {% block extra_head %}
     <link rel="stylesheet" href="https://cdn.jsdelivr.com/npm/chart.js@4.4.4/dist/chart.umd.min.css">
-    <script src="https://cdn.jsdelivr.com/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
     <style>
+        .container {
+            max-width: 600px;
+            margin: 2rem auto;
+        }
+        .card {
+            border: none;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        }
         .badge {
             padding: 0.5rem 1rem;
             border-radius: 20px;
@@ -13,6 +22,13 @@
         }
         .badge:hover {
             transform: scale(1.1);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #1E7F71, #0288D1);
+            border: none;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #1B5E20, #01579B);
         }
     </style>
 {% endblock %}
@@ -25,9 +41,9 @@
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
-                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert" aria-live="assertive">
                     {{ trans('core_' + message) | default(message) }}
-                    <button type="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close') | default('Close') }}"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close') | default('Close') }}"></button>
                 </div>
             {% endfor %}
         {% endif %}
@@ -37,9 +53,9 @@
             <div class="card-body">
                 <h2>{{ trans('core_hello') | default('Hello') }} {{ latest_record.first_name | default(trans('core_user') | default('User')) }}, {{ trans('quiz_your_personality') | default('Your Personality') }}: {{ trans('quiz_' + latest_record.personality.lower()) | default(latest_record.personality) }}</h2>
                 <p><strong>{{ trans('quiz_score') | default('Score') }}:</strong> {{ latest_record.score | default(0) }} / 30</p>
-                <p>'
+                <p>
                     {% if latest_record.personality == 'Planner' %}
-                        {{ trans('quiz_plans_description') | default('You are disciplined and plan your finances carefully, using tools like PiggyVest and setting clear goals.') }}
+                        {{ trans('quiz_planner_description') | default('You are disciplined and plan your finances carefully, using tools like PiggyVest and setting clear goals.') }}
                     {% elif latest_record.personality == 'Saver' %}
                         {{ trans('quiz_saver_description') | default('You prioritize saving, often using Ajo/Esusu/Adashe, and are cautious with spending.') }}
                     {% elif latest_record.personality == 'Balanced' %}
@@ -47,7 +63,7 @@
                     {% elif latest_record.personality == 'Spender' %}
                         {{ trans('quiz_spender_description') | default('You enjoy spending and may need to focus on budgeting and saving with apps like Moniepoint.') }}
                     {% else %}
-                        {{ trans('quiz_unknown_personality') | default('Your personality could not be determined.') }}
+                        {{ trans('quiz_avoider_description') | default('You avoid financial planning and may benefit from starting with a simple budget.') }}
                     {% endif %}
                 </p>
                 <p><strong>{{ trans('core_created_at') | default('Created At') }}:</strong> {{ latest_record.created_at | default('N/A') }}</p>
@@ -58,26 +74,31 @@
                 <h3>{{ trans('quiz_quiz_metrics') | default('Quiz Metrics') }}</h3>
             </div>
             <div class="card-body">
-                <canvas id="quizChart"></canvas>
+                <canvas id="quizChart" aria-label="Financial Behavior Radar Chart"></canvas>
                 <script>
                     document.addEventListener('DOMContentLoaded', function() {
                         const ctx = document.getElementById('quizChart').getContext('2d');
                         new Chart(ctx, {
-                            type: 'bar',
-                            data: {
-                                labels: [
-                                    '{{ trans('quiz_your_score') | default('Your Score') }}',
-                                    '{{ trans('quiz_max_score') | default('Max Score') }}'
-                                ],
-                                datasets: [{
-                                    label: '{{ trans('quiz_quiz_results') | default('Quiz Results') }}',
-                                    data: [{{ latest_record.score | default(0) }}, 30],
-                                    backgroundColor: ['#1E7F71', '#0288D1']
-                                }]
-                            },
+                            type: 'radar',
+                            data: {{ chart_data | tojson }},
                             options: {
-                                scales: { y: { beginAtZero: true, max: 30 } },
-                                animation: false
+                                scales: {
+                                    r: {
+                                        angleLines: { display: true },
+                                        suggestedMin: -1,
+                                        suggestedMax: 3
+                                    }
+                                },
+                                elements: {
+                                    line: { borderWidth: 3 }
+                                },
+                                plugins: {
+                                    legend: { position: 'top' },
+                                    title: {
+                                        display: true,
+                                        text: '{{ trans('quiz_financial_behavior') | default('Financial Behavior Breakdown') }}'
+                                    }
+                                }
                             }
                         });
                     });
@@ -91,9 +112,9 @@
             <div class="card-body">
                 {% if latest_record.badges %}
                     {% for badge in latest_record.badges %}
-                        <span class="badge bg-{{ 'success' if badge == 'Financial Guru' else 'primary' if badge == 'Savings Star' else 'info' if badge == 'Debt Dodger' else 'warning' if badge == 'Goal Setter' else 'secondary' }}">
-                            <i class="fas fa-{{ 'trophy' if badge == 'Financial Guru' else 'star' if badge == 'Savings Star' else 'check-circle' if badge == 'Debt Dodger' else 'bullseye' }}"></i>
-                            {{ trans(badge.lower().replace(' ', '_')) | default(badge) }}
+                        <span class="badge bg-{{ 'success' if badge == 'Financial Guru' else 'primary' if badge == 'Savings Star' else 'warning' if badge == 'Needs Guidance!' else 'secondary' }}">
+                            <i class="fas fa-{{ 'trophy' if badge == 'Financial Guru' else 'star' if badge == 'Savings Star' else 'exclamation-circle' if badge == 'Needs Guidance!' else 'check-circle' }}"></i>
+                            {{ trans('badge_' + badge.lower().replace(' ', '_')) | default(badge) }}
                         </span>
                     {% endfor %}
                 {% else %}
@@ -107,7 +128,7 @@
             </div>
             <div class="card-body">
                 {% for insight in insights %}
-                    <p>{{ trans('quiz_insight_' + insight) | default(insight) }}</p>
+                    <p>{{ trans('quiz_insight_' + insight.lower().replace(' ', '_')) | default(insight) }}</p>
                 {% endfor %}
                 {% if not insights %}
                     <p>{{ trans('quiz_no_insights_available') | default('No insights available') }}</p>
@@ -120,7 +141,7 @@
             </div>
             <div class="card-body">
                 {% for tip in tips %}
-                    <p>{{ trans('quiz_tip_' + tip) | default(tip) }}</p>
+                    <p>{{ trans('quiz_tip_' + tip.lower().replace(' ', '_')) | default(tip) }}</p>
                 {% endfor %}
             </div>
         </div>
@@ -131,15 +152,15 @@
             <div class="card-body">
                 {% if course_id %}
                     <form method="POST" action="{{ url_for('courses.complete_quiz', course_id=course_id) }}">
-                        <button type="submit" class="btn btn-success">{{ trans('courses_complete_course') | default('Complete Course') }}</button>
+                        <button type="submit" class="btn btn-success" aria-label="Complete Course">{{ trans('courses_complete_course') | default('Complete Course') }}</button>
                     </form>
-                    <a href="{{ url_for('quiz.step1', course_id=course_id) }}" class="btn btn-primary">{{ trans('quiz_retake_quiz') | default('Retake Quiz') }}</a>
-                    <a href="{{ url_for('courses.course_catalog') }}" class="btn btn-secondary">{{ trans('courses_back_to_courses') | default('Back to Courses') }}</a>
+                    <a href="{{ url_for('quiz.step1', course_id=course_id) }}" class="btn btn-primary" aria-label="Retake Quiz">{{ trans('quiz_retake_quiz') | default('Retake Quiz') }}</a>
+                    <a href="{{ url_for('courses.course_catalog') }}" class="btn btn-secondary" aria-label="Back to Courses">{{ trans('courses_back_to_courses') | default('Back to Courses') }}</a>
                 {% else %}
-                    <a href="{{ url_for('quiz.step1') }}" class="btn btn-primary">{{ trans('quiz_retake_quiz') | default('Retake Quiz') }}</a>
+                    <a href="{{ url_for('quiz.step1') }}" class="btn btn-primary" aria-label="Retake Quiz">{{ trans('quiz_retake_quiz') | default('Retake Quiz') }}</a>
                 {% endif %}
-                <a href="{{ url_for('budget.step1') }}" class="btn btn-secondary">{{ trans('quiz_create_budget') | default('Create Budget') }}</a>
-                <a href="{{ url_for('net_worth.step1') }}" class="btn btn-secondary">{{ trans('quiz_calculate_net_worth') | default('Calculate Net Worth') }}</a>
+                <a href="{{ url_for('budget.step1') }}" class="btn btn-secondary" aria-label="Create Budget">{{ trans('quiz_create_budget') | default('Create Budget') }}</a>
+                <a href="{{ url_for('net_worth.step1') }}" class="btn btn-secondary" aria-label="Calculate Net Worth">{{ trans('quiz_calculate_net_worth') | default('Calculate Net Worth') }}</a>
             </div>
         </div>
         <div class="card mb-4">
@@ -148,7 +169,7 @@
             </div>
             <div class="card-body">
                 {% if records %}
-                    <table class="table table-striped">
+                    <table class="table table-striped" aria-label="Previous Quizzes Table">
                         <thead>
                             <tr>
                                 <th>{{ trans('core_date') | default('Date') }}</th>
@@ -175,9 +196,9 @@
         <div class="card mb-4">
             <div class="card-body">
                 <p>{{ trans('quiz_no_quiz_data_available') | default('No quiz data available') }}</p>
-                <a href="{{ url_for('quiz.step1', course_id=course_id if course_id else '') }}" class="btn btn-primary">{{ trans('quiz_start_quiz') | default('Start Quiz') }}</a>
+                <a href="{{ url_for('quiz.step1', course_id=course_id if course_id else '') }}" class="btn btn-primary" aria-label="Start Quiz">{{ trans('quiz_start_quiz') | default('Start Quiz') }}</a>
                 {% if course_id %}
-                    <a href="{{ url_for('courses.course_catalog') }}" class="btn btn-secondary">{{ trans('courses_back_to_courses') | default('Back to Courses') }}</a>
+                    <a href="{{ url_for('courses.course_catalog') }}" class="btn btn-secondary" aria-label="Back to Courses">{{ trans('courses_back_to_courses') | default('Back to Courses') }}</a>
                 {% endif %}
             </div>
         </div>
