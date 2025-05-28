@@ -276,7 +276,7 @@ QUIZ_TRANSLATIONS = {
         'Continue': 'Continue',
         'See Results': 'See Results',
         # Route-specific messages (from translations_quiz.py)
-        'Quiz configuration error. Please try again later.': 'Quiz configuration error. Please try again later.',
+        'Quiz configuration error.': 'Quiz configuration error. Please try again later.',
         'Session Expired': 'Session Expired',
         'Please correct the errors below': 'Please correct the errors below',
         'Google Sheets Error': 'Google Sheets Error',
@@ -689,7 +689,7 @@ QUIZ_TRANSLATIONS = {
         'Continue': 'Ci gaba',
         'See Results': 'Duba Sakamako',
         # Route-specific messages (from translations_quiz.py)
-        'Quiz configuration error. Please try again later.': 'Kuskuren saitin tambayoyin. Da fatan za a sake gwadawa daga baya.',
+        'Quiz configuration error.': 'Kuskuren saitin tambayoyin. Da fatan za a sake gwadawa daga baya.',
         'Session Expired': 'Zaman Ya Ƙare',
         'Please correct the errors below': 'Da fatan za a gyara kurakuran da ke ƙasa',
         'Google Sheets Error': 'Kuskuren Google Sheets',
