@@ -4,6 +4,11 @@ QUIZ_TRANSLATIONS = {
         'quiz_personality_quiz': 'Personality Quiz',
         'quiz_start_personality_quiz': 'Start Personality Quiz',
         'quiz_assess_personality': 'Answer questions to assess financial personality',
+        'Language': 'Language',
+        'Send Email': 'Send Email',
+        'Next': 'Next',
+        'Back': 'Back',
+        'Start Quiz': 'Start Quiz',
         'quiz_dashboard': 'Quiz Dashboard',
         'quiz_dashboard_load_error': 'Unable to load quiz dashboard. Please try again.',
         'quiz_avoid_debt_label': 'Do you actively avoid taking on debt?',
@@ -829,5 +834,10 @@ QUIZ_TRANSLATIONS = {
         'quiz_insight_low_discipline': 'Karancin horan kudi na kudi. Saita kankana manufofi nawa, kama na ajiye ₦10,00 kowe wata.',
         'quiz_insight_no_emergency_fund': 'Babu asusu nawa gagawa wata. Fara ajiya da Cowrywise don kasan kuɗin da ba a ji tsana nawa ba.',
         'quiz_insight_good_investment': 'Kyawawan al’ada nawa saka jari! Bincika tsaran nawa ko’ina da dukiya.',
+        'Language': 'Yare',
+        'Send Email': 'Aika Imel',
+        'Next': 'Na gaba',
+        'Back': 'Baya',
+        'Start Quiz': 'Fara Tambayoyi'
     }
 }
