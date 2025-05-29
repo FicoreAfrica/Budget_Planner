@@ -3,67 +3,14 @@
 {% block extra_head %}
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-    <style>
-        .score-gauge {
-            max-width: 300px;
-            margin: 0 auto 1.5rem;
-        }
-        .status-badge {
-            font-size: 1rem;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .badge {
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-size: 0.95rem;
-            transition: transform 0.3s ease;
-        }
-        .badge:hover {
-            transform: scale(1.1);
-        }
-        .insights-box, .comparison-box {
-            background: #E3F2FD;
-            border-radius: 8px;
-            padding: 1rem;
-            margin-bottom: 1rem;
-        }
-        .course-link {
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
-            font-weight: 600;
-            transition: transform 0.2s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: linear-gradient(135deg, #2E7D32, #0288D1);
-            border: none;
-            color: white;
-            text-decoration: none;
-        }
-        .course-link:hover {
-            transform: scale(1.05);
-            background: linear-gradient(135deg, #1B5E20, #01579B);
-            text-decoration: none;
-        }
-        .progress-bar {
-            transition: width 0.5s ease-in-out;
-        }
-        @media (max-width: 600px) {
-            .score-gauge { max-width: 200px; }
-        }
-    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 {% endblock %}
 {% block content %}
 <div class="container">
-    <div class="header">
-        <h1><i class="fas fa-heartbeat"></i> {{ trans('financial_health_dashboard') | default('Financial Health Dashboard') }}</h1>
-        <p>{{ trans('financial_health_personalized_financial_health_score') | default('Your personalized financial health score') }}</p>
-    </div>
-
+    {% set tool_name = 'financial_health_dashboard' | default('Financial Health Dashboard') %}
+    {% set tool_icon = 'fa-heartbeat' %}
+    {% set subtitle = trans('financial_health_personalized_financial_health_score') | default('Your personalized financial health score') %}
+    {% include 'tool_header.html' %}
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
@@ -74,7 +21,6 @@
             {% endfor %}
         {% endif %}
     {% endwith %}
-
     {% if latest_record %}
         <div class="card mb-4">
             <div class="card-body">
@@ -112,7 +58,6 @@
                         document.getElementById('debt_to_income').textContent = formatNumber({{ latest_record.debt_to_income | default(0) }}, 1);
                         document.getElementById('savings_rate').textContent = formatNumber({{ latest_record.savings_rate | default(0) }}, 1);
                         document.getElementById('interest_burden').textContent = formatNumber({{ latest_record.interest_burden | default(0) }}, 1);
-
                         const ctx = document.getElementById('scoreGauge').getContext('2d');
                         new Chart(ctx, {
                             type: 'doughnut',
@@ -146,12 +91,9 @@
                 </script>
             </div>
         </div>
-
         <div class="card mb-4">
-            <div class="header">
-                <h3><i class="fas fa-chart-bar"></i> {{ trans('financial_health_financial_metrics') | default('Financial Metrics') }}</h3>
-            </div>
             <div class="card-body">
+                <h3><i class="fas fa-chart-bar"></i> {{ trans('financial_health_financial_metrics') | default('Financial Metrics') }}</h3>
                 <canvas id="scoreChart"></canvas>
                 <script>
                     document.addEventListener('DOMContentLoaded', function() {
@@ -202,12 +144,9 @@
                 </script>
             </div>
         </div>
-
         <div class="card mb-4">
-            <div class="header">
-                <h3><i class="fas fa-trophy"></i> {{ trans('financial_health_badges') | default('Badges') }}</h3>
-            </div>
             <div class="card-body">
+                <h3><i class="fas fa-trophy"></i> {{ trans('financial_health_badges') | default('Badges') }}</h3>
                 {% if latest_record.badges %}
                     {% for badge in latest_record.badges %}
                         <span class="badge bg-{{ 'success' if badge == 'Financial Star' else 'primary' if badge == 'Savings Pro' else 'info' if badge == 'Debt Manager' else 'warning' }} mb-2">
@@ -220,12 +159,9 @@
                 {% endif %}
             </div>
         </div>
-
         <div class="card mb-4">
-            <div class="header">
-                <h3><i class="fas fa-lightbulb"></i> {{ trans('financial_health_insights') | default('Insights') }}</h3>
-            </div>
             <div class="card-body">
+                <h3><i class="fas fa-lightbulb"></i> {{ trans('financial_health_insights') | default('Insights') }}</h3>
                 <div class="insights-box">
                     {% for insight in insights %}
                         <p>{{ trans('financial_health_' + insight) | default(insight) }}</p>
@@ -241,12 +177,9 @@
                 </div>
             </div>
         </div>
-
         <div class="card mb-4">
-            <div class="header">
-                <h3><i class="fas fa-graduation-cap"></i> {{ trans('courses_my_courses') | default('My Courses') }}</h3>
-            </div>
             <div class="card-body">
+                <h3><i class="fas fa-graduation-cap"></i> {{ trans('courses_my_courses') | default('My Courses') }}</h3>
                 {% set user_progress = namespace(progress=[]) %}
                 {% for record in progress_records %}
                     {% if record.course_id == 'budgeting_101' %}
@@ -283,12 +216,9 @@
                 {% endif %}
             </div>
         </div>
-
         <div class="card mb-4">
-            <div class="header">
-                <h3><i class="fas fa-balance-scale"></i> {{ trans('financial_health_how_you_compare') | default('How You Compare to Others') }}</h3>
-            </div>
             <div class="card-body">
+                <h3><i class="fas fa-balance-scale"></i> {{ trans('financial_health_how_you_compare') | default('How You Compare to Others') }}</h3>
                 <div class="comparison-box">
                     {% if total_users >= 5 %}
                         <p>
@@ -355,23 +285,17 @@
                 </script>
             </div>
         </div>
-
         <div class="card mb-4">
-            <div class="header">
-                <h3><i class="fas fa-rocket"></i> {{ trans('financial_health_tips_for_improving_score') | default('Tips for Improving Score') }}</h3>
-            </div>
             <div class="card-body">
+                <h3><i class="fas fa-rocket"></i> {{ trans('financial_health_tips_for_improving_score') | default('Tips for Improving Score') }}</h3>
                 {% for tip in tips %}
                     <p>{{ trans('financial_health_' + tip) | default(tip) }}</p>
                 {% endfor %}
             </div>
         </div>
-
         <div class="card mb-4">
-            <div class="header">
-                <h3><i class="fas fa-bolt"></i> {{ trans('financial_health_call_to_actions') | default('Call to Actions') }}</h3>
-            </div>
             <div class="card-body">
+                <h3><i class="fas fa-bolt"></i> {{ trans('financial_health_call_to_actions') | default('Call to Actions') }}</h3>
                 <a href="{{ url_for('financial_health.step1') }}" class="btn btn-primary">
                     <i class="fas fa-edit"></i> {{ trans('financial_health_recalculate_score') | default('Recalculate Score') }}
                 </a>
@@ -383,12 +307,9 @@
                 </a>
             </div>
         </div>
-
         <div class="card mb-4">
-            <div class="header">
-                <h3><i class="fas fa-history"></i> {{ trans('financial_health_previous_assessments') | default('Previous Assessments') }}</h3>
-            </div>
             <div class="card-body">
+                <h3><i class="fas fa-history"></i> {{ trans('financial_health_previous_assessments') | default('Previous Assessments') }}</h3>
                 {% if records %}
                     <table class="table table-striped">
                         <thead>
@@ -424,5 +345,4 @@
         </div>
     {% endif %}
 </div>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 {% endblock %}
