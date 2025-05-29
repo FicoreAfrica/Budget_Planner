@@ -213,9 +213,7 @@ def create_app():
             'FACEBOOK_URL': os.environ.get('FACEBOOK_URL', '#'),
             'FEEDBACK_FORM_URL': os.environ.get('FEEDBACK_FORM_URL', '#'),
             'WAITLIST_FORM_URL': os.environ.get('WAITLIST_FORM_URL', '#'),
-            'CONSULTANCY_FORM_URL': os.environ.get('CONSULTANCY_FORM_URL', '#
-
-'),
+            'CONSULTANCY_FORM_URL': os.environ.get('CONSULTANCY_FORM_URL', '#'),
             'current_lang': lang
         }
 
