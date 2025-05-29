@@ -2,7 +2,7 @@
 {% block title %}{{ trans('emergency_fund_dashboard') | default('Your Fund Dashboard') }}{% endblock %}
 {% block extra_head %}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
     <style>
         .chart-container { max-width: 100%; height: 300px; margin-bottom: 20px; }
         .insights p, .tips p, .cross-tool-insights p { margin-bottom: 15px; }
@@ -11,10 +11,10 @@
 {% endblock %}
 {% block content %}
 <div class="container">
-    <div class="header">
-        <h1>{{ trans('emergency_fund_dashboard') | default('Your Fund Dashboard') }}</h1>
-        <p>{{ trans('emergency_fund_summary') | default('Your Savings Plan Summary') }}</p>
-    </div>
+    {% set tool_name = 'emergency_fund_dashboard' | default('Your Fund Dashboard') %}
+    {% set tool_icon = 'fa-piggy-bank' %}
+    {% set subtitle = 'Let’s start with a few details' %}
+    {% include 'tool_header.html' %}
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
