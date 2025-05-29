@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, session, request, redirect, url_for, flash, current_app
-from translations import trans  # Import the global trans function
+from translations import trans
 
 learning_hub_bp = Blueprint('learning_hub', __name__)
 
@@ -115,46 +115,51 @@ quizzes_data = {
 
 def init_storage(app):
     """Initialize storage with app context and logger."""
-    app.logger.info("Initializing courses storage.", extra={'session_id': 'no-request-context'})
-    try:
-        courses_storage = app.config['STORAGE_MANAGERS']['courses']
-        courses = courses_storage.read_all()
-        if not courses:
-            app.logger.info("Courses storage is empty. Initializing with default courses.", extra={'session_id': 'no-request-context'})
-            default_courses = [
-                {
-                    'id': course['id'],
-                    'title_en': course['title_en'],
-                    'title_ha': course['title_ha'],
-                    'description_en': course['description_en'],
-                    'description_ha': course['description_ha']
-                } for course in courses_data.values()
-            ]
-            if not courses_storage.create(default_courses):
-                app.logger.error("Failed to initialize courses.json with default courses", extra={'session_id': 'no-request-context'})
-                raise RuntimeError("Course initialization failed")
-            app.logger.info(f"Initialized courses.json with {len(default_courses)} default courses", extra={'session_id': 'no-request-context'})
-    except Exception as e:
-        app.logger.error(f"Error initializing courses: {str(e)}", extra={'session_id': 'no-request-context'})
-        raise
+    with app.app_context():
+        current_app.logger.info("Initializing courses storage.", extra={'session_id': 'no-request-context'})
+        try:
+            courses_storage = app.config['STORAGE_MANAGERS']['courses']
+            courses = courses_storage.read_all()
+            if not courses:
+                current_app.logger.info("Courses storage is empty. Initializing with default courses.", extra={'session_id': 'no-request-context'})
+                default_courses = [
+                    {
+                        'id': course['id'],
+                        'title_en': course['title_en'],
+                        'title_ha': course['title_ha'],
+                        'description_en': course['description_en'],
+                        'description_ha': course['description_ha']
+                    } for course in courses_data.values()
+                ]
+                if not courses_storage.create(default_courses):
+                    current_app.logger.error("Failed to initialize courses.json with default courses", extra={'session_id': 'no-request-context'})
+                    raise RuntimeError("Course initialization failed")
+                current_app.logger.info(f"Initialized courses.json with {len(default_courses)} default courses", extra={'session_id': 'no-request-context'})
+        except Exception as e:
+            current_app.logger.error(f"Error initializing courses: {str(e)}", extra={'session_id': 'no-request-context'})
+            raise
 
 def get_progress():
+    """Safely retrieve learning progress from session."""
     try:
         return session.setdefault('learning_progress', {})
-    except Exception as e:
+    except RuntimeError as e:
         current_app.logger.error(f"Error accessing session['learning_progress']: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
         return {}
 
 def save_progress():
+    """Safely mark session as modified to save progress."""
     try:
         session.modified = True
-    except Exception as e:
+    except RuntimeError as e:
         current_app.logger.error(f"Error saving session: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
 
 def course_lookup(course_id):
+    """Retrieve course by ID."""
     return courses_data.get(course_id)
 
 def lesson_lookup(course, lesson_id):
+    """Retrieve lesson and its module by lesson ID."""
     if not course or 'modules' not in course:
         return None, None
     for module in course['modules']:
@@ -165,90 +170,124 @@ def lesson_lookup(course, lesson_id):
 
 @learning_hub_bp.route('/courses')
 def courses():
+    """Display available courses."""
+    lang = session.get('lang', 'en')
     progress = get_progress()
-    return render_template('learning_hub_courses.html', courses=courses_data, progress=progress)
+    try:
+        return render_template('learning_hub_courses.html', courses=courses_data, progress=progress, trans=trans, lang=lang)
+    except Exception as e:
+        current_app.logger.error(f"Error rendering courses page: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
+        flash(trans("learning_hub_error_loading", default="Error loading courses", lang=lang), "danger")
+        return render_template('learning_hub_courses.html', courses={}, progress={}, trans=trans, lang=lang), 500
 
 @learning_hub_bp.route('/courses/<course_id>')
 def course_overview(course_id):
+    """Display course overview."""
+    lang = session.get('lang', 'en')
     course = course_lookup(course_id)
     if not course:
-        flash(trans("learning_hub_course_not_found", default="Course not found"), "danger")
+        flash(trans("learning_hub_course_not_found", default="Course not found", lang=lang), "danger")
         return redirect(url_for('learning_hub.courses'))
     progress = get_progress().get(course_id, {})
-    return render_template('learning_hub_course_overview.html', course=course, progress=progress)
+    try:
+        return render_template('learning_hub_course_overview.html', course=course, progress=progress, trans=trans, lang=lang)
+    except Exception as e:
+        current_app.logger.error(f"Error rendering course overview for {course_id}: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
+        flash(trans("learning_hub_error_loading", default="Error loading course", lang=lang), "danger")
+        return redirect(url_for('learning_hub.courses'))
 
 @learning_hub_bp.route('/courses/<course_id>/lesson/<lesson_id>', methods=['GET', 'POST'])
 def lesson(course_id, lesson_id):
+    """Display or process a lesson."""
+    lang = session.get('lang', 'en')
     course = course_lookup(course_id)
     if not course:
-        flash(trans("learning_hub_course_not_found", default="Course not found"), "danger")
+        flash(trans("learning_hub_course_not_found", default="Course not found", lang=lang), "danger")
         return redirect(url_for('learning_hub.courses'))
     lesson, module = lesson_lookup(course, lesson_id)
     if not lesson:
-        flash(trans("learning_hub_lesson_not_found", default="Lesson not found"), "danger")
+        flash(trans("learning_hub_lesson_not_found", default="Lesson not found", lang=lang), "danger")
         return redirect(url_for('learning_hub.course_overview', course_id=course_id))
 
     progress = get_progress()
     course_progress = progress.setdefault(course_id, {'lessons_completed': [], 'quiz_scores': {}, 'current_lesson': lesson_id})
-    if request.method == 'POST':
-        if lesson_id not in course_progress['lessons_completed']:
-            course_progress['lessons_completed'].append(lesson_id)
-            course_progress['current_lesson'] = lesson_id
-            save_progress()
-            flash(trans("learning_hub_lesson_marked", default="Lesson marked as completed"), "success")
-        # Next lesson navigation
-        next_lesson_id = None
-        found = False
-        for m in course['modules']:
-            for l in m['lessons']:
-                if found and l.get('id'):
-                    next_lesson_id = l['id']
+    try:
+        if request.method == 'POST':
+            if lesson_id not in course_progress['lessons_completed']:
+                course_progress['lessons_completed'].append(lesson_id)
+                course_progress['current_lesson'] = lesson_id
+                save_progress()
+                flash(trans("learning_hub_lesson_marked", default="Lesson marked as completed", lang=lang), "success")
+            next_lesson_id = None
+            found = False
+            for m in course['modules']:
+                for l in m['lessons']:
+                    if found and l.get('id'):
+                        next_lesson_id = l['id']
+                        break
+                    if l['id'] == lesson_id:
+                        found = True
+                if next_lesson_id:
                     break
-                if l['id'] == lesson_id:
-                    found = True
             if next_lesson_id:
-                break
-        if next_lesson_id:
-            return redirect(url_for('learning_hub.lesson', course_id=course_id, lesson_id=next_lesson_id))
-        else:
-            flash(trans("learning_hub_lesson_done", default="Course completed"), "success")
-            return redirect(url_for('learning_hub.course_overview', course_id=course_id))
-    return render_template('learning_hub_lesson.html', course=course, lesson=lesson, module=module, progress=course_progress)
+                return redirect(url_for('learning_hub.lesson', course_id=course_id, lesson_id=next_lesson_id))
+            else:
+                flash(trans("learning_hub_lesson_done", default="Course completed", lang=lang), "success")
+                return redirect(url_for('learning_hub.course_overview', course_id=course_id))
+        return render_template('learning_hub_lesson.html', course=course, lesson=lesson, module=module, progress=course_progress, trans=trans, lang=lang)
+    except Exception as e:
+        current_app.logger.error(f"Error processing lesson {lesson_id} for course {course_id}: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
+        flash(trans("learning_hub_error_loading", default="Error loading lesson", lang=lang), "danger")
+        return redirect(url_for('learning_hub.course_overview', course_id=course_id))
 
 @learning_hub_bp.route('/courses/<course_id>/quiz/<quiz_id>', methods=['GET', 'POST'])
 def quiz(course_id, quiz_id):
+    """Display or process a quiz."""
+    lang = session.get('lang', 'en')
     course = course_lookup(course_id)
     if not course:
-        flash(trans("learning_hub_course_not_found", default="Course not found"), "danger")
+        flash(trans("learning_hub_course_not_found", default="Course not found", lang=lang), "danger")
         return redirect(url_for('learning_hub.courses'))
     quiz = quizzes_data.get(quiz_id)
     if not quiz:
-        flash(trans("learning_hub_quiz_not_found", default="Quiz not found"), "danger")
+        flash(trans("learning_hub_quiz_not_found", default="Quiz not found", lang=lang), "danger")
         return redirect(url_for('learning_hub.course_overview', course_id=course_id))
     progress = get_progress()
     course_progress = progress.setdefault(course_id, {'lessons_completed': [], 'quiz_scores': {}, 'current_lesson': None})
 
-    if request.method == 'POST':
-        answers = request.form.to_dict()
-        score = 0
-        for i, q in enumerate(quiz['questions']):
-            user_answer = answers.get(f'q{i}')
-            if user_answer and user_answer == trans(q['answer_key'], default=q['answer_key']):
-                score += 1
-        course_progress['quiz_scores'][quiz_id] = score
-        save_progress()
-        flash(f"{trans('learning_hub_quiz_completed', default='Quiz completed! Score:')} {score}/{len(quiz['questions'])}", "success")
+    try:
+        if request.method == 'POST':
+            answers = request.form.to_dict()
+            score = 0
+            for i, q in enumerate(quiz['questions']):
+                user_answer = answers.get(f'q{i}')
+                if user_answer and user_answer == q['answer_key']:
+                    score += 1
+            course_progress['quiz_scores'][quiz_id] = score
+            save_progress()
+            flash(f"{trans('learning_hub_quiz_completed', default='Quiz completed! Score:', lang=lang)} {score}/{len(quiz['questions'])}", "success")
+            return redirect(url_for('learning_hub.course_overview', course_id=course_id))
+        return render_template('learning_hub_quiz.html', course=course, quiz=quiz, progress=course_progress, trans=trans, lang=lang)
+    except Exception as e:
+        current_app.logger.error(f"Error processing quiz {quiz_id} for course {course_id}: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
+        flash(trans("learning_hub_error_loading", default="Error loading quiz", lang=lang), "danger")
         return redirect(url_for('learning_hub.course_overview', course_id=course_id))
-    return render_template('learning_hub_quiz.html', course=course, quiz=quiz)
 
 @learning_hub_bp.route('/dashboard')
 def dashboard():
+    """Display learning hub dashboard."""
+    lang = session.get('lang', 'en')
     progress = get_progress()
     progress_summary = []
-    for course_id, course in courses_data.items():
-        cp = progress.get(course_id, {})
-        lessons_total = sum(len(m.get('lessons', [])) for m in course['modules'])
-        completed = len(cp.get('lessons_completed', []))
-        percent = int((completed / lessons_total) * 100) if lessons_total > 0 else 0
-        progress_summary.append({'course': course, 'completed': completed, 'total': lessons_total, 'percent': percent})
-    return render_template('learning_hub_dashboard.html', progress_summary=progress_summary)
+    try:
+        for course_id, course in courses_data.items():
+            cp = progress.get(course_id, {})
+            lessons_total = sum(len(m.get('lessons', [])) for m in course['modules'])
+            completed = len(cp.get('lessons_completed', []))
+            percent = int((completed / lessons_total) * 100) if lessons_total > 0 else 0
+            progress_summary.append({'course': course, 'completed': completed, 'total': lessons_total, 'percent': percent})
+        return render_template('learning_hub_dashboard.html', progress_summary=progress_summary, trans=trans, lang=lang)
+    except Exception as e:
+        current_app.logger.error(f"Error rendering dashboard: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
+        flash(trans("learning_hub_error_loading", default="Error loading dashboard", lang=lang), "danger")
+        return render_template('learning_hub_dashboard.html', progress_summary=[], trans=trans, lang=lang), 500
