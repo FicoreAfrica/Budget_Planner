@@ -18,51 +18,19 @@
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/apple-touch-icon.png') }}">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='img/favicon-32x32.png') }}">
     <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='img/favicon-16x16.png') }}">
-    <style>
-        body {
-            font-family: 'Poppins', 'Arial', sans-serif;
-            background-color: #f8f9fa;
-            color: #666;
-        }
-        .navbar {
-            background: linear-gradient(90deg, #0288D1, #2E7D32);
-            animation: gradientShift 5s ease infinite;
-        }
-        .navbar-brand, .nav-link {
-            color: #FFFFFF !important;
-            font-weight: bold;
-        }
-        @keyframes gradientShift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-        .header-message {
-            background: linear-gradient(90deg, #0288D1, #2E7D32);
-            color: white;
-            text-align: center;
-            padding: 10px;
-            font-size: 1.2rem;
-            animation: fadeInOut 6s ease-in-out infinite;
-        }
-        @keyframes fadeInOut {
-            0% { opacity: 0; }
-            20% { opacity: 1; }
-            80% { opacity: 1; }
-            100% { opacity: 0; }
-        }
-    </style>
     {% block extra_head %}{% endblock %}
 </head>
 <body>
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
-        {% for category, message in messages %}
-          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-            {{ trans(message) | default(message) }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close') | default('Close') }}"></button>
-          </div>
-        {% endfor %}
+        <div class="container mt-3">
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+              {{ trans(message) | default(message) }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close') | default('Close') }}"></button>
+            </div>
+          {% endfor %}
+        </div>
       {% endif %}
     {% endwith %}
 
@@ -74,13 +42,13 @@
     <!-- Navigation Bar -->
     <nav class="navbar navbar-expand-lg">
         <div class="container-fluid">
-            <a class="navbar-brand" href="{{ url_for('index') }}"><img src="{{ url_for('static', filename='img/ficore_logo.png') }}" alt="{{ trans('core_ficore_africa_logo') | default('Ficore Africa Logo') }}" style="max-width: 150px;"></a>
-            <!-- Language Toggle Button (Always Visible) -->
+            <a class="navbar-brand" href="{{ url_for('index') }}"><img src="{{ url_for('static', filename='img/ficore_logo.png') }}" alt="{{ trans('core_ficore_africa_logo') | default('Ficore Africa Logo') }}" class="logo-centered"></a>
             <a href="{{ url_for('set_language', lang='ha' if session.lang == 'en' else 'en') }}"
                class="btn btn-primary navbar-btn btn-outline-light language-btn ms-2 me-2"
                title="{{ trans('core_change_language') | default('Change Language') }}"
-               aria-label="{{ trans('core_change_language') | default('Change Language') }}">
-                <i class="fas fa-globe me-1"></i>
+               aria-label="{{ trans('core_change_language') | default('Change Language') }}"
+               role="button">
+                <i class="fas fa-globe me-1" aria-hidden="true"></i>
                 {{ 'HA' if session.lang == 'en' else 'EN' }}
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="{{ trans('core_toggle_navigation') | default('Toggle navigation') }}">
@@ -114,7 +82,7 @@
     </div>
 
     <!-- Footer -->
-    <footer class="footer mt-5" style="background: linear-gradient(90deg, #003087, #004D40); color: white;">
+    <footer class="footer mt-5">
         <div class="container text-center py-4">
             <p>{{ trans('core_about_ficore_africa') | default('About Ficore Africa') }}: {{ trans('core_empowering_financial_growth') | default('Empowering financial growth across Africa since 2025') }}</p>
             <div class="social-icons d-flex justify-content-center gap-3">
@@ -131,8 +99,6 @@
             <div class="footer-buttons mt-3">
                 <a href="/cdn-cgi/l/email-protection#8fe9e6ece0fdeaeee9fde6eceecfe8e2eee6e3a1ece0e2" class="text-white"><i class="fas fa-envelope"></i> {{ trans('core_contact_us') | default('Contact Us') }}</a>
                 <a href="{{ FEEDBACK_FORM_URL }}" target="_blank" class="text-white"><i class="fas fa-comment"></i> {{ trans('core_provide_feedback') | default('Provide Feedback') }}</a>
-                <a href="{{ WAITLIST_FORM_URL }}" target="_blank" class="text-white"><i class="fas fa-users"></i> {{ trans('core_join_waitlist') | default('Join Waitlist') }}</a>
-                <a href="{{ CONSULTANCY_FORM_URL }}" target="_blank" class="text-white"><i class="fas fa-briefcase"></i> {{ trans('core_book_consultancy') | default('Book Consultancy') }}</a>
                 <a href="{{ url_for('logout') }}" class="text-white"><i class="fas fa-sign-out-alt"></i> {{ trans('core_logout') | default('Logout') }}</a>
             </div>
         </div>
@@ -140,6 +106,8 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <!-- Font Awesome Script -->
+    <script src="https://kit.fontawesome.com/your-kit-id.js" crossorigin="anonymous"></script>
     <!-- Custom JS -->
     <script src="{{ url_for('static', filename='js/interactivity.js') }}"></script>
     {% block base_scripts %}
