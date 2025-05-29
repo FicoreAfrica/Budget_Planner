@@ -536,7 +536,7 @@ def create_app():
     def page_not_found(e):
         lang = session.get('language', 'en')
         logger.error(f"404 error: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
-        return render_template('404.html', t=quiz_trans, lang=lang), lang), 404
+        return render_template('404.html', t=quiz_trans, lang=lang), 404
 
     # Register blueprints
     app.register_blueprint(financial_health_bp)
