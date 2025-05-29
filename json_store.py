@@ -25,7 +25,9 @@ class JsonStorage:
         if not logger_instance:
             raise ValueError("Logger instance is required")
 
-        self.filename = filename if os.path.isabs(filename) else os.path.join(os.path.dirname(__file__), '..', filename)
+        # Use /tmp for JSON files on Render
+        base_dir = '/tmp' if os.environ.get('RENDER') else os.path.join(os.path.dirname(__file__), '..')
+        self.filename = filename if os.path.isabs(filename) else os.path.join(base_dir, filename)
         self.logger = logger_instance
 
         # Create directory if it doesn't exist
@@ -182,5 +184,5 @@ class JsonStorage:
                 self.logger.warning(f"Record {record_id} not found for deletion in {self.filename}")
                 raise ValueError(f"Record {record_id} not found")
         except Exception as e:
-            self.logger.error(f"Error deleting record {record_id} in {self.filename}: {str(e)}
+            self.logger.error(f"Error deleting record {record_id} in {self.filename}: {str(e)}")
             raise
