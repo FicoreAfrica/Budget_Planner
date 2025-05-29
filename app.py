@@ -5,7 +5,7 @@ import uuid
 from datetime import datetime, timedelta
 from flask import Flask, render_template, request, session, redirect, url_for, flash, send_from_directory, has_request_context, g, jsonify
 from flask_session import Session
-from flask_wtf.csrf import CSRFProtection, CSRFError
+from flask_wtf.csrf import CSRFProtect, CSRFError
 from flask_mail import Mail
 from translations.translations import trans, get_translations
 from translations.translations_quiz import trans as quiz_trans, get_translations as get_quiz_translations
