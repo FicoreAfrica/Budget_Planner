@@ -653,7 +653,7 @@ def quiz_step(step_num):
                 threading.Thread(
                     target=send_quiz_email_async,
                     args=(current_app._get_current_object(), 
-                          session['quiz_data']['get('email'], 
+                          session['quiz_data']['get('email')], 
                           'session['quiz_data']['get('first_name'], '') 
                           personality, 
                           personality_desc, 
