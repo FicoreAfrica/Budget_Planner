@@ -5,13 +5,35 @@ body {
     color: #666;
 }
 
-/* Header */
-.header {
-    background: linear-gradient(135deg, #2E7D32, #0288D1);
+/* Header Message */
+.header-message {
+    background: linear-gradient(90deg, #0288D1, #2E7D32);
     color: white;
-    padding: 15px;
     text-align: center;
-    border-radius: 8px 8px 0 0;
+    padding: 10px;
+    font-size: 1.2rem;
+    animation: fadeInOut 6s ease-in-out infinite;
+}
+@keyframes fadeInOut {
+    0% { opacity: 0; }
+    20% { opacity: 1; }
+    80% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+/* Navbar */
+.navbar {
+    background: linear-gradient(90deg, #0288D1, #2E7D32);
+    animation: gradientShift 5s ease infinite;
+}
+.navbar-brand, .nav-link {
+    color: #FFFFFF !important;
+    font-weight: bold;
+}
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
 }
 
 /* Buttons */
@@ -56,11 +78,6 @@ body {
 }
 
 /* Logo Centering */
-.logo-container {
-    text-align: center;
-    padding: 20px 0;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-}
 .logo-centered {
     max-width: 150px;
 }
@@ -77,6 +94,14 @@ body {
     font-size: 2.5rem;
     font-weight: 600;
     text-align: center;
+}
+.card-title i,
+.tools-section h2 i,
+.hero h2 i,
+.why-section h2 i,
+.testimonials-section h2 i {
+    color: #0288D1;
+    margin-right: 10px;
 }
 
 /* Hero (index.html) */
@@ -96,7 +121,7 @@ body {
 }
 
 /* Tool Card (index.html) */
-.tool-card .card {
+.tool-card .custom-card {
     background-color: #E3F2FD;
 }
 
@@ -174,7 +199,12 @@ body {
     border-radius: 5px;
 }
 
-/* Footer Social Icons */
+/* Footer */
+.footer {
+    background: linear-gradient(90deg, #003087, #004D40);
+    color: white;
+    padding: 20px 0;
+}
 .social-icons a {
     color: white !important;
     margin: 0 10px;
@@ -184,6 +214,21 @@ body {
 .social-icons a:hover {
     color: #E3F2FD !important;
     text-decoration: underline;
+}
+.footer-buttons a {
+    color: white !important;
+    margin: 0 10px;
+    font-size: 1rem;
+    text-decoration: none;
+}
+.footer-buttons a:hover {
+    color: #E3F2FD !important;
+    text-decoration: underline;
+}
+.footer-buttons i,
+.social-icons i {
+    color: #0288D1;
+    margin-right: 10px;
 }
 
 /* Mobile Optimizations */
@@ -226,9 +271,11 @@ body {
     .testimonial + .testimonial {
         margin-top: 1.5rem;
     }
-    .social-icons a {
+    .social-icons a,
+    .footer-buttons a {
         font-size: 0.9rem;
-        margin: 0 5px;
+        margin: 10px auto;
+        display: block;
     }
 }
 
