@@ -19,6 +19,7 @@ EMERGENCY_FUND_TRANSLATIONS = {
         'core_input_cannot_exceed_10_billion': 'Input cannot exceed ₦10 billion',
         'core_please_enter_valid_numbers': 'Please enter valid numbers',
         'an_unexpected_error_occurred': 'An unexpected error occurred. Please try again.',
+        'An unexpected error occurred.': 'An unexpected error occurred.',
         'emergency_fund_calculator': 'Emergency Fund Calculator',
         'emergency_fund_plan_emergency_fund': 'Plan your emergency fund with Ficore Africa',
         'emergency_fund_dashboard': 'Emergency Fund Dashboard',
@@ -246,5 +247,6 @@ EMERGENCY_FUND_TRANSLATIONS = {
         'emergency_fund_start_emergency_fund': 'Fara Asusun Gaggawa',
         'emergency_fund_goal': 'Tsara kudi don biyan bukatun gaggawa',
         'emergency_fund_start_emergency_fund': 'Tsara Kudin Gaggawa',
+        'An unexpected error occurred.': 'An unexpected error occurred.',
     }
 }
