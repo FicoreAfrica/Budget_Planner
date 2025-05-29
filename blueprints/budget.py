@@ -27,62 +27,100 @@ def strip_commas(value):
     return value
 
 class Step1Form(FlaskForm):
-    first_name = StringField(trans('budget_first_name'), validators=[DataRequired(message=trans('budget_first_name_required'))])
-    email = StringField(trans('budget_email'), validators=[Optional(), Email(message=trans('budget_email_invalid'))])
-    send_email = BooleanField(trans('budget_send_email'))
-    submit = SubmitField(trans('budget_next'))
+    first_name = StringField()
+    email = StringField()
+    send_email = BooleanField()
+    submit = SubmitField()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        lang = session.get('lang', 'en')
+        # Set labels dynamically
+        self.first_name.label.text = trans('budget_first_name', lang)
+        self.email.label.text = trans('budget_email', lang)
+        self.send_email.label.text = trans('budget_send_email', lang)
+        self.submit.label.text = trans('budget_next', lang)
+        # Set validators dynamically
+        self.first_name.validators = [DataRequired(message=trans('budget_first_name_required', lang))]
+        self.email.validators = [Optional(), Email(message=trans('budget_email_invalid', lang))]
 
 class Step2Form(FlaskForm):
-    income = FloatField(
-        trans('budget_monthly_income'),
-        validators=[
-            DataRequired(message=trans('budget_income_required')),
-            NumberRange(min=0, max=10000000000, message=trans('budget_income_max'))
-        ],
-        filters=[strip_commas]
-    )
-    submit = SubmitField(trans('budget_next'))
+    income = FloatField(filters=[strip_commas])
+    submit = SubmitField()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        lang = session.get('lang', 'en')
+        # Set labels dynamically
+        self.income.label.text = trans('budget_monthly_income', lang)
+        self.submit.label.text = trans('budget_next', lang)
+        # Set validators dynamically
+        self.income.validators = [
+            DataRequired(message=trans('budget_income_required', lang)),
+            NumberRange(min=0, max=10000000000, message=trans('budget_income_max', lang))
+        ]
 
 class Step3Form(FlaskForm):
-    housing = FloatField(
-        trans('budget_housing_rent'),
-        validators=[DataRequired(message=trans('budget_housing_required')), NumberRange(min=0, message=trans('budget_amount_positive'))],
-        filters=[strip_commas]
-    )
-    food = FloatField(
-        trans('budget_food'),
-        validators=[DataRequired(message=trans('budget_food_required')), NumberRange(min=0, message=trans('budget_amount_positive'))],
-        filters=[strip_commas]
-    )
-    transport = FloatField(
-        trans('budget_transport'),
-        validators=[DataRequired(message=trans('budget_transport_required')), NumberRange(min=0, message=trans('budget_amount_positive'))],
-        filters=[strip_commas]
-    )
-    dependents = FloatField(
-        trans('budget_dependents_support'),
-        validators=[DataRequired(message=trans('budget_dependents_required')), NumberRange(min=0, message=trans('budget_amount_positive'))],
-        filters=[strip_commas]
-    )
-    miscellaneous = FloatField(
-        trans('budget_miscellaneous'),
-        validators=[DataRequired(message=trans('budget_miscellaneous_required')), NumberRange(min=0, message=trans('budget_amount_positive'))],
-        filters=[strip_commas]
-    )
-    others = FloatField(
-        trans('budget_others'),
-        validators=[DataRequired(message=trans('budget_others_required')), NumberRange(min=0, message=trans('budget_amount_positive'))],
-        filters=[strip_commas]
-    )
-    submit = SubmitField(trans('budget_next'))
+    housing = FloatField(filters=[strip_commas])
+    food = FloatField(filters=[strip_commas])
+    transport = FloatField(filters=[strip_commas])
+    dependents = FloatField(filters=[strip_commas])
+    miscellaneous = FloatField(filters=[strip_commas])
+    others = FloatField(filters=[strip_commas])
+    submit = SubmitField()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        lang = session.get('lang', 'en')
+        # Set labels dynamically
+        self.housing.label.text = trans('budget_housing_rent', lang)
+        self.food.label.text = trans('budget_food', lang)
+        self.transport.label.text = trans('budget_transport', lang)
+        self.dependents.label.text = trans('budget_dependents_support', lang)
+        self.miscellaneous.label.text = trans('budget_miscellaneous', lang)
+        self.others.label.text = trans('budget_others', lang)
+        self.submit.label.text = trans('budget_next', lang)
+        # Set validators dynamically
+        self.housing.validators = [
+            DataRequired(message=trans('budget_housing_required', lang)),
+            NumberRange(min=0, message=trans('budget_amount_positive', lang))
+        ]
+        self.food.validators = [
+            DataRequired(message=trans('budget_food_required', lang)),
+            NumberRange(min=0, message=trans('budget_amount_positive', lang))
+        ]
+        self.transport.validators = [
+            DataRequired(message=trans('budget_transport_required', lang)),
+            NumberRange(min=0, message=trans('budget_amount_positive', lang))
+        ]
+        self.dependents.validators = [
+            DataRequired(message=trans('budget_dependents_required', lang)),
+            NumberRange(min=0, message=trans('budget_amount_positive', lang))
+        ]
+        self.miscellaneous.validators = [
+            DataRequired(message=trans('budget_miscellaneous_required', lang)),
+            NumberRange(min=0, message=trans('budget_amount_positive', lang))
+        ]
+        self.others.validators = [
+            DataRequired(message=trans('budget_others_required', lang)),
+            NumberRange(min=0, message=trans('budget_amount_positive', lang))
+        ]
 
 class Step4Form(FlaskForm):
-    savings_goal = FloatField(
-        trans('budget_savings_goal'),
-        validators=[DataRequired(message=trans('budget_savings_goal_required')), NumberRange(min=0, message=trans('budget_amount_positive'))],
-        filters=[strip_commas]
-    )
-    submit = SubmitField(trans('budget_submit'))
+    savings_goal = FloatField(filters=[strip_commas])
+    submit = SubmitField()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        lang = session.get('lang', 'en')
+        # Set labels dynamically
+        self.savings_goal.label.text = trans('budget_savings_goal', lang)
+        self.submit.label.text = trans('budget_submit', lang)
+        # Set validators dynamically
+        self.savings_goal.validators = [
+            DataRequired(message=trans('budget_savings_goal_required', lang)),
+            NumberRange(min=0, message=trans('budget_amount_positive', lang))
+        ]
 
 @budget_bp.route('/step1', methods=['GET', 'POST'])
 def step1():
