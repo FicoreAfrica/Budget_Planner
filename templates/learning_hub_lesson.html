@@ -1,20 +1,28 @@
 {% extends "base.html" %}
+{% block title %}
+{{ trans(lesson.title_key) }}
+{% endblock %}
+{% block extra_head %}
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+{% endblock %}
 {% block content %}
 <div class="container">
-    <div class="header">
-        <h1>{{ trans(course.title_key) }}</h1>
-        <h3>{{ trans(lesson.title_key) }}</h3>
-    </div>
+    {% set tool_name = lesson.title_key %}
+    {% set tool_icon = 'fa-chalkboard-teacher' %}
+    {% set subtitle = trans(course.title_key) %}
+    {% include 'tool_header.html' %}
     <div class="card mt-3">
         <div class="card-body">
             <p>{{ trans(lesson.content_key) }}</p>
             <form method="POST">
-                <button type="submit" class="btn btn-success">{{ trans('learning_hub_mark_complete') }}</button>
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-check"></i> {{ trans('learning_hub_mark_complete') }}
+                </button>
             </form>
         </div>
     </div>
     <a href="{{ url_for('learning_hub.course_overview', course_id=course.id) }}" class="btn btn-secondary mt-3">
-        {{ trans('learning_hub_back_to_course') }}
+        <i class="fas fa-arrow-left"></i> {{ trans('learning_hub_back_to_course') }}
     </a>
 </div>
 {% endblock %}
