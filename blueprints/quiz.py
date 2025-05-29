@@ -404,7 +404,7 @@ def store_quiz_data(data: dict, logger: logging.LoggerAdapter, language: str = '
         flash(trans('quiz_storage_error', lang=language), 'error')
         return False
         
-def send_quiz_email(to_email: str, user_name: str, personality: str, personality_desc: str, answers: list, badges: list, language: str = 'en', app: 'Flask', logger: logging.LoggerAdapter) -> bool:
+def send_quiz_email(to_email: str, user_name: str, personality: str, personality_desc: str, answers: list, badges: list, app: 'Flask', logger: logging.LoggerAdapter, language: str = 'en') -> bool:
     session_id = session.get('sid', 'no-session-id') if has_request_context() else 'no-session-id'
     try:
         send_email(
