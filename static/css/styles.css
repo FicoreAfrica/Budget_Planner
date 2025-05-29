@@ -12,6 +12,11 @@ body {
     padding: 20px;
 }
 
+.step-container {
+    max-width: 600px;
+    margin: 2rem auto;
+}
+
 /* Navbar */
 .navbar {
     background: linear-gradient(90deg, #0288D1, #2E7D32);
@@ -25,66 +30,6 @@ body {
     0% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
     100% { background-position: 0% 50%; }
-}
-
-/* New Styles */
-h1, h2, h3, h4, h5 {
-    color: #0288D1;
-}
-.card-title {
-    font-weight: 600;
-    margin-bottom: 1rem;
-}
-.card-text {
-    color: #6c757d;
-}
-.btn-success {
-    padding: 0.75rem 1.5rem;
-    border-radius: 8px;
-    font-weight: 600;
-    transition: transform 0.2s ease;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    background: #2E7D32;
-    border: none;
-    color: white;
-}
-.btn-success:hover {
-    transform: scale(1.05);
-    background: #1B5E20;
-}
-.badge-success {
-    background-color: #2E7D32;
-    color: white;
-}
-.badge-info {
-    background-color: #17a2b8;
-    color: white;
-}
-.list-group {
-    margin-top: 1rem;
-}
-.list-group-item {
-    border: none;
-    padding: 1rem;
-    background-color: #f8f9fa;
-    border-radius: 8px;
-    margin-bottom: 0.5rem;
-}
-.list-group-item ul {
-    list-style-type: none;
-    padding-left: 1rem;
-}
-.list-group-item ul li {
-    margin-bottom: 0.5rem;
-}
-.list-group-item a {
-    color: #0288D1;
-    text-decoration: none;
-}
-.list-group-item a:hover {
-    text-decoration: underline;
 }
 
 /* Header Message */
@@ -145,6 +90,40 @@ h1, h2, h3, h4, h5 {
     background: linear-gradient(90deg, #0277BD, #27632A);
 }
 
+.btn-secondary {
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: transform 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #6c757d;
+    border: none;
+    color: white;
+}
+.btn-secondary:hover {
+    transform: scale(1.05);
+    background: #5a6268;
+}
+
+.btn-success {
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: transform 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #2E7D32;
+    border: none;
+    color: white;
+}
+.btn-success:hover {
+    transform: scale(1.05);
+    background: #1B5E20;
+}
+
 /* Language Button */
 .language-btn {
     font-size: 1rem;
@@ -186,6 +165,8 @@ h1, h2, h3, h4, h5 {
     display: flex;
     align-items: center;
     gap: 8px;
+    font-weight: 600;
+    margin-bottom: 1rem;
 }
 .card-title i {
     color: #0288D1;
@@ -195,6 +176,9 @@ h1, h2, h3, h4, h5 {
     font-size: 0.8rem;
     color: #666;
     font-style: italic;
+}
+.card-text {
+    color: #6c757d;
 }
 
 /* Tool Header */
@@ -265,8 +249,14 @@ h1, h2, h3, h4, h5 {
 }
 
 /* Progress Bar */
+.progress {
+    height: 1.5rem;
+    border-radius: 0.25rem;
+    background-color: #e9ecef;
+}
 .progress-bar {
     transition: width 0.5s ease-in-out;
+    background-color: #2E7D32;
 }
 
 /* Score Gauge */
@@ -287,86 +277,19 @@ h1, h2, h3, h4, h5 {
 .badge {
     font-size: 0.95rem;
     transition: transform 0.3s ease;
+    margin-bottom: 0.5rem;
+    margin-right: 0.5rem;
 }
 .badge:hover {
     transform: scale(1.1);
 }
-
-/* Insights and Comparison Boxes */
-.insights-box, .comparison-box {
-    background: #E3F2FD;
-    border-radius: 8px;
-    padding: 1rem;
-    margin-bottom: 1rem;
-}
-
-/* Course Link */
-.course-link {
-    padding: 0.75rem 1.5rem;
-    border-radius: 8px;
-    font-weight: 600;
-    transition: transform 0.2s ease;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    background: linear-gradient(135deg, #2E7D32, #0288D1);
-    border: none;
-    color: white;
-    text-decoration: none;
-}
-.course-link:hover {
-    transform: scale(1.05);
-    background: linear-gradient(135deg, #1B5E20, #01579B);
-    text-decoration: none;
-}
-
-/* Section Headers */
-h1, h3,
-.hero h2,
-.tools-section h2,
-.why-section h2,
-.testimonials-section h2,
-.recommended-learning h2,
-.faq-section h2 {
-    font-family: 'Poppins', 'Arial', sans-serif;
-    color: #0288D1;
-    font-size: 2.5rem;
-    font-weight: 600;
-    text-align: center;
-}
-.card-title i,
-.tools-section h2 i,
-.hero h2 i,
-.why-section h2 i,
-.testimonials-section h2 i,
-.faq-section h2 i {
-    color: #0288D1;
-    margin-right: 10px;
-}
-
-/* New Styles */
-h1, h2, h3 {
-    color: #0288D1;
-}
-.progress {
-    height: 1.5rem;
-    border-radius: 0.25rem;
-    background-color: #e9ecef;
-}
-.progress-bar {
-    transition: width 0.5s ease-in-out;
+.badge-success {
     background-color: #2E7D32;
+    color: white;
 }
-.badge {
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
-    font-size: 0.95rem;
-    transition: transform 0.3s ease;
-    margin-bottom: 0.5rem;
-    margin-right: 0.5rem;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
+.badge-info {
+    background-color: #17a2b8;
+    color: white;
 }
 .badge-bronze {
     background-color: #cd7f32;
@@ -398,6 +321,36 @@ h1, h2, h3 {
     color: #333;
     border: 2px solid #ced4da;
 }
+
+/* Insights and Comparison Boxes */
+.insights-box, .comparison-box {
+    background: #E3F2FD;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+/* Course Link */
+.course-link {
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: transform 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, #2E7D32, #0288D1);
+    border: none;
+    color: white;
+    text-decoration: none;
+}
+.course-link:hover {
+    transform: scale(1.05);
+    background: linear-gradient(135deg, #1B5E20, #01579B);
+    text-decoration: none;
+}
+
+/* Resources */
 .resources {
     margin-top: 1rem;
 }
@@ -410,12 +363,64 @@ h1, h2, h3 {
 .resources a:hover {
     text-decoration: underline;
 }
+
+/* List Group */
+.list-group {
+    margin-top: 1rem;
+}
+.list-group-item {
+    border: none;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+}
+.list-group-item ul {
+    list-style-type: none;
+    padding-left: 1rem;
+}
+.list-group-item ul li {
+    margin-bottom: 0.5rem;
+}
+.list-group-item a {
+    color: #0288D1;
+    text-decoration: none;
+}
+.list-group-item a:hover {
+    text-decoration: underline;
+}
+
+/* Form Validation */
 .form-check-input.is-invalid {
     border-color: #dc3545;
 }
 .form-control.is-invalid ~ .invalid-feedback,
 .form-check-input.is-invalid ~ .invalid-feedback {
     display: block;
+}
+
+/* Section Headers */
+h1, h3,
+.hero h2,
+.tools-section h2,
+.why-section h2,
+.testimonials-section h2,
+.recommended-learning h2,
+.faq-section h2 {
+    font-family: 'Poppins', 'Arial', sans-serif;
+    color: #0288D1;
+    font-size: 2.5rem;
+    font-weight: 600;
+    text-align: center;
+}
+.card-title i,
+.tools-section h2 i,
+.hero h2 i,
+.why-section h2 i,
+.testimonials-section h2 i,
+.faq-section h2 i {
+    color: #0288D1;
+    margin-right: 10px;
 }
 
 /* Hero */
@@ -580,6 +585,10 @@ h1, h2, h3 {
     .btn-primary:last-child {
         margin-bottom: 40px;
     }
+    .btn-success, .btn-secondary, .course-link {
+        font-size: 0.9rem;
+        padding: 0.5rem 1rem;
+    }
     .testimonial + .testimonial {
         margin-top: 1.5rem;
     }
@@ -636,13 +645,13 @@ h1, h2, h3 {
     body {
         padding: 10px;
     }
-    .container {
+    .container, .step-container {
         max-width: 100%;
     }
     .card-body {
         padding: 1rem;
     }
-    .btn-primary, .course-link {
+    .btn-primary, .btn-secondary, .btn-success, .course-link {
         font-size: 0.9rem;
         padding: 0.5rem 1rem;
     }
@@ -651,6 +660,12 @@ h1, h2, h3 {
     }
     .score-gauge {
         max-width: 200px;
+    }
+    .tool-title {
+        font-size: 1.4rem;
+    }
+    .tool-icon {
+        font-size: 1.4rem;
     }
 }
 
