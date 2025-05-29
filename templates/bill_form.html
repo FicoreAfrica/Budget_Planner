@@ -2,9 +2,10 @@
 {% block title %}{{ trans('bill_bill_planner') | default('Bill Planner') }}{% endblock %}
 {% block content %}
   <div class="container">
-    <div class="header">
-      <h1>{{ trans('bill_add_new_bill') | default('Add New Bill') }}</h1>
-    </div>
+    {% set tool_name = 'bill_bill_planner' | default('Bill Planner') %}
+    {% set tool_icon = 'fa-file-invoice' %}
+    {% set subtitle = 'Let’s start with a few details' %}
+    {% include 'tool_header.html' %}
     <div class="card">
       <div class="card-body">
         <form method="POST" action="{{ url_for('bill.form') }}">
