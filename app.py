@@ -305,6 +305,12 @@ def create_app():
             flash(trans('global_error_message', default='An error occurred', lang=lang), 'danger')
             return redirect(url_for('index'))
 
+    @app.route('/about')
+    def about():
+    lang = session.get('language', 'en')
+    logger.info("Serving about page")
+    return render_template('about.html', t=trans, lang=lang)
+
     @app.route('/health')
     def health():
         logger.info("Health check requested")
