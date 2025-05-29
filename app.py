@@ -77,19 +77,22 @@ def setup_logging(app):
     handler = logging.StreamHandler(sys.stderr)
     handler.setLevel(logging.DEBUG)
     handler.setFormatter(formatter)
-    app.logger.handlers = [handler]
-    app.logger.setLevel(logging.INFO)
+    root_logger.addHandler(handler)
     os.makedirs('data', exist_ok=True)
-    file_handler = logging.FileHandler('data/storage.log')
-    file_handler.setLevel(logging.DEBUG)
-    file_handler.setFormatter(formatter)
-    app.logger.addHandler(file_handler)
-    app.logger = logger  # Replace with SessionAdapter
+    try:
+        file_handler = logging.FileHandler('data/storage.log')
+        file_handler.setLevel(logging.DEBUG)
+        file_handler.setFormatter(formatter)
+        root_logger.addHandler(file_handler)
+        logger.info("Logging setup complete with file handler", extra={'session_id': 'init'})
+    except (PermissionError, OSError) as e:
+        logger.warning(f"Failed to set up file logging: {str(e)}", extra={'session_id': 'init'})
+    app.logger = logger  # Replace app.logger with SessionAdapter
 
 def setup_session(app):
     session_dir = os.environ.get('SESSION_DIR', 'data/sessions')
     if os.environ.get('RENDER'):
-        session_dir = '/opt/render/project/src/data/sessions'
+        session_dir = '/tmp/sessions'  # Use /tmp for Render compatibility
     try:
         if os.path.exists(session_dir):
             if not os.path.isdir(session_dir):
@@ -119,7 +122,11 @@ def init_gspread_client():
         if not creds_json:
             logger.warning("GOOGLE_CREDENTIALS not set. Google Sheets integration disabled.", extra={'session_id': 'init'})
             return None
-        creds_info = json.loads(creds_json)
+        try:
+            creds_info = json.loads(creds_json)
+        except json.JSONDecodeError as e:
+            logger.error(f"Invalid GOOGLE_CREDENTIALS JSON: {str(e)}", extra={'session_id': 'init'})
+            return None
         creds = Credentials.from_service_account_info(
             creds_info,
             scopes=['https://www.googleapis.com/auth/spreadsheets']
@@ -128,7 +135,7 @@ def init_gspread_client():
         logger.info("Successfully initialized gspread client", extra={'session_id': 'init'})
         return client
     except Exception as e:
-        logger.error(f"Failed to initialize gspread client: {str(e)}", extra={'session_id': 'init'})
+        logger.error(f"Failed to initialize gspread client: {str(e)}", extra={'session_id': 'init'}, exc_info=True)
         return None
 
 def init_storage_managers(app):
@@ -167,12 +174,35 @@ def init_storage_managers(app):
         storage_managers['sheets'] = None
     app.config['STORAGE_MANAGERS'] = storage_managers
 
+def initialize_courses_data(app):
+    try:
+        courses_storage = app.config['STORAGE_MANAGERS']['courses']
+        if not isinstance(courses_storage, dict):
+            courses = courses_storage.read_all(session_id='init')
+            if not courses:
+                logger.info("Courses storage is empty. Initializing with default courses.", extra={'session_id': 'init'})
+                if not courses_storage.create(SAMPLE_COURSES, session_id='init'):
+                    logger.error("Failed to initialize courses.json with default courses", extra={'session_id': 'init'}, exc_info=True)
+                    raise RuntimeError("Course initialization failed")
+                logger.info(f"Initialized courses.json with {len(SAMPLE_COURSES)} default courses", extra={'session_id': 'init'})
+                app.config['COURSES'] = courses_storage.read_all(session_id='init')
+            else:
+                app.config['COURSES'] = courses
+        else:
+            logger.warning("Courses storage is in-memory. Using SAMPLE_COURSES.", extra={'session_id': 'init'})
+            app.config['COURSES'] = SAMPLE_COURSES
+    except Exception as e:
+        logger.error(f"Error initializing courses: {str(e)}", extra={'session_id': 'init'}, exc_info=True)
+        app.config['COURSES'] = SAMPLE_COURSES
+
 def create_app():
     app = Flask(__name__)
     app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'a_fallback-secret-key-for-dev-only-change-me')
     if not os.environ.get('FLASK_SECRET_KEY') and not app.debug:
+        logger.critical("FLASK_SECRET_KEY must be set in production", extra={'session_id': 'init'})
         raise RuntimeError("FLASK_SECRET_KEY must be set in production")
 
+    logger.info("Starting app creation", extra={'session_id': 'init'})
     setup_logging(app)
     setup_session(app)
     app.config['GSPREAD_CLIENT'] = init_gspread_client()
@@ -198,31 +228,12 @@ def create_app():
     Session(app)
     CSRFProtect(app)
 
-    # Initialize storage managers and other context-dependent operations
+    # Initialize storage-dependent data within app context
     with app.app_context():
-        logger.info("Starting initialization", extra={'session_id': 'init'})
+        logger.info("Starting data initialization", extra={'session_id': 'init'})
+        initialize_courses_data(app)
         try:
-            courses_storage = current_app.config['STORAGE_MANAGERS']['courses']
-            if not isinstance(courses_storage, dict):
-                courses = courses_storage.read_all(session_id='init')
-                if not courses:
-                    logger.info("Courses storage is empty. Initializing with default courses.", extra={'session_id': 'init'})
-                    if not courses_storage.create(SAMPLE_COURSES, session_id='init'):
-                        logger.error("Failed to initialize courses.json with default courses", extra={'session_id': 'init'}, exc_info=True)
-                        raise RuntimeError("Course initialization failed")
-                    logger.info(f"Initialized courses.json with {len(SAMPLE_COURSES)} default courses", extra={'session_id': 'init'})
-                    app.config['COURSES'] = courses_storage.read_all(session_id='init')
-                else:
-                    app.config['COURSES'] = courses
-            else:
-                app.config['COURSES'] = SAMPLE_COURSES
-        except Exception as e:
-            logger.error(f"Error initializing courses: {str(e)}", extra={'session_id': 'init'}, exc_info=True)
-            app.config['COURSES'] = SAMPLE_COURSES
-            raise
-
-        logger.info("Initializing learning hub courses", extra={'session_id': 'init'})
-        try:
+            logger.info("Initializing learning hub courses", extra={'session_id': 'init'})
             initialize_courses(app)
         except PermissionError as e:
             logger.error(f"Permission error initializing learning hub courses: {str(e)}", extra={'session_id': 'init'}, exc_info=True)
@@ -230,9 +241,8 @@ def create_app():
         except Exception as e:
             logger.error(f"Error initializing learning hub courses: {str(e)}", extra={'session_id': 'init'}, exc_info=True)
             raise
-
-        logger.info("Initializing quiz questions", extra={'session_id': 'init'})
         try:
+            logger.info("Initializing quiz questions", extra={'session_id': 'init'})
             init_quiz_questions(app)
         except PermissionError as e:
             logger.error(f"Permission error initializing quiz questions: {str(e)}", extra={'session_id': 'init'}, exc_info=True)
@@ -240,6 +250,7 @@ def create_app():
         except Exception as e:
             logger.error(f"Error initializing quiz questions: {str(e)}", extra={'session_id': 'init'}, exc_info=True)
             raise
+        logger.info("Completed data initialization", extra={'session_id': 'init'})
 
     # Add custom Jinja2 filter for translations
     app.jinja_env.filters['trans'] = lambda key, **kwargs: trans(
@@ -309,7 +320,6 @@ def create_app():
     def index():
         lang = session.get('language', 'en')
         logger.info("Serving index page", extra={'session_id': session.get('sid', 'no-session-id')})
-        courses_storage = current_app.config['STORAGE_MANAGERS']['courses']
         try:
             courses = current_app.config['COURSES'] if current_app.config['COURSES'] else SAMPLE_COURSES
             logger.info(f"Retrieved {len(courses)} courses from cache", extra={'session_id': session.get('sid', 'no-session-id')})
@@ -446,6 +456,7 @@ def create_app():
     app.register_blueprint(emergency_fund_bp)
     app.register_blueprint(learning_hub_bp)
 
+    logger.info("App creation completed", extra={'session_id': 'init'})
     return app
 
 class GoogleSheetsStorage:
