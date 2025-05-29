@@ -19,9 +19,10 @@
 {% endblock %}
 {% block content %}
   <div class="container">
-    <div class="header">
-      <h1>{{ trans('bill_bill_dashboard') | default('Bill Dashboard') }}</h1>
-    </div>
+    {% set tool_name = 'bill_bill_dashboard' | default('Bill Dashboard') %}
+    {% set tool_icon = 'fa-file-invoice' %}
+    {% set subtitle = 'Let’s start with a few details' %}
+    {% include 'tool_header.html' %}
     <div class="card">
       <div class="card-body">
         <div class="stat">
