@@ -27,6 +27,66 @@ body {
     100% { background-position: 0% 50%; }
 }
 
+/* New Styles */
+h1, h2, h3, h4, h5 {
+    color: #0288D1;
+}
+.card-title {
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+.card-text {
+    color: #6c757d;
+}
+.btn-success {
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: transform 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #2E7D32;
+    border: none;
+    color: white;
+}
+.btn-success:hover {
+    transform: scale(1.05);
+    background: #1B5E20;
+}
+.badge-success {
+    background-color: #2E7D32;
+    color: white;
+}
+.badge-info {
+    background-color: #17a2b8;
+    color: white;
+}
+.list-group {
+    margin-top: 1rem;
+}
+.list-group-item {
+    border: none;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+}
+.list-group-item ul {
+    list-style-type: none;
+    padding-left: 1rem;
+}
+.list-group-item ul li {
+    margin-bottom: 0.5rem;
+}
+.list-group-item a {
+    color: #0288D1;
+    text-decoration: none;
+}
+.list-group-item a:hover {
+    text-decoration: underline;
+}
+
 /* Header Message */
 .header-message {
     background: linear-gradient(90deg, #0288D1, #2E7D32);
