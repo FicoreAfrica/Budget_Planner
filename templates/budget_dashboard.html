@@ -11,16 +11,16 @@
 {% endblock %}
 {% block content %}
 <div class="container">
-    <div class="header">
-        <h1>{{ trans('budget_budget_dashboard') | default('Budget Dashboard') }}</h1>
-        <p>{{ trans('budget_budget_summary') | default('Your budget summary') }}</p>
-    </div>
+    {% set tool_name = trans('budget_budget_dashboard') | default('Budget Dashboard') %}
+    {% set tool_icon = 'fa-calculator' %}
+    {% set subtitle = trans('budget_budget_summary') | default('Your budget summary') %}
+    {% include 'tool_header.html' %}
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
                 <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
                     {{ trans('core_' + message) | default(message) }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close') | default('Close') }}"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close') | default('Close') }}</button>
                 </div>
             {% endfor %}
         {% endif %}
@@ -40,40 +40,6 @@
             <div class="card-body">
                 <h3>{{ trans('budget_expense_breakdown') | default('Expense Breakdown') }}</h3>
                 <canvas id="expenseChart"></canvas>
-                <script>
-                    document.addEventListener('DOMContentLoaded', function() {
-                        const ctx = document.getElementById('expenseChart').getContext('2d');
-                        new Chart(ctx, {
-                            type: 'pie',
-                            data: {
-                                labels: [
-                                    '{{ trans('budget_housing_rent') | default('Housing/Rent') }}',
-                                    '{{ trans('budget_food') | default('Food') }}',
-                                    '{{ trans('budget_transport') | default('Transport') }}',
-                                    '{{ trans('budget_dependents_support') | default('Dependents Support') }}',
-                                    '{{ trans('budget_miscellaneous') | default('Miscellaneous') }}',
-                                    '{{ trans('budget_others') | default('Others') }}'
-                                ],
-                                datasets: [{
-                                    label: '{{ trans('budget_amount') | default('Amount') }} (₦)',
-                                    data: [
-                                        {{ latest_budget.housing | format_number }},
-                                        {{ latest_budget.food | format_number }},
-                                        {{ latest_budget.transport | format_number }},
-                                        {{ latest_budget.dependents | format_number }},
-                                        {{ latest_budget.miscellaneous | format_number }},
-                                        {{ latest_budget.others | format_number }}
-                                    ],
-                                    backgroundColor: ['#1E7F71', '#2E7D32', '#0288D1', '#dc3545', '#FBC02D', '#D81B60']
-                                }]
-                            },
-                            options: {
-                                responsive: true,
-                                plugins: { legend: { position: 'top' } }
-                            }
-                        });
-                    });
-                </script>
             </div>
         </div>
         <div class="card">
@@ -145,4 +111,40 @@
         <a href="{{ url_for('budget.step1') }}" class="btn btn-primary">{{ trans('budget_start_budgeting') | default('Start Budgeting') }}</a>
     {% endif %}
 </div>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('expenseChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: [
+                '{{ trans('budget_housing_rent') | default('Housing/Rent') }}',
+                '{{ trans('budget_food') | default('Food') }}',
+                '{{ trans('budget_transport') | default('Transport') }}',
+                '{{ trans('budget_dependents_support') | default('Dependents Support') }}',
+                '{{ trans('budget_miscellaneous') | default('Miscellaneous') }}',
+                '{{ trans('budget_others') | default('Others') }}'
+            ],
+            datasets: [{
+                label: '{{ trans('budget_amount') | default('Amount') }} (₦)',
+                data: [
+                    {{ latest_budget.housing | format_number }},
+                    {{ latest_budget.food | format_number }},
+                    {{ latest_budget.transport | format_number }},
+                    {{ latest_budget.dependents | format_number }},
+                    {{ latest_budget.miscellaneous | format_number }},
+                    {{ latest_budget.others | format_number }}
+                ],
+                backgroundColor: ['#1E7F71', '#2E7D32', '#0288D1', '#dc3545', '#FBC02D', '#D81B60']
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { position: 'top' } }
+        }
+    });
+});
+</script>
 {% endblock %}
