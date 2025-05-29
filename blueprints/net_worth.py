@@ -59,7 +59,7 @@ class Step2Form(FlaskForm):
             DataRequired(message=trans('net_worth_investments_required', lang=lang)),
             NumberRange(min=0, max=10000000000, message=trans('net_worth_investments_max', lang=lang))
         ]
-        self.property.label = f"property: {trans('net_worth_property', lang=lang)}"
+        self.property.label.text = trans('net_worth_property', lang=lang)  # Fixed: Removed f-string for label
         self.property.validators = [
             DataRequired(message=trans('net_worth_property_required', lang=lang)),
             NumberRange(min=0, max=10000000000, message=trans('net_worth_property_max', lang=lang))
@@ -71,7 +71,7 @@ class Step2Form(FlaskForm):
                 cleaned_data = str(field.data).replace(',', '')
                 field.data = float(cleaned_data)
             except (ValueError, TypeError):
-                current_app.logger.error(f"Invalid cash_savings input: {field.data}")
+                current_app.logger.error(f"Invalid cash_savings input: {field.data}", extra={'session_id': session.get('sid', 'unknown')})
                 raise ValidationError(trans('net_worth_cash_savings_invalid', lang=session.get('lang', 'en')))
 
     def validate_investments(self, field):
@@ -80,7 +80,7 @@ class Step2Form(FlaskForm):
                 cleaned_data = str(field.data).replace(',', '')
                 field.data = float(cleaned_data)
             except (ValueError, TypeError):
-                current_app.logger.error(f"Invalid investments input: {field.data}")
+                current_app.logger.error(f"Invalid investments input: {field.data}", extra={'session_id': session.get('sid', 'unknown')})
                 raise ValidationError(trans('net_worth_investments_invalid', lang=session.get('lang', 'en')))
 
     def validate_property(self, field):
@@ -89,15 +89,15 @@ class Step2Form(FlaskForm):
                 cleaned_data = str(field.data).replace(',', '')
                 field.data = float(cleaned_data)
             except (ValueError, TypeError):
-                current_app.logger.error(f"Invalid property input: {field.data}")
+                current_app.logger.error(f"Invalid property input: {field.data}", extra={'session_id': session.get('sid', 'unknown')})
                 raise ValidationError(trans('net_worth_property_invalid', lang=session.get('lang', 'en')))
 
 class Step3Form(FlaskForm):
     loans = FloatField()
     submit = SubmitField()
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *args, **kwargs):  # Fixed: Added *args, **kwargs for consistency
+        super().__init__(*args, **kwargs)
         lang = session.get('lang', 'en')
         self.loans.label.text = trans('net_worth_loans', lang=lang)
         self.submit.label.text = trans('net_worth_submit', lang=lang)
@@ -112,7 +112,7 @@ class Step3Form(FlaskForm):
                 cleaned_data = str(field.data).replace(',', '')
                 field.data = float(cleaned_data) if cleaned_data else None
             except (ValueError, TypeError):
-                current_app.logger.error(f"Invalid loans input: {field.data}")
+                current_app.logger.error(f"Invalid loans input: {field.data}", extra={'session_id': session.get('sid', 'unknown')})
                 raise ValidationError(trans('net_worth_loans_invalid', lang=session.get('lang', 'en')))
 
 @net_worth_bp.route('/step1', methods=['GET', 'POST'])
@@ -125,7 +125,7 @@ def step1():
     try:
         if request.method == 'POST' and form.validate_on_submit():
             form_data = form.data.copy()
-            session['form_data'] = form_data
+            session['net_worth_form_data'] = form_data  # Fixed: Consistent session key
             current_app.logger.info(f"Net worth step1 form data saved for session {session['sid']}: {form_data}")
             return redirect(url_for('net_worth.step2'))
         return render_template('net_worth_step1.html', form=form, trans=trans, lang=lang)
@@ -149,7 +149,7 @@ def step2():
                 'property': float(form.property.data),
                 'submit': form.submit.data
             }
-            session['form_data'] = {**session.get('form_data', {}), **form_data}
+            session['net_worth_step2_form_data'] = form_data  # Fixed: Consistent session key
             current_app.logger.info(f"Net worth step2 form data saved for session {session['sid']}: {form_data}")
             return redirect(url_for('net_worth.step3'))
         return render_template('net_worth_step2.html', form=form, trans=trans, lang=lang)
@@ -169,18 +169,19 @@ def step3():
         if request.method == 'POST' and form.validate_on_submit():
             step1_data = session.get('net_worth_form_data', {})
             step2_data = session.get('net_worth_step2_form_data', {})
-            
+            form_data = form.data.copy()  # Fixed: Added form data capture
+
             # Calculate assets and liabilities
             cash_savings = step2_data.get('cash_savings', 0)
             investments = step2_data.get('investments', 0)
             property = step2_data.get('property', 0)
             loans = form_data.get('loans', 0) or 0
-            
+
             total_assets = cash_savings + investments + property
             total_liabilities = loans
             net_worth = total_assets - total_liabilities
-            
-            # Assign badges (store raw badge names for translation in template)
+
+            # Assign badges
             badges = []
             if net_worth > 0:
                 badges.append('net_worth_badge_wealth_builder')
@@ -208,7 +209,7 @@ def step3():
                     "created_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 }
             }
-            
+
             # Save to storage
             try:
                 storage = current_app.config['STORAGE_MANAGERS']['net_worth']
@@ -246,14 +247,14 @@ def step3():
                     current_app.logger.warning(f"Failed to send net worth email: {str(email_error)}", extra={'session_id': session['sid']})
                     flash(trans("net_worth_email_failed", lang=lang), "warning")
 
-                # Clear session
-                session.pop('net_worth_form_data', None)
-                session.pop('net_worth_step2_form_data', None)
-                flash(trans("net_worth_success", lang=lang), "success")
-                return redirect(url_for('net_worth_dashboard'))
+            # Clear session
+            session.pop('net_worth_form_data', None)
+            session.pop('net_worth_step2_form_data', None)
+            flash(trans("net_worth_success", lang=lang), "success")
+            return redirect(url_for('net_worth.dashboard'))
         return render_template('net_worth_step3.html', form=form, trans=trans, lang=lang)
     except Exception as e:
-        current_app.logger.error(f"Error in net_worth.step3": {str(e)}", extra={'session_id': session['sid']})
+        current_app.logger.error(f"Error in net_worth.step3: {str(e)}", extra={'session_id': session['sid']})  # Fixed: Correct f-string syntax
         flash(trans("net_worth_calculation_error", lang=lang), "danger")
         return render_template('net_worth_step3.html', form=form, trans=trans, lang=lang), 500
 
@@ -272,7 +273,7 @@ def dashboard():
 
         # Fallback: try to get by email if no session records
         if not latest_record:
-            email = session.get('form_data', {}).get('email')
+            email = session.get('net_worth_form_data', {}).get('email')
             if email:
                 all_records = storage.read_all()
                 filtered = [(rec["id"], rec["data"]) for rec in all_records if rec.get("data", {}).get("email") == email]
