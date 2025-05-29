@@ -560,6 +560,11 @@ def create_app():
         logger.error(f"404 error: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
         return render_template('404.html', t=quiz_trans, lang=lang), 404
 
+    @app.errorhandler(Exception)
+def handle_exception(e):
+    import traceback
+    app.logger.error("Unhandled Exception: %s\n%s", str(e), traceback.format_exc())
+
     # Register blueprints
     app.register_blueprint(financial_health_bp)
     app.register_blueprint(budget_bp)
