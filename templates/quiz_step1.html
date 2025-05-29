@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{{ trans('quiz_financial_personality_quiz') | default('Financial Personality Quiz') }}{% endblock %}
+{% block title %}{{ translations.quiz_financial_personality_quiz }}{% endblock %}
 {% block extra_head %}
     <style>
         .container {
@@ -27,15 +27,15 @@
 {% block content %}
 <div class="container">
     <div class="header">
-        <h1>{{ trans('quiz_financial_personality_quiz') | default('Financial Personality Quiz') }}</h1>
-        <p>{{ trans('quiz_enter_personal_information') | default('Enter your personal information') }}</p>
+        <h1>{{ translations.quiz_financial_personality_quiz }}</h1>
+        <p>{{ translations.quiz_enter_personal_information }}</p>
     </div>
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
                 <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert" aria-live="assertive">
-                    {{ trans('core_' + message) | default(message) }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close') | default('Close') }}"></button>
+                    {{ translations['core_' + message] | default(message) }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ translations.core_close }}"></button>
                 </div>
             {% endfor %}
         {% endif %}
@@ -45,53 +45,31 @@
             <form method="POST" action="{{ url_for('quiz.step1', course_id=course_id) }}">
                 {{ form.csrf_token }}
                 <div class="mb-3">
-                    <label class="form-label" for="{{ form.first_name.id }}">
-                        {% if hasattr(form.first_name, 'label') and form.first_name.label %}
-                            {{ form.first_name.label.text }}
-                        {% else %}
-                            {{ trans('core_first_name') | default('First Name') }}
-                        {% endif %}
-                    </label>
-                    {{ form.first_name(class="form-control" ~ (' is-invalid' if form.first_name.errors else ''), placeholder=trans('core_first_name_placeholder') | default('e.g., Muhammad, Bashir, Umar'), **{'data-bs-toggle': 'tooltip', 'title': trans('core_first_name_tooltip') | default('Enter your first name'), 'aria-describedby': 'first_name_help'}) }}
+                    <label class="form-label" for="{{ form.first_name.id }}">{{ form.first_name.label.text }}</label>
+                    {{ form.first_name(class="form-control" ~ (' is-invalid' if form.first_name.errors else ''), **form.first_name.render_kw) }}
                     {% for error in form.first_name.errors %}
-                        <div class="invalid-feedback">{{ trans(error) | default(error) }}</div>
+                        <div class="invalid-feedback">{{ translations[error] | default(error) }}</div>
                     {% endfor %}
                 </div>
                 <div class="mb-3">
-                    <label class="form-label" for="{{ form.email.id }}">
-                        {% if hasattr(form.email, 'label') and form.email.label %}
-                            {{ form.email.label.text }}
-                        {% else %}
-                            {{ trans('core_email') | default('Email') }}
-                        {% endif %}
-                    </label>
-                    {{ form.email(class="form-control" ~ (' is-invalid' if form.email.errors else ''), placeholder=trans('core_email_placeholder') | default('e.g., muhammad@example.com'), **{'data-bs-toggle': 'tooltip', 'title': trans('core_email_tooltip') | default('Enter your email to receive quiz results'), 'aria-describedby': 'email_help'}) }}
+                    <label class="form-label" for="{{ form.email.id }}">{{ form.email.label.text }}</label>
+                    {{ form.email(class="form-control" ~ (' is-invalid' if form.email.errors else ''), **form.email.render_kw) }}
                     {% for error in form.email.errors %}
-                        <div class="invalid-feedback">{{ trans(error) | default(error) }}</div>
+                        <div class="invalid-feedback">{{ translations[error] | default(error) }}</div>
                     {% endfor %}
                 </div>
                 <div class="mb-3 form-check">
-                    {{ form.send_email(class="form-check-input" ~ (' is-invalid' if form.send_email.errors else ''), **{'data-bs-toggle': 'tooltip', 'title': trans('core_send_email_tooltip') | default('Check to receive email with quiz results'), 'aria-describedby': 'send_email_help'}) }}
-                    <label class="form-check-label" for="{{ form.send_email.id }}">
-                        {% if hasattr(form.send_email, 'label') and form.send_email.label %}
-                            {{ form.send_email.label.text }}
-                        {% else %}
-                            {{ trans('core_send_email') | default('Send Email') }}
-                        {% endif %}
-                    </label>
+                    {{ form.send_email(class="form-check-input" ~ (' is-invalid' if form.send_email.errors else ''), **form.send_email.render_kw) }}
+                    <label class="form-check-label" for="{{ form.send_email.id }}">{{ form.send_email.label.text }}</label>
                     {% for error in form.send_email.errors %}
-                        <div class="invalid-feedback">{{ trans(error) | default(error) }}</div>
+                        <div class="invalid-feedback">{{ translations[error] | default(error) }}</div>
                     {% endfor %}
                 </div>
                 <div class="d-flex justify-content-between">
                     {% if course_id %}
-                        <a href="{{ url_for('learning_hub.courses') }}" class="btn btn-secondary" aria-label="Back to Courses">
-                            {{ trans('courses_back_to_courses') | default('Back to Courses') }}
-                        </a>
+                        <a href="{{ url_for('learning_hub.courses') }}" class="btn btn-secondary" aria-label="Back to Courses">{{ translations.courses_back_to_courses }}</a>
                     {% endif %}
-                    <button type="submit" class="btn btn-primary" aria-label="Start Quiz">
-                        {{ form.submit.label.text if hasattr(form.submit, 'label') and form.submit.label else trans('quiz_start_quiz') | default('Start Quiz') }}
-                    </button>
+                    <button type="submit" class="btn btn-primary" aria-label="Start Quiz">{{ form.submit.label.text }}</button>
                 </div>
             </form>
         </div>
