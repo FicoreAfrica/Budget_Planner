@@ -6,83 +6,23 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
-    <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #E3F2FD, #F5F7FA);
-            color: #333;
-            padding: 20px;
-        }
-        .container {
-            max-width: 1000px;
-            margin: auto;
-        }
-        h1, h3 {
-            color: #0288D1;
-        }
-        .card {
-            background: #fff;
-            border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0, 0,0,0.1);
-            margin-bottom: 2rem;
-            border: 2px solid #0288D1;
-            opacity: 0;
-            transform: translateY(20px);
-            animation: slideIn 0.5s forwards;
-        }
-        @keyframes slideIn {
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .card-body {
-            padding: 1.5rem;
-        }
-        .btn-primary {
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
-            font-weight: 600;
-            transition: transform 0.2s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: linear-gradient(135deg, #2E7D32, #0288D2);
-            border: none;
-            color: white;
-        }
-        .btn-primary:hover {
-            transform: scale(1.05);
-            background: linear-gradient(135deg, #1B5E20, #01579B);
-        }
-        .chart-container {
-            max-height: 300px;
-            width: 100%;
-            position: relative;
-        }
-        .progress-bar {
-            transition: width 0.5s ease-in-out;
-        }
-        @media (max-width: 600px) {
-            .card-body { padding: 1rem; }
-            .btn-primary { font-size: 0.9rem; padding: 0.5rem 1rem; }
-            .chart-container { max-height: 200px; }
-        }
-    </style>
 {% endblock %}
 {% block content %}
 <div class="container">
-    <section class="dashboard-header text-center my-5">
-        <h1>{{ trans('core_financial_dashboard') | default('Financial Dashboard') }}</h1>
-        <p>{{ trans('core_financial_overview') | default('Your comprehensive financial overview with Ficore Africa.') }}</p>
-    </section>
+    {% set tool_name = 'core_financial_dashboard' | default('Financial Dashboard') %}
+    {% set tool_icon = 'fa-tachometer-alt' %}
+    {% set subtitle = trans('core_financial_overview') | default('Your comprehensive financial overview with Ficore Africa.') %}
+    {% include 'tool_header.html' %}
     {% with messages = get_flashed_messages(with_categories=true) %}
         <div class="alert-container mt-3">
-            {% for category, message in messages %}
             {% if messages %}
-                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close') | default('Close') }}"></button>
-                </div>
-            {% endfor %}
-        {% endif %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close') | default('Close') }}"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
         </div>
     {% endwith %}
     <div class="row">
@@ -91,10 +31,10 @@
                 <div class="card-body">
                     <h3>{{ trans('financial_health_financial_health_score') | default('Financial Health Score') }}</h3>
                     {% if data.financial_health.score %}
-                        <p>{{ p trans('core_score') | default('Score') }}: {{ data.financial_health.score | format_number }} / 100 }}</p>
+                        <p>{{ trans('core_score') | default('Score') }}: {{ data.financial_health.score | format_number }} / 100</p>
                         <p>{{ trans('core_status') | default('Status') }}: {{ trans('financial_health_' + data.financial_health.status) | default(data.financial_health.status) }}</p>
                     {% else %}
-                        {{ trans('core_not_calculated') | default('Not yet calculated.') }}</p>
+                        <p>{{ trans('core_not_calculated') | default('Not yet calculated.') }}</p>
                     {% endif %}
                     <a href="{{ url_for('financial_health.step1') }}" 
                        class="btn btn-primary"
@@ -109,7 +49,7 @@
                 <div class="card-body">
                     <h3>{{ trans('budget_budget_planner') | default('Budget Planner') }}</h3>
                     {% if data.budget.surplus_deficit %}
-                        p>{{ trans('budget_surplus_deficit') | default('Surplus/Deficit') }}: ₦{{ data.budget.surplus_deficit | format_number }}</p>
+                        <p>{{ trans('budget_surplus_deficit') | default('Surplus/Deficit') }}: ₦{{ data.budget.surplus_deficit | format_number }}</p>
                         <p>{{ trans('budget_savings_goal') | default('Saving Goal') }}: ₦{{ data.budget.savings_goal | format_number }}</p>
                     {% else %}
                         <p>{{ trans('core_not_calculated') | default('Not yet calculated.') }}</p>
@@ -127,7 +67,7 @@
                 <div class="card-body">
                     <h3>{{ trans('quiz_personality_quiz') | default('Personality Quiz') }}</h3>
                     {% if data.quiz.personality %}
-                        <p>{{ trans('quiz_personality') | default('') }}: {{ trans('quiz_' + data.quiz.personality) | default(data.quiz.personality) }}</p>
+                        <p>{{ trans('quiz_personality') | default('Personality') }}: {{ trans('quiz_' + data.quiz.personality) | default(data.quiz.personality) }}</p>
                         <p>{{ trans('core_score') | default('Score') }}: {{ data.quiz.score | format_number }} / 10</p>
                     {% else %}
                         <p>{{ trans('quiz_not_completed') | default('Quiz not completed.') }}</p>
@@ -181,10 +121,10 @@
                 <div class="card-body">
                     <h3>{{ trans('emergency_fund_emergency_fund_calculator') | default('Emergency Fund Calculator') }}</h3>
                     {% if data.emergency_fund.savings_gap is not none %}
-                    <p>{{ trans('emergency_fund_target_savings_6_months') | default('Target Savings (6 Months)') }}: ₦{{ data.emergency_fund.target_savings_6m | format_number }}</p>
-                    <p>{{ trans('emergency_fund_savings_gap_6_months') | default('Savings Gap (6 Months)') }}: ₦{{ data.emergency_fund.savings_gap_6m | format_number }}</p>
+                        <p>{{ trans('emergency_fund_target_savings_6_months') | default('Target Savings (6 Months)') }}: ₦{{ data.emergency_fund.target_savings_6m | format_number }}</p>
+                        <p>{{ trans('emergency_fund_savings_gap_6_months') | default('Savings Gap (6 Months)') }}: ₦{{ data.emergency_fund.savings_gap_6m | format_number }}</p>
                     {% else %}
-                    <p>{{ trans('core_not_calculated') | default('Not yet calculated.') }}</p>
+                        <p>{{ trans('core_not_calculated') | default('Not yet calculated.') }}</p>
                     {% endif %}
                     <a href="{{ url_for('emergency_fund.step1') }}" 
                        class="btn btn-primary"
@@ -197,7 +137,7 @@
         <div class="col-md-6 mb-4">
             <div class="card h-100">
                 <div class="card-body">
-                    <h3>{{ trans('courses_my_courses') | default('My Courses') }}</h3></div>
+                    <h3>{{ trans('courses_my_courses') | default('My Courses') }}</h3>
                     {% set user_progress = namespace(progress=[]) %}
                     {% for record in data.courses %}
                         {% if record.course_id == 'budgeting_101' %}
@@ -222,60 +162,59 @@
                         <a href="{{ url_for('learning_hub.course_detail', course_id='budgeting_101') }}" 
                            class="btn btn-primary"
                            aria-label="{{ trans('courses_continue_budgeting') | default('Continue Budgeting Basics Course') }}">
-                            <i class="fas fa-play"></i> {{ trans('courses_continue_course') | default('') }}
+                            <i class="fas fa-play"></i> {{ trans('courses_continue_course') | default('Continue Course') }}
                         </a>
                     {% else %}
                         <p>{{ trans('courses_no_course_progress') | default('You haven’t started any courses yet.') }}</p>
                         <a href="{{ url_for('learning_hub.course_detail', course_id='budgeting_101') }}" 
                            class="btn btn-primary"
-                           aria-label="{{ trans('courses_start_budgeting') | default('') }}">
+                           aria-label="{{ trans('courses_start_budgeting') | default('Start Budgeting Basics Course') }}">
                             <i class="fas fa-book"></i> {{ trans('courses_start_budgeting_course') | default('Start Budgeting Basics') }}
                         </a>
                     {% endif %}
                 </div>
             </div>
         </div>
-        <!-- Add Learning Hub Progress -->
         <div class="col-md-6 mb-4">
             <div class="card h-100">
                 <div class="card-body">
                     <h3>{{ trans('learninghub_dashboard') | default('Learning Hub Progress') }}</h3>
                     {% if data.learning_progress %}
                         {% set total_lessons = 0 %}
-                        {% set completed_lessons = completed %}
-                    {% for course_id, progress in data.learning_progress.items() %}
+                        {% set completed_lessons = 0 %}
+                        {% for course_id, progress in data.learning_progress.items() %}
                             {% set course = none %}
                             {% for c in courses_data %}
                                 {% if c.id == course_id %}
                                     {% set course = c %}
                                 {% endif %}
-                            }
                             {% endfor %}
                             {% if course %}
-                                {% set lessons = total_lessons %}
-                            {% for module in course.modules %}
-                                {% set lessons = lessons + module.lessons | length %}
-                            {% endfor %}
-                            {% set completed = progress.completed | lessons_completed | length %}
-                            {% set total_lessons = total_lessons + lessons %}
-                            {% set completed_lessons = completed_lessons + completed %}
-                            <p>
-                                <strong>{{ trans('course.title_key') | default('Course') }}:</strong>
-                                {{ completed }}/{{ lessons }} {{ trans('learninghub_lessons_completed') | default('Lessons Completed') }}
-                            </p>
+                                {% set lessons = 0 %}
+                                {% for module in course.modules %}
+                                    {% set lessons = lessons + (module.lessons | length) %}
+                                {% endfor %}
+                                {% set completed = progress.completed_lessons | length %}
+                                {% set total_lessons = total_lessons + lessons %}
+                                {% set completed_lessons = completed_lessons + completed %}
+                                <p>
+                                    <strong>{{ trans('course_' + course_id) | default(course.title) }}:</strong>
+                                    {{ completed }}/{{ lessons }} {{ trans('learninghub_lessons_completed') | default('Lessons Completed') }}
+                                </p>
+                            {% endif %}
                         {% endfor %}
-                        {% if total_lessons >0 %}
+                        {% if total_lessons > 0 %}
                             {% set progress_percent = (completed_lessons / total_lessons * 100) | round(1) %}
-                        <div class="progress mb-2">
-                            <div class="progress-bar bg-success" 
-                                 role="progressbar" 
-                                 style="width: {{ progress_percent }}%" 
-                                 aria-valuenow="{{ progress_percent }}" 
-                                 aria-valuemin="0" 
-                                 aria-valuemax="100">
-                                 {{ progress_percent }}%
+                            <div class="progress mb-2">
+                                <div class="progress-bar bg-success" 
+                                     role="progressbar" 
+                                     style="width: {{ progress_percent }}%" 
+                                     aria-valuenow="{{ progress_percent }}" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100">
+                                     {{ progress_percent }}%
+                                </div>
                             </div>
-                        </div>
                         {% else %}
                             <p>{{ trans('learninghub_no_progress') | default('You haven’t started any lessons yet.') }}</p>
                         {% endif %}
@@ -285,7 +224,7 @@
                     <a href="{{ url_for('learning_hub.courses') }}" 
                        class="btn btn-primary"
                        aria-label="{{ trans('learninghub_browse_courses') | default('Browse Courses') }}">
-                        <i class="fas fa-book"></i> {{ trans('learninghub_browse_courses') | default('') }}
+                        <i class="fas fa-book"></i> {{ trans('learninghub_browse_courses') | default('Browse Courses') }}
                     </a>
                 </div>
             </div>
@@ -295,10 +234,10 @@
         <div class="card-body">
             <h3>{{ trans('core_metrics') | default('Financial Metrics Overview') }}</h3>
             <div class="chart-container">
-                <canvas id="overviewChart" aria-label="{{ trans('core_metrics_chart') | default('Financial Metrics Chart') }}"></canvas></div>
+                <canvas id="overviewChart" aria-label="{{ trans('core_metrics_chart') | default('Financial Metrics Chart') }}"></canvas>
             </div>
         </div>
-    <div>
+    </div>
     <div class="card mb-4">
         <div class="card-body">
             <h3>{{ trans('core_recommendations') | default('Financial Recommendations') }}</h3>
@@ -318,7 +257,7 @@
                 {% if not data.learning_progress %}
                     <li>{{ trans('learninghub_start_course') | default('Start a course in the Learning Hub to boost your financial knowledge.') }}</li>
                 {% endif %}
-                <li>{{ li trans('core_update_data') | default('Regularly update your financial data for accurate insights.') }}</li>
+                <li>{{ trans('core_update_data') | default('Regularly update your financial data for accurate insights.') }}</li>
             </ul>
         </div>
     </div>
@@ -326,17 +265,16 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const ctx = document.getElementById('overviewChart').getContext('2d');
-        // Ensure data is valid and fallback to 0 if undefined/null
         const financialHealthScore = {{ data.financial_health.score if data.financial_health.score else 0 }};
         const netWorth = {{ (data.net_worth.net_worth / 1000000) if data.net_worth.net_worth else 0 }};
-        const emergencyFundGap = {{ (data.emergency_fund.savings_gap_6m / 1000000) if data.emergency_fund.savings_gap.is not none else 0 }};
+        const emergencyFundGap = {{ (data.emergency_fund.savings_gap_6m / 1000000) if data.emergency_fund.savings_gap is not none else 0 }};
         new Chart(ctx, {
             type: 'bar',
             data: {
                 labels: [
                     "{{ trans('financial_health_financial_health_score') | default('Financial Health') }}",
                     "{{ trans('net_worth_net_worth') | default('Net Worth') }} (₦M)",
-                    {{ trans('emergency_fund_savings_gap_6_months') | default('Emergency Fund Gap (6 Months)') }} (₦M)"
+                    "{{ trans('emergency_fund_savings_gap_6_months') | default('Emergency Fund Gap (6 Months)') }} (₦M)"
                 ],
                 datasets: [{
                     label: "{{ trans('core_financial_metrics') | default('Financial Metrics') }}",
@@ -350,7 +288,7 @@
                 scales: {
                     y: {
                         beginAtZero: true,
-                        max: Math.max(financialHealthScore, netWorth, emergencyFundGap, 100) * 1.1, 
+                        max: Math.max(financialHealthScore, netWorth, emergencyFundGap, 100) * 1.1,
                         title: {
                             display: true,
                             text: "{{ trans('core_value') | default('Value') }}"
