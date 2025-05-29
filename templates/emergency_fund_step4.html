@@ -1,49 +1,19 @@
-<script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
-
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
-                var filteredData = jsonData.filter(row => row.some(filledCell));
-
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
-                var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                );
-                // Fallback
-                if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
-                }
-
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
-            }
-        }
-        return gk_fileData[filename] || "";
-        }
-        </script>{% extends "base.html" %}
+{% extends "base.html" %}
 {% block title %}{{ trans('emergency_fund_calculator') | default('Emergency Fund Calculator') }}{% endblock %}
+{% block extra_head %}
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+{% endblock %}
 {% block content %}
 <div class="container">
-    <div class="header">
-        <h1>{{ trans('emergency_fund_calculator') | default('Emergency Fund Calculator') }}</h1>
-        <p>{{ trans('emergency_fund_plan_emergency_fund') | default('Plan your emergency fund with Ficore Africa') }}</p>
+    {% set tool_name = 'emergency_fund_calculator' | default('Emergency Fund Calculator') %}
+    {% set tool_icon = 'fa-piggy-bank' %}
+    {% set subtitle = 'Finalize your savings plan' %}
+    {% set step = 4 %}
+    {% set total_steps = 4 %}
+    {% set step_labels = ['Personal Info', 'Income & Expenses', 'Savings & Risk', 'Savings Plan'] %}
+    {% include 'tool_header.html' %}
+    <div class="progress mb-3">
+        <div class="progress-bar bg-success" role="progressbar" style="width: 100%;" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">Step 4 of 4</div>
     </div>
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -55,9 +25,6 @@
             {% endfor %}
         {% endif %}
     {% endwith %}
-    <div class="progress mb-3">
-        <div class="progress-bar bg-success" role="progressbar" style="width: 100%;" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">Step 4 of 4</div>
-    </div>
     <div class="card">
         <div class="card-body">
             <h3>{{ trans('emergency_fund_step4_title') | default('Your Savings Plan') }}</h3>
@@ -65,20 +32,54 @@
                 {{ form.csrf_token }}
                 <div class="mb-3">
                     <label class="form-label" for="timeline">{{ trans('emergency_fund_timeline') | default('Savings Timeline') }}</label>
-                    {{ form.timeline(class="form-select", id="timeline", **{'data-bs-toggle': 'tooltip', 'title': trans('emergency_fund_timeline') | default('How long you want to save'), 'aria-describedby': 'timelineHelp'}) }}
-                    <small id="timelineHelp" class="form-text text-muted">{{ trans('emergency_fund_timeline_example') | default('Example: Choose 6 months to save quickly') }}</small>
+                    {{ form.timeline(class="form-select", id="timeline", **{'data-bs-toggle': 'tooltip', 'title': trans('emergency_fund_timeline') | default('How long you want to save'), 'aria-describedby': 'timeline_help'}) }}
+                    <small id="timeline_help" class="form-text text-muted">{{ trans('emergency_fund_timeline_example') | default('Example: Choose 6 months to save quickly') }}</small>
                     {% for error in form.timeline.errors %}
                         <div class="invalid-feedback d-block">{{ trans(error) | default(error) }}</div>
                     {% endfor %}
                 </div>
                 <div class="mb-3 form-check">
-                    {{ form.auto_email(class="form-check-input", id="auto_email", **{'data-bs-toggle': 'tooltip', 'title': trans('emergency_fund_email_summary_tooltip') | default('Get your plan by email'), 'aria-label': 'Send email summary'}) }}
-                    <label class="form-check-label" for="auto_email">{{ trans('emergency_fund_email_summary') | default('Send Email Summary') }}</label>
+                    {{ form.auto_email(class="form-check-input", id="auto_email", **{'data-bs-toggle': 'tooltip', 'title': trans('emergency_fund_email_summary') | default('Get your plan by email'), 'aria-label': 'Send Email Summary'}) }}
+                    <label class="form-check-label" for="auto_email">{{ trans('emergency_fund_email_summary') | default('Send Email') }}</label>
                 </div>
                 <button type="submit" class="btn btn-primary">{{ trans('emergency_fund_calculate_button') | default('Submit') }}</button>
-                <a href="{{ url_for('emergency_fund.step3') }}" class="btn btn-secondary">{{ trans('core_back') | default('Back') }}</a>
+                <a href="{{ url_for('emergency_fund.step3') }}" class="btn btn-secondary">{{ trans('Cancel') | cancel }}</a>
             </form>
         </div>
     </div>
 </div>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+    var gk_is_xlsx = true;
+    var gk_xlsx_file_lookup = {};
+    var gk_file_data = {};
+    function filled_cell(cell) {
+      return cell !== '' && cell !== null;
+    }
+    function load_file_data(filename) {
+      if (gk_is_xlsx && gk_xlsx_file_lookup[filename]) {
+        try {
+          var workbook = XLSX.read(gk_file_data[filename], {});
+          var first_sheet_name = workbook.SheetNames[0];
+          var worksheet = workbook.Sheets[first_sheet_name];
+          var json_data = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+          var filtered_data = json_data.filter(row => row.some(filled_cell));
+          var header_row_index = filtered_data.findIndex((row, index) =>
+            row.filter(filled_cell).length >= filtered_data[index + 1]?.filter(filled_cell).length
+          );
+          if (header_row_index === -1 || header_row_index > 25) {
+            header_row_index = 0;
+          }
+          var csv = XLSX.utils.aoa_to_sheet(filtered_data.slice(header_row_index));
+          csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+          return csv;
+        } catch (e) {
+          console.error(e);
+          return "";
+        }
+      }
+      return gk_file_data[filename] || "";
+    }
+</script>
 {% endblock %}
