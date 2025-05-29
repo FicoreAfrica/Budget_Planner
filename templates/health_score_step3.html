@@ -11,22 +11,25 @@
 {% endblock %}
 {% block content %}
 <div class="container">
-    <div class="header">
-        <h1>{{ trans('financial_health_score') | default('Financial Health Score') }}</h1>
-        <p>{{ trans('financial_health_enter_debt_interest_details') | default('Enter your debt and interest details (optional)') }}</p>
-    </div>
+    {% set tool_name = 'financial_health_score' | default('Financial Health Score') %}
+    {% set tool_icon = 'fa-heartbeat' %}
+    {% set subtitle = trans('financial_health_enter_debt_interest_details') | default('Enter your debt and interest details (optional)') %}
+    {% set step = 3 %}
+    {% set total_steps = 3 %}
+    {% set step_labels = ['Personal Info', 'Income & Expenses', 'Debt Details'] %}
+    {% include 'tool_header.html' %}
     <div class="card">
         <div class="card-body">
             <form method="POST" action="{{ url_for('financial_health.step3') }}" id="step3Form">
                 {{ form.csrf_token }}
                 <div class="mb-3">
                     <label class="form-label">{{ trans('financial_health_total_debt') | default('Total Debt') }}</label>
-                    {{ form.debt(class="form-control number-input", placeholder=trans('financial_health_debt_placeholder') | default('e.g., 200,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('financial_health_debt_tooltip') | default('Borrowings from banks, friends, colleagues'), 'type': 'text', 'aria-describedby': 'debt_help'}) }}
+                    {{ form.debt(class="form-control number-input", placeholder=trans('financial_health_debt_placeholder') | default('e.g., 200,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('financial_health_debt_tooltip') | default('Borrowings from banks, friends, colleagues'), 'type': 'text', 'aria-describedby': 'debtHelp'}) }}
                     <div class="invalid-feedback">{{ trans('financial_health_debt_must_be_positive') | default('Debt must be positive') }}</div>
                 </div>
                 <div class="mb-3">
                     <label class="form-label">{{ trans('financial_health_average_interest_rate') | default('Average Interest Rate') }}</label>
-                    {{ form.interest_rate(class="form-control number-input", placeholder=trans('financial_health_interest_rate_placeholder') | default('e.g., 5'), **{'data-bs-toggle': 'tooltip', 'title': trans('financial_health_interest_rate_tooltip') | default('Average interest rate on debts (% per year)'), 'type': 'text', 'aria-describedby': 'interest_rate_help'}) }}
+                    {{ form.interest_rate(class="form-control number-input", placeholder=trans('financial_health_interest_rate_placeholder') | default('e.g., 5'), **{'data-bs-toggle': 'tooltip', 'title': trans('financial_health_interest_rate_tooltip') | default('Average interest rate on debts (% per year)'), 'type': 'text', 'aria-describedby': 'interestRateHelp'}) }}
                     <div class="invalid-feedback">{{ trans('financial_health_interest_rate_must_be_positive') | default('Interest rate must be positive') }}</div>
                 </div>
                 <div class="d-flex justify-content-between">
@@ -50,7 +53,6 @@
             if (isNaN(num)) return '';
             return num.toLocaleString('en-NG', { minimumFractionDigits: 0, maximumFractionDigits: isInterestRate ? 2 : 0 });
         };
-
         input.addEventListener('input', (e) => {
             const cursorPosition = e.target.selectionStart;
             const oldValue = e.target.value;
@@ -72,21 +74,18 @@
             const newCursorPosition = cursorPosition + cursorOffset;
             input.setSelectionRange(newCursorPosition, newCursorPosition);
         });
-
         input.addEventListener('paste', (e) => {
             e.preventDefault();
             const pasted = (e.clipboardData || window.clipboardData).getData('text');
             const cleanValue = pasted.replace(/[^0-9.]/g, '');
             input.value = formatNumber(cleanValue);
         });
-
         input.addEventListener('blur', () => {
             if (input.value) {
                 input.value = formatNumber(input.value);
             }
         });
     });
-
     document.getElementById('step3Form').addEventListener('submit', (e) => {
         const inputs = document.querySelectorAll('.number-input');
         let valid = true;
