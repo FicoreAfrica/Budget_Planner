@@ -162,24 +162,23 @@ def create_app():
 
     # Initialize storage managers
     with app.app_context():
-        app.config['STORAGE_MANAGERS'] = {
-            'financial_health': JsonStorage('data/financial_health.json', logger_instance=logger),
-            'budget': init_budget_storage(app),
-            'quiz': JsonStorage('data/quiz_data.json', logger_instance=logger),
-            'bills': init_bill_storage(app),
-            'net_worth': JsonStorage('data/networth.json', logger_instance=logger),
-            'emergency_fund': JsonStorage('data/emergency_fund.json', logger_instance=logger),
-            'user_progress': JsonStorage('data/user_progress.json', logger_instance=logger),
-            'courses': JsonStorage('data/courses.json', logger_instance=logger),
-            'sheets': GoogleSheetsStorage(app.config['GSPREAD_CLIENT']) if app.config['GSPREAD_CLIENT'] else None
-        }
+    app.config['STORAGE_MANAGERS'] = {
+        'financial_health': JsonStorage('data/financial_health.json', logger_instance=logger),
+        'budget': init_budget_storage(app),
+        'quiz': JsonStorage('data/quiz_data.json', logger_instance=logger),
+        'bills': init_bill_storage(app),
+        'net_worth': JsonStorage('data/networth.json', logger_instance=logger),
+        'emergency_fund': JsonStorage('data/emergency_fund.json', logger_instance=logger),
+        'user_progress': JsonStorage('data/user_progress.json', logger_instance=logger),
+        'courses': JsonStorage('data/courses.json', logger_instance=logger),
+        'sheets': GoogleSheetsStorage(app.config['GSPREAD_CLIENT']) if app.config['GSPREAD_CLIENT'] else None
+    }
 
-        # Initialize courses.json if empty or missing
-        courses_storage = app.config['STORAGE_MANAGERS']['courses']
-        try:
-            courses = courses_storage.read_all()
-            if not courses:
-                logger.info("Courses storage is empty. Initializing with default courses.")
+    # Now safe to call read_all() or other session-dependent methods:
+    courses_storage = app.config['STORAGE_MANAGERS']['courses']
+    courses = courses_storage.read_all()
+    if not courses:
+        logger.info("Courses storage is empty. Initializing with default courses.")
                 default_courses = [
                     {
                         'id': 'budgeting_101',
