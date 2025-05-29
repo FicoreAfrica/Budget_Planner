@@ -558,7 +558,7 @@ def quiz_step(step_num):
             course_progress = next((p for p in progress if p['data'].get('course_id') == course_id and p['data'].get('session_id') == session_id), None)
             if course_progress and step_num not in course_progress['data'].get('completed_tasks', []):
                 course_progress['data']['completed_tasks'].append(step_num)
-                course_progress['data']['progress_percentage'] = (len(course_progress['data'].get('completed_tasks', [])) / (len(partition_questions(QUESTIONS)) + 1)) * 100)
+                course_progress['data']['progress_percentage'] = (len(course_progress['data'].get('completed_tasks', [])) / (len(partition_questions(QUESTIONS)) + 1)) * 100
                 course_progress['data']['last_updated'] = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
                 progress_storage.update_by_id(course_progress['id'], course_progress['data'])
 
