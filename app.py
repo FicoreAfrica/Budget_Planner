@@ -160,8 +160,9 @@ def create_app():
                 self.logger.error(f"Error fetching data from sheet {worksheet_name}: {e}")
                 return pd.DataFrame()
 
-    # Initialize storage managers
+    # Initialize storage managers and other context-dependent operations
     with app.app_context():
+        logger.info("Initializing storage managers")
         app.config['STORAGE_MANAGERS'] = {
             'financial_health': JsonStorage('data/financial_health.json', logger_instance=logger),
             'budget': init_budget_storage(app),
@@ -174,7 +175,7 @@ def create_app():
             'sheets': GoogleSheetsStorage(app.config['GSPREAD_CLIENT']) if app.config['GSPREAD_CLIENT'] else None
         }
 
-        # Now safe to call read_all() or other session-dependent methods:
+        logger.info("Checking courses storage")
         courses_storage = app.config['STORAGE_MANAGERS']['courses']
         courses = courses_storage.read_all()
         if not courses:
@@ -209,13 +210,15 @@ def create_app():
             courses = courses_storage.read_all()
             if len(courses) != len(default_courses):
                 logger.error(f"Failed to verify courses.json initialization. Expected {len(default_courses)} courses, got {len(courses)}.")
+        
+        logger.info("Initializing quiz questions")
         try:
             init_quiz_questions(app)
         except PermissionError as e:
-            logger.error(f"Permission error initializing courses.json: {str(e)}")
-            raise RuntimeError("Cannot write to courses.json due to permissions.")
+            logger.error(f"Permission error initializing quiz questions: {str(e)}")
+            raise RuntimeError("Cannot initialize quiz questions due to permissions.")
         except Exception as e:
-            logger.error(f"Error initializing courses storage: {str(e)}")
+            logger.error(f"Error initializing quiz questions: {str(e)}")
             raise
 
     # Add custom Jinja2 filter for translations
@@ -284,7 +287,7 @@ def create_app():
             'current_year': datetime.now().year,
             'LINKEDIN_URL': os.environ.get('LINKEDIN_URL', '#'),
             'TWITTER_URL': os.environ.get('TWITTER_URL', '#'),
-            'FACEBOOK_URL': os.environ.get('FLASH', '#'),
+            'FACEBOOK_URL': os.environ.get('FACEBOOK_URL', '#'),
             'FEEDBACK_FORM_URL': os.environ.get('FEEDBACK_FORM_URL', '#'),
             'WAITLIST_FORM_URL': os.environ.get('WAITLIST_FORM_URL', '#'),
             'CONSULTANCY_FORM_URL': os.environ.get('CONSULTANCY_FORM_URL', '#'),
