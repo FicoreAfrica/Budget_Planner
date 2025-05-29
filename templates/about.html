@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block title %}{{ trans('core_about_ficore_africa') | default('About Ficore Africa') }}{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <h1>{{ trans('core_about_ficore_africa') | default('About Ficore Africa') }}</h1>
+    <p>{{ trans('core_empowering_financial_growth') | default('Empowering financial growth across Africa since 2025') }}</p>
+    <p>{{ trans('core_disclaimer') | default('Ficore is not a bank and does not hold or move funds.') }}</p>
+    <p>{{ trans('core_learn_more_content') | default('Ficore Africa provides tools to help you track your income, net worth, budgets, and bills, enabling you to grow your money with confidence.') }}</p>
+</div>
+{% endblock %}
