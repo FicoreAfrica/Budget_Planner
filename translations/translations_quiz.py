@@ -80,9 +80,9 @@ QUIZ_TRANSLATIONS = {
         'quiz_spender_tip': 'Track expenses.',
         'quiz_avoider_tip': 'Start with a budget.',
         'badge_starter': 'Budget Beginner',
-        'badge_starter_description': 'You\'re just getting started on your finance journey.',
+        'badge_starter_description': 'You’re just getting started on your finance journey.',
         'badge_resilient_earner': 'Resilient Earner',
-        'badge_resilient_earner_description': 'You\'re building strong financial habits with consistent effort.',
+        'badge_resilient_earner_description': 'You’re building strong financial habits with consistent effort.',
         'badge_money_mover': 'Money Mover',
         'badge_money_mover_description': 'You actively manage and grow your finances.',
         'badge_financial_guru': 'Financial Guru',
@@ -98,7 +98,20 @@ QUIZ_TRANSLATIONS = {
         'quiz_assess_literacy': 'Assess Your Financial Literacy',
         'quiz_start_personality_quiz': 'Start Personality Quiz',
         'quiz_view_dashboard': 'View Dashboard',
-        'quiz_recommendations': 'Recommendations'
+        'quiz_recommendations': 'Recommendations',
+        # New translations
+        'quiz_recommended_tools': 'Recommended Tools',
+        'quiz_continue_learning': 'Continue Learning',
+        'quiz_history': 'Quiz History',
+        'quiz_no_history': 'No quiz history available.',
+        'quiz_analytics': 'Quiz Analytics',
+        'quiz_completion_rate': 'Completion Rate (%)',
+        'quiz_avg_score': 'Average Score',
+        'quiz_badge_distribution': 'Badge Distribution',
+        'resource_budget_tool': 'Budget Planner Tool',
+        'resource_emergency_fund_course': 'Emergency Fund Course',
+        'resource_investment_guide': 'Investment Guide',
+        'resource_financial_planning': 'Financial Planning Course'
     },
     'ha': {
         'quiz_financial_personality_quiz': 'Tambayar Halayen Kuɗi',
@@ -197,15 +210,28 @@ QUIZ_TRANSLATIONS = {
         'quiz_assess_literacy': 'Tantance Ilimin Kuɗin Ka',
         'quiz_start_personality_quiz': 'Fara Tambayar Hali',
         'quiz_view_dashboard': 'Duba Dashboard',
-        'quiz_recommendations': 'Shawara'
+        'quiz_recommendations': 'Shawara',
+        # New translations
+        'quiz_recommended_tools': 'Kayan Aikin da Aka Shawar',
+        'quiz_continue_learning': 'Ci Gaba da Koyo',
+        'quiz_history': 'Tarihin Tambaya',
+        'quiz_no_history': 'Babu tarihin tambaya a yanzu.',
+        'quiz_analytics': 'Nazarin Tambayar',
+        'quiz_completion_rate': 'Yawan Kammalawa (%)',
+        'quiz_avg_score': 'Matsakaicin Maki',
+        'quiz_badge_distribution': 'Rarraba Alamu',
+        'resource_budget_tool': 'Kayan Aikin Kasafi',
+        'resource_emergency_fund_course': 'Kwas na Asusun Gaggawa',
+        'resource_investment_guide': 'Jagoran Zuba Jari',
+        'resource_financial_planning': 'Kwas na Shirin Kuɗi'
     }
 }
 
 def trans(key, lang='en', default=None):
     """Retrieve translation for a given key and language."""
+    from flask import current_app
     translation = QUIZ_TRANSLATIONS.get(lang, {}).get(key, default if default is not None else key)
     if translation == key and default is None:
-        from flask import current_app
         current_app.logger.warning(f"Missing translation for key={key} in lang={lang}, session={current_app.session.get('sid', 'unknown')}")
     return translation
 
