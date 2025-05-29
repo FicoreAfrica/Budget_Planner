@@ -307,9 +307,9 @@ def create_app():
 
     @app.route('/about')
     def about():
-    lang = session.get('language', 'en')
-    logger.info("Serving about page")
-    return render_template('about.html', t=trans, lang=lang)
+        lang = session.get('language', 'en')
+        logger.info("Serving about page")
+        return render_template('about.html', t=trans, lang=lang)
 
     @app.route('/health')
     def health():
