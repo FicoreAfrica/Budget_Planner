@@ -25,7 +25,8 @@ SAMPLE_COURSES = [
         'title_en': 'Budgeting 101',
         'title_ha': 'Tsarin Kudi 101',
         'description_en': 'Learn the basics of budgeting.',
-        'description_ha': 'Koyon asalin tsarin kudi.'
+        'description_ha': 'Koyon asalin tsarin kudi.',
+        'is_premium': False
     },
     {
         'id': 'financial_quiz',
@@ -33,7 +34,8 @@ SAMPLE_COURSES = [
         'title_en': 'Financial Quiz',
         'title_ha': 'Jarabawar Kudi',
         'description_en': 'Test your financial knowledge.',
-        'description_ha': 'Gwada ilimin ku na kudi.'
+        'description_ha': 'Gwada ilimin ku na kudi.',
+        'is_premium': False
     },
     {
         'id': 'savings_basics',
@@ -41,7 +43,8 @@ SAMPLE_COURSES = [
         'title_en': 'Savings Basics',
         'title_ha': 'Asalin Tattara Kudi',
         'description_en': 'Understand how to save effectively.',
-        'description_ha': 'Fahimci yadda ake tattara kudi yadda ya kamata.'
+        'description_ha': 'Fahimci yadda ake tattara kudi yadda ya kamata.',
+        'is_premium': False
     }
 ]
 
@@ -136,17 +139,9 @@ def initialize_courses_data(app):
             courses = courses_storage.read_all()
             if not courses:
                 logger.info("Courses storage is empty. Initializing with default courses.")
-                # Ensure each course is stored as a dict with 'id' and 'data'
                 courses_storage.write([{'id': str(uuid.uuid4()), 'data': course} for course in SAMPLE_COURSES])
                 courses = courses_storage.read_all()
-            # Validate course structure
-            valid_courses = []
-            for course in courses:
-                if isinstance(course, dict) and 'data' in course and isinstance(course['data'], dict):
-                    valid_courses.append(course)
-                else:
-                    logger.warning(f"Invalid course format detected: {course}")
-            app.config['COURSES'] = valid_courses if valid_courses else SAMPLE_COURSES
+            app.config['COURSES'] = courses
         except Exception as e:
             logger.error(f"Error initializing courses: {str(e)}", exc_info=True)
             app.config['COURSES'] = SAMPLE_COURSES
@@ -218,7 +213,9 @@ def create_app():
             'FACEBOOK_URL': os.environ.get('FACEBOOK_URL', '#'),
             'FEEDBACK_FORM_URL': os.environ.get('FEEDBACK_FORM_URL', '#'),
             'WAITLIST_FORM_URL': os.environ.get('WAITLIST_FORM_URL', '#'),
-            'CONSULTANCY_FORM_URL': os.environ.get('CONSULTANCY_FORM_URL', '#'),
+            'CONSULTANCY_FORM_URL': os.environ.get('CONSULTANCY_FORM_URL', '#
+
+'),
             'current_lang': lang
         }
 
@@ -230,7 +227,6 @@ def create_app():
             courses = current_app.config['COURSES'] or SAMPLE_COURSES
             logger.info(f"Retrieved {len(courses)} courses")
             title_key_map = {c['id']: c['title_key'] for c in SAMPLE_COURSES}
-            # Ensure courses are processed correctly
             processed_courses = []
             for course in courses:
                 if isinstance(course, dict) and 'data' in course and isinstance(course['data'], dict):
@@ -238,8 +234,13 @@ def create_app():
                         **course['data'],
                         'title_key': title_key_map.get(course['data']['id'], f"learning_hub_course_{course['data']['id']}_title")
                     })
+                elif isinstance(course, dict) and 'id' in course and 'title_key' in course:
+                    # Handle flat course format (like SAMPLE_COURSES)
+                    processed_courses.append({
+                        **course,
+                        'title_key': title_key_map.get(course['id'], f"learning_hub_course_{course['id']}_title")
+                    })
                 else:
-                    # Fallback to raw course if structure is invalid
                     logger.warning(f"Invalid course format in index: {course}")
                     processed_courses.append(course)
             courses = processed_courses
