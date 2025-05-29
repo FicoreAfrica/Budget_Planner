@@ -1,11 +1,10 @@
-from flask import Blueprint, request, session, redirect, url_for, render_template, flash, g
+from flask import Blueprint, request, session, redirect, url_for, render_template, flash, g, current_app
 from flask_wtf import FlaskForm
 from wtforms import StringField, FloatField, SelectField, BooleanField, SubmitField
 from wtforms.validators import DataRequired, NumberRange, Optional, Email, ValidationError
 from json_store import JsonStorage
 from mailersend_email import send_email
 from datetime import datetime
-import logging
 import uuid
 import os
 try:
@@ -13,12 +12,16 @@ try:
 except ImportError:
     def trans(key, lang=None):
         return key  # Fallback to return the key as the translation
-        
-logger = logging.getLogger(__name__)
+
+def init_storage(app):
+    """Initialize storage with app context."""
+    storage_managers = {
+        'financial_health': JsonStorage('data/financial_health.json', logger=app.logger),
+        'progress': JsonStorage('data/user_progress.json', logger=app.logger)
+    }
+    return storage_managers
 
 financial_health_bp = Blueprint('financial_health', __name__, url_prefix='/financial_health')
-financial_health_storage = JsonStorage('data/financial_health.json')
-progress_storage = JsonStorage('data/user_progress.json')
 
 # Forms for financial health steps
 class Step1Form(FlaskForm):
@@ -101,6 +104,7 @@ def step1():
             g.log.debug(f"Validated form data: {form_data}")
 
             try:
+                financial_health_storage = current_app.config['STORAGE_MANAGERS']['financial_health']
                 storage_data = {
                     'step': 1,
                     'data': form_data
@@ -118,6 +122,7 @@ def step1():
                 return render_template('health_score_step1.html', form=form, trans=trans, lang=lang), 500
 
             g.log.debug(f"Step1 form data saved to session: {form_data}")
+-grade
             return redirect(url_for('financial_health.step2'))
         return render_template('health_score_step1.html', form=form, trans=trans, lang=lang)
     except Exception as e:
@@ -129,6 +134,8 @@ def step1():
 def step2():
     """Handle financial health step 2 form (income and expenses)."""
     if 'sid' not in session:
+
+
         session['sid'] = str(uuid.uuid4())
     lang = session.get('lang', 'en')
     form = Step2Form()
@@ -145,6 +152,7 @@ def step2():
                 'submit': form.submit.data
             }
             try:
+                financial_health_storage = current_app.config['STORAGE_MANAGERS']['financial_health']
                 storage_data = {
                     'step': 2,
                     'data': session['health_step2']
@@ -250,7 +258,9 @@ def step3():
                 "interest_rate": interest_rate,
                 "debt_to_income": debt_to_income,
                 "savings_rate": savings_rate,
-                "interest_burden": interest_burden,
+                "interestව
+
+interest_burden": interest_burden,
                 "score": score,
                 "status": status,
                 "badges": badges,
@@ -258,6 +268,7 @@ def step3():
             }
             session['health_record'] = record
             try:
+                financial_health_storage = current_app.config['STORAGE_MANAGERS']['financial_health']
                 storage_data = {
                     'step': 3,
                     'data': record
@@ -332,6 +343,7 @@ def dashboard():
         health_record = session.get('health_record', {})
         g.log.debug(f"Session health_record: {health_record}")
         if not health_record:
+            financial_health_storage = current_app.config['STORAGE_MANAGERS']['financial_health']
             stored_records = financial_health_storage.filter_by_session(session['sid'])
             g.log.debug(f"Raw stored records for current session: {stored_records}")
             if not stored_records:
@@ -390,6 +402,7 @@ def dashboard():
             g.log.debug(f"Processed user records from session: {records}")
 
         # Retrieve all records for comparison
+        financial_health_storage = current_app.config['STORAGE_MANAGERS']['financial_health']
         all_records = financial_health_storage._read()
         g.log.debug(f"All records from storage (before cleaning): {all_records}")
         
@@ -502,6 +515,7 @@ def dashboard():
             insights.append(trans("financial_health_insight_no_data"))
 
         # Load course progress for the "My Courses" card
+        progress_storage = current_app.config['STORAGE_MANAGERS']['progress']
         progress_records = []
         if 'sid' in session:
             progress_records = progress_storage.filter_by_session(session['sid'])
