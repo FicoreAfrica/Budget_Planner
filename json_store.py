@@ -100,11 +100,13 @@ class JsonStorage:
         """Retrieve all records from the JSON file."""
         return self._read()
 
-    def append(self, record: Dict[str, Any]) -> str:
+    def append(self, record: Dict[str, Any], user_email: Optional[str] = None, session_id: Optional[str] = None) -> str:
         """Append a new record to the JSON file.
 
         Args:
             record: Data to store.
+            user_email: Optional email associated with the record.
+            session_id: Optional session ID; defaults to Flask session['sid'] if not provided.
 
         Returns:
             The record ID.
@@ -112,7 +114,8 @@ class JsonStorage:
         Raises:
             RuntimeError: If the record cannot be appended.
         """
-        session_id = session.get('sid', 'no-session-id') if has_request_context() else 'no-session-id'
+        if not session_id:
+            session_id = session.get('sid', 'no-session-id') if has_request_context() else 'no-session-id'
         try:
             records = self._read()
             record_id = str(uuid.uuid4())
@@ -122,6 +125,8 @@ class JsonStorage:
                 "timestamp": datetime.utcnow().isoformat() + "Z",
                 "data": record
             }
+            if user_email:
+                record_with_metadata["user_email"] = user_email
             records.append(record_with_metadata)
             self._write(records)
             self.logger.info(f"Appended record {record_id} to {self.filename}")
