@@ -12,7 +12,7 @@ from blueprints.financial_health import financial_health_bp
 from blueprints.budget import budget_bp
 from blueprints.quiz import quiz_bp
 from blueprints.bill import bill_bp
-from blueprints.net_worth import net_worth_bp, init_net_worth_storage
+from blueprints.net_worth import net_worth_bp, init_storage
 from blueprints.emergency_fund import emergency_fund_bp
 from blueprints.learning_hub import learning_hub_bp
 from json_store import JsonStorage
