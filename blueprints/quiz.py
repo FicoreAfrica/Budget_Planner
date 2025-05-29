@@ -706,7 +706,7 @@ def results():
     session_id = session.get('sid', 'no-session-id')
     language = session.get('language', 'en')
     course_id = request.args.get('course_id', 'financial_quiz')
-    results = session.get('quiz_results', {}))
+    results = session.get('quiz_results', {})
 
     try:
         if not results:
