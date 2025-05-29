@@ -146,8 +146,6 @@ def initialize_courses():
         logger.error(f"Error initializing courses: {str(e)}", extra={'session_id': 'no-request-context'})
         raise
 
-# Call initialization at startup
-initialize_courses()
 
 def get_progress():
     try:
