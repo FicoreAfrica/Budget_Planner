@@ -1,46 +1,54 @@
 {% extends "base.html" %}
-{% block title %}{{ translations.quiz_financial_personality_quiz }}{% endblock %}
-{% block extra_head %}
-    <style>
-        .container {
-            max-width: 600px;
-            margin: 2rem auto;
-        }
-        .card {
-            border: none;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-        }
-        .btn-primary {
-            background: linear-gradient(135deg, #1E7F71, #0288D1);
-            border: none;
-        }
-        .btn-primary:hover {
-            background: linear-gradient(135deg, #1B5E20, #01579B);
-        }
-        .form-check-input.is-invalid ~ .invalid-feedback {
-            display: block;
-        }
-        .progress {
-            height: 1.5rem;
-        }
-    </style>
+
+{% block title %}
+{{ trans('quiz_financial_personality_quiz', lang=language) }}
 {% endblock %}
+
+{% block extra_head %}
+<style>
+    .container {
+        max-width: 600px;
+        margin: 2rem auto;
+    }
+    .card {
+        border: none;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    }
+    .btn-primary {
+        background: linear-gradient(135deg, #1E7F71, #0288D1);
+        border: none;
+    }
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #1B5E66, #01579B);
+    }
+    .form-check-input.is-invalid {
+        border-color: #dc3545;
+    }
+    .progress {
+        height: 1.5rem;
+        border-radius: 0.25rem;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container">
     <div class="header">
-        <h1>{{ translations.quiz_financial_personality_quiz }}</h1>
-        <p>{{ translations.quiz_step_progress.format(step=step_num, total=total_steps) }}</p>
+        <h1>{{ trans('quiz_financial_personality_quiz', lang=language) }}</h1>
+        <p>{{ trans('quiz_step_progress', lang=language, step=step_num, total=total_steps) }}</p>
     </div>
     <div class="progress mb-3">
-        <div class="progress-bar" role="progressbar" style="width: {{ (step_num / total_steps * 100) | round(2) }}%;" aria-valuenow="{{ (step_num / total_steps * 100) | round(2) }}" aria-valuemin="0" aria-valuemax="100" aria-label="Quiz Progress"></div>
+        <div class="progress-bar bg-success" role="progressbar" style="width: {{ (step_num / total_steps * 100) | round(1) }}%;" aria-valuenow="{{ (step_num / total_steps * 100) | round(1) }}" aria-valuemin="0" aria-valuemax="100" aria-label="{{ trans('quiz_progress', lang=language, default='Quiz Progress') }}">
+            {{ (step_num / total_steps * 100) | round(1) }}%
+        </div>
     </div>
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
                 <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert" aria-live="assertive">
-                    {{ translations['core_' + message] | default(message) }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ translations.core_close }}"></button>
+                    {{ trans(message, lang=language) }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close', lang=language) }}"></button>
                 </div>
             {% endfor %}
         {% endif %}
@@ -50,38 +58,38 @@
             <form method="POST" action="{{ url_for('quiz.quiz_step', step_num=step_num, course_id=course_id) }}">
                 {{ form.csrf_token }}
                 {% for question in questions %}
-                    <div class="mb-3">
-                        <label class="form-label" for="{{ question.id }}">{{ form[question.id].label.text }}</label>
-                        {% for choice in form[question.id].choices %}
+                    <div class="mb-4">
+                        <label class="form-label" for="{{ question.id }}">{{ trans(question.text_key, lang=language) }}</label>
+                        {% for choice_value, choice_label in form[question.id].choices %}
                             <div class="form-check">
                                 <input type="radio" class="form-check-input{{ ' is-invalid' if form[question.id].errors else '' }}"
-                                    name="{{ question.id }}" value="{{ choice[0] }}" id="{{ question.id }}_{{ loop.index }}"
-                                    {% if form[question.id].data == choice[0] %}checked{% endif %}
-                                    aria-label="{{ question.question }}: {{ choice[1] }}"
+                                    name="{{ question.id }}" value="{{ choice_value }}" id="{{ question.id }}_{{ loop.index }}"
+                                    {% if form[question.id].data == choice_value %}checked{% endif %}
+                                    aria-label="{{ trans(question.text_key, lang=language) }}: {{ choice_label }}"
                                     aria-describedby="help_{{ question.id }}">
-                                <label class="form-check-label" for="{{ question.id }}_{{ loop.index }}">{{ choice[1] }}</label>
+                                <label class="form-check-label" for="{{ question.id }}_{{ loop.index }}">{{ choice_label }}</label>
                             </div>
                         {% endfor %}
-                        <small class="form-text text-muted" id="help_{{ question.id }}">{{ question.question }}</small>
+                        <small class="form-text text-muted" id="help_{{ question.id }}">{{ trans(f'{question.key}_tooltip', lang=language, default='') }}</small>
                         {% if form[question.id].errors %}
-                            <div class="invalid-feedback d-block">{{ translations.form_errors }}</div>
+                            <div class="invalid-feedback d-block">{{ trans('Choose an option.', lang=language) }}</div>
                         {% endif %}
                     </div>
                 {% endfor %}
                 <div class="mb-3 form-check">
-                    {{ form.send_email(class="form-check-input" ~ (' is-invalid' if form.send_email.errors else ''), **form.send_email.render_kw) }}
+                    {{ form.send_email(class='form-check-input' ~ (' checked' if form.send_email.data else ''), **form.send_email.render_kw)}}
                     <label class="form-check-label" for="{{ form.send_email.id }}">{{ form.send_email.label.text }}</label>
                     {% for error in form.send_email.errors %}
-                        <div class="invalid-feedback">{{ translations[error] | default(error) }}</div>
+                        <div class="invalid-feedback">{{ trans(error, lang='en') }}</div>
                     {% endfor %}
                 </div>
                 <div class="d-flex justify-content-between">
                     {% if step_num > 1 %}
-                        <a href="{{ url_for('quiz.quiz_step', step_num=step_num-1, course_id=course_id) }}" class="btn btn-secondary" aria-label="Go Back">{{ translations.core_back }}</a>
+                        <a href="{{ url_for('quiz.quiz_step', step_num=step_num-1, course_id=course_id)}}" class="btn btn-secondary" aria-label="{{ trans('core_back', lang=language)}}">{{ trans('core_back', lang=language)}}</a>
                     {% else %}
-                        <a href="{{ url_for('quiz.step1', course_id=course_id) }}" class="btn btn-secondary" aria-label="Go Back">{{ translations.core_back }}</a>
+                        <a href="{{ url_for('quiz.step1', course_id=course_id)}}" class="btn btn-secondary" aria-label="{{ trans('core_back', lang=language)}}">{{ trans('core_back', lang=language)}}</a>
                     {% endif %}
-                    <button type="submit" class="btn btn-primary" aria-label="Submit">{{ form.submit.label.text }}</button>
+                    <button type="submit" class="btn btn-primary" aria-label="{{ form.submit.label.text }}">{{ form.submit.label.text }}</button>
                 </div>
             </form>
         </div>
