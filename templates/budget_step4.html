@@ -2,13 +2,16 @@
 {% block title %}{{ trans('budget_budget_planner') | default('Budget Planner') }}{% endblock %}
 {% block content %}
 <div class="container">
-    <div class="header">
-        <h1>{{ trans('budget_budget_planner') | default('Budget Planner') }}</h1>
-        <p>{{ trans('budget_set_monthly_savings_goal') | default('Set your monthly savings goal') }}</p>
-    </div>
+    {% set tool_name = trans('budget_budget_planner') | default('Budget Planner') %}
+    {% set tool_icon = 'fa-calculator' %}
+    {% set subtitle = trans('budget_set_monthly_savings_goal') | default('Let’s start with a few details') %}
+    {% set step = 4 %}
+    {% set total_steps = 4 %}
+    {% set step_labels = [trans('budget_personal_info') | default('Personal Info'), trans('budget_income') | default('Income'), trans('budget_expenses') | default('Expenses'), trans('budget_savings') | default('Savings')] %}
+    {% include 'tool_header.html' %}
     <div class="card">
         <div class="card-body">
-            <form method="POST" action="{{ url_for('budget.step4') }}">
+            <form method="POST" action="{{ url_for('budget.step4') }}" class="validate-form">
                 {{ form.csrf_token }}
                 <div class="mb-3">
                     <label class="form-label">{{ trans('budget_monthly_savings_goal') | default('Monthly Savings Goal') }}</label>
@@ -26,11 +29,10 @@
 {% endblock %}
 {% block extra_scripts %}
 <script>
-// Format input with commas as you type
 function formatNumberInput(input) {
     const format = (val) => {
         let clean = val.replace(/[^0-9.]/g, '');
-        if (!clean) return '';
+        if !clean) return '';
         let parts = clean.split('.');
         parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
         return parts.join('.');
@@ -45,7 +47,6 @@ function formatNumberInput(input) {
     });
 }
 
-// Strip commas before submitting the form
 document.querySelector('form').addEventListener('submit', function() {
     document.querySelectorAll('input[type="text"], input[type="number"]').forEach(function(input) {
         input.value = input.value.replace(/,/g, '');
