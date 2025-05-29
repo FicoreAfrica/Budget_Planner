@@ -19,7 +19,6 @@
             background: linear-gradient(135deg, #1B5E20, #01579B);
         }
         .form-control.is-invalid ~ .invalid-feedback,
-        .form-select.is-invalid ~ .invalid-feedback,
         .form-check-input.is-invalid ~ .invalid-feedback {
             display: block;
         }
@@ -68,19 +67,6 @@
                     </label>
                     {{ form.email(class="form-control" ~ (' is-invalid' if form.email.errors else ''), placeholder=trans('core_email_placeholder') | default('e.g., muhammad@example.com'), **{'data-bs-toggle': 'tooltip', 'title': trans('core_email_tooltip') | default('Enter your email to receive quiz results'), 'aria-describedby': 'email_help'}) }}
                     {% for error in form.email.errors %}
-                        <div class="invalid-feedback">{{ trans(error) | default(error) }}</div>
-                    {% endfor %}
-                </div>
-                <div class="mb-3">
-                    <label class="form-label" for="{{ form.language.id }}">
-                        {% if hasattr(form.language, 'label') and form.language.label %}
-                            {{ form.language.label.text }}
-                        {% else %}
-                            {{ trans('core_language') | default('Language') }}
-                        {% endif %}
-                    </label>
-                    {{ form.language(class="form-select" ~ (' is-invalid' if form.language.errors else ''), **{'aria-label': 'Select Language'}) }}
-                    {% for error in form.language.errors %}
                         <div class="invalid-feedback">{{ trans(error) | default(error) }}</div>
                     {% endfor %}
                 </div>
