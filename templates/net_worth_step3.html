@@ -1,19 +1,17 @@
 {% extends "base.html" %}
 {% block title %}{{ trans('net_worth_calculator') | default('Net Worth Calculator') }}{% endblock %}
 {% block extra_head %}
-    <style>
-        .container {
-            max-width: 600px;
-            margin: 2rem auto;
-        }
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 {% endblock %}
 {% block content %}
-<div class="container">
-    <div class="header">
-        <h1>{{ trans('net_worth_calculator') | default('Net Worth Calculator') }}</h1>
-        <p>{{ trans('net_worth_enter_your_liabilities') | default('Enter your liabilities (optional)') }}</p>
-    </div>
+<div class="container step-container">
+    {% set tool_name = 'net_worth_calculator' | default('Net Worth Calculator') %}
+    {% set tool_icon = 'fa-balance-scale' %}
+    {% set subtitle = trans('net_worth_enter_your_liabilities') | default('Enter your liabilities (optional)') %}
+    {% set step = 3 %}
+    {% set total_steps = 3 %}
+    {% set step_labels = ['Personal Info', 'Assets', 'Liabilities'] %}
+    {% include 'tool_header.html' %}
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
@@ -26,16 +24,20 @@
     {% endwith %}
     <div class="card">
         <div class="card-body">
-            <form method="POST" action="{{ url_for('net_worth.step3') }}">
+            <form method="POST" action="{{ url_for('net_worth.step3') }}" id="step3Form">
                 {{ form.csrf_token }}
                 <div class="mb-3">
                     <label class="form-label">{{ trans('net_worth_loans') | default('Loans') }}</label>
-                    {{ form.loans(class="form-control number-input", placeholder=trans('net_worth_loans_placeholder') | default('e.g., 200,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('net_worth_loans_tooltip') | default('Money borrowed from friends, banks, colleagues, or mobile money')}) }}
+                    {{ form.loans(class="form-control number-input", placeholder=trans('net_worth_loans_placeholder') | default('e.g., 200,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('net_worth_loans_tooltip') | default('Money borrowed from friends, banks, colleagues, or mobile money'), 'type': 'text', 'aria-describedby': 'loansHelp'}) }}
                     <div class="invalid-feedback">{{ trans('net_worth_loans_must_be_positive') | default('Loans must be positive') }}</div>
                 </div>
                 <div class="d-flex justify-content-between">
-                    <a href="{{ url_for('net_worth.step2') }}" class="btn btn-secondary">{{ trans('core_back') | default('Back') }}</a>
-                    <button type="submit" class="btn btn-primary">{{ trans('net_worth_calculate_net_worth') | default('Calculate Net Worth') }}</button>
+                    <a href="{{ url_for('net_worth.step2') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> {{ trans('core_back') | default('Back') }}
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-calculator"></i> {{ trans('net_worth_calculate_net_worth') | default('Calculate Net Worth') }}
+                    </button>
                 </div>
             </form>
         </div>
@@ -52,7 +54,6 @@
             if (isNaN(num)) return '';
             return num.toLocaleString('en-NG', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
         };
-
         input.addEventListener('input', (e) => {
             const cursorPosition = e.target.selectionStart;
             const oldValue = e.target.value;
@@ -74,22 +75,19 @@
             const newCursorPosition = cursorPosition + cursorOffset;
             input.setSelectionRange(newCursorPosition, newCursorPosition);
         });
-
         input.addEventListener('paste', (e) => {
             e.preventDefault();
             const pasted = (e.clipboardData || window.clipboardData).getData('text');
             const cleanValue = pasted.replace(/[^0-9.]/g, '');
             input.value = formatNumber(cleanValue);
         });
-
         input.addEventListener('blur', () => {
             if (input.value) {
                 input.value = formatNumber(input.value);
             }
         });
     });
-
-    document.querySelector('form').addEventListener('submit', (e) => {
+    document.getElementById('step3Form').addEventListener('submit', (e) => {
         const inputs = document.querySelectorAll('.number-input');
         let valid = true;
         inputs.forEach(input => {
