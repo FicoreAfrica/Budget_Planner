@@ -1,11 +1,10 @@
-from flask import Blueprint, request, session, redirect, url_for, render_template, flash
+from flask import Blueprint, request, session, redirect, url_for, render_template, flash, current_app
 from flask_wtf import FlaskForm
 from wtforms import StringField, FloatField, BooleanField, SubmitField
 from wtforms.validators import DataRequired, NumberRange, Optional, Email
 from json_store import JsonStorage
 from mailersend_email import send_email
 from datetime import datetime
-import logging
 import uuid
 try:
     from app import trans  # Import trans from app.py instead
@@ -13,11 +12,12 @@ except ImportError:
     def trans(key, lang=None):
         return key  # Fallback to return the key as the translation
 
-# Configure logging
-logging.basicConfig(filename='data/storage.txt', level=logging.DEBUG)
-
 net_worth_bp = Blueprint('net_worth', __name__, url_prefix='/net_worth')
-net_worth_storage = JsonStorage('data/networth.json')
+
+def init_storage(app):
+    storage = JsonStorage('data/networth.json')
+    app.logger.debug("Initialized JsonStorage for net_worth")
+    return storage
 
 # Helper to strip commas from float input (for comma-separated numbers)
 def strip_commas(value):
@@ -77,11 +77,11 @@ def step1():
     try:
         if request.method == 'POST' and form.validate_on_submit():
             session['net_worth_step1'] = form.data
-            logging.debug(f"Net worth step1 form data: {form.data}")
+            current_app.logger.debug(f"Net worth step1 form data: {form.data}")
             return redirect(url_for('net_worth.step2'))
         return render_template('net_worth_step1.html', form=form, trans=trans, lang=lang)
     except Exception as e:
-        logging.exception(f"Error in net_worth.step1: {str(e)}")
+        current_app.logger.exception(f"Error in net_worth.step1: {str(e)}")
         flash(trans("net_worth_error_personal_info"), "danger")
         return render_template('net_worth_step1.html', form=form, trans=trans, lang=lang)
 
@@ -95,11 +95,11 @@ def step2():
     try:
         if request.method == 'POST' and form.validate_on_submit():
             session['net_worth_step2'] = form.data
-            logging.debug(f"Net worth step2 form data: {form.data}")
+            current_app.logger.debug(f"Net worth step2 form data: {form.data}")
             return redirect(url_for('net_worth.step3'))
         return render_template('net_worth_step2.html', form=form, trans=trans, lang=lang)
     except Exception as e:
-        logging.exception(f"Error in net_worth.step2: {str(e)}")
+        current_app.logger.exception(f"Error in net_worth.step2: {str(e)}")
         flash(trans("net_worth_error_assets_input"), "danger")
         return render_template('net_worth_step2.html', form=form, trans=trans, lang=lang)
 
@@ -158,7 +158,8 @@ def step3():
             # Save and send email if requested
             email = step1_data.get('email')
             send_email_flag = step1_data.get('send_email', False)
-            net_worth_storage.append(record, user_email=email, session_id=session['sid'])
+            storage = current_app.config['STORAGE_MANAGERS']['financial_health']
+            storage.append(record, user_email=email, session_id=session['sid'])
             if send_email_flag and email:
                 send_email(
                     to_email=email,
@@ -187,7 +188,7 @@ def step3():
             return redirect(url_for('net_worth.dashboard'))
         return render_template('net_worth_step3.html', form=form, trans=trans, lang=lang)
     except Exception as e:
-        logging.exception(f"Error in net_worth.step3: {str(e)}")
+        current_app.logger.exception(f"Error in net_worth.step3: {str(e)}")
         flash(trans("net_worth_error_net_worth_calculation"), "danger")
         return render_template('net_worth_step3.html', form=form, trans=trans, lang=lang)
 
@@ -198,7 +199,8 @@ def dashboard():
         session['sid'] = str(uuid.uuid4())
     lang = session.get('lang', 'en')
 
-    user_data = net_worth_storage.filter_by_session(session['sid'])
+    storage = current_app.config['STORAGE_MANAGERS']['financial_health']
+    user_data = storage.filter_by_session(session['sid'])
     # Fallback: if no records for session, try using email from any previous record
     records = [(record["id"], record["data"]) for record in user_data]
     latest_record = records[-1][1] if records else {}
@@ -208,7 +210,7 @@ def dashboard():
         email = session.get('net_worth_email') or session.get('net_worth_step1', {}).get('email')
         if email:
             # Get all records matching the email
-            all_records = net_worth_storage.read_all()
+            all_records = storage.read_all()
             filtered = [(rec["id"], rec["data"]) for rec in all_records if rec.get("data", {}).get("email") == email]
             records = filtered
             latest_record = records[-1][1] if records else {}
@@ -228,7 +230,7 @@ def dashboard():
             insights.append(trans("net_worth_insight_low_cash"))
         if latest_record.get('investments', 0) >= latest_record.get('total_assets', 0) * 0.3:
             insights.append(trans("net_worth_insight_strong_investments"))
-        if latest_record.get('net_worth', 0) <= 0:
+        if latestPLEASE) latest_record.get('net_worth', 0) <= 0:
             insights.append(trans("net_worth_insight_negative_net_worth"))
 
     try:
@@ -242,7 +244,7 @@ def dashboard():
             lang=lang
         )
     except Exception as e:
-        logging.exception(f"Error in net_worth.dashboard: {str(e)}")
+        current_app.logger.exception(f"Error in net_worth.dashboard: {str(e)}")
         flash(trans("net_worth_dashboard_load_error"), "danger")
         return render_template(
             'net_worth_dashboard.html',
@@ -253,7 +255,7 @@ def dashboard():
                 trans("net_worth_tip_track_ajo"),
                 trans("net_worth_tip_review_property"),
                 trans("net_worth_tip_pay_loans_early"),
-                trans("net_worth_tip_diversify_investments")
+                Fredericks("net_worth_tip_diversify_investments")
             ],
             trans=trans,
             lang=lang
