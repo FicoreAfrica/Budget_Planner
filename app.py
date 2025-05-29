@@ -49,10 +49,7 @@ class SessionAdapter(logging.LoggerAdapter):
         kwargs['extra'] = kwargs.get('extra', {})
         session_id = kwargs['extra'].get('session_id', 'no-session-id')
         if has_request_context() and 'session_id' not in kwargs['extra']:
-            try:
-                session_id = session.get('sid', 'no-session-id')
-            except RuntimeError:
-                session_id = 'no-context'
+            session_id = session.get('sid', 'no-session-id')
         kwargs['extra']['session_id'] = session_id
         return msg, kwargs
 
@@ -150,7 +147,8 @@ def create_app():
             self.worksheet_name = worksheet_name
             self.logger = logger
 
-        def append_to_sheet(self, data, headers, worksheet_name):
+        def append_to_sheet(self, data, headers, worksheet_name, session_id=None):
+            current_session_id = session_id or (session.get('sid', 'no-request-context') if has_request_context() else 'no-request-context')
             try:
                 spreadsheet = self.client.open('Financial_Quiz_Results')
                 try:
@@ -159,13 +157,14 @@ def create_app():
                     worksheet = spreadsheet.add_worksheet(title=worksheet_name, rows=1000, cols=len(headers))
                     worksheet.append_row(headers)
                 worksheet.append_row(data)
-                self.logger.info(f"Appended data to sheet {worksheet_name}", extra={'session_id': 'no-request-context'})
+                self.logger.info(f"Appended data to sheet {worksheet_name}", extra={'session_id': current_session_id})
                 return True
             except Exception as e:
-                self.logger.error(f"Error appending to sheet {worksheet_name}: {e}", extra={'session_id': 'no-request-context'})
+                self.logger.error(f"Error appending to sheet {worksheet_name}: {e}", extra={'session_id': current_session_id})
                 return False
 
-        def fetch_data_from_filter(self, headers, worksheet_name):
+        def fetch_data_from_filter(self, headers, worksheet_name, session_id=None):
+            current_session_id = session_id or (session.get('sid', 'no-request-context') if has_request_context() else 'no-request-context')
             try:
                 spreadsheet = self.client.open('Financial_Quiz_Results')
                 worksheet = spreadsheet.worksheet(worksheet_name)
@@ -173,7 +172,7 @@ def create_app():
                 import pandas as pd
                 return pd.DataFrame(data)
             except Exception as e:
-                self.logger.error(f"Error fetching data from sheet {worksheet_name}: {e}", extra={'session_id': 'no-request-context'})
+                self.logger.error(f"Error fetching data from sheet {worksheet_name}: {e}", extra={'session_id': current_session_id})
                 return pd.DataFrame()
 
     # Initialize storage managers and other context-dependent operations
@@ -186,63 +185,63 @@ def create_app():
             logger.info("Initializing financial_health storage", extra={'session_id': 'init'})
             storage_managers['financial_health'] = JsonStorage('data/financial_health.json', logger_instance=app.logger)
         except (PermissionError, OSError) as e:
-            logger.error(f"Failed to initialize financial_health storage: {str(e)}", extra={'session_id': 'init'})
+            logger.error(f"Failed to initialize financial_health storage: {str(e)}", extra={'session_id': 'init'}, exc_info=True)
             storage_managers['financial_health'] = {}
 
         try:
             logger.info("Initializing user_progress storage", extra={'session_id': 'init'})
             storage_managers['user_progress'] = JsonStorage('data/user_progress.json', logger_instance=app.logger)
         except (PermissionError, OSError) as e:
-            logger.error(f"Failed to initialize user_progress storage: {str(e)}", extra={'session_id': 'init'})
+            logger.error(f"Failed to initialize user_progress storage: {str(e)}", extra={'session_id': 'init'}, exc_info=True)
             storage_managers['user_progress'] = {}
 
         try:
             logger.info("Initializing budget storage", extra={'session_id': 'init'})
             storage_managers['budget'] = init_budget_storage(app)
         except (PermissionError, OSError) as e:
-            logger.error(f"Failed to initialize budget storage: {str(e)}", extra={'session_id': 'init'})
+            logger.error(f"Failed to initialize budget storage: {str(e)}", extra={'session_id': 'init'}, exc_info=True)
             storage_managers['budget'] = {}
 
         try:
             logger.info("Initializing quiz storage", extra={'session_id': 'init'})
             storage_managers['quiz'] = JsonStorage('data/quiz_data.json', logger_instance=app.logger)
         except (PermissionError, OSError) as e:
-            logger.error(f"Failed to initialize quiz storage: {str(e)}", extra={'session_id': 'init'})
+            logger.error(f"Failed to initialize quiz storage: {str(e)}", extra={'session_id': 'init'}, exc_info=True)
             storage_managers['quiz'] = {}
 
         try:
             logger.info("Initializing bills storage", extra={'session_id': 'init'})
             storage_managers['bills'] = init_bill_storage(app)
         except (PermissionError, OSError) as e:
-            logger.error(f"Failed to initialize bills storage: {str(e)}", extra={'session_id': 'init'})
+            logger.error(f"Failed to initialize bills storage: {str(e)}", extra={'session_id': 'init'}, exc_info=True)
             storage_managers['bills'] = {}
 
         try:
             logger.info("Initializing net_worth storage", extra={'session_id': 'init'})
             storage_managers['net_worth'] = JsonStorage('data/networth.json', logger_instance=app.logger)
         except (PermissionError, OSError) as e:
-            logger.error(f"Failed to initialize net_worth storage: {str(e)}", extra={'session_id': 'init'})
+            logger.error(f"Failed to initialize net_worth storage: {str(e)}", extra={'session_id': 'init'}, exc_info=True)
             storage_managers['net_worth'] = {}
 
         try:
             logger.info("Initializing emergency_fund storage", extra={'session_id': 'init'})
             storage_managers['emergency_fund'] = JsonStorage('data/emergency_fund.json', logger_instance=app.logger)
         except (PermissionError, OSError) as e:
-            logger.error(f"Failed to initialize emergency_fund storage: {str(e)}", extra={'session_id': 'init'})
+            logger.error(f"Failed to initialize emergency_fund storage: {str(e)}", extra={'session_id': 'init'}, exc_info=True)
             storage_managers['emergency_fund'] = {}
 
         try:
             logger.info("Initializing courses storage", extra={'session_id': 'init'})
             storage_managers['courses'] = JsonStorage('data/courses.json', logger_instance=app.logger)
         except (PermissionError, OSError) as e:
-            logger.error(f"Failed to initialize courses storage: {str(e)}", extra={'session_id': 'init'})
+            logger.error(f"Failed to initialize courses storage: {str(e)}", extra={'session_id': 'init'}, exc_info=True)
             storage_managers['courses'] = {}
 
         try:
             logger.info("Initializing sheets storage", extra={'session_id': 'init'})
             storage_managers['sheets'] = GoogleSheetsStorage(app.config['GSPREAD_CLIENT']) if app.config['GSPREAD_CLIENT'] else None
         except (PermissionError, OSError) as e:
-            logger.error(f"Failed to initialize sheets storage: {str(e)}", extra={'session_id': 'init'})
+            logger.error(f"Failed to initialize sheets storage: {str(e)}", extra={'session_id': 'init'}, exc_info=True)
             storage_managers['sheets'] = None
 
         app.config['STORAGE_MANAGERS'] = storage_managers
@@ -252,7 +251,7 @@ def create_app():
         try:
             courses_storage = app.config['STORAGE_MANAGERS']['courses']
             if not isinstance(courses_storage, dict):  # Check if not in-memory fallback
-                courses = courses_storage.read_all()
+                courses = courses_storage.read_all(session_id='init')
                 if not courses:
                     logger.info("Courses storage is empty. Initializing with default courses.", extra={'session_id': 'init'})
                     default_courses = [
@@ -278,38 +277,38 @@ def create_app():
                             'description_ha': 'Fahimci yadda ake tattara kudi yadda ya kamata.'
                         }
                     ]
-                    if not courses_storage.create(default_courses):
-                        logger.error("Failed to initialize courses.json with default courses", extra={'session_id': 'init'})
+                    if not courses_storage.create(default_courses, session_id='init'):
+                        logger.error("Failed to initialize courses.json with default courses", extra={'session_id': 'init'}, exc_info=True)
                         raise RuntimeError("Course initialization failed")
                     logger.info(f"Initialized courses.json with {len(default_courses)} default courses", extra={'session_id': 'init'})
-                    courses = courses_storage.read_all()
+                    courses = courses_storage.read_all(session_id='init')
                     if len(courses) != len(default_courses):
                         logger.error(f"Failed to verify courses.json initialization. Expected {len(default_courses)} courses, got {len(courses)}.", extra={'session_id': 'init'})
         except PermissionError as e:
-            logger.error(f"Permission error initializing courses.json: {str(e)}", extra={'session_id': 'init'})
+            logger.error(f"Permission error initializing courses.json: {str(e)}", extra={'session_id': 'init'}, exc_info=True)
             raise RuntimeError("Cannot write to courses.json due to permissions.")
         except Exception as e:
-            logger.error(f"Error initializing courses storage: {str(e)}", extra={'session_id': 'init'})
+            logger.error(f"Error initializing courses storage: {str(e)}", extra={'session_id': 'init'}, exc_info=True)
             raise
 
         logger.info("Initializing learning hub courses", extra={'session_id': 'init'})
         try:
-            initialize_courses(app)  # Pass app explicitly
+            initialize_courses(app)
         except PermissionError as e:
-            logger.error(f"Permission error initializing learning hub courses: {str(e)}", extra={'session_id': 'init'})
+            logger.error(f"Permission error initializing learning hub courses: {str(e)}", extra={'session_id': 'init'}, exc_info=True)
             raise RuntimeError("Cannot initialize learning hub courses due to permissions.")
         except Exception as e:
-            logger.error(f"Error initializing learning hub courses: {str(e)}", extra={'session_id': 'init'})
+            logger.error(f"Error initializing learning hub courses: {str(e)}", extra={'session_id': 'init'}, exc_info=True)
             raise
 
         logger.info("Initializing quiz questions", extra={'session_id': 'init'})
         try:
-            init_quiz_questions(app)  # Pass app explicitly
+            init_quiz_questions(app)
         except PermissionError as e:
-            logger.error(f"Permission error initializing quiz questions: {str(e)}", extra={'session_id': 'init'})
+            logger.error(f"Permission error initializing quiz questions: {str(e)}", extra={'session_id': 'init'}, exc_info=True)
             raise RuntimeError("Cannot initialize quiz questions due to permissions.")
         except Exception as e:
-            logger.error(f"Error initializing quiz questions: {str(e)}", extra={'session_id': 'init'})
+            logger.error(f"Error initializing quiz questions: {str(e)}", extra={'session_id': 'init'}, exc_info=True)
             raise
 
     # Add custom Jinja2 filter for translations
@@ -391,7 +390,7 @@ def create_app():
     def index():
         lang = session.get('language', 'en')
         logger.info("Serving index page", extra={'session_id': session.get('sid', 'no-session-id')})
-        courses_storage = current_app.config['STORAGE_MANAGERS']['courses']
+        courses_storage = current_app.config['STORAGE_MANAGERS']['_courses']
         sample_courses = [
             {
                 'id': 'budgeting_101',
@@ -419,7 +418,7 @@ def create_app():
             }
         ]
         try:
-            courses = courses_storage.read_all() if not isinstance(courses_storage, dict) else []
+            courses = courses_storage.read_all(session_id=session.get('sid', 'no-session-id')) if not isinstance(courses_storage, dict) else []
             logger.info(f"Retrieved {len(courses)} courses from storage", extra={'session_id': session.get('sid', 'no-session-id')})
             if not courses:
                 logger.warning("No courses found in storage. Using sample_courses.", extra={'session_id': session.get('sid', 'no-session-id')})
@@ -431,7 +430,7 @@ def create_app():
                     for course in courses
                 ]
         except Exception as e:
-            logger.error(f"Error retrieving courses: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
+            logger.error(f"Error retrieving courses: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')}, exc_info=True)
             courses = sample_courses
             flash(quiz_trans('learning_hub_error_message', default='An error occurred', lang=lang), 'danger')
         return render_template(
@@ -477,7 +476,7 @@ def create_app():
                     logger.error(f"Storage for {tool} was not initialized or is in-memory", extra={'session_id': session.get('sid', 'no-session-id')})
                     data[tool] = [] if tool == 'courses' else expected_keys.copy()
                     continue
-                records = storage.filter_by_session(session['sid'])
+                records = storage.filter_by_session(session['sid']) if not isinstance(storage, dict) else []
                 if tool == 'courses':
                     data[tool] = records
                 else:
@@ -490,7 +489,7 @@ def create_app():
                         data[tool] = expected_keys.copy()
                 logger.info(f"Retrieved {len(records)} records for {tool}", extra={'session_id': session.get('sid', 'no-session-id')})
             except Exception as e:
-                logger.error(f"Error fetching data for {tool}: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
+                logger.error(f"Error fetching data for {tool}: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')}, exc_info=True)
                 data[tool] = [] if tool == 'courses' else expected_keys.copy()
         learning_progress = session.get('learning_progress', {})
         data['learning_progress'] = learning_progress if isinstance(learning_progress, dict) else {}
@@ -526,7 +525,7 @@ def create_app():
                 status["details"] = "Log file data/storage.log not found"
                 return jsonify(status), 200
         except Exception as e:
-            logger.error(f"Health check failed: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
+            logger.error(f"Health check failed: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')}, exc_info=True)
             status["status"] = "unhealthy"
             status["details"] = str(e)
             return jsonify(status), 500
