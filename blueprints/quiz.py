@@ -698,7 +698,7 @@ def quiz_step(step_num):
             trans=trans,
             language=language,
             base_url=current_app.config.get('BASE_URL', '')
-        )), 500'
+        ), 500
 
 @quiz_bp.route('/results', methods=['GET'])
 def results():
