@@ -1,11 +1,5 @@
 from flask import Blueprint, render_template, session, request, redirect, url_for, flash, current_app
 from translations import trans  # Import the global trans function
-import logging
-import os
-
-# Set up logger with INFO level to reduce verbosity
-logger = logging.getLogger('ficore_app')
-logger.setLevel(logging.INFO)
 
 learning_hub_bp = Blueprint('learning_hub', __name__)
 
@@ -119,14 +113,14 @@ quizzes_data = {
     }
 }
 
-def initialize_courses():
-    """Initialize courses.json with default courses if empty."""
+def init_storage(app):
+    """Initialize storage with app context and logger."""
+    app.logger.info("Initializing courses storage.", extra={'session_id': 'no-request-context'})
     try:
-        courses_storage = current_app.config['STORAGE_MANAGERS']['courses']
+        courses_storage = app.config['STORAGE_MANAGERS']['courses']
         courses = courses_storage.read_all()
         if not courses:
-            logger.info("Courses storage is empty. Initializing with default courses.", extra={'session_id': 'no-request-context'})
-            # Convert courses_data to list format for courses.json
+            app.logger.info("Courses storage is empty. Initializing with default courses.", extra={'session_id': 'no-request-context'})
             default_courses = [
                 {
                     'id': course['id'],
@@ -137,25 +131,25 @@ def initialize_courses():
                 } for course in courses_data.values()
             ]
             if not courses_storage.create(default_courses):
-                logger.error("Failed to initialize courses.json with default courses", extra={'session_id': 'no-request-context'})
+                app.logger.error("Failed to initialize courses.json with default courses", extra={'session_id': 'no-request-context'})
                 raise RuntimeError("Course initialization failed")
-            logger.info(f"Initialized courses.json with {len(default_courses)} default courses", extra={'session_id': 'no-request-context'})
+            app.logger.info(f"Initialized courses.json with {len(default_courses)} default courses", extra={'session_id': 'no-request-context'})
     except Exception as e:
-        logger.error(f"Error initializing courses: {str(e)}", extra={'session_id': 'no-request-context'})
+        app.logger.error(f"Error initializing courses: {str(e)}", extra={'session_id': 'no-request-context'})
         raise
 
 def get_progress():
     try:
         return session.setdefault('learning_progress', {})
     except Exception as e:
-        logger.error(f"Error accessing session['learning_progress']: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
+        current_app.logger.error(f"Error accessing session['learning_progress']: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
         return {}
 
 def save_progress():
     try:
         session.modified = True
     except Exception as e:
-        logger.error(f"Error saving session: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
+        current_app.logger.error(f"Error saving session: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
 
 def course_lookup(course_id):
     return courses_data.get(course_id)
