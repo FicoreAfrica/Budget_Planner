@@ -7,7 +7,7 @@ from flask import Flask, render_template, request, session, redirect, url_for, f
 from flask_session import Session
 from flask_wtf.csrf import CSRFProtect, CSRFError
 from flask_mail import Mail
-from translations.translations import trans, get_translations
+from translations import trans, get_translations
 from translations.translations_quiz import trans as quiz_trans, get_translations as get_quiz_translations
 from blueprints.financial_health import financial_health_bp
 from blueprints.budget import budget_bp, init_budget_storage
