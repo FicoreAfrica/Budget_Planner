@@ -12,7 +12,7 @@ from translations.translations_quiz import trans as quiz_trans, get_translations
 from blueprints.financial_health import financial_health_bp
 from blueprints.budget import budget_bp, init_budget_storage
 from blueprints.quiz import quiz_bp
-from blueprints.bill import bill_bp
+from blueprints.bill import bill_bp, init_bill_storage
 from blueprints.net_worth import net_worth_bp
 from blueprints.emergency_fund import emergency_fund_bp
 from blueprints.learning_hub import learning_hub_bp
@@ -162,53 +162,55 @@ def create_app():
 
     # Initialize storage managers
     with app.app_context():
-    app.config['STORAGE_MANAGERS'] = {
-        'financial_health': JsonStorage('data/financial_health.json', logger_instance=logger),
-        'budget': init_budget_storage(app),
-        'quiz': JsonStorage('data/quiz_data.json', logger_instance=logger),
-        'bills': init_bill_storage(app),
-        'net_worth': JsonStorage('data/networth.json', logger_instance=logger),
-        'emergency_fund': JsonStorage('data/emergency_fund.json', logger_instance=logger),
-        'user_progress': JsonStorage('data/user_progress.json', logger_instance=logger),
-        'courses': JsonStorage('data/courses.json', logger_instance=logger),
-        'sheets': GoogleSheetsStorage(app.config['GSPREAD_CLIENT']) if app.config['GSPREAD_CLIENT'] else None
-    }
+        app.config['STORAGE_MANAGERS'] = {
+            'financial_health': JsonStorage('data/financial_health.json', logger_instance=logger),
+            'budget': init_budget_storage(app),
+            'quiz': JsonStorage('data/quiz_data.json', logger_instance=logger),
+            'bills': init_bill_storage(app),
+            'net_worth': JsonStorage('data/networth.json', logger_instance=logger),
+            'emergency_fund': JsonStorage('data/emergency_fund.json', logger_instance=logger),
+            'user_progress': JsonStorage('data/user_progress.json', logger_instance=logger),
+            'courses': JsonStorage('data/courses.json', logger_instance=logger),
+            'sheets': GoogleSheetsStorage(app.config['GSPREAD_CLIENT']) if app.config['GSPREAD_CLIENT'] else None
+        }
 
-    # Now safe to call read_all() or other session-dependent methods:
-    courses_storage = app.config['STORAGE_MANAGERS']['courses']
-    courses = courses_storage.read_all()
-    if not courses:
-        logger.info("Courses storage is empty. Initializing with default courses.")
-                default_courses = [
-                    {
-                        'id': 'budgeting_101',
-                        'title_en': 'Budgeting 101',
-                        'title_ha': 'Tsarin Kudi 101',
-                        'description_en': 'Learn the basics of budgeting.',
-                        'description_ha': 'Koyon asalin tsarin kudi.'
-                    },
-                    {
-                        'id': 'financial_quiz',
-                        'title_en': 'Financial Quiz',
-                        'title_ha': 'Jarabawar Kudi',
-                        'description_en': 'Test your financial knowledge.',
-                        'description_ha': 'Gwada ilimin ku na kudi.'
-                    },
-                    {
-                        'id': 'savings_basics',
-                        'title_en': 'Savings Basics',
-                        'title_ha': 'Asalin Tattara Kudi',
-                        'description_en': 'Understand how to save effectively.',
-                        'description_ha': 'Fahimci yadda ake tattara kudi yadda ya kamata.'
-                    }
-                ]
-                if not courses_storage.create(default_courses):
-                    logger.error("Failed to initialize courses.json with default courses")
-                    raise RuntimeError("Course initialization failed")
-                logger.info(f"Initialized courses.json with {len(default_courses)} default courses")
-                courses = courses_storage.read_all()
-                if len(courses) != len(default_courses):
-                    logger.error(f"Failed to verify courses.json initialization. Expected {len(default_courses)} courses, got {len(courses)}.")
+        # Now safe to call read_all() or other session-dependent methods:
+        courses_storage = app.config['STORAGE_MANAGERS']['courses']
+        courses = courses_storage.read_all()
+        if not courses:
+            logger.info("Courses storage is empty. Initializing with default courses.")
+            default_courses = [
+                {
+                    'id': 'budgeting_101',
+                    'title_en': 'Budgeting 101',
+                    'title_ha': 'Tsarin Kudi 101',
+                    'description_en': 'Learn the basics of budgeting.',
+                    'description_ha': 'Koyon asalin tsarin kudi.'
+                },
+                {
+                    'id': 'financial_quiz',
+                    'title_en': 'Financial Quiz',
+                    'title_ha': 'Jarabawar Kudi',
+                    'description_en': 'Test your financial knowledge.',
+                    'description_ha': 'Gwada ilimin ku na kudi.'
+                },
+                {
+                    'id': 'savings_basics',
+                    'title_en': 'Savings Basics',
+                    'title_ha': 'Asalin Tattara Kudi',
+                    'description_en': 'Understand how to save effectively.',
+                    'description_ha': 'Fahimci yadda ake tattara kudi yadda ya kamata.'
+                }
+            ]
+            if not courses_storage.create(default_courses):
+                logger.error("Failed to initialize courses.json with default courses")
+                raise RuntimeError("Course initialization failed")
+            logger.info(f"Initialized courses.json with {len(default_courses)} default courses")
+            courses = courses_storage.read_all()
+            if len(courses) != len(default_courses):
+                logger.error(f"Failed to verify courses.json initialization. Expected {len(default_courses)} courses, got {len(courses)}.")
+        try:
+            pass
         except PermissionError as e:
             logger.error(f"Permission error initializing courses.json: {str(e)}")
             raise RuntimeError("Cannot write to courses.json due to permissions.")
