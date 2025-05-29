@@ -122,6 +122,7 @@ def init_storage_managers(app):
         ('courses', '/tmp/courses.json' if os.environ.get('RENDER') else 'data/courses.json', lambda app: JsonStorage(path, logger_instance=app.logger)),
         ('budget', None, lambda app: JsonStorage('/tmp/budget.json' if os.environ.get('RENDER') else 'data/budget.json', logger_instance=app.logger)),
         ('bills', None, lambda app: JsonStorage('/tmp/bills.json' if os.environ.get('RENDER') else 'data/bills.json', logger_instance=app.logger)),
+        ('quiz', None, lambda app: JsonStorage('/tmp/quiz.json' if os.environ.get('RENDER') else 'data/quiz.json', logger_instance=app.logger)),
     ]:
         try:
             with app.app_context():
