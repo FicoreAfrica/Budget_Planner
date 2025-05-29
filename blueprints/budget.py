@@ -1,64 +1,90 @@
 from flask import Blueprint, request, session, redirect, url_for, render_template, flash, current_app
 from flask_wtf import FlaskForm
-from wtforms import StringField, FloatField, IntegerField, SelectField, SubmitField
-from wtforms.validators import DataRequired, Optional, Email, NumberRange
+from wtforms import StringField, FloatField, BooleanField, SubmitField
+from wtforms.validators import DataRequired, NumberRange, Optional, Email
 from json_store import JsonStorage
+from mailersend_email import send_email
 from datetime import datetime
 import uuid
 
 try:
     from app import trans
 except ImportError:
-    def trans(key, lang=None, **kwargs):
-        return key.format(**kwargs)
+    def trans(key, lang=None):
+        return key
 
-financial_health_bp = Blueprint('financial_health', __name__, url_prefix='/financial_health')
+budget_bp = Blueprint('budget', __name__, url_prefix='/budget')
 
-def init_financial_health_storage(app):
-    """Initialize financial_health_storage within app context."""
+def init_budget_storage(app):
+    """Initialize budget_storage within app context."""
     with app.app_context():
-        app.logger.info("Initializing financial health storage")
-        return JsonStorage('data/financial_health.json', logger_instance=app.logger)
+        app.logger.info("Initializing budget storage")
+        return JsonStorage('data/budget.json', logger_instance=app.logger)
 
-class CommaSeparatedFloatField(FloatField):
-    def process_formdata(self, valuelist):
-        if valuelist:
-            try:
-                self.data = float(valuelist[0].replace(',', ''))
-            except ValueError:
-                self.data = None
-                raise ValueError(self.gettext('Not a valid number'))
-
-class CommaSeparatedIntegerField(IntegerField):
-    def process_formdata(self, valuelist):
-        if valuelist:
-            try:
-                self.data = int(valuelist[0].replace(',', ''))
-            except ValueError:
-                self.data = None
-                raise ValueError(self.gettext('Not a number'))
+def strip_commas(value):
+    if isinstance(value, str):
+        return value.replace(',', '')
+    return value
 
 class Step1Form(FlaskForm):
-    first_name = StringField(trans('financial_health_first_name'), validators=[DataRequired(message=trans('required_first_name'))])
-    email = StringField(trans('financial_health_email'), validators=[Optional(), Email(message=trans('financial_health_email_invalid'))])
-    submit = SubmitField(trans('core_next'))
+    first_name = StringField(trans('budget_first_name'), validators=[DataRequired(message=trans('budget_first_name_required'))])
+    email = StringField(trans('budget_email'), validators=[Optional(), Email(message=trans('budget_email_invalid'))])
+    send_email = BooleanField(trans('budget_send_email'))
+    submit = SubmitField(trans('budget_next'))
 
 class Step2Form(FlaskForm):
-    monthly_income = CommaSeparatedFloatField(trans('financial_health_monthly_income'), validators=[DataRequired(message=trans('required_monthly_income')), NumberRange(min=0, max=10000000000, message=trans('financial_health_income_exceed'))])
-    monthly_expenses = CommaSeparatedFloatField(trans('financial_health_monthly_expenses'), validators=[DataRequired(message=trans('required_monthly_expenses')), NumberRange(min=0, max=10000000000, message=trans('financial_health_expenses_exceed'))])
-    submit = SubmitField(trans('core_next'))
+    income = FloatField(
+        trans('budget_monthly_income'),
+        validators=[
+            DataRequired(message=trans('budget_income_required')),
+            NumberRange(min=0, max=10000000000, message=trans('budget_income_max'))
+        ],
+        filters=[strip_commas]
+    )
+    submit = SubmitField(trans('budget_next'))
 
 class Step3Form(FlaskForm):
-    total_assets = CommaSeparatedFloatField(trans('financial_health_total_assets'), validators=[Optional(), NumberRange(min=0, max=10000000000, message=trans('financial_health_assets_max'))])
-    total_liabilities = CommaSeparatedFloatField(trans('financial_health_total_liabilities'), validators=[Optional(), NumberRange(min=0, max=10000000000, message=trans('financial_health_liabilities_max'))])
-    submit = SubmitField(trans('core_next'))
+    housing = FloatField(
+        trans('budget_housing_rent'),
+        validators=[DataRequired(message=trans('budget_housing_required')), NumberRange(min=0, message=trans('budget_amount_positive'))],
+        filters=[strip_commas]
+    )
+    food = FloatField(
+        trans('budget_food'),
+        validators=[DataRequired(message=trans('budget_food_required')), NumberRange(min=0, message=trans('budget_amount_positive'))],
+        filters=[strip_commas]
+    )
+    transport = FloatField(
+        trans('budget_transport'),
+        validators=[DataRequired(message=trans('budget_transport_required')), NumberRange(min=0, message=trans('budget_amount_positive'))],
+        filters=[strip_commas]
+    )
+    dependents = FloatField(
+        trans('budget_dependents_support'),
+        validators=[DataRequired(message=trans('budget_dependents_required')), NumberRange(min=0, message=trans('budget_amount_positive'))],
+        filters=[strip_commas]
+    )
+    miscellaneous = FloatField(
+        trans('budget_miscellaneous'),
+        validators=[DataRequired(message=trans('budget_miscellaneous_required')), NumberRange(min=0, message=trans('budget_amount_positive'))],
+        filters=[strip_commas]
+    )
+    others = FloatField(
+        trans('budget_others'),
+        validators=[DataRequired(message=trans('budget_others_required')), NumberRange(min=0, message=trans('budget_amount_positive'))],
+        filters=[strip_commas]
+    )
+    submit = SubmitField(trans('budget_next'))
 
 class Step4Form(FlaskForm):
-    emergency_fund_months = CommaSeparatedIntegerField(trans('financial_health_emergency_fund_months'), validators=[Optional(), NumberRange(min=0, max=100, message=trans('financial_health_emergency_fund_max'))])
-    debt_repayment_plan = SelectField(trans('financial_health_debt_repayment_plan'), choices=[('yes', trans('core_yes')), ('no', trans('core_no'))], validators=[DataRequired()])
-    submit = SubmitField(trans('financial_health_calculate_button'))
+    savings_goal = FloatField(
+        trans('budget_savings_goal'),
+        validators=[DataRequired(message=trans('budget_savings_goal_required')), NumberRange(min=0, message=trans('budget_amount_positive'))],
+        filters=[strip_commas]
+    )
+    submit = SubmitField(trans('budget_submit'))
 
-@financial_health_bp.route('/step1', methods=['GET', 'POST'])
+@budget_bp.route('/step1', methods=['GET', 'POST'])
 def step1():
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
@@ -66,168 +92,191 @@ def step1():
     form = Step1Form()
     try:
         if request.method == 'POST' and form.validate_on_submit():
-            session['financial_health_step1'] = {
-                'first_name': form.first_name.data,
-                'email': form.email.data
-            }
-            return redirect(url_for('financial_health.step2'))
-        return render_template('financial_health_step1.html', form=form, step=1, trans=trans, lang=lang)
+            session['budget_step1'] = form.data
+            current_app.logger.debug(f"Budget step1 form data: {form.data}")
+            return redirect(url_for('budget.step2'))
+        return render_template('budget_step1.html', form=form, trans=trans, lang=lang)
     except Exception as e:
-        current_app.logger.exception(f"Error in step1: {str(e)}")
-        flash(trans('an_unexpected_error_occurred'), 'danger')
-        return render_template('financial_health_step1.html', form=form, step=1, trans=trans, lang=lang)
+        current_app.logger.exception(f"Error in budget.step1: {str(e)}")
+        flash(trans("budget_error_personal_info"), "danger")
+        return render_template('budget_step1.html', form=form, trans=trans, lang=lang)
 
-@financial_health_bp.route('/step2', methods=['GET', 'POST'])
+@budget_bp.route('/step2', methods=['GET', 'POST'])
 def step2():
-    if 'sid' not in session or 'financial_health_step1' not in session:
-        flash(trans('financial_health_missing_step1'), 'danger')
-        return redirect(url_for('financial_health.step1'))
+    if 'sid' not in session:
+        session['sid'] = str(uuid.uuid4())
     lang = session.get('lang', 'en')
     form = Step2Form()
     try:
         if request.method == 'POST' and form.validate_on_submit():
-            session['financial_health_step2'] = {
-                'monthly_income': form.monthly_income.data,
-                'monthly_expenses': form.monthly_expenses.data
-            }
-            return redirect(url_for('financial_health.step3'))
-        return render_template('financial_health_step2.html', form=form, step=2, trans=trans, lang=lang)
+            session['budget_step2'] = form.data
+            current_app.logger.debug(f"Budget step2 form data: {form.data}")
+            return redirect(url_for('budget.step3'))
+        return render_template('budget_step2.html', form=form, trans=trans, lang=lang)
     except Exception as e:
-        current_app.logger.exception(f"Error in step2: {str(e)}")
-        flash(trans('an_unexpected_error_occurred'), 'danger')
-        return render_template('financial_health_step2.html', form=form, step=2, trans=trans, lang=lang)
+        current_app.logger.exception(f"Error in budget.step2: {str(e)}")
+        flash(trans("budget_error_income_invalid"), "danger")
+        return render_template('budget_step2.html', form=form, trans=trans, lang=lang)
 
-@financial_health_bp.route('/step3', methods=['GET', 'POST'])
+@budget_bp.route('/step3', methods=['GET', 'POST'])
 def step3():
-    if 'sid' not in session or 'financial_health_step2' not in session:
-        flash(trans('financial_health_missing_step2'), 'danger')
-        return redirect(url_for('financial_health.step1'))
+    if 'sid' not in session:
+        session['sid'] = str(uuid.uuid4())
     lang = session.get('lang', 'en')
     form = Step3Form()
     try:
         if request.method == 'POST' and form.validate_on_submit():
-            session['financial_health_step3'] = {
-                'total_assets': form.total_assets.data,
-                'total_liabilities': form.total_liabilities.data
-            }
-            return redirect(url_for('financial_health.step4'))
-        return render_template('financial_health_step3.html', form=form, step=3, trans=trans, lang=lang)
+            session['budget_step3'] = form.data
+            current_app.logger.debug(f"Budget step3 form data: {form.data}")
+            return redirect(url_for('budget.step4'))
+        return render_template('budget_step3.html', form=form, trans=trans, lang=lang)
     except Exception as e:
-        current_app.logger.exception(f"Error in step3: {str(e)}")
-        flash(trans('an_unexpected_error_occurred'), 'danger')
-        return render_template('financial_health_step3.html', form=form, step=3, trans=trans, lang=lang)
+        current_app.logger.exception(f"Error in budget.step3: {str(e)}")
+        flash(trans("budget_error_expenses_invalid"), "danger")
+        return render_template('budget_step3.html', form=form, trans=trans, lang=lang)
 
-@financial_health_bp.route('/step4', methods=['GET', 'POST'])
+@budget_bp.route('/step4', methods=['GET', 'POST'])
 def step4():
-    if 'sid' not in session or 'financial_health_step3' not in session:
-        flash(trans('financial_health_missing_step3'), 'danger')
-        return redirect(url_for('financial_health.step1'))
+    if 'sid' not in session:
+        session['sid'] = str(uuid.uuid4())
     lang = session.get('lang', 'en')
     form = Step4Form()
     try:
         if request.method == 'POST' and form.validate_on_submit():
-            step1_data = session['financial_health_step1']
-            step2_data = session['financial_health_step2']
-            step3_data = session['financial_health_step3']
-            emergency_fund_months = form.emergency_fund_months.data or 0
-            debt_repayment_plan = form.debt_repayment_plan.data == 'yes'
-            savings_rate = ((step2_data['monthly_income'] - step2_data['monthly_expenses']) / step2_data['monthly_income']) * 100 if step2_data['monthly_income'] > 0 else 0
-            debt_to_income_ratio = (step3_data['total_liabilities'] / step2_data['monthly_income']) * 12 * 100 if step2_data['monthly_income'] > 0 and step3_data['total_liabilities'] else 0
-            net_worth = (step3_data['total_assets'] or 0) - (step3_data['total_liabilities'] or 0)
-            score = 0
-            recommendations = []
-            if savings_rate >= 20:
-                score += 25
-            elif savings_rate < 10:
-                recommendations.append(trans('financial_health_recommendation_savings_rate'))
-            if debt_to_income_ratio < 36:
-                score += 25
-            elif debt_to_income_ratio > 43:
-                recommendations.append(trans('financial_health_recommendation_debt_to_income'))
-            if emergency_fund_months >= 6:
-                score += 25
-            elif emergency_fund_months < 3:
-                recommendations.append(trans('financial_health_recommendation_emergency_fund'))
-            if debt_repayment_plan:
-                score += 25
-            else:
-                recommendations.append(trans('financial_health_recommendation_debt_repayment_plan'))
-            status = 'Excellent' if score >= 80 else 'Good' if score >= 60 else 'Needs Improvement'
+            data = form.data
+            step1_data = session.get('budget_step1', {})
+            step2_data = session.get('budget_step2', {})
+            step3_data = session.get('budget_step3', {})
+            income = step2_data.get('income', 0)
+            expenses = sum([
+                step3_data.get('housing', 0),
+                step3_data.get('food', 0),
+                step3_data.get('transport', 0),
+                step3_data.get('dependents', 0),
+                step3_data.get('miscellaneous', 0),
+                step3_data.get('others', 0)
+            ])
+            surplus_deficit = income - expenses - data['savings_goal']
             record = {
-                'id': str(uuid.uuid4()),
-                'session_id': session['sid'],
-                'data': {
-                    'first_name': step1_data.get('first_name'),
-                    'email': step1_data.get('email'),
-                    'language': lang,
-                    'monthly_income': step2_data.get('monthly_income'),
-                    'monthly_expenses': step2_data.get('monthly_expenses'),
-                    'total_assets': step3_data.get('total_assets', 0),
-                    'total_liabilities': step3_data.get('total_liabilities', 0),
-                    'emergency_fund_months': emergency_fund_months,
-                    'debt_repayment_plan': debt_repayment_plan,
-                    'savings_rate': round(savings_rate, 2),
-                    'debt_to_income_ratio': round(debt_to_income_ratio, 2),
-                    'net_worth': round(net_worth, 2),
-                    'score': score,
-                    'status': status,
-                    'recommendations': recommendations,
-                    'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                "id": str(uuid.uuid4()),
+                "data": {
+                    "first_name": step1_data.get('first_name', ''),
+                    "email": step1_data.get('email', ''),
+                    "income": income,
+                    "expenses": expenses,
+                    "housing": step3_data.get('housing', 0),
+                    "food": step3_data.get('food', 0),
+                    "transport": step3_data.get('transport', 0),
+                    "dependents": step3_data.get('dependents', 0),
+                    "miscellaneous": step3_data.get('miscellaneous', 0),
+                    "others": step3_data.get('others', 0),
+                    "savings_goal": data['savings_goal'],
+                    "surplus_deficit": surplus_deficit,
+                    "created_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 }
             }
-            financial_health_storage = current_app.config['STORAGE_MANAGERS']['financial_health']
-            financial_health_storage.append(record, user_email=step1_data.get('email'), session_id=session['sid'])
-            flash(trans('financial_health_completed_successfully'), 'success')
-            for key in ['financial_health_step1', 'financial_health_step2', 'financial_health_step3']:
-                session.pop(key, None)
-            return redirect(url_for('financial_health.dashboard'))
-        return render_template('financial_health_step4.html', form=form, step=4, trans=trans, lang=lang)
+            email = step1_data.get('email')
+            send_email_flag = step1_data.get('send_email', False)
+            budget_storage = current_app.config['STORAGE_MANAGERS']['budget']
+            budget_storage.append(record, user_email=email, session_id=session['sid'])
+            if send_email_flag and email:
+                send_email(
+                    to_email=email,
+                    subject=trans("budget_plan_summary"),
+                    template_name="budget_email.html",
+                    data={
+                        "first_name": record["data"]["first_name"],
+                        "income": record["data"]["income"],
+                        "expenses": record["data"]["expenses"],
+                        "housing": record["data"]["housing"],
+                        "food": record["data"]["food"],
+                        "transport": record["data"]["transport"],
+                        "dependents": record["data"]["dependents"],
+                        "miscellaneous": record["data"]["miscellaneous"],
+                        "others": record["data"]["others"],
+                        "savings_goal": record["data"]["savings_goal"],
+                        "surplus_deficit": record["data"]["surplus_deficit"],
+                        "created_at": record["data"]["created_at"],
+                        "cta_url": url_for('budget.dashboard', _external=True)
+                    },
+                    lang=lang
+                )
+            session.pop('budget_step1', None)
+            session.pop('budget_step2', None)
+            session.pop('budget_step3', None)
+            flash(trans("budget_budget_completed_success"), "success")
+            return redirect(url_for('budget.dashboard'))
+        return render_template('budget_step4.html', form=form, trans=trans, lang=lang)
     except Exception as e:
-        current_app.logger.exception(f"Error in step4: {str(e)}")
-        flash(trans('an_unexpected_error_occurred'), 'danger')
-        return render_template('financial_health_step4.html', form=form, step=4, trans=trans, lang=lang)
+        current_app.logger.exception(f"Error in budget.step4: {str(e)}")
+        flash(trans("budget_budget_process_error"), "danger")
+        return render_template('budget_step4.html', form=form, trans=trans, lang=lang)
 
-@financial_health_bp.route('/dashboard', methods=['GET'])
+@budget_bp.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
     lang = session.get('lang', 'en')
     try:
-        financial_health_storage = current_app.config['STORAGE_MANAGERS']['financial_health']
-        user_data = financial_health_storage.filter_by_session(session['sid'])
-        email = None
-        if not user_data and 'financial_health_step1' in session and session['financial_health_step1'].get('email'):
-            email = session['financial_health_step1']['email']
-            user_data = financial_health_storage.filter_by_email(email)
-        records = [(record['id'], record['data']) for record in user_data]
-        latest_record = records[-1][1] if records else {}
+        budget_storage = current_app.config['STORAGE_MANAGERS']['budget']
+        user_data = budget_storage.filter_by_session(session['sid'])
+        budgets = [(record["id"], record["data"]) for record in user_data]
+        latest_budget = budgets[-1][1] if budgets else {}
+
+        if request.method == 'POST':
+            action = request.form.get('action')
+            budget_id = request.form.get('budget_id')
+
+            if action == 'delete':
+                try:
+                    if budget_storage.delete_by_id(budget_id):
+                        flash(trans("budget_budget_deleted_success"), "success")
+                    else:
+                        flash(trans("budget_budget_delete_failed"), "danger")
+                        current_app.logger.error(f"Failed to delete budget ID {budget_id}")
+                    return redirect(url_for('budget.dashboard'))
+                except Exception as e:
+                    current_app.logger.exception(f"Error deleting budget item: {str(e)}")
+                    flash(trans("budget_budget_delete_error"), "danger")
+                    return redirect(url_for('budget.dashboard'))
+
         tips = [
-            trans('financial_health_tip_budget'),
-            trans('financial_health_tip_emergency_fund'),
-            trans('financial_health_tip_debt'),
-            trans('financial_health_tip_invest'),
+            trans("budget_tip_track_expenses"),
+            trans("budget_tip_ajo_savings"),
+            trans("budget_tip_data_subscriptions"),
+            trans("budget_tip_plan_dependents")
         ]
+        insights = []
+        if latest_budget.get('surplus_deficit', 0) < 0:
+            insights.append(trans("budget_insight_budget_deficit"))
+        elif latest_budget.get('surplus_deficit', 0) > 0:
+            insights.append(trans("budget_insight_budget_surplus"))
+        if latest_budget.get('savings_goal', 0) == 0:
+            insights.append(trans("budget_insight_set_savings_goal"))
+
         return render_template(
-            'financial_health_dashboard.html',
-            records=records,
-            latest_record=latest_record,
+            'budget_dashboard.html',
+            budgets=budgets,
+            latest_budget=latest_budget,
             tips=tips,
+            insights=insights,
             trans=trans,
             lang=lang
         )
     except Exception as e:
-        current_app.logger.exception(f"Error in dashboard: {str(e)}")
-        flash(trans('financial_health_load_dashboard_error'), 'danger')
+        current_app.logger.exception(f"Error in budget.dashboard: {str(e)}")
+        flash(trans("budget_dashboard_load_error"), "danger")
         return render_template(
-            'financial_health_dashboard.html',
-            records=[],
-            latest_record={},
+            'budget_dashboard.html',
+            budgets=[],
+            latest_budget={},
             tips=[
-                trans('financial_health_tip_budget'),
-                trans('financial_health_tip_emergency_fund'),
-                trans('financial_health_tip_debt'),
-                trans('financial_health_tip_invest'),
+                trans("budget_tip_track_expenses"),
+                trans("budget_tip_ajo_savings"),
+                trans("budget_tip_data_subscriptions"),
+                trans("budget_tip_plan_dependents")
             ],
+            insights=[],
             trans=trans,
             lang=lang
         )
