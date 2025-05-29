@@ -1,3 +1,4 @@
+import logging
 import os
 import requests
 from flask import Flask, session, has_request_context, render_template
