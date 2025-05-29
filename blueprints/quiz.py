@@ -386,7 +386,7 @@ def generate_insights_and_tips(personality: str, language: str = 'en'):
     insights = [trans(f'quiz_{personality.lower()}_insight', lang=language)]
     tips = [
         trans(f'quiz_{personality.lower()}_tip', lang=language),
-        trans('quiz_use_budgeting_app', lang=houston,language),
+        trans('quiz_use_budgeting_app', lang=language),
         trans('quiz_set_emergency_fund', lang=language),
         trans('quiz_review_goals', lang=language)
     ]
