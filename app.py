@@ -184,58 +184,58 @@ def create_app():
         # Initialize each storage manager with fallback
         try:
             logger.info("Initializing financial_health storage", extra={'session_id': 'init'})
-            storage_managers['financial_health'] = JsonStorage('financial_health.json', logger_instance=logger)
+            storage_managers['financial_health'] = JsonStorage('data/financial_health.json', logger_instance=app.logger)
         except (PermissionError, OSError) as e:
-            logger.error(f"Failed to initialize financial_health storage: {str(e)}. Using in-memory storage.", extra={'session_id': 'init'})
+            logger.error(f"Failed to initialize financial_health storage: {str(e)}", extra={'session_id': 'init'})
             storage_managers['financial_health'] = {}
 
         try:
             logger.info("Initializing user_progress storage", extra={'session_id': 'init'})
-            storage_managers['user_progress'] = JsonStorage('user_progress.json', logger_instance=logger)
+            storage_managers['user_progress'] = JsonStorage('data/user_progress.json', logger_instance=app.logger)
         except (PermissionError, OSError) as e:
-            logger.error(f"Failed to initialize user_progress storage: {str(e)}. Using in-memory storage.", extra={'session_id': 'init'})
+            logger.error(f"Failed to initialize user_progress storage: {str(e)}", extra={'session_id': 'init'})
             storage_managers['user_progress'] = {}
 
         try:
             logger.info("Initializing budget storage", extra={'session_id': 'init'})
             storage_managers['budget'] = init_budget_storage(app)
         except (PermissionError, OSError) as e:
-            logger.error(f"Failed to initialize budget storage: {str(e)}. Using in-memory storage.", extra={'session_id': 'init'})
+            logger.error(f"Failed to initialize budget storage: {str(e)}", extra={'session_id': 'init'})
             storage_managers['budget'] = {}
 
         try:
             logger.info("Initializing quiz storage", extra={'session_id': 'init'})
-            storage_managers['quiz'] = JsonStorage('quiz_data.json', logger_instance=logger)
+            storage_managers['quiz'] = JsonStorage('data/quiz_data.json', logger_instance=app.logger)
         except (PermissionError, OSError) as e:
-            logger.error(f"Failed to initialize quiz storage: {str(e)}. Using in-memory storage.", extra={'session_id': 'init'})
+            logger.error(f"Failed to initialize quiz storage: {str(e)}", extra={'session_id': 'init'})
             storage_managers['quiz'] = {}
 
         try:
             logger.info("Initializing bills storage", extra={'session_id': 'init'})
             storage_managers['bills'] = init_bill_storage(app)
         except (PermissionError, OSError) as e:
-            logger.error(f"Failed to initialize bills storage: {str(e)}. Using in-memory storage.", extra={'session_id': 'init'})
+            logger.error(f"Failed to initialize bills storage: {str(e)}", extra={'session_id': 'init'})
             storage_managers['bills'] = {}
 
         try:
             logger.info("Initializing net_worth storage", extra={'session_id': 'init'})
-            storage_managers['net_worth'] = JsonStorage('networth.json', logger_instance=logger)
+            storage_managers['net_worth'] = JsonStorage('data/networth.json', logger_instance=app.logger)
         except (PermissionError, OSError) as e:
-            logger.error(f"Failed to initialize net_worth storage: {str(e)}. Using in-memory storage.", extra={'session_id': 'init'})
+            logger.error(f"Failed to initialize net_worth storage: {str(e)}", extra={'session_id': 'init'})
             storage_managers['net_worth'] = {}
 
         try:
             logger.info("Initializing emergency_fund storage", extra={'session_id': 'init'})
-            storage_managers['emergency_fund'] = JsonStorage('emergency_fund.json', logger_instance=logger)
+            storage_managers['emergency_fund'] = JsonStorage('data/emergency_fund.json', logger_instance=app.logger)
         except (PermissionError, OSError) as e:
-            logger.error(f"Failed to initialize emergency_fund storage: {str(e)}. Using in-memory storage.", extra={'session_id': 'init'})
+            logger.error(f"Failed to initialize emergency_fund storage: {str(e)}", extra={'session_id': 'init'})
             storage_managers['emergency_fund'] = {}
 
         try:
             logger.info("Initializing courses storage", extra={'session_id': 'init'})
-            storage_managers['courses'] = JsonStorage('courses.json', logger_instance=logger)
+            storage_managers['courses'] = JsonStorage('data/courses.json', logger_instance=app.logger)
         except (PermissionError, OSError) as e:
-            logger.error(f"Failed to initialize courses storage: {str(e)}. Using in-memory storage.", extra={'session_id': 'init'})
+            logger.error(f"Failed to initialize courses storage: {str(e)}", extra={'session_id': 'init'})
             storage_managers['courses'] = {}
 
         try:
@@ -294,7 +294,7 @@ def create_app():
 
         logger.info("Initializing learning hub courses", extra={'session_id': 'init'})
         try:
-            initialize_courses()
+            initialize_courses(app)  # Pass app explicitly
         except PermissionError as e:
             logger.error(f"Permission error initializing learning hub courses: {str(e)}", extra={'session_id': 'init'})
             raise RuntimeError("Cannot initialize learning hub courses due to permissions.")
@@ -304,7 +304,7 @@ def create_app():
 
         logger.info("Initializing quiz questions", extra={'session_id': 'init'})
         try:
-            init_quiz_questions(app)
+            init_quiz_questions(app)  # Pass app explicitly
         except PermissionError as e:
             logger.error(f"Permission error initializing quiz questions: {str(e)}", extra={'session_id': 'init'})
             raise RuntimeError("Cannot initialize quiz questions due to permissions.")
@@ -391,7 +391,7 @@ def create_app():
     def index():
         lang = session.get('language', 'en')
         logger.info("Serving index page", extra={'session_id': session.get('sid', 'no-session-id')})
-        courses_storage = app.config['STORAGE_MANAGERS']['courses']
+        courses_storage = current_app.config['STORAGE_MANAGERS']['courses']
         sample_courses = [
             {
                 'id': 'budgeting_101',
@@ -471,7 +471,7 @@ def create_app():
             'net_worth': None,
             'savings_gap': None
         }
-        for tool, storage in app.config['STORAGE_MANAGERS'].items():
+        for tool, storage in current_app.config['STORAGE_MANAGERS'].items():
             try:
                 if storage is None or isinstance(storage, dict):
                     logger.error(f"Storage for {tool} was not initialized or is in-memory", extra={'session_id': session.get('sid', 'no-session-id')})
@@ -512,12 +512,12 @@ def create_app():
         logger.info("Health check requested", extra={'session_id': session.get('sid', 'no-session-id')})
         status = {"status": "healthy"}
         try:
-            for tool, storage in app.config['STORAGE_MANAGERS'].items():
+            for tool, storage in current_app.config['STORAGE_MANAGERS'].items():
                 if storage is None or isinstance(storage, dict):
                     status["status"] = "unhealthy"
                     status["details"] = f"Storage for {tool} failed to initialize or is in-memory"
                     return jsonify(status), 500
-            if app.config['GSPREAD_CLIENT'] is None:
+            if current_app.config['GSPREAD_CLIENT'] is None:
                 status["status"] = "unhealthy"
                 status["details"] = "Google Sheets client not initialized"
                 return jsonify(status), 500
@@ -536,7 +536,7 @@ def create_app():
     @app.errorhandler(Exception)
     def handle_global_error(e):
         lang = session.get('language', 'en')
-        logger.error(f"Global error: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
+        logger.error(f"Global error: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')}, exc_info=True)
         flash(quiz_trans('global_error_message', default='An error occurred', lang=lang), 'danger')
         return render_template('index.html', error=quiz_trans('global_error_message', default='An error occurred', lang=lang), t=quiz_trans, lang=lang)
 
@@ -564,7 +564,12 @@ def create_app():
 
     return app
 
-app = create_app()
+# Create app with error handling
+try:
+    app = create_app()
+except Exception as e:
+    logger.critical(f"Error creating app: {str(e)}", exc_info=True)
+    raise
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
