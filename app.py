@@ -15,7 +15,7 @@ from blueprints.quiz import quiz_bp
 from blueprints.bill import bill_bp, init_bill_storage
 from blueprints.net_worth import net_worth_bp
 from blueprints.emergency_fund import emergency_fund_bp
-from blueprints.learning_hub import learning_hub_bp
+from blueprints.learning_hub import learning_hub_bp, initialize_courses
 from json_store import JsonStorage
 import gspread
 from google.oauth2.service_account import Credentials
@@ -175,42 +175,59 @@ def create_app():
             'sheets': GoogleSheetsStorage(app.config['GSPREAD_CLIENT']) if app.config['GSPREAD_CLIENT'] else None
         }
 
-        logger.info("Checking courses storage")
-        courses_storage = app.config['STORAGE_MANAGERS']['courses']
-        courses = courses_storage.read_all()
-        if not courses:
-            logger.info("Courses storage is empty. Initializing with default courses.")
-            default_courses = [
-                {
-                    'id': 'budgeting_101',
-                    'title_en': 'Budgeting 101',
-                    'title_ha': 'Tsarin Kudi 101',
-                    'description_en': 'Learn the basics of budgeting.',
-                    'description_ha': 'Koyon asalin tsarin kudi.'
-                },
-                {
-                    'id': 'financial_quiz',
-                    'title_en': 'Financial Quiz',
-                    'title_ha': 'Jarabawar Kudi',
-                    'description_en': 'Test your financial knowledge.',
-                    'description_ha': 'Gwada ilimin ku na kudi.'
-                },
-                {
-                    'id': 'savings_basics',
-                    'title_en': 'Savings Basics',
-                    'title_ha': 'Asalin Tattara Kudi',
-                    'description_en': 'Understand how to save effectively.',
-                    'description_ha': 'Fahimci yadda ake tattara kudi yadda ya kamata.'
-                }
-            ]
-            if not courses_storage.create(default_courses):
-                logger.error("Failed to initialize courses.json with default courses")
-                raise RuntimeError("Course initialization failed")
-            logger.info(f"Initialized courses.json with {len(default_courses)} default courses")
+        logger.info("Initializing courses")
+        try:
+            courses_storage = app.config['STORAGE_MANAGERS']['courses']
             courses = courses_storage.read_all()
-            if len(courses) != len(default_courses):
-                logger.error(f"Failed to verify courses.json initialization. Expected {len(default_courses)} courses, got {len(courses)}.")
-        
+            if not courses:
+                logger.info("Courses storage is empty. Initializing with default courses.")
+                default_courses = [
+                    {
+                        'id': 'budgeting_101',
+                        'title_en': 'Budgeting 101',
+                        'title_ha': 'Tsarin Kudi 101',
+                        'description_en': 'Learn the basics of budgeting.',
+                        'description_ha': 'Koyon asalin tsarin kudi.'
+                    },
+                    {
+                        'id': 'financial_quiz',
+                        'title_en': 'Financial Quiz',
+                        'title_ha': 'Jarabawar Kudi',
+                        'description_en': 'Test your financial knowledge.',
+                        'description_ha': 'Gwada ilimin ku na kudi.'
+                    },
+                    {
+                        'id': 'savings_basics',
+                        'title_en': 'Savings Basics',
+                        'title_ha': 'Asalin Tattara Kudi',
+                        'description_en': 'Understand how to save effectively.',
+                        'description_ha': 'Fahimci yadda ake tattara kudi yadda ya kamata.'
+                    }
+                ]
+                if not courses_storage.create(default_courses):
+                    logger.error("Failed to initialize courses.json with default courses")
+                    raise RuntimeError("Course initialization failed")
+                logger.info(f"Initialized courses.json with {len(default_courses)} default courses")
+                courses = courses_storage.read_all()
+                if len(courses) != len(default_courses):
+                    logger.error(f"Failed to verify courses.json initialization. Expected {len(default_courses)} courses, got {len(courses)}.")
+        except PermissionError as e:
+            logger.error(f"Permission error initializing courses.json: {str(e)}")
+            raise RuntimeError("Cannot write to courses.json due to permissions.")
+        except Exception as e:
+            logger.error(f"Error initializing courses storage: {str(e)}")
+            raise
+
+        logger.info("Initializing learning hub courses")
+        try:
+            initialize_courses()
+        except PermissionError as e:
+            logger.error(f"Permission error initializing learning hub courses: {str(e)}")
+            raise RuntimeError("Cannot initialize learning hub courses due to permissions.")
+        except Exception as e:
+            logger.error(f"Error initializing learning hub courses: {str(e)}")
+            raise
+
         logger.info("Initializing quiz questions")
         try:
             init_quiz_questions(app)
@@ -418,7 +435,6 @@ def create_app():
     @app.route('/health')
     @session_required
     def health():
-        lang = session.get('language', 'en')
         logger.info("Health check requested")
         status = {"status": "healthy"}
         try:
