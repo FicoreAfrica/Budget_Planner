@@ -1,9 +1,16 @@
 {% extends "base.html" %}
+{% block title %}
+{{ trans('learning_hub_courses') }}
+{% endblock %}
+{% block extra_head %}
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+{% endblock %}
 {% block content %}
 <div class="container">
-    <div class="header">
-        <h1>{{ trans('learning_hub_courses') }}</h1>
-    </div>
+    {% set tool_name = 'learning_hub_courses' %}
+    {% set tool_icon = 'fa-graduation-cap' %}
+    {% set subtitle = trans('learning_hub_courses_subtitle', default='Explore our financial education courses') %}
+    {% include 'tool_header.html' %}
     <div class="row mt-4">
         {% for course_id, course in courses.items() %}
         <div class="col-md-4 mb-4">
@@ -15,17 +22,16 @@
                         <br>
                         {% set cp = progress.get(course_id, {}) %}
                         {% if cp.lessons_completed %}
-                            <span class="badge bg-success">
+                            <span class="badge badge-success">
+                                <i class="fas fa-check"></i>
                                 {{ cp.lessons_completed|length }}/
-                                {{
-                                    course['modules']|sum(attribute='lessons'|length)
-                                }}
+                                {{ course['modules']|sum(attribute='lessons'|length) }}
                                 {{ trans('learning_hub_lessons_completed') }}
                             </span>
                         {% endif %}
                     </p>
                     <a href="{{ url_for('learning_hub.course_overview', course_id=course_id) }}" class="btn btn-primary">
-                        {{ trans('learning_hub_start_course') }}
+                        <i class="fas fa-play"></i> {{ trans('learning_hub_start_course') }}
                     </a>
                 </div>
             </div>
