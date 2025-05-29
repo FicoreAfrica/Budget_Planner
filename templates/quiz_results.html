@@ -1,214 +1,137 @@
-{% extends "base.html" %}
-
-{% block title %}
-{{ trans('quiz_financial_personality_results', lang=language) }}
-{% endblock %}
-
-{% block extra_head %}
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<!DOCTYPE html>
+<html lang="{{ language | default('en') }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ trans('quiz_your_financial_personality_results', lang=language) }}</title>
     <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            color: #333;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 20px;
+        }
         .container {
             max-width: 800px;
-            margin: 2rem auto;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
-        .card {
-            border: none;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            border-radius: 0.5rem;
-            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        h1, h2, h3 {
+            color: #2E7D32;
         }
         .badge {
-            padding: 0.5rem 1rem;
-            border-radius: 1rem;
-            font-size: 0.9rem;
-            transition: transform 0.2s ease;
-            margin: 0.25rem;
+            display: inline-block;
+            padding: 5px 12px;
+            margin: 5px;
+            border-radius: 12px;
+            font-size: 0.875em;
         }
-        .badge:hover {
-            transform: scale(1.05);
+        .badge-bronze {
+            background-color: #cd7f32;
+            color: white;
+            border: 2px solid #8c5523;
         }
-        .btn-primary {
-            background: linear-gradient(145deg, #1E7F71, #0288D1);
-            border: none;
+        .badge-silver {
+            background-color: #c0c0c0;
+            color: #333;
+            border: 2px solid #a9a9a9;
         }
-        .btn-primary:hover {
-            background: linear-gradient(145deg, #1a6b5e, #0277bd);
+        .badge-gold {
+            background-color: #ffd700;
+            color: #333;
+            border: 2px solid #daa520;
         }
-        .table-responsive {
-            max-height: 300px;
-            overflow-y: auto;
+        .badge-platinum {
+            background-color: #e5e4e2;
+            color: #333;
+            border: 2px solid #b0b0b0;
+        }
+        .badge-blue {
+            background-color: #0288D1;
+            color: white;
+            border: 2px solid #01579B;
+        }
+        .badge-gray {
+            background-color: #e9ecef;
+            color: #333;
+            border: 2px solid #ced4da;
+        }
+        .resources {
+            margin-top: 20px;
+        }
+        .resources a {
+            color: #0288D1;
+            text-decoration: none;
+            display: block;
+            margin: 5px 0;
+        }
+        .resources a:hover {
+            text-decoration: underline;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #2E7D32, #0288D1);
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        .btn:hover {
+            background: linear-gradient(135deg, #1B5E20, #01579B);
         }
     </style>
-{% endblock %}
-
-{% block content %}
-<div class="container">
-    <div class="header">
-        <h1>{{ trans('quiz_financial_personality_results', lang=language) }}</h1>
-        <p>{{ trans('quiz_your_financial_personality_results', lang=language) }}</p>
-    </div>
-    
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert" aria-live="assertive">
-                    {{ trans(message, lang=language) }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close', lang=language) }}"></button>
-                </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
-
-    {% if latest_record %}
-        <div class="card mb-4">
-            <div class="card-body">
-                <h2>
-                    {{ trans('core_hello', lang=language) }} {{ latest_record.first_name | default(trans('core_user', lang=language)) }},
-                    {{ trans('quiz_your_personality', lang=language) }}: {{ trans('quiz_' + latest_record.personality.lower() + '_description', lang=language, default=latest_record.personality) }}
-                </h2>
-                <p><strong>{{ trans('quiz_score', lang=language) }}</strong> {{ latest_record.score }} / 30</p>
-                <p>{{ trans('quiz_' + latest_record.personality.lower() + '_description', lang=language) }}</p>
-                <p><strong>{{ trans('core_created_at', lang=language) }}</strong> {{ latest_record.created_at }}</p>
-            </div>
-        </div>
-
-        <div class="card mb-4">
-            <div class="header">
-                <h3>{{ trans('quiz_quiz_metrics', lang=language) }}</h3>
-            </div>
-            <div class="card-body">
-                <canvas id="quizChart" aria-label="{{ trans('quiz_financial_behavior', lang=language) }}"></canvas>
-                <script>
-                    document.addEventListener('DOMContentLoaded', () => {
-                        const ctx = document.getElementById('quizChart').getContext('2d');
-                        new Chart(ctx, {
-                            type: 'radar',
-                            data: {{ latest_record.chart_data | tojson }},
-                            options: {
-                                scales: {
-                                    r: {
-                                        angleLines: { display: true },
-                                        suggestedMin: -1,
-                                        suggestedMax: 3
-                                    }
-                                },
-                                elements: { line: { borderWidth: 2 } },
-                                plugins: {
-                                    legend: { position: 'top' },
-                                    title: {
-                                        display: true,
-                                        text: '{{ trans('quiz_financial_behavior', lang=language) }}'
-                                    }
-                                }
-                            }
-                        });
-                    });
-                </script>
-            </div>
-        </div>
-
-        <div class="card mb-4">
-            <div class="header">
-                <h3>{{ trans('quiz_badges', lang=language) }}</h3>
-            </div>
-            <div class="card-body">
-                {% if latest_record.badges %}
-                    {% for badge in latest_record.badges %}
-                        <span class="badge bg-{{ 'primary' if badge == trans('badge_financial_guru', lang=language) else 'success' if badge == trans('badge_savings_star', lang=language) else 'warning' if badge == trans('badge_needs_guidance', lang=language) else 'info' }}">
-                            <i class="fas fa-{{ 'trophy' if badge == trans('badge_financial_guru', lang=language) else 'star' if badge == trans('badge_savings_star', lang=language) else 'exclamation-circle' if badge == trans('badge_needs_guidance', lang=language) else 'check-circle' }}"></i>
-                            {{ badge }}
-                        </span>
-                    {% endfor %}
-                {% else %}
-                    <p>{{ trans('quiz_no_badges', lang=language, default='No badges earned yet') }}</p>
-                {% endif %}
-            </div>
-        </div>
-
-        <div class="card mb-4">
-            <div class="header">
-                <h3>{{ trans('quiz_insights', lang=language) }}</h3>
-            </div>
-            <div class="card-body">
-                {% for insight in insights %}
-                    <p>{{ insight }}</p>
+</head>
+<body>
+    <div class="container">
+        <h1>{{ trans('quiz_your_financial_personality_results', lang=language) }}</h1>
+        <p><strong>{{ trans('core_first_name', lang=language) }}</strong>: {{ latest_record.first_name }}</p>
+        <p><strong>{{ trans('quiz_your_personality', lang=language) }}</strong>: {{ trans('quiz_' + latest_record.personality.lower() + '_description', lang=language) }}</p>
+        <p><strong>{{ trans('quiz_score', lang=language) }}</strong>: {{ latest_record.score }} / 30</p>
+        <p><strong>{{ trans('core_created_at', lang=language) }}</strong>: {{ latest_record.created_at }}</p>
+        
+        <h2>{{ trans('quiz_badges', lang=language) }}</h2>
+        {% if latest_record.badges %}
+            <div>
+                {% for badge in latest_record.badges %}
+                    <span class="badge {{ badge.color_class }}" title="{{ badge.description }}">{{ badge.name }}</span>
                 {% endfor %}
-                {% if not insights %}
-                    <p>{{ trans('quiz_insights_available', lang=language, default='No insights available') }}</p>
-                {% endif %}
-            </div>
-        </div>
-
-        <div class="card mb-4">
-            <div class="header">
-                <h3>{{ trans('tips_for_improving', lang=language) }}</h3>
-            </div>
-            <div class="card-body">
-                {% for tip in tips %}
-                    <p>{{ tip }}</p>
-                {% endfor %}
-            </div>
-        </div>
-
-        <div class="card mb-4">
-            <div class="header">
-                <h3>{{ trans('quiz_call_to_actions', lang=language) }}</h3>
-            </div>
-            <div class="card-body">
-                {% if course_id %}
-                    <form method="POST" action="{{ url_for('courses.complete', course_id=course_id) }}">
-                        <button type="submit" class="btn btn-success mb-2" aria-label="{{ trans('Complete Course', lang='en') }}">{{ trans('Complete Course', lang='en') }}</button>
-                    </form>
-                    <a href="{{ url_for('quiz.step1', course_id=course_id) }}" class="btn btn-primary mb-2" aria-label="{{ trans('quiz_retake_quiz', lang=language) }}">{{ trans('quiz_retake_quiz', lang=language) }}</a>
-                    <a href="{{ url_for('courses.course_catalog') }}" class="btn btn-secondary mb-2" aria-label="{{ trans('Back to Courses', lang='en') }}">{{ trans('Back to Courses', lang='en') }}</a>
-                {% else %}
-                    <a href="{{ url_for('quiz.step1') }}" class="btn btn-primary mb-2" aria-label="{{ trans('quiz_retake_quiz', lang=language) }}">{{ trans('quiz_retake_quiz', lang=language) }}</a>
-                {% endif %}
-                <a href="{{ url_for('budget.create') }}" class="btn btn-secondary mb-2" aria-label="{{ trans('quiz_create_budget', lang=language) }}">{{ trans('quiz_create_budget', lang=language) }}</a>
-                <a href="{{ url_for('net_worth.calculate') }}" class="btn btn-secondary mb-2" aria-label="{{ trans('quiz_calculate_net_worth', lang=language) }}">{{ trans('quiz_calculate_net_worth', lang=language) }}</a>
-            </div>
-        </div>
-
-        <div class="card mb-4">
-            <div class="header">
-                <h3>{{ trans('quiz_previous_quizzes', lang=language) }}</h3>
-            </div>
-            <div class="card-body table-responsive">
-                {% if records %}
-                    <table class="table table-striped" aria-label="{{ trans('previous_quizzes_table', lang=language, default='Previous Quizzes') }}">
-                        <thead>
-                            <tr>
-                                <th>{{ trans('core_date', lang=language) }}</th>
-                                <th>{{ trans('quiz_personality', lang=language) }}</th>
-                                <th>{{ trans('quiz_score', lang=language) }}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for record in records %}
-                                <tr>
-                                    <td>{{ record.created_at }}</td>
-                                    <td>{{ trans('quiz_' + record.personality.lower() + '_description', lang=language, default=record.personality) }}</td>
-                                    <td>{{ record.score }} / 30</td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                {% else %}
-                    <p>{{ trans('quiz_no_previous_quizzes', lang=language) }}</p>
-                </div>
             </div>
         {% else %}
-            <div class="card mb-4">
-                <div class="card-body">
-                    <p>{{ trans('quiz_no_quiz_data_available', lang=language) }}</p>
-                    <a href="{{ url_for('quiz.step1', course_id=course_id if course_id else '') }}" class="btn btn-primary" aria-label="{{ trans('quiz_start_quiz', lang=language) }}">{{ trans('quiz_start_quiz', lang=language) }}</a>
-                    {% if course_id %}
-                        <a href="{{ url_for('courses.course_catalog') }}" class="btn btn-secondary" aria-label="{{ trans('Back to Courses', lang='en') }}">{{ trans('Back to Courses', lang='en') }}</a>
-                    {% endif %}
-                </div>
-            </div>
+            <p>{{ trans('quiz_no_badges', lang=language, default='No badges earned yet') }}</p>
         {% endif %}
+
+        <h2>{{ trans('quiz_recommended_tools', lang=language) }}</h2>
+        {% if latest_record.resources %}
+            <div class="resources">
+                {% for resource in latest_record.resources %}
+                    <a href="{{ base_url + resource.url }}">{{ resource.label }}</a>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p>{{ trans('quiz_no_quiz_data_available', lang=language) }}</p>
+        {% endif %}
+
+        <h2>{{ trans('quiz_insights', lang=language) }}</h2>
+        <ul>
+            {% for insight in insights %}
+                <li>{{ insight }}</li>
+            {% endfor %}
+        </ul>
+
+        <h2>{{ trans('quiz_tips_for_improving_financial_habits', lang=language) }}</h2>
+        <ul>
+            {% for tip in tips %}
+                <li>{{ tip }}</li>
+            {% endfor %}
+        </ul>
+
+        <a href="{{ base_url }}/quiz/step1?course_id={{ course_id }}" class="btn">{{ trans('quiz_retake_quiz', lang=language) }}</a>
+        <a href="{{ base_url }}/quiz/history?course_id={{ course_id }}" class="btn">{{ trans('quiz_history', lang=language) }}</a>
     </div>
-</div>
-{% endblock %}
+</body>
+</html>
