@@ -1,71 +1,119 @@
 from flask import Blueprint, request, session, redirect, url_for, render_template, flash, current_app
 from flask_wtf import FlaskForm
 from wtforms import StringField, FloatField, BooleanField, SubmitField
-from wtforms.validators import DataRequired, NumberRange, Optional, Email
+from wtforms.validators import DataRequired, NumberRange, Optional, Email, ValidationError
 from json_store import JsonStorage
 from mailersend_email import send_email
 from datetime import datetime
 import uuid
+
 try:
-    from app import trans  # Import trans from app.py instead
+    from app import trans
 except ImportError:
     def trans(key, lang=None):
-        return key  # Fallback to return the key as the translation
+        return key
 
 net_worth_bp = Blueprint('net_worth', __name__, url_prefix='/net_worth')
 
 def init_storage(app):
-    storage = JsonStorage('data/networth.json')
-    app.logger.debug("Initialized JsonStorage for net_worth")
-    return storage
+    """Initialize storage with app context."""
+    with app.app_context():
+        storage = JsonStorage('data/networth.json', logger_instance=current_app.logger)
+        current_app.logger.debug("Initialized JsonStorage for net_worth")
+        return storage
 
-# Helper to strip commas from float input (for comma-separated numbers)
-def strip_commas(value):
-    if isinstance(value, str):
-        return value.replace(',', '')
-    return value
-
-# Forms for net worth steps
 class Step1Form(FlaskForm):
-    first_name = StringField(trans('net_worth_first_name'), validators=[DataRequired(message=trans('net_worth_first_name_required'))])
-    email = StringField(trans('net_worth_email'), validators=[Optional(), Email(message=trans('net_worth_email_invalid'))])
-    send_email = BooleanField(trans('net_worth_send_email'))
-    submit = SubmitField(trans('net_worth_next'))
+    first_name = StringField()
+    email = StringField()
+    send_email = BooleanField()
+    submit = SubmitField()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        lang = session.get('lang', 'en')
+        self.first_name.label.text = trans('net_worth_first_name', lang=lang)
+        self.email.label.text = trans('net_worth_email', lang=lang)
+        self.send_email.label.text = trans('net_worth_send_email', lang=lang)
+        self.submit.label.text = trans('net_worth_next', lang=lang)
+        self.first_name.validators = [DataRequired(message=trans('net_worth_first_name_required', lang=lang))]
+        self.email.validators = [Optional(), Email(message=trans('net_worth_email_invalid', lang=lang))]
 
 class Step2Form(FlaskForm):
-    cash_savings = FloatField(
-        trans('net_worth_cash_savings'),
-        validators=[
-            DataRequired(message=trans('net_worth_cash_savings_required')),
-            NumberRange(min=0, max=10000000000, message=trans('net_worth_cash_savings_max'))
-        ],
-        filters=[strip_commas]
-    )
-    investments = FloatField(
-        trans('net_worth_investments'),
-        validators=[
-            DataRequired(message=trans('net_worth_investments_required')),
-            NumberRange(min=0, max=10000000000, message=trans('net_worth_investments_max'))
-        ],
-        filters=[strip_commas]
-    )
-    property = FloatField(
-        trans('net_worth_property'),
-        validators=[
-            DataRequired(message=trans('net_worth_property_required')),
-            NumberRange(min=0, max=10000000000, message=trans('net_worth_property_max'))
-        ],
-        filters=[strip_commas]
-    )
-    submit = SubmitField(trans('net_worth_next'))
+    cash_savings = FloatField()
+    investments = FloatField()
+    property = FloatField()
+    submit = SubmitField()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        lang = session.get('lang', 'en')
+        self.cash_savings.label.text = trans('net_worth_cash_savings', lang=lang)
+        self.investments.label.text = trans('net_worth_investments', lang=lang)
+        self.property.label.text = trans('net_worth_property', lang=lang)
+        self.submit.label.text = trans('net_worth_next', lang=lang)
+        self.cash_savings.validators = [
+            DataRequired(message=trans('net_worth_cash_savings_required', lang=lang)),
+            NumberRange(min=0, max=10000000000, message=trans('net_worth_cash_savings_max', lang=lang))
+        ]
+        self.investments.validators = [
+            DataRequired(message=trans('net_worth_investments_required', lang=lang)),
+            NumberRange(min=0, max=10000000000, message=trans('net_worth_investments_max', lang=lang))
+        ]
+        self.property.label = f"property: {trans('net_worth_property', lang=lang)}"
+        self.property.validators = [
+            DataRequired(message=trans('net_worth_property_required', lang=lang)),
+            NumberRange(min=0, max=10000000000, message=trans('net_worth_property_max', lang=lang))
+        ]
+
+    def validate_cash_savings(self, field):
+        if field.data is not None:
+            try:
+                cleaned_data = str(field.data).replace(',', '')
+                field.data = float(cleaned_data)
+            except (ValueError, TypeError):
+                current_app.logger.error(f"Invalid cash_savings input: {field.data}")
+                raise ValidationError(trans('net_worth_cash_savings_invalid', lang=session.get('lang', 'en')))
+
+    def validate_investments(self, field):
+        if field.data is not None:
+            try:
+                cleaned_data = str(field.data).replace(',', '')
+                field.data = float(cleaned_data)
+            except (ValueError, TypeError):
+                current_app.logger.error(f"Invalid investments input: {field.data}")
+                raise ValidationError(trans('net_worth_investments_invalid', lang=session.get('lang', 'en')))
+
+    def validate_property(self, field):
+        if field.data is not None:
+            try:
+                cleaned_data = str(field.data).replace(',', '')
+                field.data = float(cleaned_data)
+            except (ValueError, TypeError):
+                current_app.logger.error(f"Invalid property input: {field.data}")
+                raise ValidationError(trans('net_worth_property_invalid', lang=session.get('lang', 'en')))
 
 class Step3Form(FlaskForm):
-    loans = FloatField(
-        trans('net_worth_loans'),
-        validators=[Optional(), NumberRange(min=0, max=10000000000, message=trans('net_worth_loans_max'))],
-        filters=[strip_commas]
-    )
-    submit = SubmitField(trans('net_worth_submit'))
+    loans = FloatField()
+    submit = SubmitField()
+
+    def __init__(self):
+        super().__init__()
+        lang = session.get('lang', 'en')
+        self.loans.label.text = trans('net_worth_loans', lang=lang)
+        self.submit.label.text = trans('net_worth_submit', lang=lang)
+        self.loans.validators = [
+            Optional(),
+            NumberRange(min=0, max=10000000000, message=trans('net_worth_loans_max', lang=lang))
+        ]
+
+    def validate_loans(self, field):
+        if field.data is not None:
+            try:
+                cleaned_data = str(field.data).replace(',', '')
+                field.data = float(cleaned_data) if cleaned_data else None
+            except (ValueError, TypeError):
+                current_app.logger.error(f"Invalid loans input: {field.data}")
+                raise ValidationError(trans('net_worth_loans_invalid', lang=session.get('lang', 'en')))
 
 @net_worth_bp.route('/step1', methods=['GET', 'POST'])
 def step1():
@@ -76,14 +124,15 @@ def step1():
     form = Step1Form()
     try:
         if request.method == 'POST' and form.validate_on_submit():
-            session['net_worth_step1'] = form.data
-            current_app.logger.debug(f"Net worth step1 form data: {form.data}")
+            form_data = form.data.copy()
+            session['form_data'] = form_data
+            current_app.logger.info(f"Net worth step1 form data saved for session {session['sid']}: {form_data}")
             return redirect(url_for('net_worth.step2'))
         return render_template('net_worth_step1.html', form=form, trans=trans, lang=lang)
     except Exception as e:
-        current_app.logger.exception(f"Error in net_worth.step1: {str(e)}")
-        flash(trans("net_worth_error_personal_info"), "danger")
-        return render_template('net_worth_step1.html', form=form, trans=trans, lang=lang)
+        current_app.logger.error(f"Error in net_worth.step1: {str(e)}", extra={'session_id': session['sid']})
+        flash(trans("net_worth_error_personal_info", lang=lang), "danger")
+        return render_template('net_worth_step1.html', form=form, trans=trans, lang=lang), 500
 
 @net_worth_bp.route('/step2', methods=['GET', 'POST'])
 def step2():
@@ -94,33 +143,38 @@ def step2():
     form = Step2Form()
     try:
         if request.method == 'POST' and form.validate_on_submit():
-            session['net_worth_step2'] = form.data
-            current_app.logger.debug(f"Net worth step2 form data: {form.data}")
+            form_data = {
+                'cash_savings': float(form.cash_savings.data),
+                'investments': float(form.investments.data),
+                'property': float(form.property.data),
+                'submit': form.submit.data
+            }
+            session['form_data'] = {**session.get('form_data', {}), **form_data}
+            current_app.logger.info(f"Net worth step2 form data saved for session {session['sid']}: {form_data}")
             return redirect(url_for('net_worth.step3'))
         return render_template('net_worth_step2.html', form=form, trans=trans, lang=lang)
     except Exception as e:
-        current_app.logger.exception(f"Error in net_worth.step2: {str(e)}")
-        flash(trans("net_worth_error_assets_input"), "danger")
-        return render_template('net_worth_step2.html', form=form, trans=trans, lang=lang)
+        current_app.logger.error(f"Error in net_worth.step2: {str(e)}", extra={'session_id': session['sid']})
+        flash(trans("net_worth_error_assets", lang=lang), "danger")
+        return render_template('net_worth_step2.html', form=form, trans=trans, lang=lang), 500
 
 @net_worth_bp.route('/step3', methods=['GET', 'POST'])
 def step3():
-    """Handle net worth step 3 form (liabilities) and calculate net worth."""
+    """Calculate net worth."""
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
     lang = session.get('lang', 'en')
     form = Step3Form()
     try:
         if request.method == 'POST' and form.validate_on_submit():
-            data = form.data
-            step1_data = session.get('net_worth_step1', {})
-            step2_data = session.get('net_worth_step2', {})
+            step1_data = session.get('net_worth_form_data', {})
+            step2_data = session.get('net_worth_step2_form_data', {})
             
             # Calculate assets and liabilities
             cash_savings = step2_data.get('cash_savings', 0)
             investments = step2_data.get('investments', 0)
             property = step2_data.get('property', 0)
-            loans = data.get('loans', 0) or 0
+            loans = form_data.get('loans', 0) or 0
             
             total_assets = cash_savings + investments + property
             total_liabilities = loans
@@ -129,14 +183,14 @@ def step3():
             # Assign badges (store raw badge names for translation in template)
             badges = []
             if net_worth > 0:
-                badges.append('Wealth Builder')
+                badges.append('net_worth_badge_wealth_builder')
             if total_liabilities == 0:
-                badges.append('Debt Free')
+                badges.append('net_worth_badge_debt_free')
             if cash_savings >= total_assets * 0.3:
-                badges.append('Savings Champion')
+                badges.append('net_worth_badge_savings_champion')
             if property >= total_assets * 0.5:
-                badges.append('Property Mogul')
-            
+                badges.append('net_worth_badge_property_mogul')
+
             # Store record
             record = {
                 "id": str(uuid.uuid4()),
@@ -155,85 +209,94 @@ def step3():
                 }
             }
             
-            # Save and send email if requested
+            # Save to storage
+            try:
+                storage = current_app.config['STORAGE_MANAGERS']['net_worth']
+                storage.append(record, user_email=step1_data.get('email'), session_id=session['sid'])
+            except Exception as storage_error:
+                current_app.logger.error(f"Failed to save net worth record: {str(storage_error)}", extra={'session_id': session['sid']})
+                flash(trans("net_worth_storage_error", lang=lang), "danger")
+                return render_template('net_worth_step3.html', form=form, trans=trans, lang=lang), 500
+
+            # Send email if requested
             email = step1_data.get('email')
             send_email_flag = step1_data.get('send_email', False)
-            storage = current_app.config['STORAGE_MANAGERS']['financial_health']
-            storage.append(record, user_email=email, session_id=session['sid'])
             if send_email_flag and email:
-                send_email(
-                    to_email=email,
-                    subject=trans("net_worth_net_worth_summary"),
-                    template_name="net_worth_email.html",
-                    data={
-                        "first_name": record["data"]["first_name"],
-                        "cash_savings": record["data"]["cash_savings"],
-                        "investments": record["data"]["investments"],
-                        "property": record["data"]["property"],
-                        "loans": record["data"]["loans"],
-                        "total_assets": record["data"]["total_assets"],
-                        "total_liabilities": record["data"]["total_liabilities"],
-                        "net_worth": record["data"]["net_worth"],
-                        "badges": record["data"]["badges"],
-                        "created_at": record["data"]["created_at"],
-                        "cta_url": url_for('net_worth.dashboard', _external=True)
-                    },
-                    lang=lang
-                )
-            
-            # Clear session
-            session.pop('net_worth_step1', None)
-            session.pop('net_worth_step2', None)
-            flash(trans("net_worth_net_worth_completed_success"), "success")
-            return redirect(url_for('net_worth.dashboard'))
+                try:
+                    send_email(
+                        to_email=email,
+                        subject=trans("net_worth_net_worth_summary", lang=lang),
+                        template_name="net_worth_email.html",
+                        data={
+                            "first_name": record["data"]["first_name"],
+                            "cash_savings": record["data"]["cash_savings"],
+                            "investments": record["data"]["investments"],
+                            "property": record["data"]["property"],
+                            "loans": record["data"]["loans"],
+                            "total_assets": record["data"]["total_assets"],
+                            "total_liabilities": record["data"]["total_liabilities"],
+                            "net_worth": record["data"]["net_worth"],
+                            "badges": record["data"]["badges"],
+                            "created_at": record["data"]["created_at"],
+                            "cta_url": url_for('net_worth.dashboard', _external=True)
+                        },
+                        lang=lang
+                    )
+                except Exception as email_error:
+                    current_app.logger.warning(f"Failed to send net worth email: {str(email_error)}", extra={'session_id': session['sid']})
+                    flash(trans("net_worth_email_failed", lang=lang), "warning")
+
+                # Clear session
+                session.pop('net_worth_form_data', None)
+                session.pop('net_worth_step2_form_data', None)
+                flash(trans("net_worth_success", lang=lang), "success")
+                return redirect(url_for('net_worth_dashboard'))
         return render_template('net_worth_step3.html', form=form, trans=trans, lang=lang)
     except Exception as e:
-        current_app.logger.exception(f"Error in net_worth.step3: {str(e)}")
-        flash(trans("net_worth_error_net_worth_calculation"), "danger")
-        return render_template('net_worth_step3.html', form=form, trans=trans, lang=lang)
+        current_app.logger.error(f"Error in net_worth.step3": {str(e)}", extra={'session_id': session['sid']})
+        flash(trans("net_worth_calculation_error", lang=lang), "danger")
+        return render_template('net_worth_step3.html', form=form, trans=trans, lang=lang), 500
 
 @net_worth_bp.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
-    """Display net worth dashboard. If no session data, fallback to latest record by email if possible."""
+    """Display net worth dashboard."""
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
     lang = session.get('lang', 'en')
 
-    storage = current_app.config['STORAGE_MANAGERS']['financial_health']
-    user_data = storage.filter_by_session(session['sid'])
-    # Fallback: if no records for session, try using email from any previous record
-    records = [(record["id"], record["data"]) for record in user_data]
-    latest_record = records[-1][1] if records else {}
-
-    # Extra fallback: try to get by email if available and session data is empty
-    if not latest_record:
-        email = session.get('net_worth_email') or session.get('net_worth_step1', {}).get('email')
-        if email:
-            # Get all records matching the email
-            all_records = storage.read_all()
-            filtered = [(rec["id"], rec["data"]) for rec in all_records if rec.get("data", {}).get("email") == email]
-            records = filtered
-            latest_record = records[-1][1] if records else {}
-
-    # Generate insights and tips
-    insights = []
-    tips = [
-        trans("net_worth_tip_track_ajo"),
-        trans("net_worth_tip_review_property"),
-        trans("net_worth_tip_pay_loans_early"),
-        trans("net_worth_tip_diversify_investments")
-    ]
-    if latest_record:
-        if latest_record.get('total_liabilities', 0) > latest_record.get('total_assets', 0) * 0.5:
-            insights.append(trans("net_worth_insight_high_loans"))
-        if latest_record.get('cash_savings', 0) < latest_record.get('total_assets', 0) * 0.1:
-            insights.append(trans("net_worth_insight_low_cash"))
-        if latest_record.get('investments', 0) >= latest_record.get('total_assets', 0) * 0.3:
-            insights.append(trans("net_worth_insight_strong_investments"))
-        if latestPLEASE) latest_record.get('net_worth', 0) <= 0:
-            insights.append(trans("net_worth_insight_negative_net_worth"))
-
     try:
+        storage = current_app.config['STORAGE_MANAGERS']['net_worth']
+        user_data = storage.filter_by_session(session['sid'])
+        records = [(record["id"], record["data"]) for record in user_data]
+        latest_record = records[-1][1] if records else {}
+
+        # Fallback: try to get by email if no session records
+        if not latest_record:
+            email = session.get('form_data', {}).get('email')
+            if email:
+                all_records = storage.read_all()
+                filtered = [(rec["id"], rec["data"]) for rec in all_records if rec.get("data", {}).get("email") == email]
+                records = filtered
+                latest_record = records[-1][1] if records else {}
+
+        # Generate insights and tips
+        insights = []
+        tips = [
+            trans("net_worth_tip_track_ajo", lang=lang),
+            trans("net_worth_tip_review_property", lang=lang),
+            trans("net_worth_tip_pay_loans_early", lang=lang),
+            trans("net_worth_tip_diversify_investments", lang=lang)
+        ]
+        if latest_record:
+            if latest_record.get('total_liabilities', 0) > latest_record.get('total_assets', 0) * 0.5:
+                insights.append(trans("net_worth_insight_high_loans", lang=lang))
+            if latest_record.get('cash_savings', 0) < latest_record.get('total_assets', 0) * 0.1:
+                insights.append(trans("net_worth_insight_low_cash", lang=lang))
+            if latest_record.get('investments', 0) >= latest_record.get('total_assets', 0) * 0.3:
+                insights.append(trans("net_worth_insight_strong_investments", lang=lang))
+            if latest_record.get('net_worth', 0) <= 0:
+                insights.append(trans("net_worth_insight_negative_net_worth", lang=lang))
+
         return render_template(
             'net_worth_dashboard.html',
             records=records,
@@ -244,19 +307,19 @@ def dashboard():
             lang=lang
         )
     except Exception as e:
-        current_app.logger.exception(f"Error in net_worth.dashboard: {str(e)}")
-        flash(trans("net_worth_dashboard_load_error"), "danger")
+        current_app.logger.error(f"Error in net_worth.dashboard: {str(e)}", extra={'session_id': session['sid']})
+        flash(trans("net_worth_dashboard_load_error", lang=lang), "danger")
         return render_template(
             'net_worth_dashboard.html',
             records=[],
             latest_record={},
             insights=[],
             tips=[
-                trans("net_worth_tip_track_ajo"),
-                trans("net_worth_tip_review_property"),
-                trans("net_worth_tip_pay_loans_early"),
-                Fredericks("net_worth_tip_diversify_investments")
+                trans("net_worth_tip_track_ajo", lang=lang),
+                trans("net_worth_tip_review_property", lang=lang),
+                trans("net_worth_tip_pay_loans_early", lang=lang),
+                trans("net_worth_tip_diversify_investments", lang=lang)
             ],
             trans=trans,
             lang=lang
-        )
+        ), 500
