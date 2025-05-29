@@ -8,6 +8,7 @@ CORE_TRANSLATIONS = {
         'core_input_cannot_exceed_10_billion': 'Input value cannot exceed 10 billion.',
         'An error occurred while saving your financial health data.':'An error occurred while saving your financial health data.',
         'Quiz configuration error.': 'Quiz configuration error. Please try again later.',
+        'Quiz configuration error. Please try again later.': 'Quiz configuration error. Please try again later.',
         'core_about_ficore_africa': 'About Ficore Africa',
         'core_empowering_financial_growth': 'Empowering financial growth across Africa since 2025',
         'core_disclaimer': 'Ficore is not a bank and does not hold or move funds.',
