@@ -1,5 +1,5 @@
 import json
-import os
+import os.path
 import uuid
 import logging
 from datetime import datetime
@@ -8,7 +8,10 @@ from flask import session, has_request_context
 class JsonStorage:
     """Custom JSON storage class to manage records with session ID, user email, and timestamps."""
     def __init__(self, filename, logger_instance=None):
-        self.filename = filename
+        # Set base directory relative to project root (parent of json_store.py)
+        base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data'))
+        # Construct full path for the file
+        self.filename = os.path.join(base_dir, filename)
         self.logger = logger_instance if logger_instance else logging.getLogger('ficore_app.json_store')
         if not logger_instance:
             self.logger.setLevel(logging.DEBUG)
@@ -17,16 +20,23 @@ class JsonStorage:
                 handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
                 self.logger.addHandler(handler)
 
-        os.makedirs(os.path.dirname(filename), exist_ok=True)
-        self.logger.debug(f"Starting initialization for {filename}", extra={'session_id': 'init'})
+        # Create directory if it exists and is non-empty
+        dir_path = os.path.dirname(self.filename)
+        if dir_path:
+            self.logger.debug(f"Creating directory {dir_path} if it does not exist", extra={'session_id': 'init'})
+            os.makedirs(dir_path, exist_ok=True)
+        else:
+            self.logger.warning(f"No directory specified for {self.filename}, using current directory", extra={'session_id': 'init'})
+
+        self.logger.debug(f"Starting initialization for {self.filename}", extra={'session_id': 'init'})
         self._initialize_file()
-        self.logger.info(f"Initialized JsonStorage for {os.path.basename(filename)} at {filename}", extra={'session_id': 'init'})
+        self.logger.info(f"Initialized JsonStorage for {os.path.basename(self.filename)} at {self.filename}", extra={'session_id': 'init'})
 
     def _initialize_file(self):
         """Initialize file if it doesn't exist and check write permissions."""
         current_session_id = 'init'
         self.logger.debug(f"Entering _initialize_file for {self.filename}", extra={'session_id': current_session_id})
-        
+
         if not os.path.exists(self.filename):
             try:
                 with open(self.filename, 'w') as f:
@@ -35,11 +45,11 @@ class JsonStorage:
             except Exception as e:
                 self.logger.error(f"Failed to create {self.filename}: {str(e)}", exc_info=True, extra={'session_id': current_session_id})
                 raise
-        
+
         if not os.access(self.filename, os.W_OK):
             self.logger.error(f"No write permissions for {self.filename}", extra={'session_id': current_session_id})
             raise PermissionError(f"Cannot write to {self.filename}")
-        
+
         self.logger.debug(f"Completed _initialize_file for {self.filename}", extra={'session_id': current_session_id})
 
     def _read(self):
@@ -50,11 +60,11 @@ class JsonStorage:
             if os.path.exists(self.filename):
                 with open(self.filename, 'r') as f:
                     data = json.load(f)
-                    
+
                     if not isinstance(data, list):
                         self.logger.warning(f"Invalid data format in {self.filename}: expected list, got {type(data)}", extra={'session_id': current_session_id})
                         return []
-                    
+
                     # Special handling for courses.json: return raw records
                     if os.path.basename(self.filename) == 'courses.json':
                         valid_records = []
@@ -75,7 +85,7 @@ class JsonStorage:
                         if not isinstance(record, dict):
                             self.logger.warning(f"Skipping non-dict record in {self.filename}: {record}", extra={'session_id': current_session_id})
                             continue
-                        
+
                         if not all(key in record for key in ['id', 'timestamp', 'data']):
                             self.logger.warning(f"Skipping record with missing keys in {self.filename}: {record}", extra={'session_id': current_session_id})
                             continue
@@ -89,10 +99,10 @@ class JsonStorage:
                         else:
                             self.logger.warning(f"Skipping record with invalid 'data' type in {self.filename}: {record}", extra={'session_id': current_session_id})
                             continue
-                        
+
                         record['data'] = processed_data
                         cleaned_data.append(record)
-                    
+
                     self.logger.debug(f"Read {len(cleaned_data)} records from {self.filename}", extra={'session_id': current_session_id})
                     return cleaned_data
             self.logger.debug(f"File {self.filename} not found. Returning empty list.", extra={'session_id': current_session_id})
@@ -185,6 +195,21 @@ class JsonStorage:
             self.logger.exception(f"Error filtering {self.filename} by session_id {session_id}: {str(e)}", extra={'session_id': current_session_id})
             return []
 
+    def filter_by_email(self, email):
+        """Retrieve records matching the user email."""
+        current_session_id = session.get('sid', 'unknown') if has_request_context() else 'no-request-context'
+        self.logger.debug(f"Entering filter_by_email for {self.filename}, email: {email}", extra={'session_id': current_session_id})
+        try:
+            records = self._read()
+            if os.path.basename(self.filename) == 'courses.json':
+                return []  # Courses are not email-specific
+            filtered = [r for r in records if r.get("user_email") == email]
+            self.logger.debug(f"Filtered {len(filtered)} records for email {email}", extra={'session_id': current_session_id})
+            return filtered
+        except Exception as e:
+            self.logger.exception(f"Error filtering {self.filename} by email {email}: {str(e)}", extra={'session_id': current_session_id})
+            return []
+
     def get_by_id(self, record_id):
         """Retrieve a record by ID."""
         current_session_id = session.get('sid', 'unknown') if has_request_context() else 'no-request-context'
@@ -216,14 +241,14 @@ class JsonStorage:
                     else:
                         records[i]['data'] = updated_record.get('data', updated_record)
                     break
-            
+
             if found_record:
                 if self._write(records):
                     self.logger.info(f"Updated record {record_id} in {self.filename}", extra={'session_id': found_record.get('session_id', 'unknown')})
                     return True
                 self.logger.error(f"Failed to write updated record {record_id}", extra={'session_id': found_record.get('session_id', 'unknown')})
                 return False
-            
+
             self.logger.error(f"Record {record_id} not found for update in {self.filename}", extra={'session_id': current_session_id})
             return False
         except Exception as e:
@@ -253,28 +278,28 @@ class JsonStorage:
             self.logger.exception(f"Error deleting record {record_id} from {self.filename}: {str(e)}", extra={'session_id': current_session_id})
             return False
 
-def create(self, data):
-    """Initialize the JSON file with the provided data, overwriting any existing content."""
-    current_session_id = session.get('sid', 'unknown') if has_request_context() else 'no-request-context'
-    self.logger.debug(f"Entering create for {self.filename}", extra={'session_id': current_session_id})
-    try:
-        if not isinstance(data, list):
-            self.logger.error(f"Invalid data format for create in {self.filename}: expected list, got {type(data)}", extra={'session_id': current_session_id})
-            raise ValueError(f"Data must be a list, got {type(data)}")
-        
-        # For courses.json, ensure records have required fields
-        if os.path.basename(self.filename) == 'courses.json':
-            for record in data:
-                if not isinstance(record, dict) or not all(key in record for key in ['id', 'title_en', 'title_ha']):
-                    self.logger.error(f"Invalid course record in create for {self.filename}: {record}", extra={'session_id': current_session_id})
-                    raise ValueError(f"Course record missing required keys: {record}")
+    def create(self, data):
+        """Initialize the JSON file with the provided data, overwriting any existing content."""
+        current_session_id = session.get('sid', 'unknown') if has_request_context() else 'no-request-context'
+        self.logger.debug(f"Entering create for {self.filename}", extra={'session_id': current_session_id})
+        try:
+            if not isinstance(data, list):
+                self.logger.error(f"Invalid data format for create in {self.filename}: expected list, got {type(data)}", extra={'session_id': current_session_id})
+                raise ValueError(f"Data must be a list, got {type(data)}")
 
-        if self._write(data):
-            self.logger.info(f"Created {self.filename} with {len(data)} records", extra={'session_id': current_session_id})
-            return True
-        else:
-            self.logger.error(f"Failed to create {self.filename}", extra={'session_id': current_session_id})
+            # For courses.json, ensure records have required fields
+            if os.path.basename(self.filename) == 'courses.json':
+                for record in data:
+                    if not isinstance(record, dict) or not all(key in record for key in ['id', 'title_en', 'title_ha']):
+                        self.logger.error(f"Invalid course record in create for {self.filename}: {record}", extra={'session_id': current_session_id})
+                        raise ValueError(f"Course record missing required keys: {record}")
+
+            if self._write(data):
+                self.logger.info(f"Created {self.filename} with {len(data)} records", extra={'session_id': current_session_id})
+                return True
+            else:
+                self.logger.error(f"Failed to create {self.filename}", extra={'session_id': current_session_id})
+                return False
+        except Exception as e:
+            self.logger.exception(f"Error creating {self.filename}: {str(e)}", extra={'session_id': current_session_id})
             return False
-    except Exception as e:
-        self.logger.exception(f"Error creating {self.filename}: {str(e)}", extra={'session_id': current_session_id})
-        return False
