@@ -10,13 +10,13 @@ from flask_wtf.csrf import CSRFProtect, CSRFError
 from flask_mail import Mail
 from translations import trans, get_translations
 from translations.translations_quiz import trans as quiz_trans, get_translations as get_quiz_translations
-from blueprints.financial_health import financial_health
+from blueprints.financial_health import financial_health_bp
 from blueprints.budget import bp as budget_bp, init_budget_storage
 from blueprints.quiz import bp as quiz_bp, init_quiz_questions
 from blueprints.bill import bp as bill_bp, init_bill_storage
 from blueprints.net_worth import bp as net_worth_bp
-from blueprints.emergency_finance import bp as emergency_finance_bp
-from blueprints.learning import bp as learning_bp, initialize_courses
+from blueprints.emergency_fund import bp as emergency_fund_bp
+from blueprints.learning_hub import bp as learning_hub_bp, initialize_courses
 from json_store import JsonStorage
 import gspread
 from google.oauth2.service_account import Credentials
@@ -358,7 +358,7 @@ def create_app():
             session['language'] = 'en'
             logger.info("Set default language to 'en'", extra={'session_id': session['sid']})
         g.logger = logger
-        g.logger.info(f"Request started περιοδικά: {request.path}", extra={'session_id': session['sid']})
+        g.logger.info(f"Request started for path: {request.path}", extra={'session_id': session['sid']})
         if not os.path.exists('data/storage.log'):
             g.logger.warning("data/storage.log not found", extra={'session_id': session['sid']})
 
@@ -554,13 +554,13 @@ def create_app():
         return render_template('404.html', t=quiz_trans, lang=lang), 404
 
     # Register blueprints
-    app.register_blueprint(financial_health)
+    app.register_blueprint(financial_health_bp)
     app.register_blueprint(budget_bp)
     app.register_blueprint(quiz_bp)
     app.register_blueprint(bill_bp)
     app.register_blueprint(net_worth_bp)
-    app.register_blueprint(emergency_finance_bp)
-    app.register_blueprint(learning_bp)
+    app.register_blueprint(emergency_fund_bp)
+    app.register_blueprint(learning_hub_bp)
 
     return app
 
