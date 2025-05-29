@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{{ trans('quiz_financial_personality_dashboard') | default('Financial Personality Dashboard') }}{% endblock %}
+{% block title %}{{ translations.quiz_financial_personality_dashboard }}{% endblock %}
 {% block extra_head %}
     <link rel="stylesheet" href="https://cdn.jsdelivr.com/npm/chart.js@4.4.4/dist/chart.umd.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
@@ -35,15 +35,15 @@
 {% block content %}
 <div class="container">
     <div class="header">
-        <h1>{{ trans('quiz_financial_personality_dashboard') | default('Financial Personality Dashboard') }}</h1>
-        <p>{{ trans('quiz_your_financial_personality_results') | default('Your financial personality results') }}</p>
+        <h1>{{ translations.quiz_financial_personality_dashboard }}</h1>
+        <p>{{ translations.quiz_your_financial_personality_results }}</p>
     </div>
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
                 <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert" aria-live="assertive">
-                    {{ trans('core_' + message) | default(message) }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close') | default('Close') }}"></button>
+                    {{ translations['core_' + message] | default(message) }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ translations.core_close }}"></button>
                 </div>
             {% endfor %}
         {% endif %}
@@ -51,27 +51,15 @@
     {% if latest_record %}
         <div class="card mb-4">
             <div class="card-body">
-                <h2>{{ trans('core_hello') | default('Hello') }} {{ latest_record.first_name | default(trans('core_user') | default('User')) }}, {{ trans('quiz_your_personality') | default('Your Personality') }}: {{ trans('quiz_' + latest_record.personality.lower()) | default(latest_record.personality) }}</h2>
-                <p><strong>{{ trans('quiz_score') | default('Score') }}:</strong> {{ latest_record.score | default(0) }} / 30</p>
-                <p>
-                    {% if latest_record.personality == 'Planner' %}
-                        {{ trans('quiz_planner_description') | default('You are disciplined and plan your finances carefully, using tools like PiggyVest and setting clear goals.') }}
-                    {% elif latest_record.personality == 'Saver' %}
-                        {{ trans('quiz_saver_description') | default('You prioritize saving, often using Ajo/Esusu/Adashe, and are cautious with spending.') }}
-                    {% elif latest_record.personality == 'Balanced' %}
-                        {{ trans('quiz_balanced_description') | default('You balance spending and saving, occasionally planning but open to impulse purchases.') }}
-                    {% elif latest_record.personality == 'Spender' %}
-                        {{ trans('quiz_spender_description') | default('You enjoy spending and may need to focus on budgeting and saving with apps like Moniepoint.') }}
-                    {% else %}
-                        {{ trans('quiz_avoider_description') | default('You avoid financial planning and may benefit from starting with a simple budget.') }}
-                    {% endif %}
-                </p>
-                <p><strong>{{ trans('core_created_at') | default('Created At') }}:</strong> {{ latest_record.created_at | default('N/A') }}</p>
+                <h2>{{ translations.core_hello }} {{ latest_record.first_name | default(translations.core_user) }}, {{ translations.quiz_your_personality }}: {{ translations['quiz_' + latest_record.personality.lower() + '_description'] | default(latest_record.personality) }}</h2>
+                <p><strong>{{ translations.quiz_score }}:</strong> {{ latest_record.score | default(0) }} / 30</p>
+                <p>{{ translations['quiz_' + latest_record.personality.lower() + '_description'] }}</p>
+                <p><strong>{{ translations.core_created_at }}:</strong> {{ latest_record.created_at | default('N/A') }}</p>
             </div>
         </div>
         <div class="card mb-4">
             <div class="header">
-                <h3>{{ trans('quiz_quiz_metrics') | default('Quiz Metrics') }}</h3>
+                <h3>{{ translations.quiz_quiz_metrics }}</h3>
             </div>
             <div class="card-body">
                 <canvas id="quizChart" aria-label="Financial Behavior Radar Chart"></canvas>
@@ -96,7 +84,7 @@
                                     legend: { position: 'top' },
                                     title: {
                                         display: true,
-                                        text: '{{ trans('quiz_financial_behavior') | default('Financial Behavior Breakdown') }}'
+                                        text: '{{ translations.quiz_financial_behavior }}'
                                     }
                                 }
                             }
@@ -107,98 +95,98 @@
         </div>
         <div class="card mb-4">
             <div class="header">
-                <h3>{{ trans('quiz_badges') | default('Badges') }}</h3>
+                <h3>{{ translations.quiz_badges }}</h3>
             </div>
             <div class="card-body">
                 {% if latest_record.badges %}
                     {% for badge in latest_record.badges %}
                         <span class="badge bg-{{ 'success' if badge == 'Financial Guru' else 'primary' if badge == 'Savings Star' else 'warning' if badge == 'Needs Guidance!' else 'secondary' }}">
                             <i class="fas fa-{{ 'trophy' if badge == 'Financial Guru' else 'star' if badge == 'Savings Star' else 'exclamation-circle' if badge == 'Needs Guidance!' else 'check-circle' }}"></i>
-                            {{ trans('badge_' + badge.lower().replace(' ', '_')) | default(badge) }}
+                            {{ badge }}
                         </span>
                     {% endfor %}
                 {% else %}
-                    <p>{{ trans('quiz_no_badges_earned_yet') | default('No badges earned yet') }}</p>
+                    <p>{{ translations.quiz_no_badges_earned_yet }}</p>
                 {% endif %}
             </div>
         </div>
         <div class="card mb-4">
             <div class="header">
-                <h3>{{ trans('quiz_insights') | default('Insights') }}</h3>
+                <h3>{{ translations.quiz_insights }}</h3>
             </div>
             <div class="card-body">
                 {% for insight in insights %}
-                    <p>{{ trans('quiz_insight_' + insight.lower().replace(' ', '_')) | default(insight) }}</p>
+                    <p>{{ insight }}</p>
                 {% endfor %}
                 {% if not insights %}
-                    <p>{{ trans('quiz_no_insights_available') | default('No insights available') }}</p>
+                    <p>{{ translations.quiz_no_insights_available }}</p>
                 {% endif %}
             </div>
         </div>
         <div class="card mb-4">
             <div class="header">
-                <h3>{{ trans('quiz_tips_for_improving_financial_habits') | default('Tips for Improving Financial Habits') }}</h3>
+                <h3>{{ translations.quiz_tips_for_improving_financial_habits }}</h3>
             </div>
             <div class="card-body">
                 {% for tip in tips %}
-                    <p>{{ trans('quiz_tip_' + tip.lower().replace(' ', '_')) | default(tip) }}</p>
+                    <p>{{ tip }}</p>
                 {% endfor %}
             </div>
         </div>
         <div class="card mb-4">
             <div class="header">
-                <h3>{{ trans('quiz_call_to_actions') | default('Call to Actions') }}</h3>
+                <h3>{{ translations.quiz_call_to_actions }}</h3>
             </div>
             <div class="card-body">
                 {% if course_id %}
                     <form method="POST" action="{{ url_for('courses.complete_quiz', course_id=course_id) }}">
-                        <button type="submit" class="btn btn-success" aria-label="Complete Course">{{ trans('courses_complete_course') | default('Complete Course') }}</button>
+                        <button type="submit" class="btn btn-success" aria-label="Complete Course">{{ translations.courses_complete_course }}</button>
                     </form>
-                    <a href="{{ url_for('quiz.step1', course_id=course_id) }}" class="btn btn-primary" aria-label="Retake Quiz">{{ trans('quiz_retake_quiz') | default('Retake Quiz') }}</a>
-                    <a href="{{ url_for('courses.course_catalog') }}" class="btn btn-secondary" aria-label="Back to Courses">{{ trans('courses_back_to_courses') | default('Back to Courses') }}</a>
+                    <a href="{{ url_for('quiz.step1', course_id=course_id) }}" class="btn btn-primary" aria-label="Retake Quiz">{{ translations.quiz_retake_quiz }}</a>
+                    <a href="{{ url_for('courses.course_catalog') }}" class="btn btn-secondary" aria-label="Back to Courses">{{ translations.courses_back_to_courses }}</a>
                 {% else %}
-                    <a href="{{ url_for('quiz.step1') }}" class="btn btn-primary" aria-label="Retake Quiz">{{ trans('quiz_retake_quiz') | default('Retake Quiz') }}</a>
+                    <a href="{{ url_for('quiz.step1') }}" class="btn btn-primary" aria-label="Retake Quiz">{{ translations.quiz_retake_quiz }}</a>
                 {% endif %}
-                <a href="{{ url_for('budget.step1') }}" class="btn btn-secondary" aria-label="Create Budget">{{ trans('quiz_create_budget') | default('Create Budget') }}</a>
-                <a href="{{ url_for('net_worth.step1') }}" class="btn btn-secondary" aria-label="Calculate Net Worth">{{ trans('quiz_calculate_net_worth') | default('Calculate Net Worth') }}</a>
+                <a href="{{ url_for('budget.step1') }}" class="btn btn-secondary" aria-label="Create Budget">{{ translations.quiz_create_budget }}</a>
+                <a href="{{ url_for('net_worth.step1') }}" class="btn btn-secondary" aria-label="Calculate Net Worth">{{ translations.quiz_calculate_net_worth }}</a>
             </div>
         </div>
         <div class="card mb-4">
             <div class="header">
-                <h3>{{ trans('quiz_previous_quizzes') | default('Previous Quizzes') }}</h3>
+                <h3>{{ translations.quiz_previous_quizzes }}</h3>
             </div>
             <div class="card-body">
                 {% if records %}
                     <table class="table table-striped" aria-label="Previous Quizzes Table">
                         <thead>
                             <tr>
-                                <th>{{ trans('core_date') | default('Date') }}</th>
-                                <th>{{ trans('quiz_personality') | default('Personality') }}</th>
-                                <th>{{ trans('quiz_score') | default('Score') }}</th>
+                                <th>{{ translations.core_date }}</th>
+                                <th>{{ translations.quiz_personality }}</th>
+                                <th>{{ translations.quiz_score }}</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for record_id, record in records %}
                                 <tr>
                                     <td>{{ record.created_at | default('N/A') }}</td>
-                                    <td>{{ trans('quiz_' + record.personality.lower()) | default(record.personality) }}</td>
+                                    <td>{{ translations['quiz_' + record.personality.lower() + '_description'] | default(record.personality) }}</td>
                                     <td>{{ record.score | default(0) }} / 30</td>
                                 </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 {% else %}
-                    <p>{{ trans('quiz_no_previous_quizzes') | default('No previous quizzes') }}</p>
+                    <p>{{ translations.quiz_no_previous_quizzes }}</p>
                 {% endif %}
             </div>
         </div>
     {% else %}
         <div class="card mb-4">
             <div class="card-body">
-                <p>{{ trans('quiz_no_quiz_data_available') | default('No quiz data available') }}</p>
-                <a href="{{ url_for('quiz.step1', course_id=course_id if course_id else '') }}" class="btn btn-primary" aria-label="Start Quiz">{{ trans('quiz_start_quiz') | default('Start Quiz') }}</a>
+                <p>{{ translations.quiz_no_quiz_data_available }}</p>
+                <a href="{{ url_for('quiz.step1', course_id=course_id if course_id else '') }}" class="btn btn-primary" aria-label="Start Quiz">{{ translations.quiz_start_quiz }}</a>
                 {% if course_id %}
-                    <a href="{{ url_for('courses.course_catalog') }}" class="btn btn-secondary" aria-label="Back to Courses">{{ trans('courses_back_to_courses') | default('Back to Courses') }}</a>
+                    <a href="{{ url_for('courses.course_catalog') }}" class="btn btn-secondary" aria-label="Back to Courses">{{ translations.courses_back_to_courses }}</a>
                 {% endif %}
             </div>
         </div>
