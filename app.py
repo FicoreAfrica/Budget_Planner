@@ -3,7 +3,7 @@ import os
 import json
 import uuid
 from datetime import datetime, timedelta
-from flask import Flask, render_template, request, session, redirect, url_for, flash, send_from_directory, has_request_context, g, jsonify
+from flask import Flask, render_template, request, session, redirect, url_for, flash, send_from_directory, has_request_context, g, jsonify, current_app
 from flask_session import Session
 from flask_wtf.csrf import CSRFProtect, CSRFError
 from flask_mail import Mail
@@ -23,30 +23,37 @@ from functools import wraps
 
 # Set up logging
 root_logger = logging.getLogger('ficore_app')
-root_logger.setLevel(logging.INFO)
+root_logger.setLevel(logging.DEBUG)
 
 class SessionFormatter(logging.Formatter):
     def format(self, record):
-        record.session_id = getattr(record, 'session_id', 'no-session-id')
+        record.session_id = getattr(record, 'session_id', 'no_session')
         return super().format(record)
 
 formatter = SessionFormatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s [session: %(session_id)s]')
 
 os.makedirs('data', exist_ok=True)
 file_handler = logging.FileHandler('data/storage.log')
-file_handler.setLevel(logging.INFO)
+file_handler.setLevel(logging.DEBUG)
 file_handler.setFormatter(formatter)
 root_logger.addHandler(file_handler)
 
 console_handler = logging.StreamHandler()
-console_handler.setLevel(logging.INFO)
+console_handler.setLevel(logging.DEBUG)
 console_handler.setFormatter(formatter)
 root_logger.addHandler(console_handler)
 
 class SessionAdapter(logging.LoggerAdapter):
     def process(self, msg, kwargs):
         kwargs['extra'] = kwargs.get('extra', {})
-        kwargs['extra']['session_id'] = session.get('sid', 'no-session-id') if has_request_context() else 'no-request-context'
+        # Only access session if explicitly provided in extra or in a request context
+        session_id = kwargs['extra'].get('session_id', 'no-session-id')
+        if has_request_context() and 'session_id' not in kwargs['extra']:
+            try:
+                session_id = session.get('sid', 'no-session-id')
+            except RuntimeError:
+                session_id = 'no-context'
+        kwargs['extra']['session_id'] = session_id
         return msg, kwargs
 
 logger = SessionAdapter(root_logger, {})
@@ -55,7 +62,7 @@ def create_app():
     app = Flask(__name__)
     app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'a_fallback-secret-key-for-dev-only-change-me')
     if not app.config['SECRET_KEY']:
-        logger.critical("FLASK_SECRET_KEY not set. Using insecure default!")
+        logger.critical("FLASK_SECRET_KEY not set. Using insecure default!", extra={'session_id': 'init'})
 
     # Configure Flask-Mail
     app.config.update({
@@ -78,15 +85,15 @@ def create_app():
     try:
         if os.path.exists(session_dir):
             if not os.path.isdir(session_dir):
-                logger.error(f"Session path {session_dir} exists but is not a directory. Attempting to remove and recreate.")
+                logger.error(f"Session path {session_dir} exists but is not a directory. Attempting to remove and recreate.", extra={'session_id': 'init'})
                 os.remove(session_dir)
                 os.makedirs(session_dir, exist_ok=True)
-                logger.info(f"Created session directory at {session_dir}")
+                logger.info(f"Created session directory at {session_dir}", extra={'session_id': 'init'})
         else:
             os.makedirs(session_dir, exist_ok=True)
-            logger.info(f"Created session directory at {session_dir}")
+            logger.info(f"Created session directory at {session_dir}", extra={'session_id': 'init'})
     except Exception as e:
-        logger.error(f"Failed to create session directory {session_dir}: {str(e)}")
+        logger.error(f"Failed to create session directory {session_dir}: {str(e)}", extra={'session_id': 'init'})
         raise RuntimeError(f"Cannot proceed without session directory: {str(e)}")
 
     app.config['SESSION_FILE_DIR'] = session_dir
@@ -112,17 +119,17 @@ def create_app():
         try:
             creds_json = os.environ.get('GOOGLE_CREDENTIALS')
             if not creds_json:
-                logger.warning("GOOGLE_CREDENTIALS not set. Google Sheets integration disabled.")
+                logger.warning("GOOGLE_CREDENTIALS not set. Google Sheets integration disabled.", extra={'session_id': 'init'})
                 return None
             creds = Credentials.from_service_account_info(
                 json.loads(creds_json),
                 scopes=['https://www.googleapis.com/auth/spreadsheets']
             )
             client = gspread.authorize(creds)
-            logger.info("Successfully initialized gspread client")
+            logger.info("Successfully initialized gspread client", extra={'session_id': 'init'})
             return client
         except Exception as e:
-            logger.error(f"Failed to initialize gspread client: {str(e)}")
+            logger.error(f"Failed to initialize gspread client: {str(e)}", extra={'session_id': 'init'})
             return None
 
     app.config['GSPREAD_CLIENT'] = init_gspread_client()
@@ -143,10 +150,10 @@ def create_app():
                     worksheet = spreadsheet.add_worksheet(title=worksheet_name, rows=1000, cols=len(headers))
                     worksheet.append_row(headers)
                 worksheet.append_row(data)
-                self.logger.info(f"Appended data to sheet {worksheet_name}")
+                self.logger.info(f"Appended data to sheet {worksheet_name}", extra={'session_id': 'no-request-context'})
                 return True
             except Exception as e:
-                self.logger.error(f"Error appending to sheet {worksheet_name}: {e}")
+                self.logger.error(f"Error appending to sheet {worksheet_name}: {e}", extra={'session_id': 'no-request-context'})
                 return False
 
         def fetch_data_from_filter(self, headers, worksheet_name):
@@ -157,30 +164,30 @@ def create_app():
                 import pandas as pd
                 return pd.DataFrame(data)
             except Exception as e:
-                self.logger.error(f"Error fetching data from sheet {worksheet_name}: {e}")
+                self.logger.error(f"Error fetching data from sheet {worksheet_name}: {e}", extra={'session_id': 'no-request-context'})
                 return pd.DataFrame()
 
     # Initialize storage managers and other context-dependent operations
     with app.app_context():
-        logger.info("Initializing storage managers")
+        logger.info("Initializing storage managers", extra={'session_id': 'init'})
         app.config['STORAGE_MANAGERS'] = {
-            'financial_health': JsonStorage('data/financial_health.json', logger_instance=logger),
+            'financial_health': JsonStorage('financial_health.json', logger_instance=logger),
             'budget': init_budget_storage(app),
-            'quiz': JsonStorage('data/quiz_data.json', logger_instance=logger),
+            'quiz': JsonStorage('quiz_data.json', logger_instance=logger),
             'bills': init_bill_storage(app),
-            'net_worth': JsonStorage('data/networth.json', logger_instance=logger),
-            'emergency_fund': JsonStorage('data/emergency_fund.json', logger_instance=logger),
-            'user_progress': JsonStorage('data/user_progress.json', logger_instance=logger),
-            'courses': JsonStorage('data/courses.json', logger_instance=logger),
+            'net_worth': JsonStorage('networth.json', logger_instance=logger),
+            'emergency_fund': JsonStorage('emergency_fund.json', logger_instance=logger),
+            'user_progress': JsonStorage('user_progress.json', logger_instance=logger),
+            'courses': JsonStorage('courses.json', logger_instance=logger),
             'sheets': GoogleSheetsStorage(app.config['GSPREAD_CLIENT']) if app.config['GSPREAD_CLIENT'] else None
         }
 
-        logger.info("Initializing courses")
+        logger.info("Initializing courses", extra={'session_id': 'init'})
         try:
             courses_storage = app.config['STORAGE_MANAGERS']['courses']
             courses = courses_storage.read_all()
             if not courses:
-                logger.info("Courses storage is empty. Initializing with default courses.")
+                logger.info("Courses storage is empty. Initializing with default courses.", extra={'session_id': 'init'})
                 default_courses = [
                     {
                         'id': 'budgeting_101',
@@ -205,37 +212,37 @@ def create_app():
                     }
                 ]
                 if not courses_storage.create(default_courses):
-                    logger.error("Failed to initialize courses.json with default courses")
+                    logger.error("Failed to initialize courses.json with default courses", extra={'session_id': 'init'})
                     raise RuntimeError("Course initialization failed")
-                logger.info(f"Initialized courses.json with {len(default_courses)} default courses")
+                logger.info(f"Initialized courses.json with {len(default_courses)} default courses", extra={'session_id': 'init'})
                 courses = courses_storage.read_all()
                 if len(courses) != len(default_courses):
-                    logger.error(f"Failed to verify courses.json initialization. Expected {len(default_courses)} courses, got {len(courses)}.")
+                    logger.error(f"Failed to verify courses.json initialization. Expected {len(default_courses)} courses, got {len(courses)}.", extra={'session_id': 'init'})
         except PermissionError as e:
-            logger.error(f"Permission error initializing courses.json: {str(e)}")
+            logger.error(f"Permission error initializing courses.json: {str(e)}", extra={'session_id': 'init'})
             raise RuntimeError("Cannot write to courses.json due to permissions.")
         except Exception as e:
-            logger.error(f"Error initializing courses storage: {str(e)}")
+            logger.error(f"Error initializing courses storage: {str(e)}", extra={'session_id': 'init'})
             raise
 
-        logger.info("Initializing learning hub courses")
+        logger.info("Initializing learning hub courses", extra={'session_id': 'init'})
         try:
             initialize_courses()
         except PermissionError as e:
-            logger.error(f"Permission error initializing learning hub courses: {str(e)}")
+            logger.error(f"Permission error initializing learning hub courses: {str(e)}", extra={'session_id': 'init'})
             raise RuntimeError("Cannot initialize learning hub courses due to permissions.")
         except Exception as e:
-            logger.error(f"Error initializing learning hub courses: {str(e)}")
+            logger.error(f"Error initializing learning hub courses: {str(e)}", extra={'session_id': 'init'})
             raise
 
-        logger.info("Initializing quiz questions")
+        logger.info("Initializing quiz questions", extra={'session_id': 'init'})
         try:
             init_quiz_questions(app)
         except PermissionError as e:
-            logger.error(f"Permission error initializing quiz questions: {str(e)}")
+            logger.error(f"Permission error initializing quiz questions: {str(e)}", extra={'session_id': 'init'})
             raise RuntimeError("Cannot initialize quiz questions due to permissions.")
         except Exception as e:
-            logger.error(f"Error initializing quiz questions: {str(e)}")
+            logger.error(f"Error initializing quiz questions: {str(e)}", extra={'session_id': 'init'})
             raise
 
     # Add custom Jinja2 filter for translations
@@ -261,7 +268,7 @@ def create_app():
                 return f"{float(value):,.2f}"
             return str(value)
         except (ValueError, TypeError) as e:
-            logger.warning(f"Error formatting number {value}: {str(e)}")
+            logger.warning(f"Error formatting number {value}: {str(e)}", extra={'session_id': 'no-request-context'})
             return str(value)
 
     # Session required decorator
@@ -270,7 +277,7 @@ def create_app():
         def decorated_function(*args, **kwargs):
             if 'sid' not in session:
                 session['sid'] = str(uuid.uuid4())
-                logger.info(f"New session ID generated: {session['sid']}")
+                logger.info(f"New session ID generated: {session['sid']}", extra={'session_id': session['sid']})
             return f(*args, **kwargs)
         return decorated_function
 
@@ -279,14 +286,14 @@ def create_app():
     def before_request_setup():
         if 'sid' not in session:
             session['sid'] = str(uuid.uuid4())
-            logger.info(f"New session ID generated: {session['sid']}")
+            logger.info(f"New session ID generated: {session['sid']}", extra={'session_id': session['sid']})
         if 'language' not in session:
             session['language'] = 'en'
-            logger.info("Set default language to 'en'")
+            logger.info("Set default language to 'en'", extra={'session_id': session['sid']})
         g.logger = logger
-        g.logger.info(f"Request started for path: {request.path}")
+        g.logger.info(f"Request started for path: {request.path}", extra={'session_id': session['sid']})
         if not os.path.exists('data/storage.log'):
-            g.logger.warning("data/storage.log not found")
+            g.logger.warning("data/storage.log not found", extra={'session_id': session['sid']})
 
     # Context processor for translations
     @app.context_processor
@@ -316,7 +323,7 @@ def create_app():
     @session_required
     def index():
         lang = session.get('language', 'en')
-        logger.info("Serving index page")
+        logger.info("Serving index page", extra={'session_id': session.get('sid', 'no-session-id')})
         courses_storage = app.config['STORAGE_MANAGERS']['courses']
         sample_courses = [
             {
@@ -346,9 +353,9 @@ def create_app():
         ]
         try:
             courses = courses_storage.read_all() if courses_storage else []
-            logger.info(f"Retrieved {len(courses)} courses from storage")
+            logger.info(f"Retrieved {len(courses)} courses from storage", extra={'session_id': session.get('sid', 'no-session-id')})
             if not courses:
-                logger.warning("No courses found in storage. Using sample_courses.")
+                logger.warning("No courses found in storage. Using sample_courses.", extra={'session_id': session.get('sid', 'no-session-id')})
                 courses = sample_courses
             else:
                 title_key_map = {c['id']: c['title_key'] for c in sample_courses}
@@ -357,7 +364,7 @@ def create_app():
                     for course in courses
                 ]
         except Exception as e:
-            logger.error(f"Error retrieving courses: {str(e)}")
+            logger.error(f"Error retrieving courses: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
             courses = sample_courses
             flash(quiz_trans('learning_hub_error_message', default='An error occurred', lang=lang), 'danger')
         return render_template(
@@ -374,20 +381,20 @@ def create_app():
         valid_langs = ['en', 'ha']
         new_lang = lang if lang in valid_langs else 'en'
         session['language'] = new_lang
-        logger.info(f"Language set to {session['language']}")
+        logger.info(f"Language set to {session['language']}", extra={'session_id': session.get('sid', 'no-session-id')})
         flash(quiz_trans('learning_hub_success_language_updated', default='Language updated successfully', lang=new_lang) if new_lang in valid_langs else quiz_trans('Invalid language', default='Invalid language', lang=new_lang))
         return redirect(request.referrer or url_for('index'))
 
     @app.route('/favicon.ico')
     def favicon():
-        logger.info("Serving favicon.ico")
+        logger.info("Serving favicon.ico", extra={'session_id': 'no-request-context'})
         return send_from_directory(os.path.join(app.root_path, 'static', 'img'), 'favicon-32x32.png', mimetype='image/png')
 
     @app.route('/general_dashboard')
     @session_required
     def general_dashboard():
         lang = session.get('language', 'en')
-        logger.info("Serving general dashboard")
+        logger.info("Serving general dashboard", extra={'session_id': session.get('sid', 'no-session-id')})
         data = {}
         expected_keys = {
             'score': None,
@@ -400,7 +407,7 @@ def create_app():
         for tool, storage in app.config['STORAGE_MANAGERS'].items():
             try:
                 if storage is None:
-                    logger.error(f"Storage for {tool} was not initialized")
+                    logger.error(f"Storage for {tool} was not initialized", extra={'session_id': session.get('sid', 'no-session-id')})
                     data[tool] = [] if tool == 'courses' else expected_keys.copy()
                     continue
                 records = storage.filter_by_session(session['sid'])
@@ -414,9 +421,9 @@ def create_app():
                         data[tool].update({k: record_data.get(k, v) for k, v in expected_keys.items()})
                     else:
                         data[tool] = expected_keys.copy()
-                logger.info(f"Retrieved {len(records)} records for {tool}")
+                logger.info(f"Retrieved {len(records)} records for {tool}", extra={'session_id': session.get('sid', 'no-session-id')})
             except Exception as e:
-                logger.error(f"Error fetching data for {tool}: {str(e)}")
+                logger.error(f"Error fetching data for {tool}: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
                 data[tool] = [] if tool == 'courses' else expected_keys.copy()
         learning_progress = session.get('learning_progress', {})
         data['learning_progress'] = learning_progress if isinstance(learning_progress, dict) else {}
@@ -425,7 +432,7 @@ def create_app():
     @app.route('/logout')
     @session_required
     def logout():
-        logger.info("Logging out user")
+        logger.info("Logging out user", extra={'session_id': session.get('sid', 'no-session-id')})
         lang = session.get('language', 'en')
         session.clear()
         session['language'] = lang
@@ -435,7 +442,7 @@ def create_app():
     @app.route('/health')
     @session_required
     def health():
-        logger.info("Health check requested")
+        logger.info("Health check requested", extra={'session_id': session.get('sid', 'no-session-id')})
         status = {"status": "healthy"}
         try:
             for tool, storage in app.config['STORAGE_MANAGERS'].items():
@@ -448,7 +455,7 @@ def create_app():
                 status["details"] = "Google Sheets client not initialized"
                 return jsonify(status), 500
         except Exception as e:
-            logger.error(f"Health check failed: {str(e)}")
+            logger.error(f"Health check failed: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
             status["status"] = "unhealthy"
             status["details"] = str(e)
             return jsonify(status), 500
@@ -458,21 +465,21 @@ def create_app():
     @app.errorhandler(Exception)
     def handle_global_error(e):
         lang = session.get('language', 'en')
-        logger.error(f"Global error: {str(e)}")
+        logger.error(f"Global error: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
         flash(quiz_trans('global_error_message', default='An error occurred', lang=lang), 'danger')
         return render_template('index.html', error=quiz_trans('global_error_message', default='An error occurred', lang=lang), t=quiz_trans, lang=lang), 500
 
     @app.errorhandler(CSRFError)
     def handle_csrf_error(e):
         lang = session.get('language', 'en')
-        logger.error(f"CSRF error: {str(e)}")
+        logger.error(f"CSRF error: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
         flash(quiz_trans('csrf_error', default='Invalid CSRF token', lang=lang), 'danger')
         return render_template('index.html', error=quiz_trans('csrf_error', default='Invalid CSRF token', lang=lang), t=quiz_trans, lang=lang), 400
 
     @app.errorhandler(404)
     def page_not_found(e):
         lang = session.get('language', 'en')
-        logger.error(f"404 error: {str(e)}")
+        logger.error(f"404 error: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
         return render_template('404.html', t=quiz_trans, lang=lang), 404
 
     # Register blueprints
