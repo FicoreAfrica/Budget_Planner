@@ -5,7 +5,6 @@ from wtforms.validators import DataRequired, NumberRange, Email
 from json_store import JsonStorage
 from mailersend_email import send_email
 from datetime import datetime, date, timedelta
-import logging
 import uuid
 try:
     from app import trans
@@ -13,14 +12,12 @@ except ImportError:
     def trans(key, lang=None):
         return key
 
-# Configure logging
-logging.basicConfig(filename='data/storage.txt', level=logging.DEBUG)
-
 bill_bp = Blueprint('bill', __name__, url_prefix='/bill')
 
 def init_bill_storage(app):
     """Initialize bill_storage within app context."""
     with app.app_context():
+        app.logger.info("Initializing bill storage")
         return JsonStorage('data/bills.json', logger_instance=app.logger)
 
 def strip_commas(value):
