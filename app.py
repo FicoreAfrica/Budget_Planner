@@ -1,5 +1,6 @@
 import logging
 import os
+import sys
 import json
 import uuid
 from datetime import datetime, timedelta
@@ -11,7 +12,7 @@ from translations import trans, get_translations
 from translations.translations_quiz import trans as quiz_trans, get_translations as get_quiz_translations
 from blueprints.financial_health import financial_health
 from blueprints.budget import bp as budget_bp, init_budget_storage
-from blueprints.quiz import bp as quiz_bp
+from blueprints.quiz import bp as quiz_bp, init_quiz_questions
 from blueprints.bill import bp as bill_bp, init_bill_storage
 from blueprints.net_worth import bp as net_worth_bp
 from blueprints.emergency_finance import bp as emergency_finance_bp
@@ -38,7 +39,7 @@ file_handler.setLevel(logging.DEBUG)
 file_handler.setFormatter(formatter)
 root_logger.addHandler(file_handler)
 
-console_handler = logging.StreamHandler()
+console_handler = logging.StreamHandler(sys.stderr)
 console_handler.setLevel(logging.DEBUG)
 console_handler.setFormatter(formatter)
 root_logger.addHandler(console_handler)
@@ -85,13 +86,17 @@ def create_app():
         if os.path.exists(session_dir):
             if not os.path.isdir(session_dir):
                 logger.error(f"Session path {session_dir} exists but is not a directory. Attempting to remove and recreate.", extra={'session_id': 'init'})
-                os.remove(session_dir)
+                try:
+                    os.remove(session_dir)
+                except OSError as e:
+                    logger.error(f"Failed to remove {session_dir}: {str(e)}", extra={'session_id': 'init'})
+                    raise RuntimeError(f"Cannot remove session path: {str(e)}")
                 os.makedirs(session_dir, exist_ok=True)
                 logger.info(f"Created session directory at {session_dir}", extra={'session_id': 'init'})
         else:
             os.makedirs(session_dir, exist_ok=True)
             logger.info(f"Created session directory at {session_dir}", extra={'session_id': 'init'})
-    except Exception as e:
+    except (PermissionError, OSError) as e:
         logger.error(f"Failed to create session directory {session_dir}: {str(e)}", extra={'session_id': 'init'})
         raise RuntimeError(f"Cannot proceed without session directory: {str(e)}")
 
@@ -120,8 +125,13 @@ def create_app():
             if not creds_json:
                 logger.warning("GOOGLE_CREDENTIALS not set. Google Sheets integration disabled.", extra={'session_id': 'init'})
                 return None
+            try:
+                creds_info = json.loads(creds_json)
+            except json.JSONDecodeError as e:
+                logger.error(f"Invalid GOOGLE_CREDENTIALS JSON: {str(e)}", extra={'session_id': 'init'})
+                return None
             creds = Credentials.from_service_account_info(
-                json.loads(creds_json),
+                creds_info,
                 scopes=['https://www.googleapis.com/auth/spreadsheets']
             )
             client = gspread.authorize(creds)
@@ -171,69 +181,69 @@ def create_app():
         logger.info("Starting STORAGE_MANAGERS initialization", extra={'session_id': 'init'})
         storage_managers = {}
         
-        # Initialize each storage manager individually with error handling
+        # Initialize each storage manager with fallback
         try:
             logger.info("Initializing financial_health storage", extra={'session_id': 'init'})
             storage_managers['financial_health'] = JsonStorage('financial_health.json', logger_instance=logger)
-        except Exception as e:
-            logger.error(f"Failed to initialize financial_health storage: {str(e)}", extra={'session_id': 'init'})
-            raise
+        except (PermissionError, OSError) as e:
+            logger.error(f"Failed to initialize financial_health storage: {str(e)}. Using in-memory storage.", extra={'session_id': 'init'})
+            storage_managers['financial_health'] = {}
 
         try:
             logger.info("Initializing user_progress storage", extra={'session_id': 'init'})
             storage_managers['user_progress'] = JsonStorage('user_progress.json', logger_instance=logger)
-        except Exception as e:
-            logger.error(f"Failed to initialize user_progress storage: {str(e)}", extra={'session_id': 'init'})
-            raise
+        except (PermissionError, OSError) as e:
+            logger.error(f"Failed to initialize user_progress storage: {str(e)}. Using in-memory storage.", extra={'session_id': 'init'})
+            storage_managers['user_progress'] = {}
 
         try:
             logger.info("Initializing budget storage", extra={'session_id': 'init'})
             storage_managers['budget'] = init_budget_storage(app)
-        except Exception as e:
-            logger.error(f"Failed to initialize budget storage: {str(e)}", extra={'session_id': 'init'})
-            raise
+        except (PermissionError, OSError) as e:
+            logger.error(f"Failed to initialize budget storage: {str(e)}. Using in-memory storage.", extra={'session_id': 'init'})
+            storage_managers['budget'] = {}
 
         try:
             logger.info("Initializing quiz storage", extra={'session_id': 'init'})
             storage_managers['quiz'] = JsonStorage('quiz_data.json', logger_instance=logger)
-        except Exception as e:
-            logger.error(f"Failed to initialize quiz storage: {str(e)}", extra={'session_id': 'init'})
-            raise
+        except (PermissionError, OSError) as e:
+            logger.error(f"Failed to initialize quiz storage: {str(e)}. Using in-memory storage.", extra={'session_id': 'init'})
+            storage_managers['quiz'] = {}
 
         try:
             logger.info("Initializing bills storage", extra={'session_id': 'init'})
             storage_managers['bills'] = init_bill_storage(app)
-        except Exception as e:
-            logger.error(f"Failed to initialize bills storage: {str(e)}", extra={'session_id': 'init'})
-            raise
+        except (PermissionError, OSError) as e:
+            logger.error(f"Failed to initialize bills storage: {str(e)}. Using in-memory storage.", extra={'session_id': 'init'})
+            storage_managers['bills'] = {}
 
         try:
             logger.info("Initializing net_worth storage", extra={'session_id': 'init'})
             storage_managers['net_worth'] = JsonStorage('networth.json', logger_instance=logger)
-        except Exception as e:
-            logger.error(f"Failed to initialize net_worth storage: {str(e)}", extra={'session_id': 'init'})
-            raise
+        except (PermissionError, OSError) as e:
+            logger.error(f"Failed to initialize net_worth storage: {str(e)}. Using in-memory storage.", extra={'session_id': 'init'})
+            storage_managers['net_worth'] = {}
 
         try:
             logger.info("Initializing emergency_fund storage", extra={'session_id': 'init'})
             storage_managers['emergency_fund'] = JsonStorage('emergency_fund.json', logger_instance=logger)
-        except Exception as e:
-            logger.error(f"Failed to initialize emergency_fund storage: {str(e)}", extra={'session_id': 'init'})
-            raise
+        except (PermissionError, OSError) as e:
+            logger.error(f"Failed to initialize emergency_fund storage: {str(e)}. Using in-memory storage.", extra={'session_id': 'init'})
+            storage_managers['emergency_fund'] = {}
 
         try:
             logger.info("Initializing courses storage", extra={'session_id': 'init'})
             storage_managers['courses'] = JsonStorage('courses.json', logger_instance=logger)
-        except Exception as e:
-            logger.error(f"Failed to initialize courses storage: {str(e)}", extra={'session_id': 'init'})
-            raise
+        except (PermissionError, OSError) as e:
+            logger.error(f"Failed to initialize courses storage: {str(e)}. Using in-memory storage.", extra={'session_id': 'init'})
+            storage_managers['courses'] = {}
 
         try:
             logger.info("Initializing sheets storage", extra={'session_id': 'init'})
             storage_managers['sheets'] = GoogleSheetsStorage(app.config['GSPREAD_CLIENT']) if app.config['GSPREAD_CLIENT'] else None
-        except Exception as e:
+        except (PermissionError, OSError) as e:
             logger.error(f"Failed to initialize sheets storage: {str(e)}", extra={'session_id': 'init'})
-            raise
+            storage_managers['sheets'] = None
 
         app.config['STORAGE_MANAGERS'] = storage_managers
         logger.info("Completed STORAGE_MANAGERS initialization", extra={'session_id': 'init'})
@@ -241,39 +251,40 @@ def create_app():
         logger.info("Initializing courses", extra={'session_id': 'init'})
         try:
             courses_storage = app.config['STORAGE_MANAGERS']['courses']
-            courses = courses_storage.read_all()
-            if not courses:
-                logger.info("Courses storage is empty. Initializing with default courses.", extra={'session_id': 'init'})
-                default_courses = [
-                    {
-                        'id': 'budgeting_101',
-                        'title_en': 'Budgeting 101',
-                        'title_ha': 'Tsarin Kudi 101',
-                        'description_en': 'Learn the basics of budgeting.',
-                        'description_ha': 'Koyon asalin tsarin kudi.'
-                    },
-                    {
-                        'id': 'financial_quiz',
-                        'title_en': 'Financial Quiz',
-                        'title_ha': 'Jarabawar Kudi',
-                        'description_en': 'Test your financial knowledge.',
-                        'description_ha': 'Gwada ilimin ku na kudi.'
-                    },
-                    {
-                        'id': 'savings_basics',
-                        'title_en': 'Savings Basics',
-                        'title_ha': 'Asalin Tattara Kudi',
-                        'description_en': 'Understand how to save effectively.',
-                        'description_ha': 'Fahimci yadda ake tattara kudi yadda ya kamata.'
-                    }
-                ]
-                if not courses_storage.create(default_courses):
-                    logger.error("Failed to initialize courses.json with default courses", extra={'session_id': 'init'})
-                    raise RuntimeError("Course initialization failed")
-                logger.info(f"Initialized courses.json with {len(default_courses)} default courses", extra={'session_id': 'init'})
+            if not isinstance(courses_storage, dict):  # Check if not in-memory fallback
                 courses = courses_storage.read_all()
-                if len(courses) != len(default_courses):
-                    logger.error(f"Failed to verify courses.json initialization. Expected {len(default_courses)} courses, got {len(courses)}.", extra={'session_id': 'init'})
+                if not courses:
+                    logger.info("Courses storage is empty. Initializing with default courses.", extra={'session_id': 'init'})
+                    default_courses = [
+                        {
+                            'id': 'budgeting_101',
+                            'title_en': 'Budgeting 101',
+                            'title_ha': 'Tsarin Kudi 101',
+                            'description_en': 'Learn the basics of budgeting.',
+                            'description_ha': 'Koyon asalin tsarin kudi.'
+                        },
+                        {
+                            'id': 'financial_quiz',
+                            'title_en': 'Financial Quiz',
+                            'title_ha': 'Jarabawar Kudi',
+                            'description_en': 'Test your financial knowledge.',
+                            'description_ha': 'Gwada ilimin ku na kudi.'
+                        },
+                        {
+                            'id': 'savings_basics',
+                            'title_en': 'Savings Basics',
+                            'title_ha': 'Asalin Tattara Kudi',
+                            'description_en': 'Understand how to save effectively.',
+                            'description_ha': 'Fahimci yadda ake tattara kudi yadda ya kamata.'
+                        }
+                    ]
+                    if not courses_storage.create(default_courses):
+                        logger.error("Failed to initialize courses.json with default courses", extra={'session_id': 'init'})
+                        raise RuntimeError("Course initialization failed")
+                    logger.info(f"Initialized courses.json with {len(default_courses)} default courses", extra={'session_id': 'init'})
+                    courses = courses_storage.read_all()
+                    if len(courses) != len(default_courses):
+                        logger.error(f"Failed to verify courses.json initialization. Expected {len(default_courses)} courses, got {len(courses)}.", extra={'session_id': 'init'})
         except PermissionError as e:
             logger.error(f"Permission error initializing courses.json: {str(e)}", extra={'session_id': 'init'})
             raise RuntimeError("Cannot write to courses.json due to permissions.")
@@ -347,7 +358,7 @@ def create_app():
             session['language'] = 'en'
             logger.info("Set default language to 'en'", extra={'session_id': session['sid']})
         g.logger = logger
-        g.logger.info(f"Request started for path: {request.path}", extra={'session_id': session['sid']})
+        g.logger.info(f"Request started περιοδικά: {request.path}", extra={'session_id': session['sid']})
         if not os.path.exists('data/storage.log'):
             g.logger.warning("data/storage.log not found", extra={'session_id': session['sid']})
 
@@ -408,7 +419,7 @@ def create_app():
             }
         ]
         try:
-            courses = courses_storage.read_all() if courses_storage else []
+            courses = courses_storage.read_all() if not isinstance(courses_storage, dict) else []
             logger.info(f"Retrieved {len(courses)} courses from storage", extra={'session_id': session.get('sid', 'no-session-id')})
             if not courses:
                 logger.warning("No courses found in storage. Using sample_courses.", extra={'session_id': session.get('sid', 'no-session-id')})
@@ -462,8 +473,8 @@ def create_app():
         }
         for tool, storage in app.config['STORAGE_MANAGERS'].items():
             try:
-                if storage is None:
-                    logger.error(f"Storage for {tool} was not initialized", extra={'session_id': session.get('sid', 'no-session-id')})
+                if storage is None or isinstance(storage, dict):
+                    logger.error(f"Storage for {tool} was not initialized or is in-memory", extra={'session_id': session.get('sid', 'no-session-id')})
                     data[tool] = [] if tool == 'courses' else expected_keys.copy()
                     continue
                 records = storage.filter_by_session(session['sid'])
@@ -502,14 +513,18 @@ def create_app():
         status = {"status": "healthy"}
         try:
             for tool, storage in app.config['STORAGE_MANAGERS'].items():
-                if storage is None:
+                if storage is None or isinstance(storage, dict):
                     status["status"] = "unhealthy"
-                    status["details"] = f"Storage for {tool} failed to initialize"
+                    status["details"] = f"Storage for {tool} failed to initialize or is in-memory"
                     return jsonify(status), 500
             if app.config['GSPREAD_CLIENT'] is None:
                 status["status"] = "unhealthy"
                 status["details"] = "Google Sheets client not initialized"
                 return jsonify(status), 500
+            if not os.path.exists('data/storage.log'):
+                status["status"] = "warning"
+                status["details"] = "Log file data/storage.log not found"
+                return jsonify(status), 200
         except Exception as e:
             logger.error(f"Health check failed: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
             status["status"] = "unhealthy"
@@ -539,13 +554,13 @@ def create_app():
         return render_template('404.html', t=quiz_trans, lang=lang), 404
 
     # Register blueprints
-    app.register_blueprint(financial_health_bp)
+    app.register_blueprint(financial_health)
     app.register_blueprint(budget_bp)
     app.register_blueprint(quiz_bp)
     app.register_blueprint(bill_bp)
     app.register_blueprint(net_worth_bp)
-    app.register_blueprint(emergency_fund_bp)
-    app.register_blueprint(learning_hub_bp)
+    app.register_blueprint(emergency_finance_bp)
+    app.register_blueprint(learning_bp)
 
     return app
 
