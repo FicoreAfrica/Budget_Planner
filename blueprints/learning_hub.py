@@ -1,6 +1,5 @@
-from flask import Blueprint, render_template, session, request, redirect, url_for, flash
+from flask import Blueprint, render_template, session, request, redirect, url_for, flash, current_app
 from translations import trans  # Import the global trans function
-from json_store import JsonStorage  # Import JsonStorage
 import logging
 import os
 
@@ -10,14 +9,13 @@ logger.setLevel(logging.INFO)
 
 learning_hub_bp = Blueprint('learning_hub', __name__)
 
-# Initialize courses.json with default courses
-courses_storage = JsonStorage('data/courses.json')
+# Define courses and quizzes data
 courses_data = {
     "budgeting_101": {
         "id": "budgeting_101",
-        "title_en": "Budgeting 101",  # Direct English title for courses.json
+        "title_en": "Budgeting 101",
         "title_ha": "Tsarin Kudi 101",
-        "description_en": "Learn the basics of budgeting.",  # Added for courses.json
+        "description_en": "Learn the basics of budgeting.",
         "description_ha": "Koyon asalin tsarin kudi.",
         "title_key": "learning_hub_course_budgeting101_title",
         "desc_key": "learning_hub_course_budgeting101_desc",
@@ -121,10 +119,10 @@ quizzes_data = {
     }
 }
 
-# Initialize courses.json if empty
 def initialize_courses():
     """Initialize courses.json with default courses if empty."""
     try:
+        courses_storage = current_app.config['STORAGE_MANAGERS']['courses']
         courses = courses_storage.read_all()
         if not courses:
             logger.info("Courses storage is empty. Initializing with default courses.", extra={'session_id': 'no-request-context'})
@@ -145,7 +143,6 @@ def initialize_courses():
     except Exception as e:
         logger.error(f"Error initializing courses: {str(e)}", extra={'session_id': 'no-request-context'})
         raise
-
 
 def get_progress():
     try:
