@@ -541,11 +541,11 @@ def create_app():
     # Register blueprints
     app.register_blueprint(financial_health_bp)
     app.register_blueprint(budget_bp)
-    app.register_blueprint(quiz_bp))
-    app.register_blueprint(bill_bp))
-    app.register_blueprint(net_worth_bp))
-    app.register_blueprint(emergency_fund_bp))
-    app.register_blueprint(learning_hub_bp))
+    app.register_blueprint(quiz_bp)
+    app.register_blueprint(bill_bp)
+    app.register_blueprint(net_worth_bp)
+    app.register_blueprint(emergency_fund_bp)
+    app.register_blueprint(learning_hub_bp)
 
     return app
 
