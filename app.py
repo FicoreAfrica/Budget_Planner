@@ -11,12 +11,12 @@ from flask_mail import Mail
 from translations import trans, get_translations
 from translations.translations_quiz import trans as quiz_trans, get_translations as get_quiz_translations
 from blueprints.financial_health import financial_health_bp
-from blueprints.budget import bp as budget_bp, init_budget_storage
-from blueprints.quiz import bp as quiz_bp, init_quiz_questions
-from blueprints.bill import bp as bill_bp, init_bill_storage
-from blueprints.net_worth import bp as net_worth_bp
-from blueprints.emergency_fund import bp as emergency_fund_bp
-from blueprints.learning_hub import bp as learning_hub_bp, initialize_courses
+from blueprints.budget import budget_bp, init_budget_storage
+from blueprints.quiz import quiz_bp, init_quiz_questions
+from blueprints.bill import bill_bp, init_bill_storage
+from blueprints.net_worth import net_worth_bp
+from blueprints.emergency_fund import emergency_fund_bp
+from blueprints.learning_hub import learning_hub_bp, initialize_courses
 from json_store import JsonStorage
 import gspread
 from google.oauth2.service_account import Credentials
