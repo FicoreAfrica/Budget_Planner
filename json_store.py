@@ -8,10 +8,8 @@ from flask import session, has_request_context
 class JsonStorage:
     """Custom JSON storage class to manage records with session ID, user email, and timestamps."""
     def __init__(self, filename, logger_instance=None):
-        # Set base directory relative to project root (parent of json_store.py)
-        base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data'))
-        # Construct full path for the file
-        self.filename = os.path.join(base_dir, filename)
+        # Use filename as provided, assuming it's relative to project root
+        self.filename = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', filename))
         self.logger = logger_instance if logger_instance else logging.getLogger('ficore_app.json_store')
         if not logger_instance:
             self.logger.setLevel(logging.DEBUG)
@@ -20,7 +18,7 @@ class JsonStorage:
                 handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
                 self.logger.addHandler(handler)
 
-        # Create directory if it exists and is non-empty
+        # Create directory if it doesn't exist
         dir_path = os.path.dirname(self.filename)
         if dir_path:
             self.logger.debug(f"Creating directory {dir_path} if it does not exist", extra={'session_id': 'init'})
@@ -34,23 +32,21 @@ class JsonStorage:
 
     def _initialize_file(self):
         """Initialize file if it doesn't exist and check write permissions."""
-        current_session_id = 'init'
-        self.logger.debug(f"Entering _initialize_file for {self.filename}", extra={'session_id': current_session_id})
-
+        self.logger.debug(f"Entering _initialize_file for {self.filename}", extra={'session_id': 'init'})
         if not os.path.exists(self.filename):
             try:
                 with open(self.filename, 'w') as f:
                     json.dump([], f)
-                self.logger.info(f"Created new file {self.filename}", extra={'session_id': current_session_id})
+                self.logger.info(f"Created new file {self.filename}", extra={'session_id': 'init'})
             except Exception as e:
-                self.logger.error(f"Failed to create {self.filename}: {str(e)}", exc_info=True, extra={'session_id': current_session_id})
+                self.logger.error(f"Failed to create {self.filename}: {str(e)}", exc_info=True, extra={'session_id': 'init'})
                 raise
 
         if not os.access(self.filename, os.W_OK):
-            self.logger.error(f"No write permissions for {self.filename}", extra={'session_id': current_session_id})
+            self.logger.error(f"No write permissions for {self.filename}", extra={'session_id': 'init'})
             raise PermissionError(f"Cannot write to {self.filename}")
 
-        self.logger.debug(f"Completed _initialize_file for {self.filename}", extra={'session_id': current_session_id})
+        self.logger.debug(f"Completed _initialize_file for {self.filename}", extra={'session_id': 'init'})
 
     def _read(self):
         """Reads all records from the JSON file, handling old/new data structures."""
