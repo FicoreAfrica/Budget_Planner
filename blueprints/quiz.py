@@ -12,6 +12,11 @@ from translations.translations_quiz import trans, get_translations
 # Define the quiz blueprint
 quiz_bp = Blueprint('quiz', __name__, template_folder='templates', static_folder='static', url_prefix='/quiz')
 
+def init_storage(app):
+    storage = {}  # Initialize storage managers dictionary
+    app.logger.debug("Initialized storage managers for quiz")
+    return storage
+
 # Hardcoded questions
 QUESTIONS = [
     {
@@ -228,7 +233,7 @@ class QuizAnalytics:
                 badge_counts['unranked']
             ]
 
-            self.storage_managers['sheets'].append_to_sheet(data, self.headers, self.worksheet_name)
+            self.storage_managers['financial_health'].append_to_sheet(data, self.headers, self.worksheet_name)
         except Exception as e:
             current_app.logger.error(f"Analytics update error: {e}")
 
@@ -386,7 +391,7 @@ def generate_insights_and_tips(personality, language='en'):
 def append_to_google_sheets(data, headers, worksheet_name='Quiz', language='en'):
     try:
         storage_managers = current_app.config['STORAGE_MANAGERS']
-        if storage_managers['sheets'].append_to_sheet(data, headers, worksheet_name):
+        if storage_managers['financial_health'].append_to_sheet(data, headers, worksheet_name):
             return True
         flash(trans('quiz_google_sheets_error', lang=language), 'error')
         return False
@@ -466,7 +471,7 @@ def step1():
         session.modified = True
         current_app.logger.info(f"Step 1 validated, session: {session['sid']}")
 
-        progress_storage = current_app.config['STORAGE_MANAGERS']['user_progress']
+        progress_storage = current_app.config['STORAGE_MANAGERS']['financial_health']
         progress = progress_storage.filter_by_session(session['sid'])
         course_progress = next((p for p in progress if p['data'].get('course_id') == course_id), None)
         if not course_progress:
@@ -519,7 +524,7 @@ def quiz_step(step_num):
         session.modified = True
 
         course_id = request.args.get('course_id', 'financial_quiz')
-        progress_storage = current_app.config['STORAGE_MANAGERS']['user_progress']
+        progress_storage = current_app.config['STORAGE_MANAGERS']['financial_health']
         progress = progress_storage.filter_by_session(session['sid'])
         course_progress = next((p for p in progress if p['data'].get('course_id') == course_id), None)
         if course_progress and step_num not in course_progress['data'].get('completed_tasks', []):
@@ -547,7 +552,7 @@ def quiz_step(step_num):
         }])
 
         storage_managers = current_app.config['STORAGE_MANAGERS']
-        all_users_df = storage_managers['sheets'].fetch_data_from_filter(
+        all_users_df = storage_managers['financial_health'].fetch_data_from_filter(
             headers=storage_managers['PREDETERMINED_HEADERS_QUIZ'],
             worksheet_name='Quiz'
         )
@@ -701,7 +706,7 @@ def history():
 def analytics():
     language = session.get('language', 'en')
     storage_managers = current_app.config['STORAGE_MANAGERS']
-    analytics_df = storage_managers['sheets'].fetch_data_from_filter(
+    analytics_df = storage_managers['financial_health'].fetch_data_from_filter(
         headers=['Timestamp', 'Started', 'Completed', 'Completion_Rate', 'Avg_Score_Planner',
                  'Avg_Score_Saver', 'Avg_Score_Balanced', 'Avg_Score_Spender', 'Avg_Score_Avoider',
                  'Badge_Starter', 'Badge_Resilient_Earner', 'Badge_Money_Mover', 'Badge_Financial_Guru',
