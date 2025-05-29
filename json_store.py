@@ -96,6 +96,10 @@ class JsonStorage:
             self.logger.error(f"Error writing to {self.filename}: {str(e)}")
             raise
 
+    def write(self, data: List[Dict[str, Any]]) -> None:
+        """Public method to write data to the JSON file."""
+        self._write(data)
+
     def read_all(self) -> List[Dict[str, Any]]:
         """Retrieve all records from the JSON file."""
         return self._read()
