@@ -284,6 +284,80 @@ h1, h3,
     margin-right: 10px;
 }
 
+/* New Styles */
+h1, h2, h3 {
+    color: #0288D1;
+}
+.progress {
+    height: 1.5rem;
+    border-radius: 0.25rem;
+    background-color: #e9ecef;
+}
+.progress-bar {
+    transition: width 0.5s ease-in-out;
+    background-color: #2E7D32;
+}
+.badge {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.95rem;
+    transition: transform 0.3s ease;
+    margin-bottom: 0.5rem;
+    margin-right: 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.badge-bronze {
+    background-color: #cd7f32;
+    color: white;
+    border: 2px solid #8c5523;
+}
+.badge-silver {
+    background-color: #c0c0c0;
+    color: #333;
+    border: 2px solid #a9a9a9;
+}
+.badge-gold {
+    background-color: #ffd700;
+    color: #333;
+    border: 2px solid #daa520;
+}
+.badge-platinum {
+    background-color: #e5e4e2;
+    color: #333;
+    border: 2px solid #b0b0b0;
+}
+.badge-blue {
+    background-color: #0288D1;
+    color: white;
+    border: 2px solid #01579B;
+}
+.badge-gray {
+    background-color: #e9ecef;
+    color: #333;
+    border: 2px solid #ced4da;
+}
+.resources {
+    margin-top: 1rem;
+}
+.resources a {
+    color: #0288D1;
+    text-decoration: none;
+    display: block;
+    margin: 0.5rem 0;
+}
+.resources a:hover {
+    text-decoration: underline;
+}
+.form-check-input.is-invalid {
+    border-color: #dc3545;
+}
+.form-control.is-invalid ~ .invalid-feedback,
+.form-check-input.is-invalid ~ .invalid-feedback {
+    display: block;
+}
+
 /* Hero */
 .hero {
     background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), linear-gradient(135deg, #0288D1, #2E7D32);
