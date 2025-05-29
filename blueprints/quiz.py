@@ -416,7 +416,7 @@ def send_quiz_email(to_email, user_name, personality, personality_desc, answers,
             },
             lang=language
         )
-        current_app.logger.info(f"Email sent to {to_email}", extra={'session_id': session.get('sid', 'unknown')}")
+        current_app.logger.info(f"Email sent to {to_email}", extra={'session_id': session_id})
         return True
     except Exception as e:
         current_app.logger.error(f"Email error to {to_email}: {str(e)}", extra={'session_id': session.get('sid', 'unknown')}")
