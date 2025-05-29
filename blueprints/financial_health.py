@@ -122,7 +122,6 @@ def step1():
                 return render_template('health_score_step1.html', form=form, trans=trans, lang=lang), 500
 
             g.log.debug(f"Step1 form data saved to session: {form_data}")
--grade
             return redirect(url_for('financial_health.step2'))
         return render_template('health_score_step1.html', form=form, trans=trans, lang=lang)
     except Exception as e:
@@ -134,8 +133,6 @@ def step1():
 def step2():
     """Handle financial health step 2 form (income and expenses)."""
     if 'sid' not in session:
-
-
         session['sid'] = str(uuid.uuid4())
     lang = session.get('lang', 'en')
     form = Step2Form()
@@ -258,9 +255,7 @@ def step3():
                 "interest_rate": interest_rate,
                 "debt_to_income": debt_to_income,
                 "savings_rate": savings_rate,
-                "interestව
-
-interest_burden": interest_burden,
+                "interest_burden": interest_burden,
                 "score": score,
                 "status": status,
                 "badges": badges,
