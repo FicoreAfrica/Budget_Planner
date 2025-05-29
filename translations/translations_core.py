@@ -7,6 +7,10 @@ CORE_TRANSLATIONS = {
         'core_error': 'An unexpected error occurred. Please try again.',
         'core_input_cannot_exceed_10_billion': 'Input value cannot exceed 10 billion.',
         'Quiz configuration error.': 'Quiz configuration error. Please try again later.',
+        'core_about_ficore_africa': 'About Ficore Africa',
+        'core_empowering_financial_growth': 'Empowering financial growth across Africa since 2025',
+        'core_disclaimer': 'Ficore is not a bank and does not hold or move funds.',
+        'core_learn_more_content': 'Ficore Africa provides tools to help you track your income, net worth, budgets, and bills, enabling you to grow your money with confidence.',
         'core_send_email': 'Send Email',
         'core_send_email_tooltip': 'Click to send the quiz results via email',
         'core_start_quiz': 'Start Quiz',
@@ -493,6 +497,10 @@ CORE_TRANSLATIONS = {
         'core_Quiz configuration error. Please try again later.': 'A sake gwadawa anjima',
         'core_book_consultancy': 'Yi Alƙawari',
         'core_please_complete_all_fields': 'Da fatan za a cika duk filaye',
-        'Quiz configuration error.': 'Quiz configuration error. Please try again later.'
+        'Quiz configuration error.': 'Quiz configuration error. Please try again later.',
+        'core_about_ficore_africa': 'Game da Ficore Africa',
+        'core_empowering_financial_growth': 'Ƙarfafa ci gaban kuɗi a cikin Afirka tun 2025',
+        'core_disclaimer': 'Ficore ba banki ba ne kuma ba ya riƙe ko motsa kuɗi.',
+        'core_learn_more_content': 'Ficore Africa tana ba da kayan aiki don taimaka muku bin diddigin kuɗin shiga, darajar kuɗi, kasafin kuɗi, da lissafin kuɗi, wanda ke ba ku damar haɓaka kuɗin ku tare da amincewa.'
     }
 }
