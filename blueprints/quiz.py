@@ -392,7 +392,7 @@ def generate_insights_and_tips(personality: str, language: str = 'en'):
     ]
     return insights, tips
 
-def store_quiz_data(data: dict, language: str = 'en', logger: logging.LoggerAdapter) -> bool:
+def store_quiz_data(data: dict, logger: logging.LoggerAdapter, language: str = 'en') -> bool:
     session_id = session.get('sid', 'no-session-id') if has_request_context() else 'no-session-id'
     try:
         storage = current_app.config['STORAGE_MANAGERS']['financial_health']
@@ -403,7 +403,7 @@ def store_quiz_data(data: dict, language: str = 'en', logger: logging.LoggerAdap
         logger.error(f"Storage error: {str(e)}", extra={'session_id': session_id})
         flash(trans('quiz_storage_error', lang=language), 'error')
         return False
-
+        
 def send_quiz_email(to_email: str, user_name: str, personality: str, personality_desc: str, answers: list, badges: list, language: str = 'en', app: 'Flask', logger: logging.LoggerAdapter) -> bool:
     session_id = session.get('sid', 'no-session-id') if has_request_context() else 'no-session-id'
     try:
