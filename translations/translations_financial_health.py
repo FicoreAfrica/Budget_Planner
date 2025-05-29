@@ -6,8 +6,9 @@ FINANCIAL_HEALTH_TRANSLATIONS = {
         'financial_health_tips_for_filling_form': 'Tips for Filling the Form',
         'financial_health_interest_rate_positive': 'Interest rate must be positive',
         'financial_health_form_errors': 'There are errors in your financial health form.',
-            'financial_health_email_must_be_string': 'The email address must be a valid string.',
-            'financial_health_save_data_error': 'An error occurred while saving your financial health data.',
+        'financial_health_email_must_be_string': 'The email address must be a valid string.',
+        'financial_health_save_error': 'An error occurred while saving your financial health data.',
+        'financial_health_save_data_error': 'An error occurred while saving your financial health data.',
             'financial_health_error_personal_info': 'Please correct the errors in your personal information.',
             'financial_health_error_income_expenses': 'Please review your income and expenses for errors.',
             'financial_health_income_zero_error': 'Income cannot be zero. Please enter a valid amount.',
@@ -574,6 +575,7 @@ FINANCIAL_HEALTH_TRANSLATIONS = {
             'financial_health_badge_financial_star': 'Ka sami alamar Tauraron Kuɗi.',
             'financial_health_badge_savings_pro': 'Ka sami alamar Ƙwararren Ajiya.',
             'financial_health_badge_debt_manager': 'Ka sami alamar Manajan Bashi.',
+        'financial_health_save_error': 'An error occurred while saving your financial health data.',
             'financial_health_badge_interest_free': 'Ka sami alamar Kyauta daga Riba.',
             'financial_health_no_previous_assessments': 'Ba a sami tantancewar lafiyar kuɗi na baya ba.'
     }
