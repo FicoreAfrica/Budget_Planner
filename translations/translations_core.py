@@ -6,6 +6,7 @@ CORE_TRANSLATIONS = {
         'core_welcome_to_score': 'Welcome to Score',
         'core_error': 'An unexpected error occurred. Please try again.',
         'core_input_cannot_exceed_10_billion': 'Input value cannot exceed 10 billion.',
+        'An error occurred while saving your financial health data.':'An error occurred while saving your financial health data.',
         'Quiz configuration error.': 'Quiz configuration error. Please try again later.',
         'core_about_ficore_africa': 'About Ficore Africa',
         'core_empowering_financial_growth': 'Empowering financial growth across Africa since 2025',
@@ -527,6 +528,7 @@ CORE_TRANSLATIONS = {
         'learning_hub_success_language_updated': 'An sabunta harshe cikin nasara',
         'learning_hub_success_logout': 'An fita cikin nasara',
         'global_error_message': 'An samu kuskure',
+        'An error occurred while saving your financial health data.':'Ankasa ajiye bayanaka, ka sake gwadawa',
         'csrf_error': 'Alamar CSRF ba ta da inganci'
     }
 }
