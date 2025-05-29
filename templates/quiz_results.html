@@ -1,137 +1,83 @@
-<!DOCTYPE html>
-<html lang="{{ language | default('en') }}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ trans('quiz_your_financial_personality_results', lang=language) }}</title>
-    <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            color: #333;
-            background-color: #f8f9fa;
-            margin: 0;
-            padding: 20px;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-        h1, h2, h3 {
-            color: #2E7D32;
-        }
-        .badge {
-            display: inline-block;
-            padding: 5px 12px;
-            margin: 5px;
-            border-radius: 12px;
-            font-size: 0.875em;
-        }
-        .badge-bronze {
-            background-color: #cd7f32;
-            color: white;
-            border: 2px solid #8c5523;
-        }
-        .badge-silver {
-            background-color: #c0c0c0;
-            color: #333;
-            border: 2px solid #a9a9a9;
-        }
-        .badge-gold {
-            background-color: #ffd700;
-            color: #333;
-            border: 2px solid #daa520;
-        }
-        .badge-platinum {
-            background-color: #e5e4e2;
-            color: #333;
-            border: 2px solid #b0b0b0;
-        }
-        .badge-blue {
-            background-color: #0288D1;
-            color: white;
-            border: 2px solid #01579B;
-        }
-        .badge-gray {
-            background-color: #e9ecef;
-            color: #333;
-            border: 2px solid #ced4da;
-        }
-        .resources {
-            margin-top: 20px;
-        }
-        .resources a {
-            color: #0288D1;
-            text-decoration: none;
-            display: block;
-            margin: 5px 0;
-        }
-        .resources a:hover {
-            text-decoration: underline;
-        }
-        .btn {
-            display: inline-block;
-            padding: 10px 20px;
-            background: linear-gradient(135deg, #2E7D32, #0288D1);
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            margin-top: 10px;
-        }
-        .btn:hover {
-            background: linear-gradient(135deg, #1B5E20, #01579B);
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>{{ trans('quiz_your_financial_personality_results', lang=language) }}</h1>
-        <p><strong>{{ trans('core_first_name', lang=language) }}</strong>: {{ latest_record.first_name }}</p>
-        <p><strong>{{ trans('quiz_your_personality', lang=language) }}</strong>: {{ trans('quiz_' + latest_record.personality.lower() + '_description', lang=language) }}</p>
-        <p><strong>{{ trans('quiz_score', lang=language) }}</strong>: {{ latest_record.score }} / 30</p>
-        <p><strong>{{ trans('core_created_at', lang=language) }}</strong>: {{ latest_record.created_at }}</p>
-        
-        <h2>{{ trans('quiz_badges', lang=language) }}</h2>
-        {% if latest_record.badges %}
-            <div>
-                {% for badge in latest_record.badges %}
-                    <span class="badge {{ badge.color_class }}" title="{{ badge.description }}">{{ badge.name }}</span>
-                {% endfor %}
-            </div>
-        {% else %}
-            <p>{{ trans('quiz_no_badges', lang=language, default='No badges earned yet') }}</p>
-        {% endif %}
-
-        <h2>{{ trans('quiz_recommended_tools', lang=language) }}</h2>
-        {% if latest_record.resources %}
-            <div class="resources">
-                {% for resource in latest_record.resources %}
-                    <a href="{{ base_url + resource.url }}">{{ resource.label }}</a>
-                {% endfor %}
-            </div>
-        {% else %}
-            <p>{{ trans('quiz_no_quiz_data_available', lang=language) }}</p>
-        {% endif %}
-
-        <h2>{{ trans('quiz_insights', lang=language) }}</h2>
-        <ul>
-            {% for insight in insights %}
-                <li>{{ insight }}</li>
-            {% endfor %}
-        </ul>
-
-        <h2>{{ trans('quiz_tips_for_improving_financial_habits', lang=language) }}</h2>
-        <ul>
-            {% for tip in tips %}
-                <li>{{ tip }}</li>
-            {% endfor %}
-        </ul>
-
-        <a href="{{ base_url }}/quiz/step1?course_id={{ course_id }}" class="btn">{{ trans('quiz_retake_quiz', lang=language) }}</a>
-        <a href="{{ base_url }}/quiz/history?course_id={{ course_id }}" class="btn">{{ trans('quiz_history', lang=language) }}</a>
+{% extends "base.html" %}
+{% block title %}
+{{ trans('quiz_your_financial_personality_results', lang=language) }}
+{% endblock %}
+{% block extra_head %}
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+{% endblock %}
+{% block content %}
+<div class="container">
+    {% set tool_name = 'quiz_your_financial_personality_results' %}
+    {% set tool_icon = 'fa-user-circle' %}
+    {% set subtitle = trans('quiz_your_financial_personality_results_subtitle', lang=language, default='Discover your financial personality and insights') %}
+    {% include 'tool_header.html' %}
+    <div class="card mb-4">
+        <div class="card-body">
+            <p><strong>{{ trans('core_first_name', lang=language) }}</strong>: {{ latest_record.first_name }}</p>
+            <p><strong>{{ trans('quiz_your_personality', lang=language) }}</strong>: {{ trans('quiz_' + latest_record.personality.lower() + '_description', lang=language) }}</p>
+            <p><strong>{{ trans('quiz_score', lang=language) }}</strong>: {{ latest_record.score }} / 30</p>
+            <p><strong>{{ trans('core_created_at', lang=language) }}</strong>: {{ latest_record.created_at }}</p>
+        </div>
     </div>
-</body>
-</html>
+    <div class="card mb-4">
+        <div class="card-body">
+            <h3><i class="fas fa-trophy"></i> {{ trans('quiz_badges', lang=language) }}</h3>
+            {% if latest_record.badges %}
+                <div>
+                    {% for badge in latest_record.badges %}
+                        <span class="badge {{ badge.color_class }}" title="{{ badge.description }}">{{ badge.name }}</span>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p>{{ trans('quiz_no_badges', lang=language, default='No badges earned yet') }}</p>
+            {% endif %}
+        </div>
+    </div>
+    <div class="card mb-4">
+        <div class="card-body">
+            <h3><i class="fas fa-tools"></i> {{ trans('quiz_recommended_tools', lang=language) }}</h3>
+            {% if latest_record.resources %}
+                <div class="resources">
+                    {% for resource in latest_record.resources %}
+                        <a href="{{ base_url + resource.url }}">{{ trans(resource.label, lang=language) }}</a>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p>{{ trans('quiz_no_quiz_data_available', lang=language) }}</p>
+            {% endif %}
+        </div>
+    </div>
+    <div class="card mb-4">
+        <div class="card-body">
+            <h3><i class="fas fa-lightbulb"></i> {{ trans('quiz_insights', lang=language) }}</h3>
+            <div class="insights-box">
+                <ul>
+                    {% for insight in insights %}
+                        <li>{{ trans('quiz_' + insight.lower().replace(' ', '_'), lang=language, default=insight) }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="card mb-4">
+        <div class="card-body">
+            <h3><i class="fas fa-rocket"></i> {{ trans('quiz_tips_for_improving_financial_habits', lang=language) }}</h3>
+            <ul>
+                {% for tip in tips %}
+                    <li>{{ trans('quiz_' + tip.lower().replace(' ', '_'), lang=language, default=tip) }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    <div class="card mb-4">
+        <div class="card-body">
+            <a href="{{ base_url }}/quiz/step1?course_id={{ course_id }}" class="btn btn-primary">
+                <i class="fas fa-redo"></i> {{ trans('quiz_retake_quiz', lang=language) }}
+            </a>
+            <a href="{{ base_url }}/quiz/history?course_id={{ course_id }}" class="btn btn-secondary">
+                <i class="fas fa-history"></i> {{ trans('quiz_history', lang=language) }}
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
