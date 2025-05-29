@@ -2,13 +2,16 @@
 {% block title %}{{ trans('budget_budget_planner') | default('Budget Planner') }}{% endblock %}
 {% block content %}
 <div class="container">
-    <div class="header">
-        <h1>{{ trans('budget_budget_planner') | default('Budget Planner') }}</h1>
-        <p>{{ trans('budget_enter_personal_information') | default('Enter your personal information') }}</p>
-    </div>
+    {% set tool_name = trans('budget_budget_planner') | default('Budget Planner') %}
+    {% set tool_icon = 'fa-file-invoice' %}
+    {% set subtitle = trans('budget_enter_personal_information') | default('Let’s start with a few details') %}
+    {% set step = 1 %}
+    {% set total_steps = 4 %}
+    {% set step_labels = [trans('budget_personal_info') | default('Personal Info'), trans('budget_income') | default('Income'), trans('budget_expenses') | default('Expenses'), trans('budget_savings_goal') | default('Savings Goal')] %}
+    {% include 'tool_header.html' %}
     <div class="card">
         <div class="card-body">
-            <form method="POST" action="{{ url_for('budget.step1') }}">
+            <form method="POST" action="{{ url_for('budget.step1') }}" class="validate-form">
                 {{ form.csrf_token }}
                 <div class="mb-3">
                     <label class="form-label">{{ trans('core_first_name') | default('First Name') }}</label>
@@ -24,7 +27,7 @@
                     {{ form.send_email(class="form-check-input", **{'data-bs-toggle': 'tooltip', 'title': trans('budget_send_email_tooltip') | default('Check to receive email summary'), 'aria-describedby': 'send_email_help'}) }}
                     <label class="form-check-label" for="send_email">{{ trans('budget_send_email') | default('Send Email') }}</label>
                 </div>
-                <button type="submit" class="btn btn-primary">{{ trans('budget_continue_to_income') | default('Continue to Income') }}</button>
+                <button type="submit" class="btn btn-primary">{{ trans('core_next') | default('Next') }}</button>
             </form>
         </div>
     </div>
