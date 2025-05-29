@@ -386,7 +386,7 @@ def generate_insights_and_tips(personality: str, language: str = 'en'):
     insights = [trans(f'quiz_{personality.lower()}_insight', lang=language)]
     tips = [
         trans(f'quiz_{personality.lower()}_tip', lang=language),
-        trans('quiz_use_budgeting_app', lang=language),
+        trans('quiz_use_budgeting_app', lang=houston,language),
         trans('quiz_set_emergency_fund', lang=language),
         trans('quiz_review_goals', lang=language)
     ]
@@ -395,7 +395,11 @@ def generate_insights_and_tips(personality: str, language: str = 'en'):
 def store_quiz_data(data: dict, logger: logging.LoggerAdapter, language: str = 'en') -> bool:
     session_id = session.get('sid', 'no-session-id') if has_request_context() else 'no-session-id'
     try:
-        storage = current_app.config['STORAGE_MANAGERS']['financial_health']
+        storage = current_app.config.get('STORAGE_MANAGERS', {}).get('financial_health')
+        if not storage:
+            logger.error("Storage manager 'financial_health' not configured", extra={'session_id': session_id})
+            flash(trans('quiz_config_error', lang=language), 'error')
+            return False
         storage.append(data)
         logger.info("Stored quiz data", extra={'session_id': session_id})
         return True
@@ -403,7 +407,7 @@ def store_quiz_data(data: dict, logger: logging.LoggerAdapter, language: str = '
         logger.error(f"Storage error: {str(e)}", extra={'session_id': session_id})
         flash(trans('quiz_storage_error', lang=language), 'error')
         return False
-        
+
 def send_quiz_email(to_email: str, user_name: str, personality: str, personality_desc: str, answers: list, badges: list, app: 'Flask', logger: logging.LoggerAdapter, language: str = 'en') -> bool:
     session_id = session.get('sid', 'no-session-id') if has_request_context() else 'no-session-id'
     try:
@@ -436,7 +440,7 @@ def send_quiz_email_async(app: 'Flask', to_email: str, user_name: str, personali
     session_id = session.get('sid', 'no-session-id') if has_request_context() else 'no-session-id'
     with app.app_context():
         try:
-            send_quiz_email(to_email, user_name, personality, personality_desc, answers, badges, language, app, logger)
+            send_quiz_email(to_email, user_name, personality, personality_desc, answers, badges, app, logger, language)
         except Exception as e:
             logger.error(f"Async email error to {to_email}: {str(e)}", extra={'session_id': session_id})
 
@@ -480,7 +484,19 @@ def step1():
             session.modified = True
             logger.info(f"Step 1 validated", extra={'session_id': session_id})
 
-            progress_storage = current_app.config['STORAGE_MANAGERS']['financial_health']
+            progress_storage = current_app.config.get('STORAGE_MANAGERS', {}).get('financial_health')
+            if not progress_storage:
+                logger.error("Storage manager 'financial_health' not configured", extra={'session_id': session_id})
+                flash(trans('quiz_config_error', lang=language), 'error')
+                return render_template(
+                    'quiz_step1.html',
+                    form=form,
+                    course_id=course_id,
+                    trans=trans,
+                    language=language,
+                    base_url=current_app.config.get('BASE_URL', '')
+                )
+
             progress = progress_storage.read_all()
             course_progress = next((p for p in progress if p['data'].get('course_id') == course_id and p['data'].get('session_id') == session_id), None)
             if not course_progress:
@@ -523,24 +539,25 @@ def step1():
             trans=trans,
             language=language,
             base_url=current_app.config.get('BASE_URL', '')
-        ),
-    500
+        )
 
 @quiz_bp.route('/step/<int:step_num>', methods=['GET', 'POST'])
 def quiz_step(step_num):
     logger = current_app.logger
     session_id = session.get('sid', 'no-session-id')
     language = session.get('language', 'en')
+    course_id = request.args.get('course_id', 'financial_quiz')
+
     if 'sid' not in session or 'quiz_data' not in session:
-        logger.warning(f"Session expired", extra={'session_id': session_id})
+        logger.warning(f"Session expired or quiz_data missing", extra={'session_id': session_id})
         flash(trans('quiz_session_expired', lang=language), 'error')
-        return redirect(url_for('quiz.step1', course_id=request.args.get('course_id', 'financial_quiz')))
+        return redirect(url_for('quiz.step1', course_id=course_id))
 
     steps = partition_questions(QUESTIONS)
     if step_num < 1 or step_num > len(steps):
         logger.error(f"Invalid step number: {step_num}", extra={'session_id': session_id})
         flash(trans('quiz_invalid_step', lang=language), 'error')
-        return redirect(url_for('quiz.step1', course_id=request.args.get('course_id', 'financial_quiz')))
+        return redirect(url_for('quiz.step1', course_id=course_id))
 
     questions = steps[step_num - 1]
     form = QuizForm(personal_info=False, step_num=step_num + 1, language=language)
@@ -552,8 +569,12 @@ def quiz_step(step_num):
             session['quiz_data']['send_email'] = form.send_email.data
             session.modified = True
 
-            course_id = request.args.get('course_id', 'financial_quiz')
-            progress_storage = current_app.config['STORAGE_MANAGERS']['financial_health']
+            progress_storage = current_app.config.get('STORAGE_MANAGERS', {}).get('financial_health')
+            if not progress_storage:
+                logger.error("Storage manager 'financial_health' not configured", extra={'session_id': session_id})
+                flash(trans('quiz_config_error', lang=language), 'error')
+                return redirect(url_for('quiz.step1', course_id=course_id))
+
             progress = progress_storage.read_all()
             course_progress = next((p for p in progress if p['data'].get('course_id') == course_id and p['data'].get('session_id') == session_id), None)
             if course_progress and step_num not in course_progress['data'].get('completed_tasks', []):
@@ -581,7 +602,12 @@ def quiz_step(step_num):
                 **{f'answer_{i}': trans(session['quiz_data'].get(q['id'], ''), lang=language) for i, q in enumerate(QUESTIONS, 1)}
             }])
 
-            storage = current_app.config['STORAGE_MANAGERS']['financial_health']
+            storage = current_app.config.get('STORAGE_MANAGERS', {}).get('financial_health')
+            if not storage:
+                logger.error("Storage manager 'financial_health' not configured", extra={'session_id': session_id})
+                flash(trans('quiz_config_error', lang=language), 'error')
+                return redirect(url_for('quiz.step1', course_id=course_id))
+
             all_users_data = storage.read_all()
             all_users_df = pd.DataFrame([record['data'] for record in all_users_data if 'data' in record])
 
@@ -603,7 +629,7 @@ def quiz_step(step_num):
                 }
             }
 
-            if not store_quiz_data(data, language, logger, storage):
+            if not store_quiz_data(data, logger, language):
                 logger.error(f"Failed to store quiz results", extra={'session_id': session_id})
                 return redirect(url_for('quiz.quiz_step', step_num=step_num, course_id=course_id))
 
@@ -649,20 +675,22 @@ def quiz_step(step_num):
                 'tips': tips
             }
 
-            if session['quiz_data'].get('send_email', '') and session['quiz_data'].get('email'):
+            if session['quiz_data'].get('send_email', False) and session['quiz_data'].get('email', ''):
                 threading.Thread(
                     target=send_quiz_email_async,
-                    args=(current_app._get_current_object(), 
-                          session['quiz_data'].get('email', ''),
-                          session['quiz_data'].get('first_name', ''), 
-                          personality, 
-                          personality_desc, 
-                          answers, 
-                          badges, 
-                          language, 
-                          logger)
+                    args=(
+                        current_app._get_current_object(),
+                        session['quiz_data'].get('email', ''),
+                        session['quiz_data'].get('first_name', ''),
+                        personality,
+                        personality_desc,
+                        answers,
+                        badges,
+                        language,
+                        logger
+                    )
                 ).start()
-                logger.info(f"Initiated async email to {session['quiz_data'].get('email']}", extra={'session_id': session_id})
+                logger.info(f"Initiated async email to {session['quiz_data'].get('email', '')}", extra={'session_id': session_id})
                 flash(trans('quiz_check_inbox', lang=language), 'success')
 
             flash(trans('quiz_submission_success', lang=language), 'success')
@@ -671,8 +699,8 @@ def quiz_step(step_num):
         if 'quiz_data' in session:
             for q in questions:
                 if q['id'] in session['quiz_data']:
-                    form.form[q['id']].data = session['quiz_data'].get(q['id'])
-            form.send_email.form.data = session['quiz_data'].get('send_email', False)
+                    getattr(form, q['id']).data = session['quiz_data'].get(q['id'])
+            form.send_email.data = session['quiz_data'].get('send_email', False)
 
         return render_template(
             'quiz_step.html',
@@ -698,7 +726,7 @@ def quiz_step(step_num):
             trans=trans,
             language=language,
             base_url=current_app.config.get('BASE_URL', '')
-        ), 500
+        )
 
 @quiz_bp.route('/results', methods=['GET'])
 def results():
@@ -751,7 +779,6 @@ def history():
             language=language,
             base_url=current_app.config.get('BASE_URL', '')
         )
-
     except Exception as e:
         logger.error(f"Error in history: {str(e)}", extra={'session_id': session_id})
         flash(trans('quiz_config_error', lang=language), 'error')
@@ -762,11 +789,21 @@ def analytics():
     logger = current_app.logger
     session_id = session.get('sid', 'no-session-id')
     language = session.get('language', 'en')
-    storage = current_app.config['STORAGE_MANAGERS']['financial_health']
-    analytics_data = storage.read_all()
-    analytics_df = pd.DataFrame([record['data'] for record in analytics_data if 'data' in record and 'Started' in record['data']])
+    storage = current_app.config.get('STORAGE_MANAGERS', {}).get('financial_health')
+    if not storage:
+        logger.error("Storage manager 'financial_health' not configured", extra={'session_id': session_id})
+        flash(trans('quiz_config_error', lang=language), 'error')
+        return render_template(
+            'quiz_analytics.html',
+            analytics={},
+            trans=trans,
+            language=language
+        )
 
     try:
+        analytics_data = storage.read_all()
+        analytics_df = pd.DataFrame([record['data'] for record in analytics_data if 'data' in record and 'Started' in record['data']])
+
         if analytics_df.empty:
             flash(trans('quiz_no_quiz_data_available', lang=language), 'info')
             return render_template(
@@ -791,8 +828,7 @@ def analytics():
             analytics={},
             trans=trans,
             language=language
-        ),
-    500
+        )
 
 @quiz_bp.errorhandler(Exception)
 def handle_error(e):
