@@ -3,6 +3,8 @@ EMERGENCY_FUND_TRANSLATIONS = {
         'core_english': 'English',
         'core_hausa': 'Hausa',
         'core_not_provided': 'Not provided',
+        'emergency_fund_goal': 'Set your emergency fund goal',
+        'emergency_fund_start_emergency_fund': 'Start building your emergency fund',
         'core_months': 'months',
         'core_dear': 'Dear',
         'core_hello': 'Hello',
@@ -241,6 +243,8 @@ EMERGENCY_FUND_TRANSLATIONS = {
         'emergency_fund_no_badges': 'Babu alamomi a yanzu',
         'emergency_fund_no_badges_earned': 'Babu alamomin da aka samu a yanzu',
         'emergency_fund_goal': 'Manufar Asusun Gaggawa',
-        'emergency_fund_start_emergency_fund': 'Fara Asusun Gaggawa'
+        'emergency_fund_start_emergency_fund': 'Fara Asusun Gaggawa',
+        'emergency_fund_goal': 'Tsara kudi don biyan bukatun gaggawa',
+        'emergency_fund_start_emergency_fund': 'Tsara Kudin Gaggawa',
     }
 }
