@@ -11,22 +11,25 @@
 {% endblock %}
 {% block content %}
 <div class="container">
-    <div class="header">
-        <h1>{{ trans('financial_health_score') | default('Financial Health Score') }}</h1>
-        <p>{{ trans('financial_health_enter_monthly_income_expenses') | default('Enter your monthly income and expenses') }}</p>
-    </div>
+    {% set tool_name = 'financial_health_score' | default('Financial Health Score') %}
+    {% set tool_icon = 'fa-heartbeat' %}
+    {% set subtitle = trans('financial_health_enter_monthly_income_expenses') | default('Enter your monthly income and expenses') %}
+    {% set step = 2 %}
+    {% set total_steps = 3 %}
+    {% set step_labels = ['Personal Info', 'Income & Expenses', 'Debt Details'] %}
+    {% include 'tool_header.html' %}
     <div class="card">
         <div class="card-body">
             <form method="POST" action="{{ url_for('financial_health.step2') }}" id="step2Form">
                 {{ form.csrf_token }}
                 <div class="mb-3">
                     <label class="form-label">{{ trans('financial_health_monthly_income') | default('Monthly Income') }}</label>
-                    {{ form.income(class="form-control number-input", placeholder=trans('financial_health_income_placeholder') | default('e.g., 500,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('financial_health_income_tooltip') | default('Income from business, salary, gifts, investments'), 'type': 'text', 'aria-describedby': 'income_help'}) }}
+                    {{ form.income(class="form-control number-input", placeholder=trans('financial_health_income_placeholder') | default('e.g., 500,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('financial_health_income_tooltip') | default('Income from business, salary, gifts, investments'), 'type': 'text', 'aria-describedby': 'incomeHelp'}) }}
                     <div class="invalid-feedback">{{ trans('financial_health_income_required') | default('Income is required') }}</div>
                 </div>
                 <div class="mb-3">
                     <label class="form-label">{{ trans('financial_health_monthly_expenses') | default('Monthly Expenses') }}</label>
-                    {{ form.expenses(class="form-control number-input", placeholder=trans('financial_health_expenses_placeholder') | default('e.g., 300,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('financial_health_expenses_tooltip') | default('Expenses like food, clothing, outings, data subscriptions'), 'type': 'text', 'aria-describedby': 'expenses_help'}) }}
+                    {{ form.expenses(class="form-control number-input", placeholder=trans('financial_health_expenses_placeholder') | default('e.g., 300,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('financial_health_expenses_tooltip') | default('Expenses like food, clothing, outings, data subscriptions'), 'type': 'text', 'aria-describedby': 'expensesHelp'}) }}
                     <div class="invalid-feedback">{{ trans('financial_health_expenses_required') | default('Expenses are required') }}</div>
                 </div>
                 <div class="d-flex justify-content-between">
@@ -48,7 +51,6 @@
             if (isNaN(num)) return '';
             return num.toLocaleString('en-NG', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
         };
-
         input.addEventListener('input', (e) => {
             const cursorPosition = e.target.selectionStart;
             const oldValue = e.target.value;
@@ -70,21 +72,18 @@
             const newCursorPosition = cursorPosition + cursorOffset;
             input.setSelectionRange(newCursorPosition, newCursorPosition);
         });
-
         input.addEventListener('paste', (e) => {
             e.preventDefault();
             const pasted = (e.clipboardData || window.clipboardData).getData('text');
             const cleanValue = pasted.replace(/[^0-9.]/g, '');
             input.value = formatNumber(cleanValue);
         });
-
         input.addEventListener('blur', () => {
             if (input.value) {
                 input.value = formatNumber(input.value);
             }
         });
     });
-
     document.getElementById('step2Form').addEventListener('submit', (e) => {
         const inputs = document.querySelectorAll('.number-input');
         let valid = true;
