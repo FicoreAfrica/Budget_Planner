@@ -51,19 +51,25 @@
                 {{ form.csrf_token }}
                 {% for question in questions %}
                     <div class="mb-3">
-                        <label class="form-label" for="{{ question.id }}">{{ trans('quiz_' + question.key + '_label') | default(question.label | default('Question')) }}</label>
+                        <label class="form-label" for="{{ question.id }}">
+                            {% if hasattr(form[question.id], 'label') and form[question.id].label %}
+                                {{ form[question.id].label.text }}
+                            {% else %}
+                                {{ trans('quiz_' + question.key + '_label') | default(question.label | default('Question')) }}
+                            {% endif %}
+                        </label>
                         {% for choice in form[question.id].choices %}
                             <div class="form-check">
                                 <input type="radio" class="form-check-input{{ ' is-invalid' if form[question.id].errors else '' }}"
-                                       name="{{ question.id }}" value="{{ choice[0] }}" id="{{ question.id }}_{{ loop.index }}"
-                                       {% if form[question.id].data == choice[0] %}checked{% endif %}
-                                       data-bs-toggle="tooltip" title="{{ trans('quiz_' + question.key + '_tooltip') | default(question.tooltip | default('Select an option')) }}"
-                                       aria-label="{{ trans('quiz_' + question.key + '_label') | default(question.label) }}: {{ choice[0] }}"
-                                       aria-describedby="help_{{ question.key }}">
+                                    name="{{ question.id }}" value="{{ choice[0] }}" id="{{ question.id }}_{{ loop.index }}"
+                                    {% if form[question.id].data == choice[0] %}checked{% endif %}
+                                    data-bs-toggle="tooltip" title="{{ trans('quiz_' + question.key + '_tooltip') | default(question.tooltip | default('Select an option')) }}"
+                                    aria-label="{{ trans('quiz_' + question.key + '_label') | default(question.label) }}: {{ choice[0] }}"
+                                    aria-describedby="help_{{ question.id }}">
                                 <label class="form-check-label" for="{{ question.id }}_{{ loop.index }}">{{ choice[1] }}</label>
                             </div>
                         {% endfor %}
-                        <small class="form-text text-muted" id="help_{{ question.key }}">{{ trans('quiz_' + question.key + '_placeholder') | default(question.placeholder | default('Select an option')) }}</small>
+                        <small class="form-text text-muted" id="help_{{ question.id }}">{{ trans('quiz_' + question.key + '_placeholder') | default(question.placeholder | default('Select an option')) }}</small>
                         {% if form[question.id].errors %}
                             <div class="invalid-feedback d-block">
                                 {{ trans('form_errors') | default('Please correct the errors') }}
@@ -71,18 +77,8 @@
                         {% endif %}
                     </div>
                 {% endfor %}
-                <div class="mb-3">
-                    <label for="{{ form.language.id }}" class="form-label">
-                        {% if hasattr(form.language, 'label') and form.language.label %}
-                            {{ form.language.label.text }}
-                        {% else %}
-                            {{ trans('core_language') | default('Language') }}
-                        {% endif %}
-                    </label>
-                    {{ form.language(class="form-select", **{'aria-label': 'Select Language'}) }}
-                </div>
                 <div class="mb-3 form-check">
-                    {{ form.send_email(class="form-check-input", **{'data-bs-toggle': 'tooltip', 'title': trans('core_send_email_tooltip') | default('Check to receive email with quiz results'), 'aria-describedby': 'send_email_help'}) }}
+                    {{ form.send_email(class="form-check-input" ~ (' is-invalid' if form.send_email.errors else ''), **{'data-bs-toggle': 'tooltip', 'title': trans('core_send_email_tooltip') | default('Check to receive email with quiz results'), 'aria-describedby': 'help_send_email'}) }}
                     <label class="form-check-label" for="{{ form.send_email.id }}">
                         {% if hasattr(form.send_email, 'label') and form.send_email.label %}
                             {{ form.send_email.label.text }}
@@ -90,6 +86,9 @@
                             {{ trans('core_send_email') | default('Send Email') }}
                         {% endif %}
                     </label>
+                    {% for error in form.send_email.errors %}
+                        <div class="invalid-feedback">{{ trans(error) | default(error) }}</div>
+                    {% endfor %}
                 </div>
                 <div class="d-flex justify-content-between">
                     {% if step_num > 1 %}
@@ -97,7 +96,13 @@
                     {% else %}
                         <a href="{{ url_for('quiz.step1', course_id=course_id) }}" class="btn btn-secondary" aria-label="Go Back">{{ trans('core_back') | default('Back') }}</a>
                     {% endif %}
-                    <button type="submit" class="btn btn-primary" aria-label="Submit">{{ form.submit.label.text }}</button>
+                    <button type="submit" class="btn btn-primary" aria-label="Submit">
+                        {% if hasattr(form.submit, 'label') and form.submit.label %}
+                            {{ form.submit.label.text }}
+                        {% else %}
+                            {{ trans('core_continue') | default('Continue') }}
+                        {% endif %}
+                    </button>
                 </div>
             </form>
         </div>
