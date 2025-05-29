@@ -1,178 +1,167 @@
 {% extends 'base.html' %}
-{% block title %}{{ trans('bill_view_edit_bills') | default('View and Edit Bills') }}{% endblock %}
+{% block title %}{{ translations['View and Edit Bills'] | default('View and Edit Bills') }}{% endblock %}
 {% block content %}
-  <div class="container">
+<div class="container">
     <div class="header">
-      <h1>{{ trans('bill_view_edit_bills') | default('View and Edit Bills') }}</h1>
+        <h2>{{ translations['View and Edit Bills'] | default('View and Edit Bills') }}</h2>
     </div>
     {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        {% for category, message in messages %}
-          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-            {{ trans('core_' + message) | default(message) }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close') | default('Close') }}"></button>
-          </div>
-        {% endfor %}
-      {% endif %}
-    {% endwith %}
-    <div class="card">
-      <div class="card-body">
-        <div class="mb-3">
-          <label class="form-label">{{ trans('bill_select_category') | default('Select Category') }}</label>
-          <select class="form-select" onchange="window.location.href='{{ url_for('bill.view_edit') }}?category='+this.value">
-            <option value="all" {% if category == 'all' %}selected{% endif %}>{{ trans('core_all') | default('All') }}</option>
-            <option value="utilities" {% if category == 'utilities' %}selected{% endif %}>{{ trans('bill_utilities') | default('Utilities') }}</option>
-            <option value="rent" {% if category == 'rent' %}selected{% endif %}>{{ trans('bill_rent') | default('Rent') }}</option>
-            <option value="data_internet" {% if category == 'data_internet' %}selected{% endif %}>{{ trans('bill_data_internet') | default('Data/Internet') }}</option>
-            <option value="ajo_esusu_adashe" {% if category == 'ajo_esusu_adashe' %}selected{% endif %}>{{ trans('bill_ajo_esusu_adashe') | default('Ajo/Esusu/Adashe') }}</option>
-            <option value="food" {% if category == 'food' %}selected{% endif %}>{{ trans('bill_food') | default('Food') }}</option>
-            <option value="transport" {% if category == 'transport' %}selected{% endif %}>{{ trans('bill_transport') | default('Transport') }}</option>
-            <option value="clothing" {% if category == 'clothing' %}selected{% endif %}>{{ trans('bill_clothing') | default('Clothing') }}</option>
-            <option value="education" {% if category == 'education' %}selected{% endif %}>{{ trans('bill_education') | default('Education') }}</option>
-            <option value="healthcare" {% if category == 'healthcare' %}selected{% endif %}>{{ trans('bill_healthcare') | default('Healthcare') }}</option>
-            <option value="entertainment" {% if category == 'entertainment' %}selected{% endif %}>{{ trans('bill_entertainment') | default('Entertainment') }}</option>
-            <option value="airtime" {% if category == 'airtime' %}selected{% endif %}>{{ trans('bill_airtime') | default('Airtime') }}</option>
-            <option value="school_fees" {% if category == 'school_fees' %}selected{% endif %}>{{ trans('bill_school_fees') | default('School Fees') }}</option>
-            <option value="savings_investments" {% if category == 'savings_investments' %}selected{% endif %}>{{ trans('bill_savings_investments') | default('Savings/Investments') }}</option>
-            <option value="other" {% if category == 'other' %}selected{% endif %}>{{ trans('bill_other') | default('Other') }}</option>
-          </select>
-        </div>
-        {% if bills %}
-          <div class="table-responsive">
-            <table class="table table-striped">
-              <thead>
-                <tr>
-                  <th>{{ trans('bill_bill_name') | default('Bill Name') }}</th>
-                  <th>{{ trans('bill_amount') | default('Amount') }}</th>
-                  <th>{{ trans('bill_due_date') | default('Due Date') }}</th>
-                  <th>{{ trans('bill_status') | default('Status') }}</th>
-                  <th>{{ trans('bill_actions') | default('Actions') }}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for bill_id, bill in bills %}
-                  <tr>
-                    <td>{{ bill.bill_name }}</td>
-                    <td>₦{{ bill.amount | format_number }}</td>
-                    <td>{{ trans('bill_due') | default('Due') }} {{ bill.due_date }}</td>
-                    <td>
-                      <form method="POST" action="{{ url_for('bill.view_edit') }}">
-                        {{ form.csrf_token }}
-                        <input type="hidden" name="bill_id" value="{{ bill_id }}">
-                        <input type="hidden" name="action" value="toggle_status">
-                        <button type="submit" class="btn btn-link status-{{ bill.status }}">{{ trans('bill_' + bill.status.lower()) | default(bill.status|capitalize) }}</button>
-                      </form>
-                    </td>
-                    <td>
-                      <form method="POST" action="{{ url_for('bill.view_edit') }}" style="display: inline;">
-                        {{ form.csrf_token }}
-                        <input type="hidden" name="bill_id" value="{{ bill_id }}">
-                        <input type="hidden" name="action" value="edit">
-                        <button type="submit" class="btn btn-primary btn-sm">{{ trans('bill_edit') | default('Edit') }}</button>
-                      </form>
-                      <form method="POST" action="{{ url_for('bill.view_edit') }}" style="display: inline;">
-                        {{ form.csrf_token }}
-                        <input type="hidden" name="bill_id" value="{{ bill_id }}">
-                        <input type="hidden" name="action" value="delete">
-                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('{{ trans('bill_confirm_delete') | default('Confirm Delete') }}');">{{ trans('bill_delete') | default('Delete') }}</button>
-                      </form>
-                    </td>
-                  </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        {% else %}
-          <p>{{ trans('bill_no_bills_found') | default('No bills found') }}</p>
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ translations['core_' + message] | default(message) }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ translations['core_close'] | default('Close') }}"></button>
+                </div>
+            {% endfor %}
         {% endif %}
-      </div>
+    {% endwith %}
+    <div class="mb-3">
+        <label class="form-label">{{ translations['Select Category'] | default('Select Category') }}</label>
+        <select class="form-select" onchange="window.location.href='{{ url_for('view_edit_bills') }}?category='+this.value">
+            <option value="all" {% if category == 'all' %}selected{% endif %}>{{ translations['All'] | default('All') }}</option>
+            <option value="utilities" {% if category == 'utilities' %}selected{% endif %}>{{ translations['Utilities'] | default('Utilities') }}</option>
+            <option value="rent" {% if category == 'rent' %}selected{% endif %}>{{ translations['Rent'] | default('Rent') }}</option>
+            <option value="subscription" {% if category == 'subscription' %}selected{% endif %}>{{ translations['Subscription'] | default('Subscription') }}</option>
+            <option value="other" {% if category == 'other' %}selected{% endif %}>{{ translations['Other'] | default('Other') }}</option>
+        </select>
     </div>
-    <div class="card">
-      <div class="card-body">
-        <h3>{{ trans('bill_edit_bill') | default('Edit Bill') }}</h3>
-        <form method="POST" action="{{ url_for('bill.view_edit') }}">
-          {{ form.csrf_token }}
-          <input type="hidden" name="action" value="edit">
-          <input type="hidden" name="bill_id" value="{{ request.form.bill_id or '' }}">
-          <div class="mb-3">
-            <label class="form-label">{{ trans('core_first_name') | default('First Name') }}</label>
-            {{ form.first_name(class="form-control", placeholder=trans('core_first_name_placeholder') | default('e.g., Chukwuma'), value=request.form.first_name or '') }}
-            <div class="invalid-feedback">{{ trans('core_first_name_required') | default('First name is required') }}</div>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">{{ trans('bill_bill_name') | default('Bill Name') }}</label>
-            {{ form.bill_name(class="form-control", placeholder=trans('bill_bill_name_placeholder') | default('e.g., NEPA, MTN Data, Ajo Contribution'), value=request.form.bill_name or '') }}
-            <div class="invalid-feedback">{{ trans('bill_bill_name_required') | default('Bill name is required') }}</div>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">{{ trans('bill_amount') | default('Amount') }}</label>
-            {{ form.amount(class="form-control", id="editAmountInput", placeholder=trans('bill_amount_placeholder') | default('e.g., ₦5000'), value=request.form.amount or '') }}
-            <div class="invalid-feedback">{{ trans('bill_amount_required') | default('Valid amount is required') }}</div>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">{{ trans('bill_due_date') | default('Due Date (YYYY-MM-DD)') }}</label>
-            {{ form.due_date(class="form-control", type="date", placeholder=trans('bill_due_date_placeholder') | default('YYYY-MM-DD'), value=request.form.due_date or '') }}
-            <div class="invalid-feedback">{{ trans('bill_due_date_required') | default('Valid due date is required') }}</div>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">{{ trans('bill_frequency') | default('Frequency') }}</label>
-            {{ form.frequency(class="form-select") }}
-            <div class="invalid-feedback">{{ trans('bill_frequency_required') | default('Frequency is required') }}</div>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">{{ trans('bill_category') | default('Category') }}</label>
+    {% if bills %}
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>{{ translations['Description'] | default('Description') }}</th>
+                        <th>{{ translations['Amount'] | default('Amount') }}</th>
+                        <th>{{ translations['Due Date'] | default('Due Date') }}</th>
+                        <th>{{ translations['Status'] | default('Status') }}</th>
+                        <th>{{ translations['Edit'] | default('Edit') }}</th>
+                        <th>{{ translations['Delete'] | default('Delete') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for bill in bills %}
+                        <tr>
+                            <td>{{ bill.Description }}</td>
+                            <td>₦{{ bill.Amount | format_number }}</td>
+                            <td>{{ translations['Due'] | default('Due') }} {{ bill.DueDate }}</td>
+                            <td>
+                                <a href="{{ url_for('toggle_status', record_id=bill.RecordID) }}"
+                                   class="status-{{ 'paid' if bill.Status == 'Paid' else 'unpaid' }}">
+                                    {{ translations[bill.Status] | default(bill.Status|capitalize) }}
+                                </a>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('view_edit_bills', record_id=bill.RecordID, category=category) }}"
+                                   class="btn btn-primary btn-sm">{{ translations['Edit'] | default('Edit') }}</a>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('delete_bill', record_id=bill.RecordID) }}"
+                                   class="btn btn-danger btn-sm"
+                                   onclick="return confirm('{{ translations['Confirm Delete'] | default('Confirm Delete') }}');">{{ translations['Delete'] | default('Delete') }}</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p>{{ translations['No bills found'] | default('No bills found') }}</p>
+    {% endif %}
+    <h3>{{ translations['Add New Bill'] | default('Add New Bill') }}</h3>
+    <form method="POST" action="{{ url_for('view_edit_bills', category=category) }}">
+        {{ form.hidden_tag() }}
+        <div class="mb-3">
+            <label class="form-label">{{ translations['What is this bill for?'] | default('What is this bill for?') }}</label>
+            {{ form.description(class="form-control", placeholder=translations['bill_bill_name_placeholder'] | default('e.g., NEPA, MTN Data, Ajo Contribution')) }}
+            <div class="invalid-feedback">{{ translations['Bill name is required'] | default('Bill name is required') }}</div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">{{ translations['How much is the bill? (₦)'] | default('How much is the bill? (₦)') }}</label>
+            {{ form.amount(class="form-control", id="editAmountInput", placeholder=translations['bill_amount_placeholder'] | default('e.g., ₦5000')) }}
+            <div class="invalid-feedback">{{ translations['Valid amount is required'] | default('Valid amount is required') }}</div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">{{ translations['When is this bill due?'] | default('When is this bill due?') }}</label>
+            {{ form.due_date(class="form-control", type="date", placeholder=translations['bill_due_date_placeholder'] | default('YYYY-MM-DD')) }}
+            <div class="invalid-feedback">{{ translations['Valid due date is required'] | default('Valid due date is required') }}</div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">{{ translations['Category'] | default('Category') }}</label>
             {{ form.category(class="form-select") }}
-            <div class="invalid-feedback">{{ trans('bill_category_required') | default('Category is required') }}</div>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">{{ trans('bill_status') | default('Status') }}</label>
+            <div class="invalid-feedback">{{ translations['Category is required'] | default('Category is required') }}</div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">{{ translations['How often does this bill occur?'] | default('How often does this bill occur?') }}</label>
+            {{ form.recurrence(class="form-select") }}
+            <div class="invalid-feedback">{{ translations['Frequency is required'] | default('Frequency is required') }}</div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">{{ translations['Send me reminders'] | default('Send me reminders') }}</label>
+            {{ form.reminders(class="form-select", multiple="multiple") }}
+        </div>
+        <div class="mb-3">
+            <label class="form-label">{{ translations['Status'] | default('Status') }}</label>
             {{ form.status(class="form-select") }}
-            <div class="invalid-feedback">{{ trans('bill_status_required') | default('Status is required') }}</div>
-          </div>
-          <button type="submit" class="btn btn-primary">{{ trans('bill_save_bill') | default('Save Bill') }}</button>
-        </form>
-      </div>
+            <div class="invalid-feedback">{{ translations['Status is required'] | default('Status is required') }}</div>
+        </div>
+        {{ form.record_id(class="form-control", type="hidden") }}
+        <button type="submit" class="btn btn-primary">{{ translations['Save Bill'] | default('Save Bill') }}</button>
+    </form>
+    <div class="mt-3 d-flex justify-content-between">
+        <a href="{{ url_for('bill_form') }}" class="btn btn-secondary">{{ translations['Back'] | default('Back') }}</a>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-primary">{{ translations['Go to Dashboard'] | default('Go to Dashboard') }}</a>
     </div>
-    <div class="d-flex justify-content-between">
-      <a href="{{ url_for('bill.form') }}" class="btn btn-secondary">{{ trans('core_back') | default('Back') }}</a>
-      <a href="{{ url_for('bill.dashboard') }}" class="btn btn-primary">{{ trans('bill_go_to_dashboard') | default('Go to Dashboard') }}</a>
-    </div>
-  </div>
+</div>
 {% endblock %}
 {% block extra_scripts %}
+<style>
+    body { font-family: Arial, sans-serif; background-color: #f4f4f4; }
+    .container { max-width: 700px; margin: 20px auto; background: #fff; padding: 20px; border-radius: 8px; }
+    .header { text-align: center; padding: 10px; background: #1E7F71; color: #fff; border-radius: 8px 8px 0 0; }
+    .form-label { font-size: 1.1em; }
+    .form-control, .form-select { font-size: 1em; margin-bottom: 10px; }
+    .btn-primary { background: #2E7D32; border: none; font-size: 1.1em; }
+    .btn-primary:hover { background: #0288D1; }
+    .btn-secondary { background: #6c757d; font-size: 1.1em; }
+    .btn-danger { font-size: 1em; }
+    .table { font-size: 1em; }
+    .status-paid { color: green; }
+    .status-unpaid { color: red; }
+    .form-select[multiple] { height: 100px; }
+</style>
 <script>
-// Format amount field (commas) as user types in edit form
-function formatNumberInput(input) {
-    const format = (val) => {
-        let clean = val.replace(/[^0-9.]/g, '');
-        if (!clean) return '';
-        let parts = clean.split('.');
-        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-        return parts.join('.');
-    };
+    // Format amount field (commas) as user types in edit form
+    function formatNumberInput(input) {
+        const format = (val) => {
+            let clean = val.replace(/[^0-9.]/g, '');
+            if (!clean) return '';
+            let parts = clean.split('.');
+            parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            return parts.join('.');
+        };
 
-    input.addEventListener('input', function(e) {
-        let cursor = input.selectionStart;
-        let oldLength = input.value.length;
-        input.value = format(input.value);
-        let newLength = input.value.length;
-        input.setSelectionRange(cursor + (newLength - oldLength), cursor + (newLength - oldLength));
-    });
-}
-
-// Strip commas before submitting the edit form
-document.addEventListener('DOMContentLoaded', function() {
-    var amt = document.getElementById('editAmountInput');
-    if (amt) formatNumberInput(amt);
-
-    // Prevent commas before submitting
-    var editForm = document.querySelector('form[action="{{ url_for('bill.view_edit') }}"]');
-    if (editForm) {
-        editForm.addEventListener('submit', function() {
-            var ea = document.getElementById('editAmountInput');
-            if (ea) ea.value = ea.value.replace(/,/g, '');
+        input.addEventListener('input', function(e) {
+            let cursor = input.selectionStart;
+            let oldLength = input.value.length;
+            input.value = format(input.value);
+            let newLength = input.value.length;
+            input.setSelectionRange(cursor + (newLength - oldLength), cursor + (newLength - oldLength));
         });
     }
-});
+
+    // Strip commas before submitting the edit form
+    document.addEventListener('DOMContentLoaded', function() {
+        var amt = document.getElementById('editAmountInput');
+        if (amt) formatNumberInput(amt);
+
+        // Prevent commas before submitting
+        var editForm = document.querySelector('form[action="{{ url_for('view_edit_bills', category=category) }}"]');
+        if (editForm) {
+            editForm.addEventListener('submit', function() {
+                var ea = document.getElementById('editAmountInput');
+                if (ea) ea.value = ea.value.replace(/,/g, '');
+            });
+        }
+    });
 </script>
 {% endblock %}
