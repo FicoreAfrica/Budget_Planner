@@ -5,6 +5,21 @@ body {
     color: #666;
 }
 
+/* Navbar */
+.navbar {
+    background: linear-gradient(90deg, #0288D1, #2E7D32);
+    animation: gradientShift 5s ease infinite;
+}
+.navbar-brand, .nav-link {
+    color: #FFFFFF !important;
+    font-weight: bold;
+}
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
 /* Header Message */
 .header-message {
     background: linear-gradient(90deg, #0288D1, #2E7D32);
@@ -21,19 +36,26 @@ body {
     100% { opacity: 0; }
 }
 
-/* Navbar */
-.navbar {
-    background: linear-gradient(90deg, #0288D1, #2E7D32);
-    animation: gradientShift 5s ease infinite;
+/* Consent Banner */
+.consent-banner {
+    background-color: #E3F2FD;
+    color: #333;
+    text-align: center;
+    padding: 10px;
+    font-size: 1rem;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    z-index: 1000;
 }
-.navbar-brand, .nav-link {
-    color: #FFFFFF !important;
-    font-weight: bold;
+.consent-banner i {
+    color: #0288D1;
 }
-@keyframes gradientShift {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+@media (max-width: 768px) {
+    .consent-banner {
+        font-size: 0.9rem;
+        padding: 8px;
+    }
 }
 
 /* Buttons */
@@ -69,6 +91,9 @@ body {
     border: none;
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
+.tool-card .custom-card {
+    background-color: #E3F2FD;
+}
 
 /* Container */
 .container {
@@ -82,13 +107,13 @@ body {
     max-width: 150px;
 }
 
-/* Section Headers Dark Green */
+/* Section Headers */
 .hero h2,
 .tools-section h2,
 .why-section h2,
 .testimonials-section h2,
 .recommended-learning h2,
-.about-section h2 {
+.faq-section h2 {
     font-family: 'Poppins', 'Arial', sans-serif;
     color: #2E7D32;
     font-size: 2.5rem;
@@ -99,12 +124,13 @@ body {
 .tools-section h2 i,
 .hero h2 i,
 .why-section h2 i,
-.testimonials-section h2 i {
+.testimonials-section h2 i,
+.faq-section h2 i {
     color: #0288D1;
     margin-right: 10px;
 }
 
-/* Hero (index.html) */
+/* Hero */
 .hero {
     background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), linear-gradient(135deg, #0288D1, #2E7D32);
     color: white;
@@ -119,13 +145,25 @@ body {
 .hero p {
     margin-bottom: 2rem;
 }
-
-/* Tool Card (index.html) */
-.tool-card .custom-card {
-    background-color: #E3F2FD;
+.hero-subtext {
+    font-size: 1rem;
+    color: #fff;
+    margin: 1rem 0 2rem;
+    font-weight: 400;
+}
+.hero-subtext i {
+    color: #E3F2FD;
+    font-size: 1.2rem;
 }
 
-/* Testimonials (index.html) */
+/* Tool Card */
+.no-fund-icon {
+    color: #0288D1;
+    font-size: 1rem;
+    margin-left: 5px;
+}
+
+/* Testimonials */
 .testimonials-section {
     background-color: #E3F2FD;
     border: 2px solid #343a40;
@@ -145,7 +183,7 @@ body {
     font-weight: bold;
 }
 
-/* Recommended Learning (index.html) */
+/* Recommended Learning */
 .recommended-learning {
     background-color: #E3F2FD;
     border: 2px solid #343a40;
@@ -153,28 +191,30 @@ body {
     border-radius: 5px;
 }
 
-/* Tips (bill_dashboard.html) */
-.tips {
-    background: #e8f4f8;
-    padding: 10px;
+/* FAQ Section */
+.faq-section {
+    background-color: #E3F2FD;
+    border: 2px solid #343a40;
+    padding: 20px;
     border-radius: 5px;
 }
-
-/* Bill Dashboard (bill_dashboard.html) */
-.overdue-alert {
-    font-weight: bold;
-    color: #dc3545;
+.faq-item {
+    margin-bottom: 1.5rem;
+}
+.faq-item h3 {
+    font-size: 1.5rem;
+    color: #333;
+}
+.faq-item h3 i {
+    color: #0288D1;
+    font-size: 1.2rem;
+}
+.faq-item p {
+    font-size: 1rem;
+    color: #333;
 }
 
-/* View/Edit Bills (view_edit_bills.html) */
-.status-paid {
-    color: green;
-}
-.status-unpaid {
-    color: red;
-}
-
-/* Why Section (index.html) */
+/* Why Section */
 .why-section {
     background-color: #E3F2FD;
     border: 2px solid #343a40;
@@ -191,20 +231,7 @@ body {
     margin-right: 10px;
 }
 
-/* About Section (index.html) */
-.about-section {
-    background: #E3F2FD;
-    border: 2px solid #343a40;
-    padding: 30px 20px;
-    border-radius: 5px;
-}
-
-/* Footer */
-.footer {
-    background: linear-gradient(90deg, #003087, #004D40);
-    color: white;
-    padding: 20px 0;
-}
+/* Footer Social Icons */
 .social-icons a {
     color: white !important;
     margin: 0 10px;
@@ -215,20 +242,20 @@ body {
     color: #E3F2FD !important;
     text-decoration: underline;
 }
-.footer-buttons a {
-    color: white !important;
-    margin: 0 10px;
+.footer-disclaimer {
+    font-size: 0.9rem;
+    color: #E3F2FD;
+    margin: 0.5rem 0;
+}
+.footer-disclaimer i {
+    color: #E3F2FD;
     font-size: 1rem;
-    text-decoration: none;
 }
-.footer-buttons a:hover {
-    color: #E3F2FD !important;
-    text-decoration: underline;
+.footer-disclaimer a {
+    color: #E3F2FD;
 }
-.footer-buttons i,
-.social-icons i {
-    color: #0288D1;
-    margin-right: 10px;
+.footer-disclaimer a:hover {
+    color: #fff;
 }
 
 /* Mobile Optimizations */
@@ -241,7 +268,7 @@ body {
     .why-section h2,
     .testimonials-section h2,
     .recommended-learning h2,
-    .about-section h2 {
+    .faq-section h2 {
         font-size: 1.5rem;
         line-height: 1.6;
         padding: 10px;
@@ -251,7 +278,7 @@ body {
     .testimonials-section,
     .recommended-learning,
     .why-section,
-    .about-section {
+    .faq-section {
         padding: 40px 16px;
         margin-bottom: 16px;
     }
@@ -262,8 +289,6 @@ body {
         width: 90%;
         margin: 10px auto;
         display: block;
-        background: linear-gradient(135deg, #2E7D32, #0288D1);
-        border: none;
     }
     .btn-primary:last-child {
         margin-bottom: 40px;
@@ -271,11 +296,30 @@ body {
     .testimonial + .testimonial {
         margin-top: 1.5rem;
     }
-    .social-icons a,
-    .footer-buttons a {
+    .social-icons a {
         font-size: 0.9rem;
-        margin: 10px auto;
-        display: block;
+        margin: 0 5px;
+    }
+    .hero-subtext {
+        font-size: 0.9rem;
+    }
+    .hero-subtext i {
+        font-size: 1rem;
+    }
+    .no-fund-icon {
+        font-size: 0.9rem;
+    }
+    .faq-item h3 {
+        font-size: 1.2rem;
+    }
+    .faq-item p {
+        font-size: 0.9rem;
+    }
+    .footer-disclaimer {
+        font-size: 0.8rem;
+    }
+    .footer-disclaimer i {
+        font-size: 0.9rem;
     }
 }
 
