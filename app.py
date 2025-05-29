@@ -33,6 +33,14 @@ class SessionFormatter(logging.Formatter):
 
 formatter = SessionFormatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s [session: %(session_id)s]')
 
+formatter = logging.Formatter(
+    '%(asctime)s %(levelname)s [%(filename)s:%(lineno)d %(funcName)s] %(message)s'
+)
+handler = logging.StreamHandler()
+handler.setFormatter(formatter)
+app.logger.handlers = [handler]  # Replace existing handlers
+app.logger.setLevel(logging.INFO)
+
 os.makedirs('data', exist_ok=True)
 file_handler = logging.FileHandler('data/storage.log')
 file_handler.setLevel(logging.DEBUG)
