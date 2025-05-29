@@ -17,8 +17,8 @@ except ImportError:
         return key.format(**kwargs)
 
 emergency_fund_bp = Blueprint('emergency_fund', __name__, url_prefix='/emergency_fund')
-emergency_fund_storage = JsonStorage('emergency_fund.json')
-budget_storage = JsonStorage('budget.json')
+emergency_fund_storage = JsonStorage('data/emergency_fund.json')
+budget_storage = JsonStorage('data/budget.json')
 
 class CommaSeparatedFloatField(FloatField):
     def process_formdata(self, valuelist):
