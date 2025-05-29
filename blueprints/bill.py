@@ -6,6 +6,7 @@ from json_store import JsonStorage
 from mailersend_email import send_email
 from datetime import datetime, date, timedelta
 import uuid
+
 try:
     from app import trans
 except ImportError:
@@ -26,41 +27,70 @@ def strip_commas(value):
     return value
 
 class BillForm(FlaskForm):
-    first_name = StringField('First Name', validators=[DataRequired(message=trans('bill_first_name_required'))])
-    email = StringField('Email', validators=[DataRequired(message=trans('bill_email_required')), Email()])
-    bill_name = StringField('Bill Name', validators=[DataRequired(message=trans('bill_bill_name_required'))])
-    amount = FloatField('Amount', validators=[DataRequired(message=trans('bill_amount_required')), NumberRange(min=0, max=10000000000)], filters=[strip_commas])
-    due_date = StringField('Due Date (YYYY-MM-DD)', validators=[DataRequired(message=trans('bill_due_date_required'))])
-    frequency = SelectField('Frequency', choices=[
-        ('one-time', trans('bill_frequency_one_time')),
-        ('weekly', trans('bill_frequency_weekly')),
-        ('monthly', trans('bill_frequency_monthly')),
-        ('quarterly', trans('bill_frequency_quarterly'))
-    ], default='one-time')
-    category = SelectField('Category', choices=[
-        ('utilities', trans('bill_category_utilities')),
-        ('rent', trans('bill_category_rent')),
-        ('data_internet', trans('bill_category_data_internet')),
-        ('ajo_esusu_adashe', trans('bill_category_ajo_esusu_adashe')),
-        ('food', trans('bill_category_food')),
-        ('transport', trans('bill_category_transport')),
-        ('clothing', trans('bill_category_clothing')),
-        ('education', trans('bill_category_education')),
-        ('healthcare', trans('bill_category_healthcare')),
-        ('entertainment', trans('bill_category_entertainment')),
-        ('airtime', trans('bill_category_airtime')),
-        ('school_fees', trans('bill_category_school_fees')),
-        ('savings_investments', trans('bill_category_savings_investments')),
-        ('other', trans('bill_category_other'))
-    ], validators=[DataRequired(message=trans('bill_category_required'))])
-    send_email = BooleanField(trans('bill_send_email_reminders'))
-    status = SelectField('Status', choices=[
-        ('unpaid', trans('bill_status_unpaid')),
-        ('paid', trans('bill_status_paid')),
-        ('pending', trans('bill_status_pending')),
-        ('overdue', trans('bill_status_overdue'))
-    ], default='unpaid')
-    submit = SubmitField(trans('bill_save_bill'))
+    # Define fields without context-dependent defaults/choices/messages
+    first_name = StringField('First Name')
+    email = StringField('Email')
+    bill_name = StringField('Bill Name')
+    amount = FloatField('Amount', filters=[strip_commas])
+    due_date = StringField('Due Date (YYYY-MM-DD)')
+    frequency = SelectField('Frequency')
+    category = SelectField('Category')
+    send_email = BooleanField('Send Email Reminders')
+    status = SelectField('Status')
+    submit = SubmitField('Save Bill')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Get language from session
+        lang = session.get('lang', 'en')
+
+        # Set validators dynamically
+        self.first_name.validators = [DataRequired(message=trans('bill_first_name_required', lang))]
+        self.email.validators = [DataRequired(message=trans('bill_email_required', lang)), Email()]
+        self.bill_name.validators = [DataRequired(message=trans('bill_bill_name_required', lang))]
+        self.amount.validators = [DataRequired(message=trans('bill_amount_required', lang)), NumberRange(min=0, max=10000000000)]
+        self.due_date.validators = [DataRequired(message=trans('bill_due_date_required', lang))]
+        self.category.validators = [DataRequired(message=trans('bill_category_required', lang))]
+
+        # Set choices for SelectFields
+        self.frequency.choices = [
+            ('one-time', trans('bill_frequency_one_time', lang)),
+            ('weekly', trans('bill_frequency_weekly', lang)),
+            ('monthly', trans('bill_frequency_monthly', lang)),
+            ('quarterly', trans('bill_frequency_quarterly', lang))
+        ]
+        self.frequency.default = 'one-time'
+
+        self.category.choices = [
+            ('utilities', trans('bill_category_utilities', lang)),
+            ('rent', trans('bill_category_rent', lang)),
+            ('data_internet', trans('bill_category_data_internet', lang)),
+            ('ajo_esusu_adashe', trans('bill_category_ajo_esusu_adashe', lang)),
+            ('food', trans('bill_category_food', lang)),
+            ('transport', trans('bill_category_transport', lang)),
+            ('clothing', trans('bill_category_clothing', lang)),
+            ('education', trans('bill_category_education', lang)),
+            ('healthcare', trans('bill_category_healthcare', lang)),
+            ('entertainment', trans('bill_category_entertainment', lang)),
+            ('airtime', trans('bill_category_airtime', lang)),
+            ('school_fees', trans('bill_category_school_fees', lang)),
+            ('savings_investments', trans('bill_category_savings_investments', lang)),
+            ('other', trans('bill_category_other', lang))
+        ]
+
+        self.status.choices = [
+            ('unpaid', trans('bill_status_unpaid', lang)),
+            ('paid', trans('bill_status_paid', lang)),
+            ('pending', trans('bill_status_pending', lang)),
+            ('overdue', trans('bill_status_overdue', lang))
+        ]
+        self.status.default = 'unpaid'
+
+        self.send_email.label.text = trans('bill_send_email_reminders', lang)
+        self.submit.label.text = trans('bill_save_bill', lang)
+
+        # Process form data to apply defaults
+        self.process()
 
 @bill_bp.route('/form', methods=['GET', 'POST'])
 def form():
