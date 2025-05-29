@@ -21,15 +21,21 @@
     {% block extra_head %}{% endblock %}
 </head>
 <body>
+    <!-- Consent Banner -->
+    <div class="consent-banner alert alert-info alert-dismissible fade show" role="alert">
+        <i class="fas fa-shield-alt me-1" aria-hidden="true"></i> {{ trans('core_consent_banner') | default('By using Ficore, you understand that we provide tools for planning only, not banking.') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close') | default('Close') }}"></button>
+    </div>
+
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         <div class="container mt-3">
-          {% for category, message in messages %}
-            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-              {{ trans(message) | default(message) }}
-              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close') | default('Close') }}"></button>
-            </div>
-          {% endfor %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ trans(message) | default(message) }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close') | default('Close') }}"></button>
+              </div>
+            {% endfor %}
         </div>
       {% endif %}
     {% endwith %}
@@ -57,19 +63,19 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('index') }}">{{ trans('core_home') | default('Home') }}</a>
+                        <a class="nav-link btn-primary navbar-btn" href="{{ url_for('index') }}">{{ trans('core_home') | default('Home') }}</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#tools-section" id="toolsLink">{{ trans('core_tools') | default('Tools') }}</a>
+                        <a class="nav-link btn-primary navbar-btn" href="#tools-section">{{ trans('core_tools') | default('Tools') }}</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('general_dashboard') }}">{{ trans('core_general_dashboard') | default('General Dashboard') }}</a>
+                        <a class="nav-link btn-primary navbar-btn" href="{{ url_for('general_dashboard') }}">{{ trans('core_general_dashboard') | default('General Dashboard') }}</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ FEEDBACK_FORM_URL }}" target="_blank">{{ trans('core_feedback') | default('Feedback') }}</a>
+                        <a class="nav-link btn-primary navbar-btn" href="{{ FEEDBACK_FORM_URL }}" target="_blank">{{ trans('core_feedback') | default('Feedback') }}</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('logout') }}">{{ trans('core_logout') | default('Logout') }}</a>
+                        <a class="nav-link btn-primary navbar-btn" href="{{ url_for('logout') }}">{{ trans('core_logout') | default('Logout') }}</a>
                     </li>
                 </ul>
             </div>
@@ -82,9 +88,10 @@
     </div>
 
     <!-- Footer -->
-    <footer class="footer mt-5">
-        <div class="container text-center py-4">
+    <footer class="footer mt-5" style="background: linear-gradient(90deg, #003087, #004D40); color: white;">
+        <div class="container text-center py-4" role="contentinfo">
             <p>{{ trans('core_about_ficore_africa') | default('About Ficore Africa') }}: {{ trans('core_empowering_financial_growth') | default('Empowering financial growth across Africa since 2025') }}</p>
+            <p class="footer-disclaimer"><i class="fas fa-shield-alt me-1" aria-hidden="true"></i> {{ trans('core_disclaimer') | default('Ficore is not a bank and does not hold or move funds.') }} <a href="{{ url_for('about') }}" class="text-white text-decoration-underline">{{ trans('core_learn_more') | default('Learn more') }}</a></p>
             <div class="social-icons d-flex justify-content-center gap-3">
                 <a href="{{ LINKEDIN_URL }}" target="_blank" aria-label="{{ trans('core_connect_on_linkedin') | default('Connect on LinkedIn') }}" class="d-flex align-items-center text-white">
                     <i class="fab fa-linkedin me-1"></i> LinkedIn
@@ -116,7 +123,6 @@
             document.querySelectorAll('form.validate-form').forEach(form => {
                 form.addEventListener('submit', function(e) {
                     let valid = true;
-                    // Validate text inputs
                     form.querySelectorAll('.form-control').forEach(input => {
                         input.classList.add('was-validated');
                         if (!input.value.trim()) {
@@ -126,7 +132,6 @@
                             input.classList.remove('is-invalid');
                         }
                     });
-                    // Validate select inputs
                     form.querySelectorAll('.form-select').forEach(select => {
                         select.classList.add('was-validated');
                         if (!select.value) {
@@ -142,7 +147,6 @@
                     }
                 });
             });
-            // Initialize tooltips
             const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
             [...tooltipTriggerList].forEach(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
         });
