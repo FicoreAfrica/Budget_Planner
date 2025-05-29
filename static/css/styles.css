@@ -25,8 +25,8 @@ body {
     background: linear-gradient(90deg, #0288D1, #2E7D32);
     color: white;
     text-align: center;
-    padding: 10px;
-    font-size: 1.2rem;
+    padding: 8px; /* Reduced padding to make header thinner */
+    font-size: 1rem; /* Reduced font size */
     animation: fadeInOut 6s ease-in-out infinite;
 }
 @keyframes fadeInOut {
@@ -95,6 +95,22 @@ body {
     background-color: #E3F2FD;
 }
 
+/* Tool Card Title */
+.card-title {
+    display: flex;
+    align-items: center;
+    gap: 8px; /* Space between icon, text, and advisory label */
+}
+.card-title i {
+    color: #0288D1;
+    font-size: 1.2rem; /* Reduced icon size for better balance */
+}
+.card-title .advisory-label {
+    font-size: 0.8rem;
+    color: #666;
+    font-style: italic;
+}
+
 /* Container */
 .container {
     max-width: 1200px;
@@ -154,13 +170,6 @@ body {
 .hero-subtext i {
     color: #E3F2FD;
     font-size: 1.2rem;
-}
-
-/* Tool Card */
-.no-fund-icon {
-    color: #0288D1;
-    font-size: 1rem;
-    margin-left: 5px;
 }
 
 /* Testimonials */
@@ -306,9 +315,6 @@ body {
     .hero-subtext i {
         font-size: 1rem;
     }
-    .no-fund-icon {
-        font-size: 0.9rem;
-    }
     .faq-item h3 {
         font-size: 1.2rem;
     }
@@ -320,6 +326,12 @@ body {
     }
     .footer-disclaimer i {
         font-size: 0.9rem;
+    }
+    .card-title i {
+        font-size: 1rem; /* Smaller icons on mobile */
+    }
+    .card-title .advisory-label {
+        font-size: 0.7rem;
     }
 }
 
@@ -335,7 +347,7 @@ body {
 .language-btn {
     font-size: 1rem;
     padding: 0.5rem 1rem;
-    min-width: 60px;
+    min-width: 100px; /* Increased min-width to accommodate longer text */
     text-align: center;
     border-radius: 5px;
 }
@@ -346,7 +358,7 @@ body {
     .language-btn {
         font-size: 0.9rem;
         padding: 0.4rem 0.8rem;
-        min-width: 50px;
+        min-width: 80px; /* Adjusted for mobile */
     }
     .language-btn i {
         font-size: 1rem;
