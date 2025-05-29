@@ -1,38 +1,19 @@
 {% extends "base.html" %}
-{% block title %}{{ trans('quiz_financial_personality_quiz', lang=language) }}%}%}
+{% block title %}
+{{ trans('quiz_financial_personality_quiz', lang=language) }}
 {% endblock %}
-
 {% block extra_head %}
-    <style>
-        .container {
-            max-width: 600px;
-            margin: 2rem auto;
-        }
-        .card {
-            border: none;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-        }
-        .btn-primary {
-            background: linear-gradient(135deg, #1E7F71, #0288D1);
-            border: none;
-        }
-        .btn-primary:hover {
-            background: linear-gradient(135deg, #1B5E20, #01579B);
-        }
-        .form-control.is-invalid ~ .invalid-feedback,
-        .form-check-input.is-invalid ~ .invalid-feedback {
-            display: block;
-        }
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 {% endblock %}
-
 {% block content %}
-<div class="container">
-    <div class="header">
-        <h1>{{ trans('quiz_financial_personality_quiz', lang=language) }}</h1>
-        <p>{{ trans('quiz_enter_personal_information', lang=language) }}</p>
-    </div>
+<div class="container step-container">
+    {% set tool_name = 'quiz_financial_personality_quiz' %}
+    {% set tool_icon = 'fa-user-circle' %}
+    {% set subtitle = trans('quiz_enter_personal_information', lang=language) %}
+    {% set step = 1 %}
+    {% set total_steps = total_steps | default(4) %}
+    {% set step_labels = ['Personal Info'] + (questions | map(attribute='text_key') | map('trans', lang=language) | list) %}
+    {% include 'tool_header.html' %}
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
@@ -45,34 +26,42 @@
     {% endwith %}
     <div class="card">
         <div class="card-body">
-            <form method="POST" action="{{ url_for('quiz.step1', course_id=course_id)}}">
+            <form method="POST" action="{{ url_for('quiz.step1', course_id=course_id) }}">
                 {{ form.csrf_token }}
                 <div class="mb-3">
-                    <label class="form-label" for="{{ form.first_name.id }}">{{ form.first_name.label.text }}</label>
-                    {{ form.first_name(class="form-control" ~ (' is-invalid' if form.first_name.errors else ''), **form.first_name.render_kw) }})
+                    <label class="form-label" for="{{ form.first_name.id }}">{{ trans(form.first_name.label.text, lang=language) }}</label>
+                    {{ form.first_name(class="form-control" ~ (' is-invalid' if form.first_name.errors else ''), **form.first_name.render_kw) }}
                     {% for error in form.first_name.errors %}
-                        <div class="invalid-feedback">{{ trans(error, lang='en') }}</div>
+                        <div class="invalid-feedback">{{ trans(error, lang=language) }}</div>
                     {% endfor %}
                 </div>
                 <div class="mb-3">
-                    <label class="form-label" for="{{ form.email.id }}">{{ form.email.label.text }}</label>
-                    {{ form.email(class="form-control" ~ (' is-invalid' if form.email.errors else ''), **form.email.render_kw) }})
+                    <label class="form-label" for="{{ form.email.id }}">{{ trans(form.email.label.text, lang=language) }}</label>
+                    {{ form.email(class="form-control" ~ (' is-invalid' if form.email.errors else ''), **form.email.render_kw) }}
                     {% for error in form.email.errors %}
-                        <div class="invalid-feedback">{{ trans(error, lang='en') }}</div>
+                        <div class="invalid-feedback">{{ trans(error, lang=language) }}</div>
                     {% endfor %}
                 </div>
                 <div class="mb-3 form-check">
-                    {{ form.send_email(class="form-check-input" ~ (' is-checked' if form.send_email.data else ''), **form.send_email.render_kw) }})
-                    <label class="form-check-label" for="{{ form.send_email.id }}">{{ form.send_email.label.text }}</label>
+                    {{ form.send_email(class="form-check-input" ~ (' is-checked' if form.send_email.data else ''), **form.send_email.render_kw) }}
+                    <label class="form-check-label" for="{{ form.send_email.id }}">{{ trans(form.send_email.label.text, lang=language) }}</label>
                     {% for error in form.send_email.errors %}
-                        <div class="invalid-feedback">{{ trans(error, lang='en') }}</div>
+                        <div class="invalid-feedback">{{ trans(error, lang=language) }}</div>
                     {% endfor %}
                 </div>
                 <div class="d-flex justify-content-between">
                     {% if course_id %}
-                        <a href="{{ url_for('learning_hub.courses') }}" class="btn btn-secondary" aria-label="{{ trans('courses_back_to_courses', lang='en') }}">Courses">{{ trans('courses_back_to_courses', lang='en') }}</a>
+                        <a href="{{ url_for('learning_hub.courses') }}" class="btn btn-secondary" aria-label="{{ trans('courses_back_to_courses', lang=language) }}">
+                            <i class="fas fa-arrow-left"></i> {{ trans('courses_back_to_courses', lang=language) }}
+                        </a>
+                    {% else %}
+                        <a href="{{ url_for('home') }}" class="btn btn-secondary" aria-label="{{ trans('core_back', lang=language) }}">
+                            <i class="fas fa-arrow-left"></i> {{ trans('core_back', lang=language) }}
+                        </a>
                     {% endif %}
-                    <button type="submit" class="btn btn-primary" aria-label="{{ trans('quiz_start_quiz', lang=language)}}">{{ form.submit.label.text }}</button>
+                    <button type="submit" class="btn btn-primary" aria-label="{{ trans('quiz_start_quiz', lang=language) }}">
+                        <i class="fas fa-play"></i> {{ trans('quiz_start_quiz', lang=language) }}
+                    </button>
                 </div>
             </form>
         </div>
