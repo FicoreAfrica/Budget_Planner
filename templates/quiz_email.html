@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ trans('quiz_quiz_results') | default('Your Financial Personality Quiz Results') }}</title>
+    <title>{{ trans('quiz_report_subject', lang=language) }}</title>
     <style>
         body {
             font-family: 'Arial', sans-serif;
@@ -51,11 +51,21 @@
             color: white;
             text-decoration: none;
             border-radius: 5px;
-            font-size: 0.9rem;
+            font-size: 0.9em;
             margin-top: 10px;
         }
         .btn:hover {
-            background: linear-gradient(135deg, #1B5E20, #01579B);
+            background: linear-gradient(135deg, #1B5e20, '#01579b');
+        }
+        .badge {
+            display: inline-block;
+            padding: 5px 12px;
+            margin: 5px;
+            background-color: #e9ecef;
+            border-radius: 12px;
+            font-size: 0.875em;
+            color: #2e7d32;
+            border: 2px solid #0288d1;
         }
         ul {
             padding-left: 20px;
@@ -68,42 +78,42 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>{{ trans('quiz_financial_personality_quiz') | default('Financial Personality Quiz') }}</h1>
+            <h1>{{ trans('quiz_financial_personality_quiz', lang=language) }}</h1>
         </div>
         <div class="content">
-            <p>{{ trans('core_dear') | default('Dear') }} {{ user_name }},</p>
-            <p>{{ trans('quiz_quiz_summary_intro') | default('Here is your financial personality quiz summary') }}</p>
-            <h2>{{ trans('quiz_quiz_results') | default('Quiz Results') }}</h2>
-            <p>{{ trans('core_created_at') | default('Created At') }}: {{ data.created_at }}</p>
-            <p>{{ trans('quiz_your_personality') | default('Your Personality') }}: {{ trans('quiz_' + personality.lower()) | default(personality) }}</p>
-            <p>{{ trans('quiz_score') | default('Score') }}: {{ data.score }} / 30</p>
+            <p>{{ trans('core_dear', lang=language) }} {{ user_name | default(trans('core_user', lang=language)) }},</p>
+            <p>{{ trans('quiz_quiz_summary_intro', lang=language) }}</p>
+            <h2>{{ trans('quiz_your_financially_personality_results', lang=language) }}</h2>
+            <p><strong>{{ trans('core_created_at', lang=language) }}</strong>: {{ data.created_at }}</p>
+            <p><strong>{{ trans('quiz_your_personality', lang=language)}}</strong>: {{ trans('quiz_' ~ personality.lower() ~ '_description', lang=language, default=personality) }}</p>
+            <p><strong>{{ trans('quiz_score', lang=language)}}</strong>: {{ data.score }} / 30</p>
             <p>{{ personality_desc }}</p>
-            <h3>{{ trans('quiz_badges') | default('Badges') }}</h3>
+            <h3>{{ trans('quiz_badges', lang=language) }}</h3>
             {% if data.badges %}
-                <ul>
+                <div>
                     {% for badge in data.badges %}
-                        <li>{{ trans('badge_' + badge.lower().replace(' ', '_')) | default(badge) }}</li>
+                    <span class="badge">{{ badge }}</span>
                     {% endfor %}
-                </ul>
+                </div>
             {% else %}
-                <p>{{ trans('quiz_no_badges') | default('No badges earned yet') }}</p>
+                <p>{{ trans('quiz_no_badges', lang=language, default='No badges earned yet') }}</p>
             {% endif %}
-            <h3>{{ trans('quiz_recommendations') | default('Recommendations') }}</h3>
+            <h3>{{ trans('quiz_recommendations', lang=language) }}</h3>
             <ul>
                 <li>{{ tip }}</li>
                 {% if personality in ['Spender', 'Balanced'] %}
-                    <li>{{ trans('quiz_use_budgeting_app') | default('Try using a budgeting app like PiggyVest or Moniepoint to track expenses.') }}</li>
+                    <li>{{ trans('quiz_use_budgeting_app', lang=language) }}</li>
                 {% endif %}
                 {% if personality != 'Saver' %}
-                    <li>{{ trans('quiz_set_emergency_fund') | default('Set up an emergency fund with Cowrywise for unexpected expenses.') }}</li>
+                    <li>{{ trans('quiz_set_emergency_fund', lang=language) }}</li>
                 {% endif %}
-                <li>{{ trans('quiz_review_goals') | default('Review your financial goals monthly to stay on track.') }}</li>
+                <li>{{ trans('quiz_review_goals', lang=language) }}</li>
             </ul>
-            <p><a href="{{ base_url }}/quiz/results" class="btn">{{ trans('quiz_view_dashboard') | default('View Dashboard') }}</a></p>
-            <p>{{ trans('core_thank_you') | default('Thank you for using Ficore Africa') }}</p>
+            <p><a href="{{ base_url }}/quiz/results" class="btn">{{ trans('quiz_view_dashboard', lang=language) }}</a></p>
+            <p>{{ trans('core_thank_you', lang=language) }}</p>
         </div>
         <div class="footer">
-            <p>{{ trans('core_powered_by') | default('Powered by Ficore Africa') }}</p>
+            <p>{{ trans('core_powered_by', lang=language) }}</p>
         </div>
     </div>
 </body>
