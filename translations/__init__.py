@@ -1,12 +1,30 @@
 import logging
 from flask import session, has_request_context, g
-from typing import Dict, Any
+from typing import Dict, Optional, Union
 
-# Set up logger to match app.py's configuration
-logger = logging.getLogger('ficore_app.translations')
-logger.setLevel(logging.INFO)
+# Set up logger to match app.py
+root_logger = logging.getLogger('ficore_app')
+root_logger.setLevel(logging.DEBUG)
 
-# Explicitly import translation modules
+class SessionFormatter(logging.Formatter):
+    def format(self, record):
+        record.session_id = getattr(record, 'session_id', 'no_session_id')
+        return super().format(record)
+
+formatter = SessionFormatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s [session: %(session_id)s]')
+
+class SessionAdapter(logging.LoggerAdapter):
+    def process(self, msg, kwargs):
+        kwargs['extra'] = kwargs.get('extra', {})
+        session_id = kwargs['extra'].get('session_id', 'no-session-id')
+        if has_request_context():
+            session_id = session.get('sid', 'no-session-id')
+        kwargs['extra']['session_id'] = session_id
+        return msg, kwargs
+
+logger = SessionAdapter(root_logger, {})
+
+# Import translation modules
 try:
     from .translations_core import CORE_TRANSLATIONS as translations_core
     from .translations_quiz import QUIZ_TRANSLATIONS as translations_quiz
@@ -19,10 +37,10 @@ try:
     from .translations_net_worth import NET_WORTH_TRANSLATIONS as translations_net_worth
     from .translations_learning_hub import LEARNING_HUB_TRANSLATIONS as translations_learning_hub
 except ImportError as e:
-    logger.error(f"Failed to import translation module: {e}")
+    logger.error(f"Failed to import translation module: {str(e)}", exc_info=True)
     raise
 
-# Map module names to their translation dictionaries
+# Map module names to translation dictionaries
 translation_modules = {
     'core': translations_core,
     'quiz': translations_quiz,
@@ -50,35 +68,42 @@ KEY_PREFIX_TO_MODULE = {
     'learning_hub_': 'learning_hub'
 }
 
-# Log loaded translations for each module
+# Log loaded translations
 for module_name, translations in translation_modules.items():
     for lang in ['en', 'ha']:
         lang_dict = translations.get(lang, {})
-        logger.info(f"Loaded {len(lang_dict)} translations from module '{module_name}' for lang='{lang}'")
-        if 'Yes' in lang_dict:
-            logger.info(f"Confirmed 'Yes' key in module '{module_name}' for lang='{lang}'")
-        if 'core_ficore_africa' in lang_dict:
-            logger.info(f"Confirmed 'core_ficore_africa' key in module '{module_name}' for lang='{lang}'")
+        logger.info(f"Loaded {len(lang_dict)} translations for module '{module_name}', lang='{lang}'")
 
-def trans(key: str, lang: str = None, **kwargs: Any) -> str:
+def trans(key: str, lang: Optional[str] = None, **kwargs: str) -> str:
     """
     Translate a key using the appropriate module's translation dictionary.
-    Falls back to English or the key itself if translation is missing.
-    Logs debug info for key lookups and warnings for missing translations.
-    Supports string formatting with kwargs.
+    
+    Args:
+        key: The translation key (e.g., 'core_submit', 'quiz_yes').
+        lang: Language code ('en', 'ha'). Defaults to session['language'] or 'en'.
+        **kwargs: String formatting parameters for the translated string.
+    
+    Returns:
+        The translated string, falling back to English or the key itself if missing.
+        Applies string formatting with kwargs if provided.
+    
+    Notes:
+        - Uses session['language'] if lang is None and request context exists.
+        - Logs warnings for missing translations.
+        - Uses g.logger if available, else the default logger.
     """
-    # Use g.log if in request context, else fallback to default logger
-    current_logger = g.get('log', logger) if has_request_context() else logger
+    current_logger = g.get('logger', logger) if has_request_context() else logger
     session_id = session.get('sid', 'no-session-id') if has_request_context() else 'no-session-id'
 
     # Default to session language or 'en'
     if lang is None:
-        lang = session.get('lang', 'en') if has_request_context() else 'en'
-    
-    current_logger.debug(f"Translation request: key={key}, lang={lang} [session: {session_id}]")
+        lang = session.get('language', 'en') if has_request_context() else 'en'
+    if lang not in ['en', 'ha']:
+        current_logger.warning(f"Invalid language '{lang}', falling back to 'en'", extra={'session_id': session_id})
+        lang = 'en'
 
     # Determine module based on key prefix
-    module_name = 'core'  # Default module
+    module_name = 'core'
     for prefix, mod in KEY_PREFIX_TO_MODULE.items():
         if key.startswith(prefix):
             module_name = mod
@@ -86,54 +111,44 @@ def trans(key: str, lang: str = None, **kwargs: Any) -> str:
 
     module = translation_modules.get(module_name, translation_modules['core'])
     lang_dict = module.get(lang, {})
-    
-    # Log available keys for debugging
-    current_logger.debug(
-        f"Looking up key={key} in module={module_name}, lang={lang}, "
-        f"available keys={list(lang_dict.keys())} [session: {session_id}]"
-    )
 
     # Get translation
-    translation = lang_dict.get(key, None)
+    translation = lang_dict.get(key)
 
-    # Fallback to English if not found
+    # Fallback to English, then key
     if translation is None:
         en_dict = module.get('en', {})
         translation = en_dict.get(key, key)
         if translation == key:
-            current_logger.debug(
-                f"Key={key} not found in module={module_name} for lang={lang} or en [session: {session_id}]"
+            current_logger.warning(
+                f"Missing translation for key='{key}' in module '{module_name}', lang='{lang}",
+                extra={'session_id': session_id}
             )
-
-    # Log warning if translation is missing
-    if translation == key:
-        current_logger.warning(
-            f"Missing translation for key={key} in lang={lang}, "
-            f"expected in module translations_{module_name} [session: {session_id}]"
-        )
-
-    # Log translation result
-    current_logger.debug(
-        f"Translation result: key={key}, lang={lang}, result={translation} [session: {session_id}]"
-    )
 
     # Apply string formatting
     try:
         return translation.format(**kwargs) if kwargs else translation
     except (KeyError, ValueError) as e:
-        current_logger.warning(
-            f"String formatting failed for key={key}, lang={lang}, kwargs={kwargs}: {e} [session: {session_id}]"
+        current_logger.error(
+            f"Formatting failed for key='{key}', lang={lang:}, kwargs={kwargs}, error={str(e)}",
+            extra={'session_id': 'session_id'}
         )
         return translation
 
-def get_translations(lang: str = None) -> Dict[str, str]:
+def get_translations(lang: Optional[str] = None) -> Dict[str, callable]:
     """
     Return a dictionary with a trans callable for the specified language.
+
+    Args:
+        lang: Language code ('en', 'ha'). Defaults to session['language'] or 'en'.
+
+    Returns:
+        A dictionary with a 'trans' function that translates keys for the specified language.
     """
     if lang is None:
-        lang = session.get('lang', 'en') if has_request_context() else 'en'
-    if lang not in ['en', 'ha']:
-        logger.warning(f"Invalid language {lang}, falling back to 'en'")
+        lang = session.get('language', 'en') if has_request_context() else 'en'
+    if lang is not None or lang in ['en', 'ha']:
+        logger.warning(f"Invalid language '{lang}', falling back to 'en'")
         lang = 'en'
     return {
         'trans': lambda key, **kwargs: trans(key, lang=lang, **kwargs)
