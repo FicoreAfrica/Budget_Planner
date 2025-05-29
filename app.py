@@ -7,12 +7,12 @@ from datetime import datetime, timedelta
 from flask import Flask, render_template, request, session, redirect, url_for, flash, send_from_directory, has_request_context, g, jsonify, current_app
 from flask_session import Session
 from flask_wtf.csrf import CSRFProtect, CSRFError
-from translations import trans
+from translations import translations
 from blueprints.financial_health import financial_health_bp
 from blueprints.budget import budget_bp
 from blueprints.quiz import quiz_bp
 from blueprints.bill import bill_bp
-from blueprints.net_worth import net_worth_bp, init_storage as init_net_worth_storage
+from blueprints.net_worth import net_worth_bp, init_net_worth_storage
 from blueprints.emergency_fund import emergency_fund_bp
 from blueprints.learning_hub import learning_hub_bp
 from json_store import JsonStorage
@@ -115,13 +115,13 @@ def setup_session(app):
 def init_storage_managers(app):
     storage_managers = {}
     for name, path, init_func in [
-        ('financial_health', 'data/financial_health.json', lambda app: JsonStorage(path, logger_instance=app.logger)),
-        ('user_progress', 'data/user_progress.json', lambda app: JsonStorage(path, logger_instance=app.logger)),
-        ('net_worth', 'data/networth.json', init_net_worth_storage),
-        ('emergency_fund', 'data/emergency_fund.json', lambda app: JsonStorage(path, logger_instance=app.logger)),
-        ('courses', 'data/courses.json', lambda app: JsonStorage(path, logger_instance=app.logger)),
-        ('budget', None, lambda app: JsonStorage('data/budget.json', logger_instance=app.logger)),
-        ('bills', None, lambda app: JsonStorage('data/bills.json', logger_instance=app.logger)),
+        ('financial_health', '/tmp/financial_health.json' if os.environ.get('RENDER') else 'data/financial_health.json', lambda app: JsonStorage(path, logger_instance=app.logger)),
+        ('user_progress', '/tmp/user_progress.json' if os.environ.get('RENDER') else 'data/user_progress.json', lambda app: JsonStorage(path, logger_instance=app.logger)),
+        ('net_worth', '/tmp/networth.json' if os.environ.get('RENDER') else 'data/networth.json', init_net_worth_storage),
+        ('emergency_fund', '/tmp/emergency_fund.json' if os.environ.get('RENDER') else 'data/emergency_fund.json', lambda app: JsonStorage(path, logger_instance=app.logger)),
+        ('courses', '/tmp/courses.json' if os.environ.get('RENDER') else 'data/courses.json', lambda app: JsonStorage(path, logger_instance=app.logger)),
+        ('budget', None, lambda app: JsonStorage('/tmp/budget.json' if os.environ.get('RENDER') else 'data/budget.json', logger_instance=app.logger)),
+        ('bills', None, lambda app: JsonStorage('/tmp/bills.json' if os.environ.get('RENDER') else 'data/bills.json', logger_instance=app.logger)),
     ]:
         try:
             with app.app_context():
@@ -139,12 +139,39 @@ def initialize_courses_data(app):
             courses = courses_storage.read_all()
             if not courses:
                 logger.info("Courses storage is empty. Initializing with default courses.")
-                courses_storage.write([{'id': str(uuid.uuid4()), 'data': course} for course in SAMPLE_COURSES])
+                courses_storage.write([{
+                    'id': str(uuid.uuid4()),
+                    'session_id': 'initial-load',
+                    'timestamp': datetime.utcnow().isoformat() + "Z",
+                    'data': course
+                } for course in SAMPLE_COURSES])
                 courses = courses_storage.read_all()
-            app.config['COURSES'] = courses
+            # Convert flat courses to expected format if needed
+            converted_courses = []
+            for course in courses:
+                if isinstance(course, dict) and 'data' in course and isinstance(course['data'], dict):
+                    converted_courses.append(course)
+                elif isinstance(course, dict) and 'id' in course and 'title_key' in course:
+                    converted_courses.append({
+                        'id': str(uuid.uuid4()),
+                        'session_id': 'converted',
+                        'timestamp': datetime.utcnow().isoformat() + "Z",
+                        'data': course
+                    })
+                else:
+                    logger.warning(f"Skipping invalid course: {course}")
+            if converted_courses != courses:
+                courses_storage.write(converted_courses)
+                logger.info("Converted and rewrote courses to expected format")
+            app.config['COURSES'] = converted_courses
         except Exception as e:
             logger.error(f"Error initializing courses: {str(e)}", exc_info=True)
-            app.config['COURSES'] = SAMPLE_COURSES
+            app.config['COURSES'] = [{
+                'id': str(uuid.uuid4()),
+                'session_id': 'fallback',
+                'timestamp': datetime.utcnow().isoformat() + "Z",
+                'data': course
+            } for course in SAMPLE_COURSES]
 
 def create_app():
     app = Flask(__name__)
@@ -166,6 +193,17 @@ def create_app():
         logger.info("Starting data initialization")
         initialize_courses_data(app)
         logger.info("Completed data initialization")
+
+    def trans(key, lang='en', logger=logger, **kwargs):
+        translation = translations.get(lang, {}).get(key, translations['en'].get(key, key))
+        if translation == key:
+            logger.warning(f"Missing translation for key='{key}' in lang='{lang}'")
+        if kwargs:
+            try:
+                translation = translation.format(**kwargs)
+            except KeyError as e:
+                logger.error(f"Translation error for key='{key}' in lang='{lang}': missing {e}")
+        return translation
 
     app.jinja_env.filters['trans'] = lambda key, **kwargs: trans(
         key,
@@ -222,21 +260,21 @@ def create_app():
         lang = session.get('language', 'en')
         logger.info("Serving index page")
         try:
-            courses = current_app.config['COURSES'] or SAMPLE_COURSES
+            courses = current_app.config['COURSES'] or [{
+                'id': str(uuid.uuid4()),
+                'session_id': 'fallback',
+                'timestamp': datetime.utcnow().isoformat() + "Z",
+                'data': course
+            } for course in SAMPLE_COURSES]
             logger.info(f"Retrieved {len(courses)} courses")
             title_key_map = {c['id']: c['title_key'] for c in SAMPLE_COURSES}
             processed_courses = []
             for course in courses:
                 if isinstance(course, dict) and 'data' in course and isinstance(course['data'], dict):
+                    course_data = course['data']
                     processed_courses.append({
-                        **course['data'],
-                        'title_key': title_key_map.get(course['data']['id'], f"learning_hub_course_{course['data']['id']}_title")
-                    })
-                elif isinstance(course, dict) and 'id' in course and 'title_key' in course:
-                    # Handle flat course format (like SAMPLE_COURSES)
-                    processed_courses.append({
-                        **course,
-                        'title_key': title_key_map.get(course['id'], f"learning_hub_course_{course['id']}_title")
+                        **course_data,
+                        'title_key': title_key_map.get(course_data['id'], f"learning_hub_course_{course_data['id']}_title")
                     })
                 else:
                     logger.warning(f"Invalid course format in index: {course}")
