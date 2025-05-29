@@ -210,17 +210,13 @@ def create_app():
             if len(courses) != len(default_courses):
                 logger.error(f"Failed to verify courses.json initialization. Expected {len(default_courses)} courses, got {len(courses)}.")
         try:
-            pass
+            init_quiz_questions(app)
         except PermissionError as e:
             logger.error(f"Permission error initializing courses.json: {str(e)}")
             raise RuntimeError("Cannot write to courses.json due to permissions.")
         except Exception as e:
             logger.error(f"Error initializing courses storage: {str(e)}")
             raise
-
-    # Initialize quiz questions
-    with app.app_context():
-        init_quiz_questions(app)
 
     # Add custom Jinja2 filter for translations
     app.jinja_env.filters['trans'] = lambda key, **kwargs: trans(
@@ -288,7 +284,7 @@ def create_app():
             'current_year': datetime.now().year,
             'LINKEDIN_URL': os.environ.get('LINKEDIN_URL', '#'),
             'TWITTER_URL': os.environ.get('TWITTER_URL', '#'),
-            'FACEBOOK_URL': os.environ.get('FACEBOOK_URL', '#'),
+            'FACEBOOK_URL': os.environ.get('FLASH', '#'),
             'FEEDBACK_FORM_URL': os.environ.get('FEEDBACK_FORM_URL', '#'),
             'WAITLIST_FORM_URL': os.environ.get('WAITLIST_FORM_URL', '#'),
             'CONSULTANCY_FORM_URL': os.environ.get('CONSULTANCY_FORM_URL', '#'),
