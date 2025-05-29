@@ -55,17 +55,44 @@
             margin-top: 10px;
         }
         .btn:hover {
-            background: linear-gradient(135deg, #1B5e20, '#01579b');
+            background: linear-gradient(135deg, #1B5E20, #01579B);
         }
         .badge {
             display: inline-block;
             padding: 5px 12px;
             margin: 5px;
-            background-color: #e9ecef;
             border-radius: 12px;
             font-size: 0.875em;
-            color: #2e7d32;
-            border: 2px solid #0288d1;
+        }
+        .badge-bronze {
+            background-color: #cd7f32;
+            color: white;
+            border: 2px solid #8c5523;
+        }
+        .badge-silver {
+            background-color: #c0c0c0;
+            color: #333;
+            border: 2px solid #a9a9a9;
+        }
+        .badge-gold {
+            background-color: #ffd700;
+            color: #333;
+            border: 2px solid #daa520;
+        }
+        .badge-platinum {
+            background-color: #e5e4e2;
+            color: #333;
+            border: 2px solid #b0b0b0;
+        }
+        .badge-blue {
+            background-color: #0288D1;
+            color: white;
+            border: 2px solid #01579B;
+        }
+        .badge-gray {
+            background-color: #e9ecef;
+            color: #333;
+            border: 2px solid #ced4da;
         }
         ul {
             padding-left: 20px;
@@ -83,16 +110,16 @@
         <div class="content">
             <p>{{ trans('core_dear', lang=language) }} {{ user_name | default(trans('core_user', lang=language)) }},</p>
             <p>{{ trans('quiz_quiz_summary_intro', lang=language) }}</p>
-            <h2>{{ trans('quiz_your_financially_personality_results', lang=language) }}</h2>
+            <h2>{{ trans('quiz_your_financial_personality_results', lang=language) }}</h2>
             <p><strong>{{ trans('core_created_at', lang=language) }}</strong>: {{ data.created_at }}</p>
-            <p><strong>{{ trans('quiz_your_personality', lang=language)}}</strong>: {{ trans('quiz_' ~ personality.lower() ~ '_description', lang=language, default=personality) }}</p>
-            <p><strong>{{ trans('quiz_score', lang=language)}}</strong>: {{ data.score }} / 30</p>
+            <p><strong>{{ trans('quiz_your_personality', lang=language) }}</strong>: {{ trans('quiz_' + personality.lower() + '_description', lang=language, default=personality) }}</p>
+            <p><strong>{{ trans('quiz_score', lang=language) }}</strong>: {{ data.score }} / 30</p>
             <p>{{ personality_desc }}</p>
             <h3>{{ trans('quiz_badges', lang=language) }}</h3>
             {% if data.badges %}
                 <div>
                     {% for badge in data.badges %}
-                    <span class="badge">{{ badge }}</span>
+                        <span class="badge {{ badge.color_class }}">{{ badge.name }}</span>
                     {% endfor %}
                 </div>
             {% else %}
@@ -100,7 +127,7 @@
             {% endif %}
             <h3>{{ trans('quiz_recommendations', lang=language) }}</h3>
             <ul>
-                <li>{{ tip }}</li>
+                <li>{{ trans('quiz_' + personality.lower() + '_tip', lang=language) }}</li>
                 {% if personality in ['Spender', 'Balanced'] %}
                     <li>{{ trans('quiz_use_budgeting_app', lang=language) }}</li>
                 {% endif %}
