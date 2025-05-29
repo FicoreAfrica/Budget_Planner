@@ -2,23 +2,26 @@
 {% block title %}{{ trans('budget_budget_planner') | default('Budget Planner') }}{% endblock %}
 {% block content %}
 <div class="container">
-    <div class="header">
-        <h1>{{ trans('budget_budget_planner') | default('Budget Planner') }}</h1>
-        <p>{{ trans('budget_enter_monthly_expenses') | default('Enter your monthly expenses') }}</p>
-    </div>
+    {% set tool_name = trans('budget_budget_planner') | default('Budget Planner') %}
+    {% set tool_icon = 'fa-calculator' %}
+    {% set subtitle = trans('budget_enter_monthly_expenses') | default('Let’s start with a few details') %}
+    {% set step = 3 %}
+    {% set total_steps = 4 %}
+    {% set step_labels = [trans('budget_personal_info') | default('Personal Info'), trans('budget_income') | default('Income'), trans('budget_expenses') | default('Expenses'), trans('budget_savings') | default('Savings')] %}
+    {% include 'tool_header.html' %}
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
                 <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
                     {{ trans('core_' + message) | default(message) }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close') | default('Close') }}"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close') | default('Close') }}</button>
                 </div>
             {% endfor %}
         {% endif %}
     {% endwith %}
     <div class="card">
         <div class="card-body">
-            <form method="POST" action="{{ url_for('budget.step3') }}">
+            <form method="POST" action="{{ url_for('budget.step3') }}" class="validate-form">
                 {{ form.csrf_token }}
                 <div class="mb-3">
                     <label class="form-label">{{ trans('budget_housing_rent') | default('Housing/Rent') }}</label>
@@ -47,12 +50,13 @@
                 </div>
                 <div class="mb-3">
                     <label class="form-label">{{ trans('budget_others') | default('Others') }}</label>
-                    {{ form.others(class="form-control", placeholder=trans('budget_others_placeholder') | default('e.g., 15,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('budget_others_tooltip') | default('Other non-specific expenses'), 'aria-describedby': 'others_help'}) }}
+                    {{ form.others(class="form-control", placeholder=trans('budget_others_placeholder') | default('e.g., 15,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('budget_others_tooltip') | default('Other no
+n-specific expenses'), 'aria-describedby': 'others_help'}) }}
                     <div class="invalid-feedback">{{ trans('budget_others_required') | default('Other expenses are required') }}</div>
                 </div>
                 <div class="d-flex justify-content-between">
                     <a href="{{ url_for('budget.step2') }}" class="btn btn-secondary">{{ trans('core_back') | default('Back') }}</a>
-                    <button type="submit" class="btn btn-primary">{{ trans('budget_continue_to_savings') | default('Continue to Savings') }}</button>
+                    <button type="submit" class="btn btn-primary">{{ trans('budget_continue_to_savings') | default('Next') }}</button>
                 </div>
             </form>
         </div>
@@ -61,7 +65,6 @@
 {% endblock %}
 {% block extra_scripts %}
 <script>
-// Format input with commas as you type
 function formatNumberInput(input) {
     const format = (val) => {
         let clean = val.replace(/[^0-9.]/g, '');
@@ -80,7 +83,6 @@ function formatNumberInput(input) {
     });
 }
 
-// Strip commas before submitting the form
 document.querySelector('form').addEventListener('submit', function() {
     document.querySelectorAll('input[type="text"], input[type="number"]').forEach(function(input) {
         input.value = input.value.replace(/,/g, '');
