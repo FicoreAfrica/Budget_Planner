@@ -9,13 +9,13 @@ from flask_wtf.csrf import CSRFProtect, CSRFError
 from flask_mail import Mail
 from translations import trans, get_translations
 from translations.translations_quiz import trans as quiz_trans, get_translations as get_quiz_translations
-from blueprints.financial_health import financial_health_bp
-from blueprints.budget import budget_bp, init_budget_storage
-from blueprints.quiz import quiz_bp
-from blueprints.bill import bill_bp, init_bill_storage
-from blueprints.net_worth import net_worth_bp
-from blueprints.emergency_fund import emergency_fund_bp
-from blueprints.learning_hub import learning_hub_bp, initialize_courses
+from blueprints.financial_health import financial_health
+from blueprints.budget import bp as budget_bp, init_budget_storage
+from blueprints.quiz import bp as quiz_bp
+from blueprints.bill import bp as bill_bp, init_bill_storage
+from blueprints.net_worth import bp as net_worth_bp
+from blueprints.emergency_finance import bp as emergency_finance_bp
+from blueprints.learning import bp as learning_bp, initialize_courses
 from json_store import JsonStorage
 import gspread
 from google.oauth2.service_account import Credentials
@@ -27,7 +27,7 @@ root_logger.setLevel(logging.DEBUG)
 
 class SessionFormatter(logging.Formatter):
     def format(self, record):
-        record.session_id = getattr(record, 'session_id', 'no_session')
+        record.session_id = getattr(record, 'session_id', 'no_session_id')
         return super().format(record)
 
 formatter = SessionFormatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s [session: %(session_id)s]')
@@ -46,7 +46,6 @@ root_logger.addHandler(console_handler)
 class SessionAdapter(logging.LoggerAdapter):
     def process(self, msg, kwargs):
         kwargs['extra'] = kwargs.get('extra', {})
-        # Only access session if explicitly provided in extra or in a request context
         session_id = kwargs['extra'].get('session_id', 'no-session-id')
         if has_request_context() and 'session_id' not in kwargs['extra']:
             try:
@@ -169,18 +168,75 @@ def create_app():
 
     # Initialize storage managers and other context-dependent operations
     with app.app_context():
-        logger.info("Initializing storage managers", extra={'session_id': 'init'})
-        app.config['STORAGE_MANAGERS'] = {
-            'financial_health': JsonStorage('financial_health.json', logger_instance=logger),
-            'budget': init_budget_storage(app),
-            'quiz': JsonStorage('quiz_data.json', logger_instance=logger),
-            'bills': init_bill_storage(app),
-            'net_worth': JsonStorage('networth.json', logger_instance=logger),
-            'emergency_fund': JsonStorage('emergency_fund.json', logger_instance=logger),
-            'user_progress': JsonStorage('user_progress.json', logger_instance=logger),
-            'courses': JsonStorage('courses.json', logger_instance=logger),
-            'sheets': GoogleSheetsStorage(app.config['GSPREAD_CLIENT']) if app.config['GSPREAD_CLIENT'] else None
-        }
+        logger.info("Starting STORAGE_MANAGERS initialization", extra={'session_id': 'init'})
+        storage_managers = {}
+        
+        # Initialize each storage manager individually with error handling
+        try:
+            logger.info("Initializing financial_health storage", extra={'session_id': 'init'})
+            storage_managers['financial_health'] = JsonStorage('financial_health.json', logger_instance=logger)
+        except Exception as e:
+            logger.error(f"Failed to initialize financial_health storage: {str(e)}", extra={'session_id': 'init'})
+            raise
+
+        try:
+            logger.info("Initializing user_progress storage", extra={'session_id': 'init'})
+            storage_managers['user_progress'] = JsonStorage('user_progress.json', logger_instance=logger)
+        except Exception as e:
+            logger.error(f"Failed to initialize user_progress storage: {str(e)}", extra={'session_id': 'init'})
+            raise
+
+        try:
+            logger.info("Initializing budget storage", extra={'session_id': 'init'})
+            storage_managers['budget'] = init_budget_storage(app)
+        except Exception as e:
+            logger.error(f"Failed to initialize budget storage: {str(e)}", extra={'session_id': 'init'})
+            raise
+
+        try:
+            logger.info("Initializing quiz storage", extra={'session_id': 'init'})
+            storage_managers['quiz'] = JsonStorage('quiz_data.json', logger_instance=logger)
+        except Exception as e:
+            logger.error(f"Failed to initialize quiz storage: {str(e)}", extra={'session_id': 'init'})
+            raise
+
+        try:
+            logger.info("Initializing bills storage", extra={'session_id': 'init'})
+            storage_managers['bills'] = init_bill_storage(app)
+        except Exception as e:
+            logger.error(f"Failed to initialize bills storage: {str(e)}", extra={'session_id': 'init'})
+            raise
+
+        try:
+            logger.info("Initializing net_worth storage", extra={'session_id': 'init'})
+            storage_managers['net_worth'] = JsonStorage('networth.json', logger_instance=logger)
+        except Exception as e:
+            logger.error(f"Failed to initialize net_worth storage: {str(e)}", extra={'session_id': 'init'})
+            raise
+
+        try:
+            logger.info("Initializing emergency_fund storage", extra={'session_id': 'init'})
+            storage_managers['emergency_fund'] = JsonStorage('emergency_fund.json', logger_instance=logger)
+        except Exception as e:
+            logger.error(f"Failed to initialize emergency_fund storage: {str(e)}", extra={'session_id': 'init'})
+            raise
+
+        try:
+            logger.info("Initializing courses storage", extra={'session_id': 'init'})
+            storage_managers['courses'] = JsonStorage('courses.json', logger_instance=logger)
+        except Exception as e:
+            logger.error(f"Failed to initialize courses storage: {str(e)}", extra={'session_id': 'init'})
+            raise
+
+        try:
+            logger.info("Initializing sheets storage", extra={'session_id': 'init'})
+            storage_managers['sheets'] = GoogleSheetsStorage(app.config['GSPREAD_CLIENT']) if app.config['GSPREAD_CLIENT'] else None
+        except Exception as e:
+            logger.error(f"Failed to initialize sheets storage: {str(e)}", extra={'session_id': 'init'})
+            raise
+
+        app.config['STORAGE_MANAGERS'] = storage_managers
+        logger.info("Completed STORAGE_MANAGERS initialization", extra={'session_id': 'init'})
 
         logger.info("Initializing courses", extra={'session_id': 'init'})
         try:
@@ -467,29 +523,29 @@ def create_app():
         lang = session.get('language', 'en')
         logger.error(f"Global error: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
         flash(quiz_trans('global_error_message', default='An error occurred', lang=lang), 'danger')
-        return render_template('index.html', error=quiz_trans('global_error_message', default='An error occurred', lang=lang), t=quiz_trans, lang=lang), 500
+        return render_template('index.html', error=quiz_trans('global_error_message', default='An error occurred', lang=lang), t=quiz_trans, lang=lang)
 
     @app.errorhandler(CSRFError)
     def handle_csrf_error(e):
         lang = session.get('language', 'en')
         logger.error(f"CSRF error: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
         flash(quiz_trans('csrf_error', default='Invalid CSRF token', lang=lang), 'danger')
-        return render_template('index.html', error=quiz_trans('csrf_error', default='Invalid CSRF token', lang=lang), t=quiz_trans, lang=lang), 400
+        return render_template('index.html')
 
     @app.errorhandler(404)
     def page_not_found(e):
         lang = session.get('language', 'en')
         logger.error(f"404 error: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
-        return render_template('404.html', t=quiz_trans, lang=lang), 404
+        return render_template('404.html', t=quiz_trans, lang=lang), lang), 404
 
     # Register blueprints
     app.register_blueprint(financial_health_bp)
     app.register_blueprint(budget_bp)
-    app.register_blueprint(quiz_bp)
-    app.register_blueprint(bill_bp)
-    app.register_blueprint(net_worth_bp)
-    app.register_blueprint(emergency_fund_bp)
-    app.register_blueprint(learning_hub_bp)
+    app.register_blueprint(quiz_bp))
+    app.register_blueprint(bill_bp))
+    app.register_blueprint(net_worth_bp))
+    app.register_blueprint(emergency_fund_bp))
+    app.register_blueprint(learning_hub_bp))
 
     return app
 
