@@ -1,7 +1,7 @@
 from flask import Blueprint, request, session, redirect, url_for, render_template, flash, current_app
 from flask_wtf import FlaskForm
 from wtforms import StringField, FloatField, BooleanField, SubmitField
-from wtforms.validators import DataRequired, NumberRange, Optional, Email
+from wtforms.validators import DataRequired, NumberRange, Optional, Email, ValidationError
 from json_store import JsonStorage
 from mailersend_email import send_email
 from datetime import datetime
@@ -19,9 +19,10 @@ def init_budget_storage(app):
     """Initialize budget_storage within app context."""
     with app.app_context():
         app.logger.info("Initializing budget storage")
-        return JsonStorage('data/budget.json', logger_instance=app.logger)
+        return JsonStorage('/tmp/data/budget.json', logger_instance=app.logger)
 
 def strip_commas(value):
+    """Strip commas from string values."""
     if isinstance(value, str):
         return value.replace(',', '')
     return value
@@ -35,148 +36,199 @@ class Step1Form(FlaskForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         lang = session.get('lang', 'en')
-        # Set labels dynamically
-        self.first_name.label.text = trans('budget_first_name', lang)
-        self.email.label.text = trans('budget_email', lang)
-        self.send_email.label.text = trans('budget_send_email', lang)
-        self.submit.label.text = trans('budget_next', lang)
-        # Set validators dynamically
-        self.first_name.validators = [DataRequired(message=trans('budget_first_name_required', lang))]
-        self.email.validators = [Optional(), Email(message=trans('budget_email_invalid', lang))]
+        self.first_name.label.text = trans('budget_first_name', lang) or 'First Name'
+        self.email.label.text = trans('budget_email', lang) or 'Email'
+        self.send_email.label.text = trans('budget_send_email', lang) or 'Send Email Summary'
+        self.submit.label.text = trans('budget_next', lang) or 'Next'
+        self.first_name.validators = [DataRequired(message=trans('budget_first_name_required', lang) or 'First name is required')]
+        self.email.validators = [Optional(), Email(message=trans('budget_email_invalid', lang) or 'Invalid email address')]
+
+    def validate_email(self, field):
+        """Custom email validation to handle empty strings."""
+        if field.data:
+            super().validate_email(field)
 
 class Step2Form(FlaskForm):
-    income = FloatField(filters=[strip_commas])
+    income = FloatField()
     submit = SubmitField()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         lang = session.get('lang', 'en')
-        # Set labels dynamically
-        self.income.label.text = trans('budget_monthly_income', lang)
-        self.submit.label.text = trans('budget_next', lang)
-        # Set validators dynamically
+        self.income.label.text = trans('budget_monthly_income', lang) or 'Monthly Income'
+        self.submit.label.text = trans('budget_next', lang) or 'Next'
         self.income.validators = [
-            DataRequired(message=trans('budget_income_required', lang)),
-            NumberRange(min=0, max=10000000000, message=trans('budget_income_max', lang))
+            DataRequired(message=trans('budget_income_required', lang) or 'Income is required'),
+            NumberRange(min=0, max=10000000000, message=trans('budget_income_max', lang) or 'Income must be positive and reasonable')
         ]
+
+    def validate_income(self, field):
+        """Custom validator to handle comma-separated numbers."""
+        if field.data is None:
+            return
+        try:
+            if isinstance(field.data, str):
+                field.data = float(strip_commas(field.data))
+            current_app.logger.debug(f"Validated income for session {session.get('sid', 'no-session-id')}: {field.data}")
+        except ValueError as e:
+            current_app.logger.warning(f"Invalid income value for session {session.get('sid', 'no-session-id')}: {field.data}")
+            raise ValidationError(trans('budget_income_invalid', lang) or 'Invalid income format')
 
 class Step3Form(FlaskForm):
-    housing = FloatField(filters=[strip_commas])
-    food = FloatField(filters=[strip_commas])
-    transport = FloatField(filters=[strip_commas])
-    dependents = FloatField(filters=[strip_commas])
-    miscellaneous = FloatField(filters=[strip_commas])
-    others = FloatField(filters=[strip_commas])
+    housing = FloatField()
+    food = FloatField()
+    transport = FloatField()
+    dependents = FloatField()
+    miscellaneous = FloatField()
+    others = FloatField()
     submit = SubmitField()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         lang = session.get('lang', 'en')
-        # Set labels dynamically
-        self.housing.label.text = trans('budget_housing_rent', lang)
-        self.food.label.text = trans('budget_food', lang)
-        self.transport.label.text = trans('budget_transport', lang)
-        self.dependents.label.text = trans('budget_dependents_support', lang)
-        self.miscellaneous.label.text = trans('budget_miscellaneous', lang)
-        self.others.label.text = trans('budget_others', lang)
-        self.submit.label.text = trans('budget_next', lang)
-        # Set validators dynamically
-        self.housing.validators = [
-            DataRequired(message=trans('budget_housing_required', lang)),
-            NumberRange(min=0, message=trans('budget_amount_positive', lang))
-        ]
-        self.food.validators = [
-            DataRequired(message=trans('budget_food_required', lang)),
-            NumberRange(min=0, message=trans('budget_amount_positive', lang))
-        ]
-        self.transport.validators = [
-            DataRequired(message=trans('budget_transport_required', lang)),
-            NumberRange(min=0, message=trans('budget_amount_positive', lang))
-        ]
-        self.dependents.validators = [
-            DataRequired(message=trans('budget_dependents_required', lang)),
-            NumberRange(min=0, message=trans('budget_amount_positive', lang))
-        ]
-        self.miscellaneous.validators = [
-            DataRequired(message=trans('budget_miscellaneous_required', lang)),
-            NumberRange(min=0, message=trans('budget_amount_positive', lang))
-        ]
-        self.others.validators = [
-            DataRequired(message=trans('budget_others_required', lang)),
-            NumberRange(min=0, message=trans('budget_amount_positive', lang))
-        ]
+        self.housing.label.text = trans('budget_housing_rent', lang) or 'Housing/Rent'
+        self.food.label.text = trans('budget_food', lang) or 'Food'
+        self.transport.label.text = trans('budget_transport', lang) or 'Transport'
+        self.dependents.label.text = trans('budget_dependents_support', lang) or 'Dependents Support'
+        self.miscellaneous.label.text = trans('budget_miscellaneous', lang) or 'Miscellaneous'
+        self.others.label.text = trans('budget_others', lang) or 'Others'
+        self.submit.label.text = trans('budget_next', lang) or 'Next'
+        for field in [self.housing, self.food, self.transport, self.dependents, self.miscellaneous, self.others]:
+            field.validators = [
+                DataRequired(message=trans(f'budget_{field.name}_required', lang) or f'{field.label.text} is required'),
+                NumberRange(min=0, message=trans('budget_amount_positive', lang) or 'Amount must be positive')
+            ]
+
+    def validate(self, extra_validators=None):
+        """Custom validation for all float fields."""
+        if not super().validate(extra_validators):
+            return False
+        for field in [self.housing, self.food, self.transport, self.dependents, self.miscellaneous, self.others]:
+            try:
+                if isinstance(field.data, str):
+                    field.data = float(strip_commas(field.data))
+                current_app.logger.debug(f"Validated {field.name} for session {session.get('sid', 'no-session-id')}: {field.data}")
+            except ValueError as e:
+                current_app.logger.warning(f"Invalid {field.name} value for session {session.get('sid', 'no-session-id')}: {field.data}")
+                field.errors.append(trans('budget_amount_invalid', session.get('lang', 'en')) or 'Invalid amount format')
+                return False
+        return True
 
 class Step4Form(FlaskForm):
-    savings_goal = FloatField(filters=[strip_commas])
+    savings_goal = FloatField()
     submit = SubmitField()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         lang = session.get('lang', 'en')
-        # Set labels dynamically
-        self.savings_goal.label.text = trans('budget_savings_goal', lang)
-        self.submit.label.text = trans('budget_submit', lang)
-        # Set validators dynamically
+        self.savings_goal.label.text = trans('budget_savings_goal', lang) or 'Monthly Savings Goal'
+        self.submit.label.text = trans('budget_submit', lang) or 'Calculate Budget'
         self.savings_goal.validators = [
-            DataRequired(message=trans('budget_savings_goal_required', lang)),
-            NumberRange(min=0, message=trans('budget_amount_positive', lang))
+            DataRequired(message=trans('budget_savings_goal_required', lang) or 'Savings goal is required'),
+            NumberRange(min=0, message=trans('budget_amount_positive', lang) or 'Amount must be positive')
         ]
+
+    def validate_savings_goal(self, field):
+        """Custom validator to handle comma-separated numbers."""
+        if field.data is None:
+            return
+        try:
+            if isinstance(field.data, str):
+                field.data = float(strip_commas(field.data))
+            current_app.logger.debug(f"Validated savings_goal for session {session.get('sid', 'no-session-id')}: {field.data}")
+        except ValueError as e:
+            current_app.logger.warning(f"Invalid savings_goal value for session {session.get('sid', 'no-session-id')}: {field.data}")
+            raise ValidationError(trans('budget_savings_goal_invalid', lang) or 'Invalid savings goal format')
 
 @budget_bp.route('/step1', methods=['GET', 'POST'])
 def step1():
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
+        current_app.logger.info(f"New session ID generated: {session['sid']}")
+    session.permanent = True
     lang = session.get('lang', 'en')
     form = Step1Form()
     try:
-        if request.method == 'POST' and form.validate_on_submit():
-            session['budget_step1'] = form.data
-            current_app.logger.debug(f"Budget step1 form data: {form.data}")
-            return redirect(url_for('budget.step2'))
+        if request.method == 'POST':
+            current_app.logger.info(f"POST request received for step1, session {session['sid']}: Raw form data: {request.form}")
+            if form.validate_on_submit():
+                session['budget_step1'] = form.data
+                current_app.logger.debug(f"Budget step1 form data for session {session['sid']}: {form.data}")
+                return redirect(url_for('budget.step2'))
+            else:
+                current_app.logger.warning(f"Form validation failed for step1, session {session['sid']}: {form.errors}")
+                flash(trans("budget_form_validation_error") or "Please correct the errors in the form", "danger")
+        current_app.logger.info(f"Rendering step1 form for session {session['sid']}")
         return render_template('budget_step1.html', form=form, trans=trans, lang=lang)
     except Exception as e:
-        current_app.logger.exception(f"Error in budget.step1: {str(e)}")
-        flash(trans("budget_error_personal_info"), "danger")
+        current_app.logger.exception(f"Unexpected error in budget.step1 for session {session['sid']}: {str(e)}")
+        flash(trans("budget_error_personal_info") or "Error processing personal information", "danger")
         return render_template('budget_step1.html', form=form, trans=trans, lang=lang)
 
 @budget_bp.route('/step2', methods=['GET', 'POST'])
 def step2():
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
+        current_app.logger.info(f"New session ID generated: {session['sid']}")
+    session.permanent = True
     lang = session.get('lang', 'en')
     form = Step2Form()
     try:
-        if request.method == 'POST' and form.validate_on_submit():
-            session['budget_step2'] = form.data
-            current_app.logger.debug(f"Budget step2 form data: {form.data}")
-            return redirect(url_for('budget.step3'))
+        if 'budget_step1' not in session:
+            current_app.logger.warning(f"Missing budget_step1 data for session {session['sid']}")
+            flash(trans("budget_missing_previous_steps") or "Please complete previous steps", "danger")
+            return redirect(url_for('budget.step1'))
+        if request.method == 'POST':
+            current_app.logger.info(f"POST request received for step2, session {session['sid']}: Raw form data: {request.form}")
+            if form.validate_on_submit():
+                session['budget_step2'] = form.data
+                current_app.logger.debug(f"Budget step2 form data for session {session['sid']}: {form.data}")
+                return redirect(url_for('budget.step3'))
+            else:
+                current_app.logger.warning(f"Form validation failed for step2, session {session['sid']}: {form.errors}")
+                flash(trans("budget_form_validation_error") or "Please correct the errors in the form", "danger")
+        current_app.logger.info(f"Rendering step2 form for session {session['sid']}")
         return render_template('budget_step2.html', form=form, trans=trans, lang=lang)
     except Exception as e:
-        current_app.logger.exception(f"Error in budget.step2: {str(e)}")
-        flash(trans("budget_error_income_invalid"), "danger")
+        current_app.logger.exception(f"Unexpected error in budget.step2 for session {session['sid']}: {str(e)}")
+        flash(trans("budget_error_income_invalid") or "Error processing income", "danger")
         return render_template('budget_step2.html', form=form, trans=trans, lang=lang)
 
 @budget_bp.route('/step3', methods=['GET', 'POST'])
 def step3():
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
+        current_app.logger.info(f"New session ID generated: {session['sid']}")
+    session.permanent = True
     lang = session.get('lang', 'en')
     form = Step3Form()
     try:
-        if request.method == 'POST' and form.validate_on_submit():
-            session['budget_step3'] = form.data
-            current_app.logger.debug(f"Budget step3 form data: {form.data}")
-            return redirect(url_for('budget.step4'))
+        if any(k not in session for k in ['budget_step1', 'budget_step2']):
+            current_app.logger.warning(f"Missing budget_step1 or budget_step2 data for session {session['sid']}")
+            flash(trans("budget_missing_previous_steps") or "Please complete previous steps", "danger")
+            return redirect(url_for('budget.step1'))
+        if request.method == 'POST':
+            current_app.logger.info(f"POST request received for step3, session {session['sid']}: Raw form data: {request.form}")
+            if form.validate_on_submit():
+                session['budget_step3'] = form.data
+                current_app.logger.debug(f"Budget step3 form data for session {session['sid']}: {form.data}")
+                return redirect(url_for('budget.step4'))
+            else:
+                current_app.logger.warning(f"Form validation failed for step3, session {session['sid']}: {form.errors}")
+                flash(trans("budget_form_validation_error") or "Please correct the errors in the form", "danger")
+        current_app.logger.info(f"Rendering step3 form for session {session['sid']}")
         return render_template('budget_step3.html', form=form, trans=trans, lang=lang)
     except Exception as e:
-        current_app.logger.exception(f"Error in budget.step3: {str(e)}")
-        flash(trans("budget_error_expenses_invalid"), "danger")
+        current_app.logger.exception(f"Unexpected error in budget.step3 for session {session['sid']}: {str(e)}")
+        flash(trans("budget_error_expenses_invalid") or "Error processing expenses", "danger")
         return render_template('budget_step3.html', form=form, trans=trans, lang=lang)
 
 @budget_bp.route('/step4', methods=['GET', 'POST'])
 def step4():
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
+        current_app.logger.info(f"New session ID generated: {session['sid']}")
+    session.permanent = True
     lang = session.get('lang', 'en')
     form = Step4Form()
 
@@ -189,19 +241,11 @@ def step4():
         # Validate session data for previous steps
         if missing_keys:
             current_app.logger.warning(f"Missing session data for session {session['sid']}: {missing_keys}")
-            flash(trans("budget_missing_previous_steps"), "danger")
+            flash(trans("budget_missing_previous_steps") or "Please complete previous steps", "danger")
             return redirect(url_for('budget.step1'))
 
         if request.method == 'POST':
-            current_app.logger.info(f"POST request received for session {session['sid']}: Form data: {request.form}")
-            # Ensure savings_goal is processed as a float after comma stripping
-            if 'savings_goal' in request.form:
-                try:
-                    form.savings_goal.data = float(request.form['savings_goal'].replace(',', ''))
-                except ValueError as e:
-                    current_app.logger.warning(f"Invalid savings_goal input for session {session['sid']}: {request.form['savings_goal']}")
-                    form.savings_goal.errors.append(trans("budget_savings_goal_invalid") or "Invalid savings goal format")
-            
+            current_app.logger.info(f"POST request received for step4, session {session['sid']}: Raw form data: {request.form}")
             if form.validate_on_submit():
                 # Store form data in session
                 session['budget_step4'] = form.data
@@ -228,22 +272,11 @@ def step4():
 
                 # Create record
                 record = {
-                    "id": str(uuid.uuid4()),
-                    "data": {
-                        "first_name": step1_data.get('first_name', ''),
-                        "email": step1_data.get('email', ''),
-                        "income": income,
-                        "expenses": expenses,
-                        "housing": step3_data.get('housing', 0),
-                        "food": step3_data.get('food', 0),
-                        "transport": step3_data.get('transport', 0),
-                        "dependents": step3_data.get('dependents', 0),
-                        "miscellaneous": step3_data.get('miscellaneous', 0),
-                        "others": step3_data.get('others', 0),
-                        "savings_goal": savings_goal,
-                        "surplus_deficit": surplus_deficit,
-                        "created_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                    }
+                    "income": income,
+                    "fixed_expenses": expenses,
+                    "variable_expenses": 0,
+                    "savings_goal": savings_goal,
+                    "surplus_deficit": surplus_deficit
                 }
 
                 # Check storage writability
@@ -254,8 +287,7 @@ def step4():
                         flash(trans("budget_storage_unavailable") or "Storage is currently unavailable", "danger")
                         return render_template('budget_step4.html', form=form, trans=trans, lang=lang)
                     current_app.logger.info(f"Attempting to save budget for session {session['sid']}")
-                    if not budget_storage.append(record, user_email=step1_data.get('email'), session_id=session['sid']):
-                        raise Exception("Failed to save budget data")
+                    budget_storage.append(record, user_email=step1_data.get('email'), session_id=session['sid'])
                     current_app.logger.info(f"Budget saved successfully for session {session['sid']}")
                 except Exception as e:
                     current_app.logger.error(f"Budget storage failed for session {session['sid']}: {str(e)}")
@@ -270,21 +302,21 @@ def step4():
                         current_app.logger.info(f"Sending email for session {session['sid']} to {email}")
                         send_email(
                             to_email=email,
-                            subject=trans("budget_plan_summary"),
+                            subject=trans("budget_plan_summary") or "Your Budget Plan Summary",
                             template_name="budget_email.html",
                             data={
-                                "first_name": record["data"]["first_name"],
-                                "income": record["data"]["income"],
-                                "expenses": record["data"]["expenses"],
-                                "housing": record["data"]["housing"],
-                                "food": record["data"]["food"],
-                                "transport": record["data"]["transport"],
-                                "dependents": record["data"]["dependents"],
-                                "miscellaneous": record["data"]["miscellaneous"],
-                                "others": record["data"]["others"],
-                                "savings_goal": record["data"]["savings_goal"],
-                                "surplus_deficit": record["data"]["surplus_deficit"],
-                                "created_at": record["data"]["created_at"],
+                                "first_name": step1_data.get('first_name', ''),
+                                "income": income,
+                                "expenses": expenses,
+                                "housing": step3_data.get('housing', 0),
+                                "food": step3_data.get('food', 0),
+                                "transport": step3_data.get('transport', 0),
+                                "dependents": step3_data.get('dependents', 0),
+                                "miscellaneous": step3_data.get('miscellaneous', 0),
+                                "others": step3_data.get('others', 0),
+                                "savings_goal": savings_goal,
+                                "surplus_deficit": surplus_deficit,
+                                "created_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                                 "cta_url": url_for('budget.dashboard', _external=True)
                             },
                             lang=lang
@@ -301,12 +333,12 @@ def step4():
                 session.pop('budget_step4', None)
                 current_app.logger.info(f"Session data cleared for session {session['sid']}")
 
-                flash(trans("budget_budget_completed_success"), "success")
+                flash(trans("budget_budget_completed_success") or "Budget created successfully", "success")
                 current_app.logger.info(f"Redirecting to dashboard for session {session['sid']}")
                 return redirect(url_for('budget.dashboard'))
 
             else:
-                current_app.logger.warning(f"Form validation failed for session {session['sid']}: {form.errors}")
+                current_app.logger.warning(f"Form validation failed for step4, session {session['sid']}: {form.errors}")
                 flash(trans("budget_form_validation_error") or "Please correct the errors in the form", "danger")
                 return render_template('budget_step4.html', form=form, trans=trans, lang=lang)
 
@@ -317,12 +349,13 @@ def step4():
         current_app.logger.exception(f"Unexpected error in budget.step4 for session {session['sid']}: {str(e)}")
         flash(trans("budget_budget_process_error") or "An unexpected error occurred", "danger")
         return render_template('budget_step4.html', form=form, trans=trans, lang=lang)
-        
-        
+
 @budget_bp.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
+        current_app.logger.info(f"New session ID generated: {session['sid']}")
+    session.permanent = True
     lang = session.get('lang', 'en')
     try:
         budget_storage = current_app.config['STORAGE_MANAGERS']['budget']
@@ -333,34 +366,31 @@ def dashboard():
         if request.method == 'POST':
             action = request.form.get('action')
             budget_id = request.form.get('budget_id')
-
             if action == 'delete':
                 try:
-                    if budget_storage.delete_by_id(budget_id):
-                        flash(trans("budget_budget_deleted_success"), "success")
-                    else:
-                        flash(trans("budget_budget_delete_failed"), "danger")
-                        current_app.logger.error(f"Failed to delete budget ID {budget_id}")
-                    return redirect(url_for('budget.dashboard'))
+                    budget_storage.delete_by_id(budget_id)
+                    flash(trans("budget_budget_deleted_success") or "Budget deleted successfully", "success")
+                    current_app.logger.info(f"Deleted budget ID {budget_id} for session {session['sid']}")
                 except Exception as e:
-                    current_app.logger.exception(f"Error deleting budget item: {str(e)}")
-                    flash(trans("budget_budget_delete_error"), "danger")
-                    return redirect(url_for('budget.dashboard'))
+                    current_app.logger.error(f"Failed to delete budget ID {budget_id} for session {session['sid']}: {str(e)}")
+                    flash(trans("budget_budget_delete_failed") or "Failed to delete budget", "danger")
+                return redirect(url_for('budget.dashboard'))
 
         tips = [
-            trans("budget_tip_track_expenses"),
-            trans("budget_tip_ajo_savings"),
-            trans("budget_tip_data_subscriptions"),
-            trans("budget_tip_plan_dependents")
+            trans("budget_tip_track_expenses") or "Track your expenses regularly.",
+            trans("budget_tip_ajo_savings") or "Consider group savings plans.",
+            trans("budget_tip_data_subscriptions") or "Review data subscriptions for savings.",
+            trans("budget_tip_plan_dependents") or "Plan for dependents' expenses."
         ]
         insights = []
         if latest_budget.get('surplus_deficit', 0) < 0:
-            insights.append(trans("budget_insight_budget_deficit"))
+            insights.append(trans("budget_insight_budget_deficit") or "Your budget shows a deficit.")
         elif latest_budget.get('surplus_deficit', 0) > 0:
-            insights.append(trans("budget_insight_budget_surplus"))
+            insights.append(trans("budget_insight_budget_surplus") or "You have a budget surplus.")
         if latest_budget.get('savings_goal', 0) == 0:
-            insights.append(trans("budget_insight_set_savings_goal"))
+            insights.append(trans("budget_insight_set_savings_goal") or "Consider setting a savings goal.")
 
+        current_app.logger.info(f"Rendering dashboard for session {session['sid']}: {len(budgets)} budgets found")
         return render_template(
             'budget_dashboard.html',
             budgets=budgets,
@@ -371,17 +401,17 @@ def dashboard():
             lang=lang
         )
     except Exception as e:
-        current_app.logger.exception(f"Error in budget.dashboard: {str(e)}")
-        flash(trans("budget_dashboard_load_error"), "danger")
+        current_app.logger.exception(f"Unexpected error in budget.dashboard for session {session['sid']}: {str(e)}")
+        flash(trans("budget_dashboard_load_error") or "Error loading dashboard", "danger")
         return render_template(
             'budget_dashboard.html',
             budgets=[],
             latest_budget={},
             tips=[
-                trans("budget_tip_track_expenses"),
-                trans("budget_tip_ajo_savings"),
-                trans("budget_tip_data_subscriptions"),
-                trans("budget_tip_plan_dependents")
+                trans("budget_tip_track_expenses") or "Track your expenses regularly.",
+                trans("budget_tip_ajo_savings") or "Consider group savings plans.",
+                trans("budget_tip_data_subscriptions") or "Review data subscriptions for savings.",
+                trans("budget_tip_plan_dependents") or "Plan for dependents' expenses."
             ],
             insights=[],
             trans=trans,
