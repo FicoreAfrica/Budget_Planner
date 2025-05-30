@@ -1,8 +1,8 @@
 NET_WORTH_TRANSLATIONS = {
     'en': {
         # From translations_translations_net_worth.py
-        'net_worth_calculator': 'Net Worth Calculator',
-        'net_worth_net_worth_calculator': 'Net Worth Calculator',
+        'net_worth_calculator': 'Net Worth Tracker',
+        'net_worth_net_worth_calculator': 'Net Worth Tracker',
         'net_worth_net_worth': 'Net Worth',
         'net_worth_dashboard': 'Net Worth Dashboard',
         'net_worth_dashboard_load_error': 'Unable to load net worth dashboard. Please try again.',
@@ -108,8 +108,6 @@ NET_WORTH_TRANSLATIONS = {
         'net_worth_physical_property_example': 'e.g., 5,000,000',
 
         # From additional NET_WORTH_TRANSLATIONS
-        'net_worth_calculator': 'Net Worth Calculator',
-        'net_worth_net_worth_calculator': 'Net Worth Calculator',
         'net_worth_net_worth': 'Net Worth',
         'net_worth_total_assets': 'Total Assets',
         'net_worth_go_net_worth': 'Go to Net Worth',
