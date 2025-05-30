@@ -1,150 +1,154 @@
-{% extends "base.html" %}
-{% block title %}{{ trans('budget_budget_dashboard') | default('Budget Dashboard') }}{% endblock %}
+{% extends 'base.html' %}
+{% block title %}{{ trans('bill_bill_dashboard') | default('Bill Dashboard') }}{% endblock %}
 {% block extra_head %}
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-    <style>
-        .insights p, .tips p {
-            margin-bottom: 15px;
-        }
-    </style>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/main.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/main.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <style>
+    .overdue-alert {
+        color: #dc3545;
+        font-weight: bold;
+    }
+    .stat {
+        margin-bottom: 10px;
+    }
+    .tips p {
+        margin-bottom: 15px;
+    }
+  </style>
 {% endblock %}
 {% block content %}
-<div class="container">
-    {% set tool_name = trans('budget_budget_dashboard') | default('Budget Dashboard') %}
-    {% set tool_icon = 'fa-calculator' %}
-    {% set subtitle = trans('budget_budget_summary') | default('Your budget summary') %}
+  <div class="container">
+    {% set tool_name = 'bill_bill_dashboard' | default('Bill Dashboard') %}
+    {% set tool_icon = 'fa-file-invoice' %}
+    {% set subtitle = 'Let’s start with a few details' %}
     {% include 'tool_header.html' %}
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
                 <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                    {{ trans('core_' + message) | default(message) }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close') | default('Close') }}</button>
+                    {{ trans('bill_' + message) | default(message) }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close') | default('Close') }}"></button>
                 </div>
             {% endfor %}
         {% endif %}
     {% endwith %}
-    {% if latest_budget %}
-        <div class="card">
-            <div class="card-body">
-                <h3>{{ trans('budget_budget_overview') | default('Budget Overview') }}</h3>
-                <p><strong>{{ trans('budget_monthly_income') | default('Monthly Income') }}:</strong> ₦{{ latest_budget.income | format_number }}</p>
-                <p><strong>{{ trans('budget_total_expenses') | default('Total Expenses') }}:</strong> ₦{{ latest_budget.expenses | format_number }}</p>
-                <p><strong>{{ trans('budget_savings_goal') | default('Savings Goal') }}:</strong> ₦{{ latest_budget.savings_goal | format_number }}</p>
-                <p><strong>{{ trans('budget_surplus_deficit') | default('Surplus/Deficit') }}:</strong> ₦{{ latest_budget.surplus_deficit | format_number }}</p>
-                <p><strong>{{ trans('core_created_at') | default('Created At') }}:</strong> {{ latest_budget.created_at }}</p>
-            </div>
+    <div class="card">
+      <div class="card-body">
+        <div class="stat">
+          <strong>{{ trans('bill_paid_bills') | default('Paid Bills') }}:</strong> {{ paid_count | format_number }} (₦{{ total_paid | format_number }})
         </div>
-        <div class="card">
-            <div class="card-body">
-                <h3>{{ trans('budget_expense_breakdown') | default('Expense Breakdown') }}</h3>
-                <canvas id="expenseChart"></canvas>
-            </div>
+        <div class="stat">
+          <strong>{{ trans('bill_unpaid_bills') | default('Unpaid Bills') }}:</strong> {{ unpaid_count | format_number }} (₦{{ total_unpaid | format_number }})
         </div>
-        <div class="card">
-            <div class="card-body">
-                <h3>{{ trans('budget_budget_items') | default('Budget Items') }}</h3>
-                {% if budgets %}
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th>{{ trans('core_date') | default('Date') }}</th>
-                                <th>{{ trans('budget_income') | default('Income') }}</th>
-                                <th>{{ trans('budget_expenses') | default('Expenses') }}</th>
-                                <th>{{ trans('budget_savings_goal') | default('Savings Goal') }}</th>
-                                <th>{{ trans('budget_surplus_deficit') | default('Surplus/Deficit') }}</th>
-                                <th>{{ trans('budget_actions') | default('Actions') }}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for budget_id, budget in budgets %}
-                                <tr>
-                                    <td>{{ budget.created_at }}</td>
-                                    <td>₦{{ budget.income | format_number }}</td>
-                                    <td>₦{{ budget.expenses | format_number }}</td>
-                                    <td>₦{{ budget.savings_goal | format_number }}</td>
-                                    <td>₦{{ budget.surplus_deficit | format_number }}</td>
-                                    <td>
-                                        <form method="POST" action="{{ url_for('budget.dashboard') }}">
-                                            {{ form.csrf_token }}
-                                            <input type="hidden" name="budget_id" value="{{ budget_id }}">
-                                            <input type="hidden" name="action" value="delete">
-                                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('{{ trans('budget_confirm_delete') | default('Confirm Delete') }}');">{{ trans('budget_delete') | default('Delete') }}</button>
-                                        </form>
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                {% else %}
-                    <p>{{ trans('budget_no_budget_items_found') | default('No budget items found') }}</p>
-                {% endif %}
-            </div>
+        <div class="stat">
+          <strong>{{ trans('bill_overdue_bills') | default('Overdue Bills') }}:</strong>
+          <span class="overdue-alert">{{ overdue_count | format_number }} (₦{{ total_overdue | format_number }})</span>
         </div>
-        <div class="card insights">
-            <div class="card-body">
-                <h3>{{ trans('budget_insights') | default('Insights') }}</h3>
-                {% for insight in insights %}
-                    <p>{{ trans('budget_' + insight) | default(insight) }}</p>
+        <div class="stat">
+          <strong>{{ trans('bill_pending_bills') | default('Pending Bills') }}:</strong> {{ pending_count | format_number }}
+        </div>
+        <div class="stat">
+          <strong>{{ trans('bill_total_bills') | default('Total Bills') }}:</strong> ₦{{ total_bills | format_number }}
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-body">
+        <h3>{{ trans('bill_spending_by_category') | default('Spending by Category') }}</h3>
+        <canvas id="categoryChart"></canvas>
+        <script>
+          document.addEventListener('DOMContentLoaded', function() {
+            const ctx = document.getElementById('categoryChart').getContext('2d');
+            new Chart(ctx, {
+              type: 'bar',
+              data: {
+                labels: [{% for cat in categories %}"{{ trans('bill_' + cat.replace('_', '/')) | default(cat.replace('_', '/').title()) }}",{% endfor %}],
+                datasets: [{
+                  label: '{{ trans('bill_amount') | default('Amount') }} (₦)',
+                  data: [{% for cat, amt in categories.items() %}{{ amt | format_number }},{% endfor %}],
+                  backgroundColor: ['#1E7F71', '#2E7D32', '#0288D1', '#dc3545', '#FBC02D', '#D81B60', '#7B1FA2', '#FF5722', '#795548', '#607D8B', '#00ACC1', '#8E24AA', '#F06292', '#4CAF50'],
+                  borderColor: ['#1E7F71', '#2E7D32', '#0288D1', '#dc3545', '#FBC02D', '#D81B60', '#7B1FA2', '#FF5722', '#795548', '#607D8B', '#00ACC1', '#8E24AA', '#F06292', '#4CAF50'],
+                  borderWidth: 1
+                }]
+              },
+              options: {
+                scales: { y: { beginAtZero: true } },
+                plugins: { legend: { display: true } }
+              }
+            });
+          });
+        </script>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-body">
+        <h3>{{ trans('bill_bills_due') | default('Bills Due') }}</h3>
+        <p>{{ trans('core_today') | default('Today') }}: {{ due_today|length | format_number }}</p>
+        <p>{{ trans('core_this_week') | default('This Week') }}: {{ due_week|length | format_number }}</p>
+        <p>{{ trans('core_this_month') | default('This Month') }}: {{ due_month|length | format_number }}</p>
+        <div id="calendar"></div>
+        <script>
+          document.addEventListener('DOMContentLoaded', function() {
+            var calendarEl = document.getElementById('calendar');
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+              initialView: 'dayGridMonth',
+              events: [
+                {% for bill in bills %}
+                  {
+                    title: '{{ bill.bill_name }} (₦{{ bill.amount | format_number }})',
+                    start: '{{ bill.due_date }}',
+                    backgroundColor: '{{ '#2E7D32' if bill.status == 'paid' else '#dc3545' if bill.status == 'overdue' else '#FBC02D' }}',
+                    borderColor: '{{ '#2E7D32' if bill.status == 'paid' else '#dc3545' if bill.status == 'overdue' else '#FBC02D' }}'
+                  },
                 {% endfor %}
-            </div>
-        </div>
-        <div class="card tips">
-            <div class="card-body">
-                <h3>{{ trans('budget_tips_for_managing_budget') | default('Tips for Managing Budget') }}</h3>
-                {% for tip in tips %}
-                    <p>{{ trans('budget_' + tip) | default(tip) }}</p>
-                {% endfor %}
-            </div>
-        </div>
-        <div class="card">
-            <div class="card-body">
-                <h3>{{ trans('budget_call_to_actions') | default('Call to Actions') }}</h3>
-                <a href="{{ url_for('budget.step1') }}" class="btn btn-primary">{{ trans('budget_recalculate_budget') | default('Recalculate Budget') }}</a>
-                <a href="{{ url_for('bill.form') }}" class="btn btn-secondary">{{ trans('bill_manage_bills') | default('Manage Bills') }}</a>
-                <a href="#" class="btn btn-secondary">{{ trans('budget_explore_investments') | default('Explore Investments') }}</a>
-            </div>
-        </div>
-    {% else %}
-        <p>{{ trans('budget_no_budget_data_available') | default('No budget data available') }}</p>
-        <a href="{{ url_for('budget.step1') }}" class="btn btn-primary">{{ trans('budget_start_budgeting') | default('Start Budgeting') }}</a>
-    {% endif %}
-</div>
+              ],
+              eventDidMount: function(info) {
+                info.el.setAttribute('title', info.event.title);
+              }
+            });
+            calendar.render();
+          });
+        </script>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-body">
+        <h3>{{ trans('bill_upcoming_bills') | default('Upcoming Bills') }}</h3>
+        {% if upcoming_bills %}
+          <ul>
+            {% for bill in upcoming_bills %}
+              <li>{{ bill.bill_name }} (₦{{ bill.amount | format_number }}) - {{ trans('bill_due') | default('Due') }} {{ bill.due_date }} <a href="{{ url_for('bill.view_edit') }}" class="btn btn-primary btn-sm">{{ trans('bill_pay_now') | default('Pay Now') }}</a></li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p>{{ trans('bill_no_upcoming_bills') | default('No upcoming bills') }}</p>
+        {% endif %}
+      </div>
+    </div>
+    <div class="card tips">
+      <div class="card-body">
+        <h3>{{ trans('bill_tips_for_bills') | default('Tips for Managing Bills') }}</h3>
+        {% for tip in tips %}
+          <p>{{ trans('bill_' + tip) | default(tip) }}</p>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-body">
+        <h3>{{ trans('core_feedback') | default('Feedback') }}</h3>
+        <p>{{ trans('core_provide_feedback_prompt') | default('Please provide feedback on your experience') }}</p>
+        <a href="#" class="btn btn-secondary">{{ trans('core_feedback_form') | default('Feedback Form') }}</a>
+      </div>
+    </div>
+    <div class="mt-3 d-flex justify-content-between">
+      <a href="{{ url_for('bill.form') }}" class="btn btn-primary">{{ trans('bill_add_another_bill') | default('Add Bill') }}</a>
+      <a href="{{ url_for('bill.view_edit') }}" class="btn btn-primary">{{ trans('bill_view_edit_bills') | default('View/Edit Bills') }}</a>
+      <a href="{{ url_for('index') }}" class="btn btn-secondary">{{ trans('bill_back_to_index') | default('Back to Index') }}</a>
+    </div>
+  </div>
 {% endblock %}
 {% block extra_scripts %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const ctx = document.getElementById('expenseChart').getContext('2d');
-    new Chart(ctx, {
-        type: 'pie',
-        data: {
-            labels: [
-                '{{ trans('budget_housing_rent') | default('Housing/Rent') }}',
-                '{{ trans('budget_food') | default('Food') }}',
-                '{{ trans('budget_transport') | default('Transport') }}',
-                '{{ trans('budget_dependents_support') | default('Dependents Support') }}',
-                '{{ trans('budget_miscellaneous') | default('Miscellaneous') }}',
-                '{{ trans('budget_others') | default('Others') }}'
-            ],
-            datasets: [{
-                label: '{{ trans('budget_amount') | default('Amount') }} (₦)',
-                data: [
-                    {{ latest_budget.housing | format_number }},
-                    {{ latest_budget.food | format_number }},
-                    {{ latest_budget.transport | format_number }},
-                    {{ latest_budget.dependents | format_number }},
-                    {{ latest_budget.miscellaneous | format_number }},
-                    {{ latest_budget.others | format_number }}
-                ],
-                backgroundColor: ['#1E7F71', '#2E7D32', '#0288D1', '#dc3545', '#FBC02D', '#D81B60']
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: { legend: { position: 'top' } }
-        }
-    });
-});
-</script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/main.min.js"></script>
 {% endblock %}
