@@ -322,7 +322,10 @@ FINANCIAL_HEALTH_TRANSLATIONS = {
         'budget_create_budget_tooltip': 'Start creating a personalized budget to manage your spending.',
         'financial_health_explore_savings_options_tooltip': 'Discover various ways to save money and grow your wealth.',
         'Language chnaged successfully!': 'Language changed successfully!',
-        'core_Language chnaged successfully!': 'Language changed successfully!'
+        'core_Language chnaged successfully!': 'Language changed successfully!',
+        'Enter your debt and interest details (optional)': 'Enter your debt and interest details (optional)',
+        'Enter your monthly income and expenses': 'Enter your monthly income and expenses',
+        'Enter your personal information': 'Enter your personal information'
     },
     'ha': {
         'financial_health_score': 'Makin Lafiyar Kuɗi',
@@ -647,6 +650,9 @@ FINANCIAL_HEALTH_TRANSLATIONS = {
         'budget_create_budget_tooltip': 'Fara ƙirƙirar kasafin kuɗi na musamman don sarrafa kashe kuɗin ku.',
         'financial_health_explore_savings_options_tooltip': 'Gano hanyoyi daban-daban don adana kuɗi da haɓaka arzikin ku.',
         'Language chnaged successfully!': 'An canza harshe cikin nasara!',
-        'core_Language chnaged successfully!': 'An canza harshe cikin nasara!'
+        'core_Language chnaged successfully!': 'An canza harshe cikin nasara!',
+        'Enter your debt and interest details (optional)': 'Shigar da bayanan bashin ku da ribar ku (ba dole ba)',
+        'Enter your monthly income and expenses': 'Shigar da kuɗin shiga da kuɗin da kuke kashewa a kowane wata',
+        'Enter your personal information': 'Shigar da bayanan ku na sirri'
     }
 }
