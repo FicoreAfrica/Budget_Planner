@@ -3,6 +3,8 @@ FINANCIAL_HEALTH_TRANSLATIONS = {
         'financial_health_score': 'Financial Health Score',
         'financial_health_complete_form_with_ficore': 'Complete the health score form with Ficore Africa to calculate your personalized financial health score.',
         'financial_health_new_to_finances': 'New to finances? Click here to get guided tips on how to fill this form.',
+        'financial_health_your_financial_health_status_needs_improvement':'Status needs improvement',
+        'financial_health_Your debt level is high.':'Debt level is high.',
         'financial_health_tips_for_filling_form': 'Tips for Filling the Form',
         'financial_health_interest_rate_positive': 'Interest rate must be positive',
         'financial_health_form_errors': 'There are errors in your financial health form.',
@@ -667,6 +669,8 @@ FINANCIAL_HEALTH_TRANSLATIONS = {
         'financial_health_you_earned_the_financial_star_badge._tooltip': 'Taya murna! Kun sami lambar yabo ta Tauraron Kuɗi saboda ƙwarewar lafiyar kuɗin ku.',
         'financial_health_you_earned_the_financial_star_badge.': 'Kun sami lambar yabo ta Tauraron Kuɗi.',
         'financial_health_you_earned_the_debt_manager_badge._tooltip': 'Taya murna! Kun sami lambar yabo ta Manajan Bashi saboda ƙwarewar ku wajen sarrafa bashi.',
-        'financial_health_you_earned_the_debt_manager_badge.': 'Kun sami lambar yabo ta Manajan Bashi.'
+        'financial_health_you_earned_the_debt_manager_badge.': 'Kun sami lambar yabo ta Manajan Bashi.',
+        'financial_health_your_financial_health_status_needs_improvement':'Ana bukatar inganta mataki',
+        'financial_health_Your debt level is high.':'Bashi yayi yawa'
     }
 }
