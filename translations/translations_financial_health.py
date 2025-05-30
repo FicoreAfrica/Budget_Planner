@@ -6,6 +6,7 @@ FINANCIAL_HEALTH_TRANSLATIONS = {
         'financial_health_tips_for_filling_form': 'Tips for Filling the Form',
         'financial_health_interest_rate_positive': 'Interest rate must be positive',
         'financial_health_form_errors': 'There are errors in your financial health form.',
+        'financial_health_check_financial_health': 'Check Financial Health',
         'financial_health_email_must_be_string': 'The email address must be a valid string.',
         'financial_health_save_error': 'An error occurred while saving your financial health data.',
         'financial_health_save_data_error': 'An error occurred while saving your financial health data.',
@@ -653,6 +654,7 @@ FINANCIAL_HEALTH_TRANSLATIONS = {
         'core_Language chnaged successfully!': 'An canza harshe cikin nasara!',
         'Enter your debt and interest details (optional)': 'Shigar da bayanan bashin ku da ribar ku (ba dole ba)',
         'Enter your monthly income and expenses': 'Shigar da kuɗin shiga da kuɗin da kuke kashewa a kowane wata',
-        'Enter your personal information': 'Shigar da bayanan ku na sirri'
+        'Enter your personal information': 'Shigar da bayanan ku na sirri',
+        'financial_health_check_financial_health': 'Duba Lafiyar Kuɗi'
     }
 }
