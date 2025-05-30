@@ -3,6 +3,7 @@
 QUIZ_TRANSLATIONS = {
     'en': {
         'quiz_financial_personality_quiz': 'Financial Personality Quiz',
+        'quiz_back_to_home':'Back to Home',
         'quiz_enter_personal_information': 'Enter your personal information',
         'quiz_answer_questions_for_personality': 'Answer these questions to discover your financial personality',
         'quiz_step_progress': 'Step %(step)s of %(total)s',
@@ -339,7 +340,8 @@ QUIZ_TRANSLATIONS = {
         'quiz_summary_chart_title': 'Takaitaccen Sakamakon Quiz',
         'quiz_your_answers': 'Amsoshin Ku',
         'quiz_score': 'Maki',
-        'quiz_questions': 'Tambayoyi'
+        'quiz_questions': 'Tambayoyi',
+        'quiz_back_to_home':'Koma Pejin Farko'
     }
 }
 
