@@ -9,7 +9,7 @@ FINANCIAL_HEALTH_TRANSLATIONS = {
         'financial_health_email_must_be_string': 'The email address must be a valid string.',
         'financial_health_save_error': 'An error occurred while saving your financial health data.',
         'financial_health_save_data_error': 'An error occurred while saving your financial health data.',
-            'financial_health_error_personal_info': 'Please correct the errors in your personal information.',
+        'financial_health_error_personal_info': 'Please correct the errors in your personal information.',
         'financial_health_tip_ajo_savings': 'Try joining a group savings plan (Ajo) to grow your savings steadily.',
         'financial_health_tip_pay_debts': 'Pay off your debts regularly to improve your financial health.',
         'financial_health_tip_plan_expenses': 'Plan your expenses to avoid overspending and increase your savings.',
@@ -17,7 +17,7 @@ FINANCIAL_HEALTH_TRANSLATIONS = {
         'Financial health assessment completed successfully.': 'Financial health assessment completed successfully.',
         'Unable to load your financial health dashboard.': 'Unable to load your financial health dashboard.',
         'Your personalized financial health score': 'Your personalized financial health score',
-            'financial_health_error_income_expenses': 'Please review your income and expenses for errors.',
+        'financial_health_error_income_expenses': 'Please review your income and expenses for errors.',
             'financial_health_income_zero_error': 'Income cannot be zero. Please enter a valid amount.',
             'financial_health_calculation_error': 'An error occurred while calculating your financial health.',
             'financial_health_save_final_error': 'Final saving of your financial health data failed.',
@@ -294,7 +294,20 @@ FINANCIAL_HEALTH_TRANSLATIONS = {
         'financial_health_invalid_numeric_input': 'Invalid numeric input for income or expenses',
         'financial_health_error_processing_assessment': 'Error processing financial health assessment',
         'financial_health_error_loading_dashboard': 'Error loading dashboard',
-        'financial_health_assessment_completed_successfully': 'Financial health assessment completed successfully'
+        'financial_health_assessment_completed_successfully': 'Financial health assessment completed successfully',
+         # Insights and dashboard
+        'financial_health_insight_not_enough_users': 'Not enough users for a comparison yet. Invite others to use this tool!',
+        'financial_health_your_financial_health_status_is_good.': 'Your financial health status is good.',
+        'financial_health_you_earned_the_savings_pro_badge.': 'You earned the Savings Pro badge.',
+        'financial_health_You have good savings. Keep it up!': 'You have good savings. Keep it up!',
+        'financial_health_Your interest payments are high. Look for ways to reduce interest.': 'Your interest payments are high. Look for ways to reduce interest.',
+        
+        # Core and dashboard
+        'courses_recommended_learning': 'Recommended Learning',
+        'Failed to send the financial health report to your email.': 'Failed to send the financial health report to your email.',
+        'Financial health assessment completed successfully.': 'Financial health assessment completed successfully.',
+        'Unable to load your financial health dashboard.': 'Unable to load your financial health dashboard.',
+        'Your personalized financial health score': 'Your personalized financial health score'
     },
     'ha': {
         'financial_health_score': 'Makin Lafiyar Kuɗi',
@@ -588,6 +601,18 @@ FINANCIAL_HEALTH_TRANSLATIONS = {
         'financial_health_tip_ajo_savings': 'Gwada shiga hadin gwiwar ajiya (Ajo) don bunkasa ajiyarka a hankali.',
         'financial_health_tip_pay_debts': 'Rika biyan bashin da kake bin mutane akai-akai don inganta lafiyar kuɗinka.',
         'financial_health_tip_plan_expenses': 'Shirya yadda za ka kashe kuɗi don kaucewa almubazzaranci da ƙara adana kuɗi.',
+        'Failed to send the financial health report to your email.': 'An kasa aikawa da rahoton lafiyar kuɗi zuwa imel ɗinka.',
+        'Financial health assessment completed successfully.': 'An kammala tantance lafiyar kuɗinka cikin nasara.',
+        'Unable to load your financial health dashboard.': 'An kasa ɗora dashbodi na lafiyar kuɗinka.',
+        'Your personalized financial health score': 'Sakamakon lafiyar kuɗinka na musamman',
+        'financial_health_insight_not_enough_users': 'Ba a da isassun masu amfani don kwatanta a yanzu. Gayyaci wasu su yi amfani da wannan kayan aikin!',
+        'financial_health_your_financial_health_status_is_good.': 'Matsayin lafiyar kuɗinka yana da kyau.',
+        'financial_health_you_earned_the_savings_pro_badge.': 'Ka samu lambar yabo ta adanawa kuɗi.',
+        'financial_health_You have good savings. Keep it up!': 'Kana da kyakkyawan adanawa kuɗi. Ci gaba da haka!',
+        'financial_health_Your interest payments are high. Look for ways to reduce interest.': 'Kudin ruwa da kake biya yana da yawa. Nemi hanyoyin rage yawan kudin ruwa.',
+
+        # Core and dashboard
+        'courses_recommended_learning': 'Koyarwar Da Aka Ba Da Shawara',
         'Failed to send the financial health report to your email.': 'An kasa aikawa da rahoton lafiyar kuɗi zuwa imel ɗinka.',
         'Financial health assessment completed successfully.': 'An kammala tantance lafiyar kuɗinka cikin nasara.',
         'Unable to load your financial health dashboard.': 'An kasa ɗora dashbodi na lafiyar kuɗinka.',
