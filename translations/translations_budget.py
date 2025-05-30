@@ -460,7 +460,11 @@ BUDGET_TRANSLATIONS = {
         'Enter your monthly expenses': 'Enter your monthly expenses',
         'Set your monthly savings goal': 'Set your monthly savings goal',
         'budget_savings_goal_placeholder': 'Enter your savings goal (e.g., 10000)',
-        'budget_savings_goal_tooltip': 'Enter the amount you aim to save each month.'
+        'budget_savings_goal_tooltip': 'Enter the amount you aim to save each month.',
+        'budget_form_validation_error': 'There was an error in your form submission. Please check the highlighted fields.',
+        'budget_savings_goal_help': 'Enter the amount you aim to save each month.',
+        'budget_processing': 'Processing...',
+        'budget_savings_goal_invalid': 'Please enter a valid savings goal amount.'
     },
     'ha': {
         # General Budget Fields
@@ -774,6 +778,10 @@ BUDGET_TRANSLATIONS = {
         'Enter your monthly expenses': 'Shigar da kuɗin da kuke kashewa a kowane wata',
         'Set your monthly savings goal': 'Saita burin ajiyar ku na wata-wata',
         'budget_savings_goal_placeholder': 'Shigar da burin ajiyar ku (misali, 10000)',
-        'budget_savings_goal_tooltip': 'Shigar da adadin da kuke son ajiyewa kowane wata.'
+        'budget_savings_goal_tooltip': 'Shigar da adadin da kuke son ajiyewa kowane wata.',
+        'budget_form_validation_error': 'Akwai matsala a ƙaddamar da fom ɗin ku. Da fatan za a duba filayen da aka haskaka.',
+        'budget_savings_goal_help': 'Shigar da adadin da kuke son ajiyewa kowane wata.',
+        'budget_processing': 'Ana sarrafawa...',
+        'budget_savings_goal_invalid': 'Da fatan za a shigar da ingantaccen adadin burin ajiyar ku.'
     }
 }
