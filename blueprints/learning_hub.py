@@ -1,6 +1,9 @@
 from flask import Blueprint, render_template, session, request, redirect, url_for, flash, current_app
-from translations import trans
-
+try:
+    from app import trans
+except ImportError:
+    def trans(key, lang=None):
+        return key
 learning_hub_bp = Blueprint('learning_hub', __name__)
 
 # Define courses and quizzes data
