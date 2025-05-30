@@ -246,16 +246,20 @@ def step4():
                     }
                 }
 
-                # Store data
+                # Check storage writability
                 try:
                     budget_storage = current_app.config['STORAGE_MANAGERS']['budget']
+                    if not budget_storage.is_writable():
+                        current_app.logger.error(f"Storage not writable for session {session['sid']}: {budget_storage.filename}")
+                        flash(trans("budget_storage_unavailable") or "Storage is currently unavailable", "danger")
+                        return render_template('budget_step4.html', form=form, trans=trans, lang=lang)
                     current_app.logger.info(f"Attempting to save budget for session {session['sid']}")
                     if not budget_storage.append(record, user_email=step1_data.get('email'), session_id=session['sid']):
                         raise Exception("Failed to save budget data")
                     current_app.logger.info(f"Budget saved successfully for session {session['sid']}")
                 except Exception as e:
                     current_app.logger.error(f"Budget storage failed for session {session['sid']}: {str(e)}")
-                    flash(trans("budget_storage_error"), "danger")
+                    flash(trans("budget_storage_error") or "Failed to save budget data", "danger")
                     return render_template('budget_step4.html', form=form, trans=trans, lang=lang)
 
                 # Send email if requested
@@ -303,7 +307,7 @@ def step4():
 
             else:
                 current_app.logger.warning(f"Form validation failed for session {session['sid']}: {form.errors}")
-                flash(trans("budget_form_validation_error"), "danger")
+                flash(trans("budget_form_validation_error") or "Please correct the errors in the form", "danger")
                 return render_template('budget_step4.html', form=form, trans=trans, lang=lang)
 
         current_app.logger.info(f"Rendering step4 form for session {session['sid']}")
@@ -311,7 +315,7 @@ def step4():
 
     except Exception as e:
         current_app.logger.exception(f"Unexpected error in budget.step4 for session {session['sid']}: {str(e)}")
-        flash(trans("budget_budget_process_error"), "danger")
+        flash(trans("budget_budget_process_error") or "An unexpected error occurred", "danger")
         return render_template('budget_step4.html', form=form, trans=trans, lang=lang)
         
         
