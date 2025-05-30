@@ -6,8 +6,10 @@
         <h2><i class="fas fa-wallet"></i> {{ trans('core_all_in_one_toolkit') | default('Your All-in-One Toolkit for Financial Health Across Africa') }}</h2>
         <p>{{ trans('core_money_control') | default('Your Money. Your Control. Your Tools.') }}</p>
         <p class="hero-subtext" aria-describedby="no-fund-handling-desc"><i class="fas fa-shield-alt me-1" aria-hidden="true"></i> {{ trans('core_no_fund_handling') | default('Track and manage your money, we never touch it.') }}</p>
-        <a href="{{ url_for('financial_health.step1') }}" class="btn btn-primary" aria-label="{{ trans('financial_health_get_health_score') | default('Get Your Free Health Score') }}">{{ trans('financial_health_get_health_score') | default('Where to Start? Get Your Free Health Score') }}</a>
-        <a href="#tools-section" class="btn btn-primary mt-3" aria-label="{{ trans('core_explore_tools') | default('Explore Ficore Tools') }}">{{ trans('core_explore_tools') | default('Explore Ficore Tools') }}</a>
+        <div class="d-flex flex-column align-items-center">
+            <a href="{{ url_for('financial_health.step1') }}" class="btn btn-primary mb-3" aria-label="{{ trans('financial_health_get_health_score') | default('Get Your Free Health Score') }}">{{ trans('financial_health_get_health_score') | default('Where to Start? Get Your Free Health Score') }}</a>
+            <a href="#tools-section" class="btn btn-primary" aria-label="{{ trans('core_explore_tools') | default('Explore Ficore Tools') }}">{{ trans('core_explore_tools') | default('Explore Ficore Tools') }}</a>
+        </div>
     </section>
     <section class="tools-section my-5" id="tools-section">
         <h2 class="text-center"><i class="fas fa-tools"></i> {{ trans('core_choose_tool') | default('Choose a Tool') }}</h2>
