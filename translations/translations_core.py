@@ -1,6 +1,10 @@
 CORE_TRANSLATIONS = {
     'en': {
         'core_home': 'Home',
+        'First Name': 'First Name',
+        'Email': 'Email',
+        'Please correct the errors in the form.': 'Please correct the errors in the form.',
+        'This field is required.': 'This field is required.',
         'Budget Planner': 'Budget Planner',
         'Error saving personal information.':'Error saving personal information.',
         'Enter your personal information': 'Enter your personal information',
@@ -563,6 +567,10 @@ CORE_TRANSLATIONS = {
         'Enter your personal information': 'Shigar da bayanan ku na sirri',
         'Set your monthly savings goal': 'Saita burin ajiyar ku na wata-wata',
         'Error saving personal information.':'Error saving personal information.',
+        'First Name': 'Suna na Farko',
+        'Email': 'Imel',
+        'Please correct the errors in the form.': 'Da fatan za a gyara kurakuran da ke cikin fom ɗin.',
+        'This field is required.': 'Wannan filin wajibi ne.',
 
         # Already previously requested keys (add if not already present)
         'Failed to send the financial health report to your email.': 'An kasa aikawa da rahoton lafiyar kuɗi zuwa imel ɗinka.',
