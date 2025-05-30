@@ -10,6 +10,13 @@ FINANCIAL_HEALTH_TRANSLATIONS = {
         'financial_health_save_error': 'An error occurred while saving your financial health data.',
         'financial_health_save_data_error': 'An error occurred while saving your financial health data.',
             'financial_health_error_personal_info': 'Please correct the errors in your personal information.',
+        'financial_health_tip_ajo_savings': 'Try joining a group savings plan (Ajo) to grow your savings steadily.',
+        'financial_health_tip_pay_debts': 'Pay off your debts regularly to improve your financial health.',
+        'financial_health_tip_plan_expenses': 'Plan your expenses to avoid overspending and increase your savings.',
+        'Failed to send the financial health report to your email.': 'Failed to send the financial health report to your email.',
+        'Financial health assessment completed successfully.': 'Financial health assessment completed successfully.',
+        'Unable to load your financial health dashboard.': 'Unable to load your financial health dashboard.',
+        'Your personalized financial health score': 'Your personalized financial health score',
             'financial_health_error_income_expenses': 'Please review your income and expenses for errors.',
             'financial_health_income_zero_error': 'Income cannot be zero. Please enter a valid amount.',
             'financial_health_calculation_error': 'An error occurred while calculating your financial health.',
@@ -577,6 +584,13 @@ FINANCIAL_HEALTH_TRANSLATIONS = {
             'financial_health_badge_debt_manager': 'Ka sami alamar Manajan Bashi.',
         'financial_health_save_error': 'An error occurred while saving your financial health data.',
             'financial_health_badge_interest_free': 'Ka sami alamar Kyauta daga Riba.',
-            'financial_health_no_previous_assessments': 'Ba a sami tantancewar lafiyar kuɗi na baya ba.'
+            'financial_health_no_previous_assessments': 'Ba a sami tantancewar lafiyar kuɗi na baya ba.',
+        'financial_health_tip_ajo_savings': 'Gwada shiga hadin gwiwar ajiya (Ajo) don bunkasa ajiyarka a hankali.',
+        'financial_health_tip_pay_debts': 'Rika biyan bashin da kake bin mutane akai-akai don inganta lafiyar kuɗinka.',
+        'financial_health_tip_plan_expenses': 'Shirya yadda za ka kashe kuɗi don kaucewa almubazzaranci da ƙara adana kuɗi.',
+        'Failed to send the financial health report to your email.': 'An kasa aikawa da rahoton lafiyar kuɗi zuwa imel ɗinka.',
+        'Financial health assessment completed successfully.': 'An kammala tantance lafiyar kuɗinka cikin nasara.',
+        'Unable to load your financial health dashboard.': 'An kasa ɗora dashbodi na lafiyar kuɗinka.',
+        'Your personalized financial health score': 'Sakamakon lafiyar kuɗinka na musamman'
     }
 }
