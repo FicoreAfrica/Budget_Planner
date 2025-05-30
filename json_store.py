@@ -50,9 +50,26 @@ class JsonStorage:
                 self.logger.error(f"Failed to create {self.filename}: {str(e)}")
                 raise PermissionError(f"Cannot create {self.filename}: {str(e)}")
 
-        if not os.access(self.filename, os.W_OK):
+        if not self.is_writable():
             self.logger.error(f"No write permissions for {self.filename}")
             raise PermissionError(f"Cannot write to {self.filename}")
+
+    def is_writable(self) -> bool:
+        """Check if the JSON file is writable.
+
+        Returns:
+            bool: True if the file is writable, False otherwise.
+        """
+        try:
+            # Check if file exists and is writable
+            if os.path.exists(self.filename):
+                return os.access(self.filename, os.W_OK)
+            # If file doesn't exist, check if directory is writable
+            dir_path = os.path.dirname(self.filename) or '.'
+            return os.access(dir_path, os.W_OK)
+        except Exception as e:
+            self.logger.error(f"Error checking write permissions for {self.filename}: {str(e)}")
+            return False
 
     def _read(self) -> List[Dict[str, Any]]:
         """Read all records from the JSON file."""
