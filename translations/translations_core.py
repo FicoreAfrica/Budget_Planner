@@ -4,6 +4,7 @@ CORE_TRANSLATIONS = {
         'First Name': 'First Name',
         'Email': 'Email',
         'Please correct the errors in the form.': 'Please correct the errors in the form.',
+        'Personal Information': 'Personal Information',
         'An error occurred': 'An error occurred',
         'This field is required.': 'This field is required.',
         'Budget Planner': 'Budget Planner',
@@ -584,6 +585,7 @@ CORE_TRANSLATIONS = {
         'Your personalized financial health score': 'Sakamakon lafiyar kuɗinka na musamman',
         'required_first_name': 'Da fatan za a shigar da sunan ku na farko.',
         'Let’s start with a few details': 'Bari mu fara da wasu ƴan bayanai',
-        'Please enter a valid email': 'Da fatan za a shigar da adireshin imel mai inganci.'
+        'Please enter a valid email': 'Da fatan za a shigar da adireshin imel mai inganci.',
+        'Personal Information': 'Bayanan Kai'
     }
 }
