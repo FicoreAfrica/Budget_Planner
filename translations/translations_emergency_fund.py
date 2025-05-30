@@ -1,6 +1,8 @@
 EMERGENCY_FUND_TRANSLATIONS = {
     'en': {
         'core_english': 'English',
+        'emergency_fund_send_email': 'Send me helpful tips and reminders about my emergency fund',
+        'emergency_fund_send_email_tooltip': 'Opt-in to receive guidance and updates on building your emergency fund.',
         'core_hausa': 'Hausa',
         'core_not_provided': 'Not provided',
         'emergency_fund_goal': 'Set your emergency fund goal',
@@ -247,5 +249,7 @@ EMERGENCY_FUND_TRANSLATIONS = {
         'emergency_fund_goal': 'Tsara kudi don biyan bukatun gaggawa',
         'emergency_fund_start_emergency_fund': 'Tsara Kudin Gaggawa',
         'An unexpected error occurred.': 'An unexpected error occurred.',
+        'emergency_fund_send_email': 'Aika mini da nasihu masu amfani da tunatarwa game da asusun gaggawa na',
+        'emergency_fund_send_email_tooltip': 'Zaɓi shiga don karɓar jagora da sabuntawa kan gina asusun gaggawa na ku.'
     }
 }
