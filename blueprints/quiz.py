@@ -9,8 +9,12 @@ import threading
 import logging
 from json_store import JsonStorage
 from mailersend_email import send_email
-from translations import trans
 import os
+try:
+    from app import trans
+except ImportError:
+    def trans(key, lang=None):
+        return key
 
 quiz_bp = Blueprint('quiz', __name__, template_folder='templates', static_folder='static', url_prefix='/quiz')
 
