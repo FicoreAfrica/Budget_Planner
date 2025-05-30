@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from flask import Flask, render_template, request, session, redirect, url_for, flash, send_from_directory, has_request_context, g, jsonify, current_app
 from flask_session import Session
 from flask_wtf.csrf import CSRFProtect, CSRFError
-from translations import trans
+from translations import translations
 from blueprints.financial_health import financial_health_bp
 from blueprints.budget import budget_bp
 from blueprints.quiz import quiz_bp
