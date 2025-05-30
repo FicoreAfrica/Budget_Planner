@@ -4,6 +4,8 @@ BUDGET_TRANSLATIONS = {
         'budget_summary': 'Budget Summary',
         'budget_personal_info': 'Personal Information',
         'Budget Planner': 'Budget Planner',
+        'budget_email_placeholder': 'your.email@example.com',
+        'budget_email_help': 'Enter your email address to receive your budget summary and tips.',
         'budget_summary_description': 'Here is your budget summary',
         'budget_personalized_summary': 'Your personalized budget summary',
         'budget_no_previous_budgets': 'No previous budgets',
@@ -781,6 +783,8 @@ BUDGET_TRANSLATIONS = {
         'budget_savings_goal_tooltip': 'Shigar da adadin da kuke son ajiyewa kowane wata.',
         'budget_form_validation_error': 'Akwai matsala a ƙaddamar da fom ɗin ku. Da fatan za a duba filayen da aka haskaka.',
         'budget_savings_goal_help': 'Shigar da adadin da kuke son ajiyewa kowane wata.',
+        'budget_email_placeholder': 'imelinka@misali.com',
+        'budget_email_help': 'Shigar da adireshin imel ɗin ku don karɓar taƙaitaccen kasafin ku da nasihu.',
         'budget_processing': 'Ana sarrafawa...',
         'budget_savings_goal_invalid': 'Da fatan za a shigar da ingantaccen adadin burin ajiyar ku.'
     }
