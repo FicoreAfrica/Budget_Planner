@@ -1,5 +1,5 @@
 from flask import Blueprint, current_app, session, has_request_context, request, redirect, url_for, render_template, flash
-from flask_babel import gettext
+from translations import trans  # Use trans from translations module
 from flask_wtf import FlaskForm
 from wtforms import StringField, BooleanField, SubmitField, RadioField
 from wtforms.validators import DataRequired, Email
@@ -13,19 +13,6 @@ from mailersend_email import send_email
 import os
 
 quiz_bp = Blueprint('quiz', __name__, template_folder='templates', static_folder='static', url_prefix='/quiz')
-
-def trans(key, lang=None, default=None):
-    """Translate a key with a fallback to default or key if translation is missing."""
-    logger = current_app.logger
-    session_id = session.get('sid', 'no-session-id') if has_request_context() else 'no-session-id'
-    lang = lang or session.get('language', 'en')
-    translation = gettext(key)
-    if translation == key and default:
-        logger.warning(f"Missing translation for key={key}, lang={lang}, using default={default}", extra={'session_id': session_id})
-        return default
-    elif translation == key:
-        logger.warning(f"Missing translation for key={key}, lang={lang}, falling back to key", extra={'session_id': session_id})
-    return translation
 
 def init_storage(app, logger: logging.LoggerAdapter) -> JsonStorage:
     """Initialize storage with app context."""
@@ -629,7 +616,7 @@ def step1():
         )
     except Exception as e:
         logger.error(f"Error in step1: {str(e)}", extra={'session_id': session_id})
-        flash(trans('quiz_error', lang=language), 'error')
+        flash(trans('quiz_error', lang=language, default='An unexpected error occurred'), 'error')
         return render_template(
             'quiz_step1.html',
             form=form,
@@ -812,7 +799,7 @@ def quiz_step(step_num):
 
     except Exception as e:
         logger.error(f"Error in quiz_step {step_num}: {str(e)}", extra={'session_id': session_id})
-        flash(trans('quiz_error', lang=language), 'error')
+        flash(trans('quiz_error', lang=language, default='An unexpected error occurred'), 'error')
         return render_template(
             'quiz_step.html',
             form=form,
@@ -853,7 +840,7 @@ def results():
         )
     except Exception as e:
         logger.error(f"Error in results: {str(e)}", extra={'session_id': session_id})
-        flash(trans('quiz_error', lang=language), 'error')
+        flash(trans('quiz_error', lang=language, default='An unexpected error occurred'), 'error')
         return redirect(url_for('quiz.step1', course_id=course_id))
 
 @quiz_bp.route('/history', methods=['GET'])
@@ -880,7 +867,7 @@ def history():
         )
     except Exception as e:
         logger.error(f"Error in history: {str(e)}", extra={'session_id': session_id})
-        flash(trans('quiz_error', lang=language), 'error')
+        flash(trans('quiz_error', lang=language, default='An unexpected error occurred'), 'error')
         return redirect(url_for('quiz.step1', course_id=course_id))
 
 @quiz_bp.route('/analytics', methods=['GET'])
@@ -922,7 +909,7 @@ def analytics():
         )
     except Exception as e:
         logger.error(f"Error retrieving analytics data: {e}", extra={'session_id': session_id})
-        flash(trans('quiz_error', lang=language), 'error')
+        flash(trans('quiz_error', lang=language, default='An unexpected error occurred'), 'error')
         return render_template(
             'quiz_analytics.html',
             analytics={},
