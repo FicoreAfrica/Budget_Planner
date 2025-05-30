@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block title %}
-{{ trans('quiz_financial_personality_quiz', lang=language) }}
+{{ trans('quiz_financial_personality_quiz', lang=language, default='Financial Personality Quiz') }}
 {% endblock %}
 {% block extra_head %}
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
@@ -9,7 +9,7 @@
 <div class="container step-container">
     {% set tool_name = 'quiz_financial_personality_quiz' %}
     {% set tool_icon = 'fa-user-circle' %}
-    {% set subtitle = trans('quiz_enter_personal_information', lang=language) %}
+    {% set subtitle = trans('quiz_enter_personal_information', lang=language, default='Enter Your Personal Information') %}
     {% set step = 1 %}
     {% set total_steps = total_steps | default(4) %}
     {% set step_labels = ['Personal Info'] + (questions | map(attribute='text_key') | map('trans', lang=language) | list) %}
@@ -17,50 +17,63 @@
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
-                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert" aria-live="assertive">
-                    {{ trans(message, lang=language) }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close', lang=language) }}"></button>
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ trans(message, lang=language, default=message) }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close', lang=language, default='Close') }}"></button>
                 </div>
             {% endfor %}
         {% endif %}
     {% endwith %}
+    {% if form.errors %}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            {{ trans('quiz_form_errors', lang=language, default='Please correct the errors in the form.') }}
+            <ul>
+                {% for field, errors in form.errors.items() %}
+                    {% for error in errors %}
+                        <li>{{ trans(field, lang=language, default=field) }}: {{ trans(error, lang=language, default=error) }}</li>
+                    {% endfor %}
+                {% endfor %}
+            </ul>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close', lang=language, default='Close') }}"></button>
+        </div>
+    {% endif %}
     <div class="card">
         <div class="card-body">
             <form method="POST" action="{{ url_for('quiz.step1', course_id=course_id) }}">
                 {{ form.csrf_token }}
                 <div class="mb-3">
-                    <label class="form-label" for="{{ form.first_name.id }}">{{ trans(form.first_name.label.text, lang=language) }}</label>
+                    <label class="form-label" for="{{ form.first_name.id }}">{{ trans('core_first_name', lang=language, default='First Name') }}</label>
                     {{ form.first_name(class="form-control" ~ (' is-invalid' if form.first_name.errors else ''), **form.first_name.render_kw) }}
                     {% for error in form.first_name.errors %}
-                        <div class="invalid-feedback">{{ trans(error, lang=language) }}</div>
+                        <div class="invalid-feedback">{{ trans(error, lang=language, default=error) }}</div>
                     {% endfor %}
                 </div>
                 <div class="mb-3">
-                    <label class="form-label" for="{{ form.email.id }}">{{ trans(form.email.label.text, lang=language) }}</label>
+                    <label class="form-label" for="{{ form.email.id }}">{{ trans('core_email', lang=language, default='Email') }}</label>
                     {{ form.email(class="form-control" ~ (' is-invalid' if form.email.errors else ''), **form.email.render_kw) }}
                     {% for error in form.email.errors %}
-                        <div class="invalid-feedback">{{ trans(error, lang=language) }}</div>
+                        <div class="invalid-feedback">{{ trans(error, lang=language, default=error) }}</div>
                     {% endfor %}
                 </div>
                 <div class="mb-3 form-check">
                     {{ form.send_email(class="form-check-input" ~ (' is-checked' if form.send_email.data else ''), **form.send_email.render_kw) }}
-                    <label class="form-check-label" for="{{ form.send_email.id }}">{{ trans(form.send_email.label.text, lang=language) }}</label>
+                    <label class="form-check-label" for="{{ form.send_email.id }}">{{ trans('core_send_email', lang=language, default='Send Email') }}</label>
                     {% for error in form.send_email.errors %}
-                        <div class="invalid-feedback">{{ trans(error, lang=language) }}</div>
+                        <div class="invalid-feedback">{{ trans(error, lang=language, default=error) }}</div>
                     {% endfor %}
                 </div>
                 <div class="d-flex justify-content-between">
                     {% if course_id %}
-                        <a href="{{ url_for('learning_hub.courses') }}" class="btn btn-secondary" aria-label="{{ trans('quiz_back_to_home', lang=language) }}">
-                            <i class="fas fa-arrow-left"></i> {{ trans('quiz_back_to_home', lang=language) }}
+                        <a href="{{ url_for('learning_hub.courses') }}" class="btn btn-secondary" aria-label="{{ trans('quiz_back_to_home', lang=language, default='Back to Home') }}">
+                            <i class="fas fa-arrow-left"></i> {{ trans('quiz_back_to_home', lang=language, default='Back to Home') }}
                         </a>
                     {% else %}
-                        <a href="{{ url_for('home') }}" class="btn btn-secondary" aria-label="{{ trans('core_back', lang=language) }}">
-                            <i class="fas fa-arrow-left"></i> {{ trans('core_back', lang=language) }}
+                        <a href="{{ url_for('home') }}" class="btn btn-secondary" aria-label="{{ trans('core_back', lang=language, default='Back') }}">
+                            <i class="fas fa-arrow-left"></i> {{ trans('core_back', lang=language, default='Back') }}
                         </a>
                     {% endif %}
-                    <button type="submit" class="btn btn-primary" aria-label="{{ trans('quiz_start_quiz', lang=language) }}">
-                        <i class="fas fa-play"></i> {{ trans('quiz_start_quiz', lang=language) }}
+                    <button type="submit" class="btn btn-primary" aria-label="{{ trans('quiz_start_quiz', lang=language, default='Start Quiz') }}">
+                        <i class="fas fa-play"></i> {{ trans('quiz_start_quiz', lang=language, default='Start Quiz') }}
                     </button>
                 </div>
             </form>
