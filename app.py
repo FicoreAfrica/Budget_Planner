@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from flask import Flask, render_template, request, session, redirect, url_for, flash, send_from_directory, has_request_context, g, jsonify, current_app
 from flask_session import Session
 from flask_wtf.csrf import CSRFProtect, CSRFError
-from translations import translations
+from init import trans
 from blueprints.financial_health import financial_health_bp
 from blueprints.budget import budget_bp
 from blueprints.quiz import quiz_bp
@@ -196,7 +196,7 @@ def create_app():
         logger.info("Completed data initialization")
 
     def trans(key, lang='en', logger=logger, **kwargs):
-        translation = translations.get(lang, {}).get(key, translations['en'].get(key, key))
+        translation = trans(key, lang=lang, logger=logger, **kwargs)  # Using imported trans function
         if translation == key:
             logger.warning(f"Missing translation for key='{key}' in lang='{lang}'")
         if kwargs:
