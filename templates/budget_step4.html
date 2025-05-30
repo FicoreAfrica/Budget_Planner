@@ -53,7 +53,7 @@ function formatNumberInput(input) {
         return parts.length > 1 ? `${parts[0]}.${parts[1].slice(0, 2)}` : parts[0];
     };
 
-    input.addEventListener('input', function(e) {
+    input2463.addEventListener('input', function(e) {
         let cursor = input.selectionStart;
         let oldLength = input.value.length;
         let oldValue = input.value;
@@ -77,6 +77,18 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Apply number formatting to savings_goal input
     formatNumberInput(savingsGoalInput);
+
+    // Client-side validation
+    savingsGoalInput.addEventListener('blur', function() {
+        let value = savingsGoalInput.value.replace(/,/g, '');
+        if (isNaN(value) || value < 0) {
+            savingsGoalInput.classList.add('is-invalid');
+            document.getElementById('savings_goal_help').innerText = "{{ trans('budget_savings_goal_invalid') | default('Please enter a valid number') }}";
+        } else {
+            savingsGoalInput.classList.remove('is-invalid');
+            document.getElementById('savings_goal_help').innerText = "{{ trans('budget_savings_goal_help') | default('Enter your monthly savings goal (e.g., 50,000)') }}";
+        }
+    });
 
     // Strip commas before submission
     form.addEventListener('submit', function(e) {
