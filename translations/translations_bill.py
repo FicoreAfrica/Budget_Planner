@@ -3,6 +3,11 @@ BILL_TRANSLATIONS = {
         # From previously merged dictionary
         'bill_amount': 'Amount',
         'bill_amount_required': 'Valid amount is required',
+        'bill_bill_added_dynamic': 'Bill for {bill_name} added!',
+        'bill_no_bills_empty_state': 'No bills added yet. Start by adding one!',
+        'bill_confirm_delete_prompt': 'Are you sure you want to delete this bill?',
+        'bill_add_another_bill': 'Add Another Bill',
+        'bill_back_to_index': 'Back to Index',
         'bill_ajo_esusu_adashe': 'Ajo/Esusu/Adashe',
         'bill_bill_added_success': 'Bill added successfully.',
         'core_Bill added successfully.': 'Bill added successfully.',  # Added
@@ -874,6 +879,11 @@ BILL_TRANSLATIONS = {
         'bill_edit': 'Gyara',
         'bill_delete': 'Share',
         'bill_confirm_delete': 'Kuna tabbatar kuna son share wannan takardar biya?',
+        'bill_bill_added_dynamic': 'An ƙara kuɗin {bill_name}!',
+        'bill_no_bills_empty_state': 'Ba a ƙara wani kuɗi ba tukuna. Fara da ƙara ɗaya!',
+        'bill_confirm_delete_prompt': 'Shin kana da tabbacin kana son goge wannan kuɗin?',
+        'bill_add_another_bill': 'Ƙara Wani Kuɗi',
+        'bill_back_to_index': 'Komawa Shafin Farko',
 
         # Tips
         'bill_tip_pay_early': 'Biya takardun biya da wuri don guje wa kuɗin jinkiri. Yi amfani da kuɗin waya don biya cikin sauri.',
