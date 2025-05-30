@@ -4,6 +4,7 @@ CORE_TRANSLATIONS = {
         'First Name': 'First Name',
         'Email': 'Email',
         'Please correct the errors in the form.': 'Please correct the errors in the form.',
+        'An error occurred': 'An error occurred',
         'This field is required.': 'This field is required.',
         'Budget Planner': 'Budget Planner',
         'Error saving personal information.':'Error saving personal information.',
@@ -574,6 +575,7 @@ CORE_TRANSLATIONS = {
         'Email': 'Imel',
         'Please correct the errors in the form.': 'Da fatan za a gyara kurakuran da ke cikin fom ɗin.',
         'This field is required.': 'Wannan filin wajibi ne.',
+        'An error occurred': 'An error occurred',
 
         # Already previously requested keys (add if not already present)
         'Failed to send the financial health report to your email.': 'An kasa aikawa da rahoton lafiyar kuɗi zuwa imel ɗinka.',
