@@ -194,6 +194,14 @@ def step4():
 
         if request.method == 'POST':
             current_app.logger.info(f"POST request received for session {session['sid']}: Form data: {request.form}")
+            # Ensure savings_goal is processed as a float after comma stripping
+            if 'savings_goal' in request.form:
+                try:
+                    form.savings_goal.data = float(request.form['savings_goal'].replace(',', ''))
+                except ValueError as e:
+                    current_app.logger.warning(f"Invalid savings_goal input for session {session['sid']}: {request.form['savings_goal']}")
+                    form.savings_goal.errors.append(trans("budget_savings_goal_invalid") or "Invalid savings goal format")
+            
             if form.validate_on_submit():
                 # Store form data in session
                 session['budget_step4'] = form.data
@@ -215,7 +223,8 @@ def step4():
                     step3_data.get('miscellaneous', 0),
                     step3_data.get('others', 0)
                 ])
-                surplus_deficit = income - expenses - step4_data.get('savings_goal', 0)
+                savings_goal = step4_data.get('savings_goal', 0)
+                surplus_deficit = income - expenses - savings_goal
 
                 # Create record
                 record = {
@@ -231,7 +240,7 @@ def step4():
                         "dependents": step3_data.get('dependents', 0),
                         "miscellaneous": step3_data.get('miscellaneous', 0),
                         "others": step3_data.get('others', 0),
-                        "savings_goal": step4_data.get('savings_goal', 0),
+                        "savings_goal": savings_goal,
                         "surplus_deficit": surplus_deficit,
                         "created_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                     }
