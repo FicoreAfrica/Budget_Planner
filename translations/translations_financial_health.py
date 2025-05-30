@@ -326,7 +326,13 @@ FINANCIAL_HEALTH_TRANSLATIONS = {
         'core_Language chnaged successfully!': 'Language changed successfully!',
         'Enter your debt and interest details (optional)': 'Enter your debt and interest details (optional)',
         'Enter your monthly income and expenses': 'Enter your monthly income and expenses',
-        'Enter your personal information': 'Enter your personal information'
+        'Enter your personal information': 'Enter your personal information',
+        'financial_health_start_assessment_tooltip': 'Begin your financial health assessment.',
+        'financial_health_your_financial_health_status_is_excellent.': 'Your financial health status is excellent.',
+        'financial_health_you_earned_the_financial_star_badge._tooltip': 'Congratulations! You\'ve earned the Financial Star badge for your outstanding financial health.',
+        'financial_health_you_earned_the_financial_star_badge.': 'You earned the Financial Star badge.',
+        'financial_health_you_earned_the_debt_manager_badge._tooltip': 'Congratulations! You\'ve earned the Debt Manager badge for your excellent debt management.',
+        'financial_health_you_earned_the_debt_manager_badge.': 'You earned the Debt Manager badge.'
     },
     'ha': {
         'financial_health_score': 'Makin Lafiyar Kuɗi',
@@ -655,6 +661,12 @@ FINANCIAL_HEALTH_TRANSLATIONS = {
         'Enter your debt and interest details (optional)': 'Shigar da bayanan bashin ku da ribar ku (ba dole ba)',
         'Enter your monthly income and expenses': 'Shigar da kuɗin shiga da kuɗin da kuke kashewa a kowane wata',
         'Enter your personal information': 'Shigar da bayanan ku na sirri',
-        'financial_health_check_financial_health': 'Duba Lafiyar Kuɗi'
+        'financial_health_check_financial_health': 'Duba Lafiyar Kuɗi',
+        'financial_health_start_assessment_tooltip': 'Fara kimanta lafiyar kuɗin ku.',
+        'financial_health_your_financial_health_status_is_excellent.': 'Matsayin lafiyar kuɗin ku yana da kyau ƙwarai.',
+        'financial_health_you_earned_the_financial_star_badge._tooltip': 'Taya murna! Kun sami lambar yabo ta Tauraron Kuɗi saboda ƙwarewar lafiyar kuɗin ku.',
+        'financial_health_you_earned_the_financial_star_badge.': 'Kun sami lambar yabo ta Tauraron Kuɗi.',
+        'financial_health_you_earned_the_debt_manager_badge._tooltip': 'Taya murna! Kun sami lambar yabo ta Manajan Bashi saboda ƙwarewar ku wajen sarrafa bashi.',
+        'financial_health_you_earned_the_debt_manager_badge.': 'Kun sami lambar yabo ta Manajan Bashi.'
     }
 }
