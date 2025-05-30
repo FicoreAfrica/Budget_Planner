@@ -4,7 +4,7 @@
 <div class="container">
     {% set tool_name = trans('budget_budget_planner') | default('Budget Planner') %}
     {% set tool_icon = 'fa-calculator' %}
-    {% set subtitle = trans('budget_set_monthly_savings_goal') | default('Let’s start with a few details') %}
+    {% set subtitle = trans('budget_set_monthly_savings_goal') | default('Set your monthly savings goal') %}
     {% set step = 4 %}
     {% set total_steps = 4 %}
     {% set step_labels = [trans('budget_personal_info') | default('Personal Info'), trans('budget_income') | default('Income'), trans('budget_expenses') | default('Expenses'), trans('budget_savings') | default('Savings')] %}
@@ -42,24 +42,19 @@
 <script>
 function formatNumberInput(input) {
     const format = (val) => {
-        // Remove non-numeric characters except decimal point
         let clean = val.replace(/[^0-9.]/g, '');
         if (!clean) return '';
-        // Split on decimal point
         let parts = clean.split('.');
-        // Format integer part with commas
         parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-        // Join with decimal point, keeping at most 2 decimal places
         return parts.length > 1 ? `${parts[0]}.${parts[1].slice(0, 2)}` : parts[0];
     };
 
-    input2463.addEventListener('input', function(e) {
+    input.addEventListener('input', function(e) {
         let cursor = input.selectionStart;
         let oldLength = input.value.length;
         let oldValue = input.value;
         input.value = format(input.value);
         let newLength = input.value.length;
-        // Adjust cursor position to account for added/removed commas
         let delta = newLength - oldLength;
         let newCursor = cursor + delta;
         if (delta < 0 && oldValue[cursor - 1] === ',') {
@@ -68,14 +63,15 @@ function formatNumberInput(input) {
             newCursor++;
         }
         input.setSelectionRange(newCursor, newCursor);
+        console.log(`Formatted savings_goal: ${input.value}`);
     });
 }
 
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('budget-form');
     const savingsGoalInput = document.getElementById('savings_goal');
-    
-    // Apply number formatting to savings_goal input
+
+    // Apply number formatting
     formatNumberInput(savingsGoalInput);
 
     // Client-side validation
@@ -88,12 +84,14 @@ document.addEventListener('DOMContentLoaded', function() {
             savingsGoalInput.classList.remove('is-invalid');
             document.getElementById('savings_goal_help').innerText = "{{ trans('budget_savings_goal_help') | default('Enter your monthly savings goal (e.g., 50,000)') }}";
         }
+        console.log(`Validated savings_goal: ${value}`);
     });
 
     // Strip commas before submission
     form.addEventListener('submit', function(e) {
-        savingsGoalInput.value = savingsGoalInput.value.replace(/,/g, '');
-        // Show loading spinner
+        let rawValue = savingsGoalInput.value;
+        savingsGoalInput.value = rawValue.replace(/,/g, '');
+        console.log(`Submitting savings_goal: ${savingsGoalInput.value} (raw: ${rawValue})`);
         document.getElementById('loading-spinner').style.display = 'block';
         document.getElementById('submit-button').disabled = true;
     });
