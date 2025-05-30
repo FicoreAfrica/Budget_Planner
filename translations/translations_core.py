@@ -288,7 +288,8 @@ CORE_TRANSLATIONS = {
         'Unable to load your financial health dashboard.': 'Unable to load your financial health dashboard.',
         'Your personalized financial health score': 'Your personalized financial health score',
         'required_first_name': 'Please enter your first name.',
-        'Let’s start with a few details': 'Let’s start with a few details'
+        'Let’s start with a few details': 'Let’s start with a few details',
+        'Please enter a valid email': 'Please enter a valid email address.'
     },
     'ha': {
         'core_home': 'Gida',
@@ -580,6 +581,7 @@ CORE_TRANSLATIONS = {
         'Unable to load your financial health dashboard.': 'An kasa ɗora dashbodi na lafiyar kuɗinka.',
         'Your personalized financial health score': 'Sakamakon lafiyar kuɗinka na musamman',
         'required_first_name': 'Da fatan za a shigar da sunan ku na farko.',
-        'Let’s start with a few details': 'Bari mu fara da wasu ƴan bayanai'
+        'Let’s start with a few details': 'Bari mu fara da wasu ƴan bayanai',
+        'Please enter a valid email': 'Da fatan za a shigar da adireshin imel mai inganci.'
     }
 }
