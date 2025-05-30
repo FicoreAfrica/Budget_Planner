@@ -454,7 +454,13 @@ BUDGET_TRANSLATIONS = {
         'budget_recalculate_budget': 'Recalculate Budget',
         'budget_manage_bills': 'Manage Bills',
         'budget_explore_investments': 'Explore Investments',
-        'budget_warning_no_income': 'Warning: No income recorded!'
+        'budget_warning_no_income': 'Warning: No income recorded!',
+        'budget_income_max': 'Income cannot exceed maximum allowed value.',
+        'budget_amount_positive': 'Amount must be a positive number.',
+        'Enter your monthly expenses': 'Enter your monthly expenses',
+        'Set your monthly savings goal': 'Set your monthly savings goal',
+        'budget_savings_goal_placeholder': 'Enter your savings goal (e.g., 10000)',
+        'budget_savings_goal_tooltip': 'Enter the amount you aim to save each month.'
     },
     'ha': {
         # General Budget Fields
@@ -762,6 +768,12 @@ BUDGET_TRANSLATIONS = {
         'budget_no_badges_earned_yet': 'Ba a sami alamomi ba tukuna',
         'budget_tips_for_budgeting': 'Shawarwari don Kasafin Kuɗi',
         'budget_personal_info': 'Bayanan Kai',
-        'Budget Planner': 'Mai Tsara Kasafin Kuɗi'
+        'Budget Planner': 'Mai Tsara Kasafin Kuɗi',
+        'budget_income_max': 'Kudin shiga ba zai iya wuce iyakar da aka yarda ba.',
+        'budget_amount_positive': 'Adadi dole ne ya zama tabbatacce.',
+        'Enter your monthly expenses': 'Shigar da kuɗin da kuke kashewa a kowane wata',
+        'Set your monthly savings goal': 'Saita burin ajiyar ku na wata-wata',
+        'budget_savings_goal_placeholder': 'Shigar da burin ajiyar ku (misali, 10000)',
+        'budget_savings_goal_tooltip': 'Shigar da adadin da kuke son ajiyewa kowane wata.'
     }
 }
