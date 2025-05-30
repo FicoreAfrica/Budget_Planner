@@ -51,8 +51,8 @@
                 </div>
                 <div class="d-flex justify-content-between">
                     {% if course_id %}
-                        <a href="{{ url_for('learning_hub.courses') }}" class="btn btn-secondary" aria-label="{{ trans('courses_back_to_courses', lang=language) }}">
-                            <i class="fas fa-arrow-left"></i> {{ trans('courses_back_to_courses', lang=language) }}
+                        <a href="{{ url_for('learning_hub.courses') }}" class="btn btn-secondary" aria-label="{{ trans('quiz_back_to_home', lang=language) }}">
+                            <i class="fas fa-arrow-left"></i> {{ trans('quiz_back_to_home', lang=language) }}
                         </a>
                     {% else %}
                         <a href="{{ url_for('home') }}" class="btn btn-secondary" aria-label="{{ trans('core_back', lang=language) }}">
