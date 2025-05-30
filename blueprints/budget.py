@@ -6,6 +6,7 @@ from json_store import JsonStorage
 from mailersend_email import send_email
 from datetime import datetime
 import uuid
+import re
 
 try:
     from app import trans
@@ -46,7 +47,11 @@ class Step1Form(FlaskForm):
     def validate_email(self, field):
         """Custom email validation to handle empty strings."""
         if field.data:
-            super().validate_email(field)
+            # Manual email validation since Email validator is already applied
+            email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+            if not re.match(email_pattern, field.data):
+                current_app.logger.warning(f"Invalid email format for session {session.get('sid', 'no-session-id')}: {field.data}")
+                raise ValidationError(trans('budget_email_invalid', session.get('lang', 'en')) or 'Invalid email address')
 
 class Step2Form(FlaskForm):
     income = FloatField()
@@ -72,7 +77,7 @@ class Step2Form(FlaskForm):
             current_app.logger.debug(f"Validated income for session {session.get('sid', 'no-session-id')}: {field.data}")
         except ValueError as e:
             current_app.logger.warning(f"Invalid income value for session {session.get('sid', 'no-session-id')}: {field.data}")
-            raise ValidationError(trans('budget_income_invalid', lang) or 'Invalid income format')
+            raise ValidationError(trans('budget_income_invalid', session.get('lang', 'en')) or 'Invalid income format')
 
 class Step3Form(FlaskForm):
     housing = FloatField()
@@ -138,7 +143,7 @@ class Step4Form(FlaskForm):
             current_app.logger.debug(f"Validated savings_goal for session {session.get('sid', 'no-session-id')}: {field.data}")
         except ValueError as e:
             current_app.logger.warning(f"Invalid savings_goal value for session {session.get('sid', 'no-session-id')}: {field.data}")
-            raise ValidationError(trans('budget_savings_goal_invalid', lang) or 'Invalid savings goal format')
+            raise ValidationError(trans('budget_savings_goal_invalid', session.get('lang', 'en')) or 'Invalid savings goal format')
 
 @budget_bp.route('/step1', methods=['GET', 'POST'])
 def step1():
@@ -153,7 +158,7 @@ def step1():
             current_app.logger.info(f"POST request received for step1, session {session['sid']}: Raw form data: {request.form}")
             if form.validate_on_submit():
                 session['budget_step1'] = form.data
-                current_app.logger.debug(f"Budget step1 form data for session {session['sid']}: {form.data}")
+                current_app.logger.info(f"Budget step1 form validated successfully for session {session['sid']}: {form.data}")
                 return redirect(url_for('budget.step2'))
             else:
                 current_app.logger.warning(f"Form validation failed for step1, session {session['sid']}: {form.errors}")
@@ -182,7 +187,7 @@ def step2():
             current_app.logger.info(f"POST request received for step2, session {session['sid']}: Raw form data: {request.form}")
             if form.validate_on_submit():
                 session['budget_step2'] = form.data
-                current_app.logger.debug(f"Budget step2 form data for session {session['sid']}: {form.data}")
+                current_app.logger.info(f"Budget step2 form validated successfully for session {session['sid']}: {form.data}")
                 return redirect(url_for('budget.step3'))
             else:
                 current_app.logger.warning(f"Form validation failed for step2, session {session['sid']}: {form.errors}")
@@ -211,7 +216,7 @@ def step3():
             current_app.logger.info(f"POST request received for step3, session {session['sid']}: Raw form data: {request.form}")
             if form.validate_on_submit():
                 session['budget_step3'] = form.data
-                current_app.logger.debug(f"Budget step3 form data for session {session['sid']}: {form.data}")
+                current_app.logger.info(f"Budget step3 form validated successfully for session {session['sid']}: {form.data}")
                 return redirect(url_for('budget.step4'))
             else:
                 current_app.logger.warning(f"Form validation failed for step3, session {session['sid']}: {form.errors}")
@@ -233,12 +238,10 @@ def step4():
     form = Step4Form()
 
     try:
-        # Log session data presence
         session_keys = ['budget_step1', 'budget_step2', 'budget_step3']
         missing_keys = [k for k in session_keys if k not in session]
         current_app.logger.info(f"Session check for {session['sid']}: Missing keys: {missing_keys}")
 
-        # Validate session data for previous steps
         if missing_keys:
             current_app.logger.warning(f"Missing session data for session {session['sid']}: {missing_keys}")
             flash(trans("budget_missing_previous_steps") or "Please complete previous steps", "danger")
@@ -247,17 +250,14 @@ def step4():
         if request.method == 'POST':
             current_app.logger.info(f"POST request received for step4, session {session['sid']}: Raw form data: {request.form}")
             if form.validate_on_submit():
-                # Store form data in session
                 session['budget_step4'] = form.data
-                current_app.logger.debug(f"Budget step4 form data for session {session['sid']}: {form.data}")
+                current_app.logger.info(f"Budget step4 form validated successfully for session {session['sid']}: {form.data}")
 
-                # Retrieve session data
                 step1_data = session.get('budget_step1', {})
                 step2_data = session.get('budget_step2', {})
                 step3_data = session.get('budget_step3', {})
                 step4_data = session.get('budget_step4', {})
 
-                # Calculate expenses and surplus/deficit
                 income = step2_data.get('income', 0)
                 expenses = sum([
                     step3_data.get('housing', 0),
@@ -270,7 +270,6 @@ def step4():
                 savings_goal = step4_data.get('savings_goal', 0)
                 surplus_deficit = income - expenses - savings_goal
 
-                # Create record
                 record = {
                     "income": income,
                     "fixed_expenses": expenses,
@@ -279,7 +278,6 @@ def step4():
                     "surplus_deficit": surplus_deficit
                 }
 
-                # Check storage writability
                 try:
                     budget_storage = current_app.config['STORAGE_MANAGERS']['budget']
                     if not budget_storage.is_writable():
@@ -294,7 +292,6 @@ def step4():
                     flash(trans("budget_storage_error") or "Failed to save budget data", "danger")
                     return render_template('budget_step4.html', form=form, trans=trans, lang=lang)
 
-                # Send email if requested
                 email = step1_data.get('email')
                 send_email_flag = step1_data.get('send_email', False)
                 if send_email_flag and email:
@@ -324,9 +321,7 @@ def step4():
                         current_app.logger.info(f"Email sent successfully for session {session['sid']}")
                     except Exception as e:
                         current_app.logger.error(f"Email send failed for session {session['sid']}: {str(e)}")
-                        # Email failure doesn't block redirect
 
-                # Clear session data
                 session.pop('budget_step1', None)
                 session.pop('budget_step2', None)
                 session.pop('budget_step3', None)
