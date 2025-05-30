@@ -20,6 +20,14 @@ def init_storage(app):
             'financial_health': JsonStorage('data/financial_health.json', logger_instance=app.logger),
             'progress': JsonStorage('data/user_progress.json', logger_instance=app.logger)
         }
+        # Verify file accessibility
+        for name, storage in storage_managers.items():
+            try:
+                storage._read()  # Test file access
+                app.logger.info(f"Successfully verified access to {name} storage at {storage.filename}")
+            except Exception as e:
+                app.logger.error(f"Failed to access {name} storage at {storage.filename}: {str(e)}")
+                raise RuntimeError(f"Cannot initialize {name} storage: {str(e)}")
         return storage_managers
 
 financial_health_bp = Blueprint('financial_health', __name__, url_prefix='/financial_health')
@@ -337,6 +345,8 @@ def step3():
                 current_app.logger.info(f"Sending email to {email}")
                 try:
                     send_email(
+                        app=current_app,  # Added
+                        logger=current_app.logger,  # Added
                         to_email=email,
                         subject=trans("financial_health_financial_health_report", lang=lang),
                         template_name="health_score_email.html",
@@ -357,8 +367,14 @@ def step3():
                         },
                         lang=lang
                     )
+                except ValueError as ve:
+                    current_app.logger.error(f"Configuration error in email sending: {str(ve)}")
+                    flash(trans("financial_health_email_config_error", lang=lang, default="Email configuration error"), "warning")
+                except RuntimeError as re:
+                    current_app.logger.error(f"Runtime error in email sending: {str(re)}")
+                    flash(trans("financial_health_email_failed", lang=lang), "warning")
                 except Exception as email_error:
-                    current_app.logger.error(f"Failed to send email: {str(email_error)}")
+                    current_app.logger.error(f"Unexpected error in email sending: {str(email_error)}")
                     flash(trans("financial_health_email_failed", lang=lang), "warning")
 
             session.pop('health_step1', None)
@@ -542,11 +558,17 @@ def dashboard():
         else:
             insights.append(trans("financial_health_insight_no_data", lang=lang))
 
-        progress_storage = current_app.config['STORAGE_MANAGERS']['progress']
+        progress_storage = current_app.config['STORAGE_MANAGERS'].get('progress')  # Modified to use .get
         progress_records = []
-        if 'sid' in session:
-            progress_records = progress_storage.filter_by_session(session['sid'])
-            current_app.logger.debug(f"Course progress records for session {session['sid']}: {progress_records}")
+        if progress_storage and 'sid' in session:
+            try:
+                progress_records = progress_storage.filter_by_session(session['sid'])
+                current_app.logger.debug(f"Course progress records for session {session['sid']}: {progress_records}")
+            except Exception as e:
+                current_app.logger.warning(f"Failed to fetch progress records: {str(e)}")
+                progress_records = []
+        else:
+            current_app.logger.warning("Progress storage not configured or session ID missing, skipping progress records")
 
         return render_template(
             'health_score_dashboard.html',
