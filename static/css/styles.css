@@ -167,7 +167,7 @@ body {
     to { opacity: 1; transform: translateY(0); }
 }
 .card.custom-card {
-    border-radius: 15px;
+    border-radius: 20px;
     border: none;
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
@@ -404,7 +404,7 @@ body {
     text-decoration: none;
 }
 .list-group-item a:hover {
-    text-decoration: underline;
+    text-overflow: underline;
 }
 
 /* Form Validation */
@@ -655,7 +655,42 @@ h1, h3,
     }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 576px) {
+    .tool-card .card-title {
+        font-size: 1.8rem;
+        word-wrap: break-word;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        text-align: center;
+    }
+    .tool-card i {
+        font-size: 1.6rem;
+        display: inline-block;
+        margin-bottom: 0.5rem;
+        vertical-align: middle;
+    }
+    .tool-card {
+        margin-bottom: 1.5rem;
+    }
+    .tool-card .btn {
+        height: 48px;
+        padding: 0.6rem 1.5rem;
+        font-size: 1.05rem;
+        font-weight: 600;
+        border-radius: 6px;
+    }
+    .tool-card .btn:hover {
+        transform: scale(1.05);
+        background: linear-gradient(135deg, #1B5E20, #01579B);
+    }
+    .language-btn {
+        font-size: 0.9rem;
+        padding: 0.4rem 0.8rem;
+        min-width: 80px;
+    }
+    .language-btn i {
+        font-size: 1rem;
+    }
     body {
         padding: 10px;
     }
@@ -680,17 +715,6 @@ h1, h3,
     }
     .tool-icon {
         font-size: 1.4rem;
-    }
-}
-
-@media (max-width: 576px) {
-    .language-btn {
-        font-size: 0.9rem;
-        padding: 0.4rem 0.8rem;
-        min-width: 80px;
-    }
-    .language-btn i {
-        font-size: 1rem;
     }
 }
 
