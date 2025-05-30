@@ -267,7 +267,18 @@ CORE_TRANSLATIONS = {
         'learning_hub_success_language_updated': 'Language updated successfully',
         'learning_hub_success_logout': 'Successfully logged out',
         'global_error_message': 'An error occurred',
-        'csrf_error': 'Invalid CSRF token'
+        'csrf_error': 'Invalid CSRF token',
+        'financial_health_Not enough users for a comparison yet. Invite others to use this tool!': 'Not enough users for a comparison yet. Invite others to use this tool!',
+        'courses_recommended_learning': 'Recommended Learning',
+        'courses_start_budgeting_course': 'Start Budgeting Course',
+        'courses_budgeting': 'Budgeting',
+        'courses_my_courses': 'My Courses',
+        'courses_no_course_progress': 'No course progress yet. Start learning today!',
+         # Already previously requested keys (add if not already present)
+        'Failed to send the financial health report to your email.': 'Failed to send the financial health report to your email.',
+        'Financial health assessment completed successfully.': 'Financial health assessment completed successfully.',
+        'Unable to load your financial health dashboard.': 'Unable to load your financial health dashboard.',
+        'Your personalized financial health score': 'Your personalized financial health score'
     },
     'ha': {
         'core_home': 'Gida',
@@ -536,6 +547,19 @@ CORE_TRANSLATIONS = {
         'learning_hub_success_logout': 'An fita cikin nasara',
         'global_error_message': 'An samu kuskure',
         'An error occurred while saving your financial health data.':'Ankasa ajiye bayanaka, ka sake gwadawa',
-        'csrf_error': 'Alamar CSRF ba ta da inganci'
+        'csrf_error': 'Alamar CSRF ba ta da inganci',
+         # Dashboard and comparison
+        'financial_health_Not enough users for a comparison yet. Invite others to use this tool!': 'Ba a da isassun masu amfani don kwatanta a yanzu. Gayyaci wasu su yi amfani da wannan kayan aikin!',
+        'courses_recommended_learning': 'Koyarwar Da Aka Ba Da Shawara',
+        'courses_start_budgeting_course': 'Fara Koyon Tsarin Kasafin Kuɗi',
+        'courses_budgeting': 'Kasafin Kuɗi',
+        'courses_my_courses': 'Koyarwata',
+        'courses_no_course_progress': 'Babu cigaban karatu tukuna. Fara koyon yau!',
+
+        # Already previously requested keys (add if not already present)
+        'Failed to send the financial health report to your email.': 'An kasa aikawa da rahoton lafiyar kuɗi zuwa imel ɗinka.',
+        'Financial health assessment completed successfully.': 'An kammala tantance lafiyar kuɗinka cikin nasara.',
+        'Unable to load your financial health dashboard.': 'An kasa ɗora dashbodi na lafiyar kuɗinka.',
+        'Your personalized financial health score': 'Sakamakon lafiyar kuɗinka na musamman'
     }
 }
