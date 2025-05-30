@@ -11,16 +11,27 @@
     {% include 'tool_header.html' %}
     <div class="card">
         <div class="card-body">
-            <form method="POST" action="{{ url_for('budget.step4') }}" class="validate-form">
+            <form id="budget-form" method="POST" action="{{ url_for('budget.step4') }}" class="validate-form">
                 {{ form.csrf_token }}
                 <div class="mb-3">
-                    <label class="form-label">{{ trans('budget_monthly_savings_goal') | default('Monthly Savings Goal') }}</label>
-                    {{ form.savings_goal(class="form-control", placeholder=trans('budget_savings_goal_placeholder') | default('e.g., 50,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('budget_savings_goal_tooltip') | default('Amount to save each month'), 'aria-describedby': 'savings_goal_help'}) }}
-                    <div class="invalid-feedback">{{ trans('budget_savings_goal_required') | default('Savings goal is required') }}</div>
+                    <label class="form-label" for="savings_goal">{{ trans('budget_monthly_savings_goal') | default('Monthly Savings Goal') }}</label>
+                    <input type="text" class="form-control" id="savings_goal" name="savings_goal" placeholder="{{ trans('budget_savings_goal_placeholder') | default('e.g., 50,000') }}" value="{{ form.savings_goal.data or '' }}" data-bs-toggle="tooltip" title="{{ trans('budget_savings_goal_tooltip') | default('Amount to save each month') }}" aria-describedby="savings_goal_help" required>
+                    {% if form.savings_goal.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.savings_goal.errors %}
+                                <span>{{ error }}</span><br>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    <div id="savings_goal_help" class="form-text">{{ trans('budget_savings_goal_help') | default('Enter your monthly savings goal (e.g., 50,000)') }}</div>
                 </div>
                 <div class="d-flex justify-content-between">
                     <a href="{{ url_for('budget.step3') }}" class="btn btn-secondary">{{ trans('core_back') | default('Back') }}</a>
-                    <button type="submit" class="btn btn-primary">{{ trans('budget_calculate_budget') | default('Calculate Budget') }}</button>
+                    <button type="submit" id="submit-button" class="btn btn-primary">{{ trans('budget_calculate_budget') | default('Calculate Budget') }}</button>
+                </div>
+                <div id="loading-spinner" style="display: none;" class="text-center mt-3">
+                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    {{ trans('budget_processing') | default('Processing...') }}
                 </div>
             </form>
         </div>
@@ -31,28 +42,49 @@
 <script>
 function formatNumberInput(input) {
     const format = (val) => {
+        // Remove non-numeric characters except decimal point
         let clean = val.replace(/[^0-9.]/g, '');
-        if !clean) return '';
+        if (!clean) return '';
+        // Split on decimal point
         let parts = clean.split('.');
+        // Format integer part with commas
         parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-        return parts.join('.');
+        // Join with decimal point, keeping at most 2 decimal places
+        return parts.length > 1 ? `${parts[0]}.${parts[1].slice(0, 2)}` : parts[0];
     };
 
     input.addEventListener('input', function(e) {
         let cursor = input.selectionStart;
         let oldLength = input.value.length;
+        let oldValue = input.value;
         input.value = format(input.value);
         let newLength = input.value.length;
-        input.setSelectionRange(cursor + (newLength - oldLength), cursor + (newLength - oldLength));
+        // Adjust cursor position to account for added/removed commas
+        let delta = newLength - oldLength;
+        let newCursor = cursor + delta;
+        if (delta < 0 && oldValue[cursor - 1] === ',') {
+            newCursor--;
+        } else if (delta > 0 && input.value[cursor] === ',') {
+            newCursor++;
+        }
+        input.setSelectionRange(newCursor, newCursor);
     });
 }
 
-document.querySelector('form').addEventListener('submit', function() {
-    document.querySelectorAll('input[type="text"], input[type="number"]').forEach(function(input) {
-        input.value = input.value.replace(/,/g, '');
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('budget-form');
+    const savingsGoalInput = document.getElementById('savings_goal');
+    
+    // Apply number formatting to savings_goal input
+    formatNumberInput(savingsGoalInput);
+
+    // Strip commas before submission
+    form.addEventListener('submit', function(e) {
+        savingsGoalInput.value = savingsGoalInput.value.replace(/,/g, '');
+        // Show loading spinner
+        document.getElementById('loading-spinner').style.display = 'block';
+        document.getElementById('submit-button').disabled = true;
     });
 });
-
-document.querySelectorAll('input[type="text"], input[type="number"]').forEach(formatNumberInput);
 </script>
 {% endblock %}
