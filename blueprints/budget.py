@@ -181,110 +181,130 @@ def step4():
     form = Step4Form()
 
     try:
+        # Log session data presence
+        session_keys = ['budget_step1', 'budget_step2', 'budget_step3']
+        missing_keys = [k for k in session_keys if k not in session]
+        current_app.logger.info(f"Session check for {session['sid']}: Missing keys: {missing_keys}")
+
         # Validate session data for previous steps
-        if not all(k in session for k in ['budget_step1', 'budget_step2', 'budget_step3']):
-            current_app.logger.warning(f"Missing session data for session {session['sid']}")
+        if missing_keys:
+            current_app.logger.warning(f"Missing session data for session {session['sid']}: {missing_keys}")
             flash(trans("budget_missing_previous_steps"), "danger")
             return redirect(url_for('budget.step1'))
 
-        if request.method == 'POST' and form.validate_on_submit():
-            # Store form data in session
-            session['budget_step4'] = form.data
-            current_app.logger.debug(f"Budget step4 form data: {form.data}")
+        if request.method == 'POST':
+            current_app.logger.info(f"POST request received for session {session['sid']}: Form data: {request.form}")
+            if form.validate_on_submit():
+                # Store form data in session
+                session['budget_step4'] = form.data
+                current_app.logger.debug(f"Budget step4 form data for session {session['sid']}: {form.data}")
 
-            # Retrieve session data
-            step1_data = session.get('budget_step1', {})
-            step2_data = session.get('budget_step2', {})
-            step3_data = session.get('budget_step3', {})
-            step4_data = session.get('budget_step4', {})
+                # Retrieve session data
+                step1_data = session.get('budget_step1', {})
+                step2_data = session.get('budget_step2', {})
+                step3_data = session.get('budget_step3', {})
+                step4_data = session.get('budget_step4', {})
 
-            # Calculate expenses and surplus/deficit
-            income = step2_data.get('income', 0)
-            expenses = sum([
-                step3_data.get('housing', 0),
-                step3_data.get('food', 0),
-                step3_data.get('transport', 0),
-                step3_data.get('dependents', 0),
-                step3_data.get('miscellaneous', 0),
-                step3_data.get('others', 0)
-            ])
-            surplus_deficit = income - expenses - step4_data.get('savings_goal', 0)
+                # Calculate expenses and surplus/deficit
+                income = step2_data.get('income', 0)
+                expenses = sum([
+                    step3_data.get('housing', 0),
+                    step3_data.get('food', 0),
+                    step3_data.get('transport', 0),
+                    step3_data.get('dependents', 0),
+                    step3_data.get('miscellaneous', 0),
+                    step3_data.get('others', 0)
+                ])
+                surplus_deficit = income - expenses - step4_data.get('savings_goal', 0)
 
-            # Create record
-            record = {
-                "id": str(uuid.uuid4()),
-                "data": {
-                    "first_name": step1_data.get('first_name', ''),
-                    "email": step1_data.get('email', ''),
-                    "income": income,
-                    "expenses": expenses,
-                    "housing": step3_data.get('housing', 0),
-                    "food": step3_data.get('food', 0),
-                    "transport": step3_data.get('transport', 0),
-                    "dependents": step3_data.get('dependents', 0),
-                    "miscellaneous": step3_data.get('miscellaneous', 0),
-                    "others": step3_data.get('others', 0),
-                    "savings_goal": step4_data.get('savings_goal', 0),
-                    "surplus_deficit": surplus_deficit,
-                    "created_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                # Create record
+                record = {
+                    "id": str(uuid.uuid4()),
+                    "data": {
+                        "first_name": step1_data.get('first_name', ''),
+                        "email": step1_data.get('email', ''),
+                        "income": income,
+                        "expenses": expenses,
+                        "housing": step3_data.get('housing', 0),
+                        "food": step3_data.get('food', 0),
+                        "transport": step3_data.get('transport', 0),
+                        "dependents": step3_data.get('dependents', 0),
+                        "miscellaneous": step3_data.get('miscellaneous', 0),
+                        "others": step3_data.get('others', 0),
+                        "savings_goal": step4_data.get('savings_goal', 0),
+                        "surplus_deficit": surplus_deficit,
+                        "created_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    }
                 }
-            }
 
-            # Store data
-            try:
-                budget_storage = current_app.config['STORAGE_MANAGERS']['budget']
-                if not budget_storage.append(record, user_email=step1_data.get('email'), session_id=session['sid']):
-                    raise Exception("Failed to save budget data")
-            except Exception as e:
-                current_app.logger.error(f"Budget storage failed for session {session['sid']}: {str(e)}")
-                flash(trans("budget_storage_error"), "danger")
+                # Store data
+                try:
+                    budget_storage = current_app.config['STORAGE_MANAGERS']['budget']
+                    current_app.logger.info(f"Attempting to save budget for session {session['sid']}")
+                    if not budget_storage.append(record, user_email=step1_data.get('email'), session_id=session['sid']):
+                        raise Exception("Failed to save budget data")
+                    current_app.logger.info(f"Budget saved successfully for session {session['sid']}")
+                except Exception as e:
+                    current_app.logger.error(f"Budget storage failed for session {session['sid']}: {str(e)}")
+                    flash(trans("budget_storage_error"), "danger")
+                    return render_template('budget_step4.html', form=form, trans=trans, lang=lang)
+
+                # Send email if requested
+                email = step1_data.get('email')
+                send_email_flag = step1_data.get('send_email', False)
+                if send_email_flag and email:
+                    try:
+                        current_app.logger.info(f"Sending email for session {session['sid']} to {email}")
+                        send_email(
+                            to_email=email,
+                            subject=trans("budget_plan_summary"),
+                            template_name="budget_email.html",
+                            data={
+                                "first_name": record["data"]["first_name"],
+                                "income": record["data"]["income"],
+                                "expenses": record["data"]["expenses"],
+                                "housing": record["data"]["housing"],
+                                "food": record["data"]["food"],
+                                "transport": record["data"]["transport"],
+                                "dependents": record["data"]["dependents"],
+                                "miscellaneous": record["data"]["miscellaneous"],
+                                "others": record["data"]["others"],
+                                "savings_goal": record["data"]["savings_goal"],
+                                "surplus_deficit": record["data"]["surplus_deficit"],
+                                "created_at": record["data"]["created_at"],
+                                "cta_url": url_for('budget.dashboard', _external=True)
+                            },
+                            lang=lang
+                        )
+                        current_app.logger.info(f"Email sent successfully for session {session['sid']}")
+                    except Exception as e:
+                        current_app.logger.error(f"Email send failed for session {session['sid']}: {str(e)}")
+                        # Email failure doesn't block redirect
+
+                # Clear session data
+                session.pop('budget_step1', None)
+                session.pop('budget_step2', None)
+                session.pop('budget_step3', None)
+                session.pop('budget_step4', None)
+                current_app.logger.info(f"Session data cleared for session {session['sid']}")
+
+                flash(trans("budget_budget_completed_success"), "success")
+                current_app.logger.info(f"Redirecting to dashboard for session {session['sid']}")
+                return redirect(url_for('budget.dashboard'))
+
+            else:
+                current_app.logger.warning(f"Form validation failed for session {session['sid']}: {form.errors}")
+                flash(trans("budget_form_validation_error"), "danger")
                 return render_template('budget_step4.html', form=form, trans=trans, lang=lang)
 
-            # Send email if requested
-            email = step1_data.get('email')
-            send_email_flag = step1_data.get('send_email', False)
-            if send_email_flag and email:
-                try:
-                    send_email(
-                        to_email=email,
-                        subject=trans("budget_plan_summary"),
-                        template_name="budget_email.html",
-                        data={
-                            "first_name": record["data"]["first_name"],
-                            "income": record["data"]["income"],
-                            "expenses": record["data"]["expenses"],
-                            "housing": record["data"]["housing"],
-                            "food": record["data"]["food"],
-                            "transport": record["data"]["transport"],
-                            "dependents": record["data"]["dependents"],
-                            "miscellaneous": record["data"]["miscellaneous"],
-                            "others": record["data"]["others"],
-                            "savings_goal": record["data"]["savings_goal"],
-                            "surplus_deficit": record["data"]["surplus_deficit"],
-                            "created_at": record["data"]["created_at"],
-                            "cta_url": url_for('budget.dashboard', _external=True)
-                        },
-                        lang=lang
-                    )
-                except Exception as e:
-                    current_app.logger.error(f"Email send failed for session {session['sid']}: {str(e)}")
-                    # Email failure doesn't block redirect
-
-            # Clear session data
-            session.pop('budget_step1', None)
-            session.pop('budget_step2', None)
-            session.pop('budget_step3', None)
-            session.pop('budget_step4', None)
-
-            flash(trans("budget_budget_completed_success"), "success")
-            return redirect(url_for('budget.dashboard'))
-
+        current_app.logger.info(f"Rendering step4 form for session {session['sid']}")
         return render_template('budget_step4.html', form=form, trans=trans, lang=lang)
 
     except Exception as e:
-        current_app.logger.exception(f"Error in budget.step4 for session {session['sid']}: {str(e)}")
+        current_app.logger.exception(f"Unexpected error in budget.step4 for session {session['sid']}: {str(e)}")
         flash(trans("budget_budget_process_error"), "danger")
         return render_template('budget_step4.html', form=form, trans=trans, lang=lang)
+        
         
 @budget_bp.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
