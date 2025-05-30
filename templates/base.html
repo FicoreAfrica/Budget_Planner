@@ -22,7 +22,7 @@
 </head>
 <body>
     <!-- Consent Banner -->
-    <div class="consent-banner alert alert-info alert-dismissible fade show" role="alert">
+    <div class="consent-banner alert alert-info alert-dismissible fade show" id="consentBanner" role="alert">
         <i class="fas fa-shield-alt me-1" aria-hidden="true"></i> {{ trans('core_consent_banner') | default('By using Ficore, you understand that we provide tools for planning only, not banking.') }}
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close') | default('Close') }}"></button>
     </div>
