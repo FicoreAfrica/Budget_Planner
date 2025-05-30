@@ -146,8 +146,8 @@ def form():
                         },
                         lang=lang
                     )
-                flash(trans("bill_bill_added_success"), "success")
-                return redirect(url_for('bill.view_edit'))
+                flash(trans("bill_bill_added_dynamic").format(bill_name=data['bill_name']), "success")
+                return redirect(url_for('bill.form'))  # Redirect to form to allow adding another bill
             except Exception as e:
                 current_app.logger.exception(f"Error processing bill form: {str(e)}")
                 flash(trans("bill_bill_add_error"), "danger")
@@ -303,7 +303,7 @@ def view_edit():
                     except Exception as e:
                         current_app.logger.exception(f"Error in bill.view_edit (edit): {str(e)}")
                         flash(trans("bill_bill_update_error"), "danger")
-                    return redirect(url_for('bill.view_edit'))
+                    return redirect(url_for('bill.dashboard'))  # Redirect to dashboard after edit
 
             elif action == "delete":
                 try:
@@ -312,11 +312,11 @@ def view_edit():
                     else:
                         flash(trans("bill_bill_delete_failed"), "danger")
                         current_app.logger.error(f"Failed to delete bill ID {bill_id}")
-                    return redirect(url_for('bill.view_edit'))
+                    return redirect(url_for('bill.dashboard'))  # Redirect to dashboard after delete
                 except Exception as e:
                     current_app.logger.exception(f"Error in bill.view_edit (delete): {str(e)}")
                     flash(trans("bill_bill_delete_error"), "danger")
-                    return redirect(url_for('bill.view_edit'))
+                    return redirect(url_for('bill.dashboard'))
 
             elif action == "toggle_status":
                 try:
@@ -333,18 +333,18 @@ def view_edit():
                     else:
                         flash(trans("bill_bill_not_found"), "danger")
                         current_app.logger.error(f"Bill ID {bill_id} not found")
-                    return redirect(url_for('bill.view_edit'))
+                    return redirect(url_for('bill.dashboard'))  # Redirect to dashboard after toggle
                 except Exception as e:
                     current_app.logger.exception(f"Error in bill.view_edit (toggle_status): {str(e)}")
                     flash(trans("bill_bill_status_toggle_error"), "danger")
-                    return redirect(url_for('bill.view_edit'))
+                    return redirect(url_for('bill.dashboard'))
 
-        return render_template('view_edit_bills.html', bills=bills, form=form, trans=trans, lang=lang)
+        return render_template('view_edit_bills.html', bills=bills, form=form, trans=trans, lang=lang, category=request.args.get('category', 'all'))
     except Exception as e:
         current_app.logger.exception(f"Error in bill.view_edit: {str(e)}")
         flash(trans("bill_bills_load_error"), "danger")
         try:
-            return render_template('view_edit_bills.html', bills=[], form=BillForm(), trans=trans, lang=lang)
+            return render_template('view_edit_bills.html', bills=[], form=BillForm(), trans=trans, lang=lang, category=request.args.get('category', 'all'))
         except Exception as render_e:
             current_app.logger.exception(f"Template rendering error in bill.view_edit: {str(render_e)}")
             flash(trans("bill_view_edit_template_error"), "danger")
