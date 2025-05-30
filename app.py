@@ -132,7 +132,7 @@ def init_storage_managers(app):
             logger.error(f"Failed to initialize {name} storage: {str(e)}", exc_info=True)
             raise RuntimeError(f"Cannot initialize {name} storage: {str(e)}")
     app.config['STORAGE_MANAGERS'] = storage_managers
-    logger.info(f"STORAGE_MANAGERS initialized with keys: {list(storage_managers.keys())}")  # Added logging
+    logger.info(f"STORAGE_MANAGERS initialized with keys: {list(storage_managers.keys())}")
 
 def initialize_courses_data(app):
     with app.app_context():
@@ -197,7 +197,7 @@ def create_app():
         logger.info("Completed data initialization")
 
     def translate(key, lang='en', logger=logger, **kwargs):
-        translation = trans(key, lang=lang, **kwargs)  # Using imported trans function
+        translation = trans(key, lang=lang, **kwargs)
         if translation == key:
             logger.warning(f"Missing translation for key='{key}' in lang='{lang}'")
         return translation
