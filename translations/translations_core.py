@@ -1,6 +1,8 @@
 CORE_TRANSLATIONS = {
     'en': {
         'core_home': 'Home',
+        'Budget Planner': 'Budget Planner',
+        'Enter your personal information': 'Enter your personal information',
         'core_back_to_home': 'Back to Home',
         'core_viewl_all_courses': 'Click to View All Courses',
         'core_Failed to send the financial health report to your email.': 'Failed to send the financial health report to your email.',
@@ -555,6 +557,8 @@ CORE_TRANSLATIONS = {
         'courses_budgeting': 'Kasafin Kuɗi',
         'courses_my_courses': 'Koyarwata',
         'courses_no_course_progress': 'Babu cigaban karatu tukuna. Fara koyon yau!',
+        'Budget Planner': 'Mai Tsara Kasafin Kuɗi',
+        'Enter your personal information': 'Shigar da bayanan ku na sirri',
 
         # Already previously requested keys (add if not already present)
         'Failed to send the financial health report to your email.': 'An kasa aikawa da rahoton lafiyar kuɗi zuwa imel ɗinka.',
