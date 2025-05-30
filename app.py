@@ -195,18 +195,13 @@ def create_app():
         initialize_courses_data(app)
         logger.info("Completed data initialization")
 
-    def trans(key, lang='en', logger=logger, **kwargs):
-        translation = trans(key, lang=lang, logger=logger, **kwargs)  # Using imported trans function
+    def translate(key, lang='en', logger=logger, **kwargs):
+        translation = trans(key, lang=lang, **kwargs)  # Using imported trans function
         if translation == key:
             logger.warning(f"Missing translation for key='{key}' in lang='{lang}'")
-        if kwargs:
-            try:
-                translation = translation.format(**kwargs)
-            except KeyError as e:
-                logger.error(f"Translation error for key='{key}' in lang='{lang}': missing {e}")
         return translation
 
-    app.jinja_env.filters['trans'] = lambda key, **kwargs: trans(
+    app.jinja_env.filters['trans'] = lambda key, **kwargs: translate(
         key,
         lang=kwargs.get('lang', session.get('language', 'en')),
         logger=g.get('logger', logger) if has_request_context() else logger,
@@ -243,7 +238,7 @@ def create_app():
     def inject_translations():
         lang = session.get('language', 'en')
         def context_trans(key, **kwargs):
-            return trans(key, lang=lang, logger=g.get('logger', logger), **kwargs)
+            return translate(key, lang=lang, logger=g.get('logger', logger), **kwargs)
         return {
             'trans': context_trans,
             'current_year': datetime.now().year,
@@ -284,10 +279,10 @@ def create_app():
         except Exception as e:
             logger.error(f"Error retrieving courses: {str(e)}", exc_info=True)
             courses = SAMPLE_COURSES
-            flash(trans('learning_hub_error_message', default='An error occurred', lang=lang), 'danger')
+            flash(translate('learning_hub_error_message', default='An error occurred', lang=lang), 'danger')
         return render_template(
             'index.html',
-            t=trans,
+            t=translate,
             courses=courses,
             lang=lang,
             sample_courses=SAMPLE_COURSES
@@ -299,7 +294,7 @@ def create_app():
         new_lang = lang if lang in valid_langs else 'en'
         session['language'] = new_lang
         logger.info(f"Language set to {new_lang}")
-        flash(trans('learning_hub_success_language_updated', default='Language updated successfully', lang=new_lang) if new_lang in valid_langs else trans('Invalid language', default='Invalid language', lang=new_lang), 'success' if new_lang in valid_langs else 'danger')
+        flash(translate('learning_hub_success_language_updated', default='Language updated successfully', lang=new_lang) if new_lang in valid_langs else translate('Invalid language', default='Invalid language', lang=new_lang), 'success' if new_lang in valid_langs else 'danger')
         return redirect(request.referrer or url_for('index'))
 
     @app.route('/favicon.ico')
@@ -338,11 +333,11 @@ def create_app():
                     data[tool] = [] if tool == 'courses' else expected_keys.copy()
             learning_progress = session.get('learning_progress', {})
             data['learning_progress'] = learning_progress if isinstance(learning_progress, dict) else {}
-            return render_template('general_dashboard.html', data=data, t=trans, lang=lang)
+            return render_template('general_dashboard.html', data=data, t=translate, lang=lang)
         except Exception as e:
             logger.error(f"Error in general_dashboard: {str(e)}", exc_info=True)
-            flash(trans('global_error_message', default='An error occurred', lang=lang), 'danger')
-            return render_template('general_dashboard.html', data={}, t=trans, lang=lang), 500
+            flash(translate('global_error_message', default='An error occurred', lang=lang), 'danger')
+            return render_template('general_dashboard.html', data={}, t=translate, lang=lang), 500
 
     @app.route('/logout')
     def logout():
@@ -352,18 +347,18 @@ def create_app():
             session_lang = session.get('language', 'en')
             session.clear()
             session['language'] = session_lang
-            flash(trans('learning_hub_success_logout', default='Successfully logged out', lang=lang), 'success')
+            flash(translate('learning_hub_success_logout', default='Successfully logged out', lang=lang), 'success')
             return redirect(url_for('index'))
         except Exception as e:
             logger.error(f"Error in logout: {str(e)}", exc_info=True)
-            flash(trans('global_error_message', default='An error occurred', lang=lang), 'danger')
+            flash(translate('global_error_message', default='An error occurred', lang=lang), 'danger')
             return redirect(url_for('index'))
 
     @app.route('/about')
     def about():
         lang = session.get('language', 'en')
         logger.info("Serving about page")
-        return render_template('about.html', t=trans, lang=lang)
+        return render_template('about.html', t=translate, lang=lang)
 
     @app.route('/health')
     def health():
@@ -390,21 +385,21 @@ def create_app():
     def internal_error(error):
         lang = session.get('language', 'en')
         logger.error(f"Server error: {str(error)}", exc_info=True)
-        flash(trans('global_error_message', default='An error occurred', lang=lang), 'danger')
-        return render_template('500.html', error=str(error), t=trans, lang=lang), 500
+        flash(translate('global_error_message', default='An error occurred', lang=lang), 'danger')
+        return render_template('500.html', error=str(error), t=translate, lang=lang), 500
 
     @app.errorhandler(CSRFError)
     def handle_csrf_error(error):
         lang = session.get('language', 'en')
         logger.warning(f"CSRF error: {str(error)}")
-        flash(trans('csrf_error', default='Invalid CSRF token', lang=lang), 'danger')
-        return render_template('error.html', error="Invalid CSRF token", t=trans, lang=lang), 400
+        flash(translate('csrf_error', default='Invalid CSRF token', lang=lang), 'danger')
+        return render_template('error.html', error="Invalid CSRF token", t=translate, lang=lang), 400
 
     @app.errorhandler(404)
     def page_not_found(error):
         lang = session.get('language', 'en')
         logger.error(f"404 error: {str(error)}")
-        return render_template('404.html', t=trans, lang=lang), 404
+        return render_template('404.html', t=translate, lang=lang), 404
 
     app.register_blueprint(financial_health_bp)
     app.register_blueprint(budget_bp)
