@@ -1,4 +1,5 @@
 from flask import Blueprint, current_app, session, has_request_context, request, redirect, url_for, render_template, flash
+from flask_babel import gettext
 from flask_wtf import FlaskForm
 from wtforms import StringField, BooleanField, SubmitField, RadioField
 from wtforms.validators import DataRequired, Email
@@ -10,13 +11,21 @@ import logging
 from json_store import JsonStorage
 from mailersend_email import send_email
 import os
-try:
-    from app import trans
-except ImportError:
-    def trans(key, lang=None):
-        return key
 
 quiz_bp = Blueprint('quiz', __name__, template_folder='templates', static_folder='static', url_prefix='/quiz')
+
+def trans(key, lang=None, default=None):
+    """Translate a key with a fallback to default or key if translation is missing."""
+    logger = current_app.logger
+    session_id = session.get('sid', 'no-session-id') if has_request_context() else 'no-session-id'
+    lang = lang or session.get('language', 'en')
+    translation = gettext(key)
+    if translation == key and default:
+        logger.warning(f"Missing translation for key={key}, lang={lang}, using default={default}", extra={'session_id': session_id})
+        return default
+    elif translation == key:
+        logger.warning(f"Missing translation for key={key}, lang={lang}, falling back to key", extra={'session_id': session_id})
+    return translation
 
 def init_storage(app, logger: logging.LoggerAdapter) -> JsonStorage:
     """Initialize storage with app context."""
@@ -402,7 +411,7 @@ def assign_badges_quiz(user_df: pd.DataFrame, all_users_df: pd.DataFrame, langua
             'key': 'badge_unranked',
             'name': trans('badge_unranked', lang=language),
             'color_class': 'badge-gray',
-            'description': trans('badge_unranked_description', lang=language)
+            'description': trans(badge['description_key'], lang=language)
         })
 
     return badges
@@ -565,48 +574,50 @@ def step1():
     form.submit.label.text = trans('quiz_start_quiz', lang=language)
 
     try:
-        if request.method == 'POST' and form.validate_on_submit():
-            session['quiz_data'] = {
-                'first_name': form.first_name.data,
-                'email': form.email.data,
-                'send_email': form.send_email.data
-            }
-            session.modified = True
-            logger.info(f"Step 1 validated", extra={'session_id': session_id})
-
-            storage = current_app.config.get('STORAGE_MANAGERS', {}).get('quiz')
-            if not storage:
-                logger.error("Storage manager 'quiz' not configured", extra={'session_id': session_id})
-                flash(trans('quiz_config_error', lang=language), 'error')
-                return render_template(
-                    'quiz_step1.html',
-                    form=form,
-                    course_id=course_id,
-                    trans=trans,
-                    language=language,
-                    base_url=current_app.config.get('BASE_URL', '')
-                )
-
-            progress_data = storage.read_all()
-            course_progress = next((p for p in progress_data if p['data'].get('course_id') == course_id and p['data'].get('session_id') == session_id), None)
-            if not course_progress:
-                progress_data = {
-                    'course_id': course_id,
-                    'session_id': session_id,
-                    'completed_tasks': [0],
-                    'progress_percentage': (1 / (len(partition_questions(QUESTIONS)) + 1)) * 100,
-                    'last_updated': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+        if request.method == 'POST':
+            logger.debug(f"Received POST data: {request.form}", extra={'session_id': session_id})
+            if form.validate_on_submit():
+                session['quiz_data'] = {
+                    'first_name': form.first_name.data,
+                    'email': form.email.data,
+                    'send_email': form.send_email.data
                 }
-                storage.append(progress_data, session_id=session_id)
-            else:
-                if 0 not in course_progress['data'].get('completed_tasks', []):
-                    course_progress['data']['completed_tasks'].append(0)
-                    course_progress['data']['progress_percentage'] = (len(course_progress['data']['completed_tasks']) / (len(partition_questions(QUESTIONS)) + 1)) * 100
-                    course_progress['data']['last_updated'] = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
-                    storage.update_by_id(course_progress['id'], course_progress['data'])
-                logger.info(f"Task 0 (step1) completed for course {course_id}", extra={'session_id': session_id})
+                session.modified = True
+                logger.info(f"Step 1 validated", extra={'session_id': session_id})
 
-            return redirect(url_for('quiz.quiz_step', step_num=1, course_id=course_id))
+                storage = current_app.config.get('STORAGE_MANAGERS', {}).get('quiz')
+                if not storage:
+                    logger.error("Storage manager 'quiz' not configured", extra={'session_id': session_id})
+                    flash(trans('quiz_config_error', lang=language), 'error')
+                    return render_template(
+                        'quiz_step1.html',
+                        form=form,
+                        course_id=course_id,
+                        trans=trans,
+                        language=language,
+                        base_url=current_app.config.get('BASE_URL', '')
+                    )
+
+                progress_data = storage.read_all()
+                course_progress = next((p for p in progress_data if p['data'].get('course_id') == course_id and p['data'].get('session_id') == session_id), None)
+                if not course_progress:
+                    progress_data = {
+                        'course_id': course_id,
+                        'session_id': session_id,
+                        'completed_tasks': [0],
+                        'progress_percentage': (1 / (len(partition_questions(QUESTIONS)) + 1)) * 100,
+                        'last_updated': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+                    }
+                    storage.append(progress_data, session_id=session_id)
+                else:
+                    if 0 not in course_progress['data'].get('completed_tasks', []):
+                        course_progress['data']['completed_tasks'].append(0)
+                        course_progress['data']['progress_percentage'] = (len(course_progress['data']['completed_tasks']) / (len(partition_questions(QUESTIONS)) + 1)) * 100
+                        course_progress['data']['last_updated'] = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+                        storage.update_by_id(course_progress['id'], course_progress['data'])
+                    logger.info(f"Task 0 (step1) completed for course {course_id}", extra={'session_id': session_id})
+
+                return redirect(url_for('quiz.quiz_step', step_num=1, course_id=course_id))
 
         return render_template(
             'quiz_step1.html',
