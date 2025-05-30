@@ -2,6 +2,7 @@ CORE_TRANSLATIONS = {
     'en': {
         'core_home': 'Home',
         'Budget Planner': 'Budget Planner',
+        'Error saving personal information.':'Error saving personal information.',
         'Enter your personal information': 'Enter your personal information',
         'Set your monthly savings goal': 'Set your monthly savings goal',
         'core_back_to_home': 'Back to Home',
@@ -561,6 +562,7 @@ CORE_TRANSLATIONS = {
         'Budget Planner': 'Mai Tsara Kasafin Kuɗi',
         'Enter your personal information': 'Shigar da bayanan ku na sirri',
         'Set your monthly savings goal': 'Saita burin ajiyar ku na wata-wata',
+        'Error saving personal information.':'Error saving personal information.',
 
         # Already previously requested keys (add if not already present)
         'Failed to send the financial health report to your email.': 'An kasa aikawa da rahoton lafiyar kuɗi zuwa imel ɗinka.',
