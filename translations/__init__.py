@@ -154,18 +154,4 @@ def get_translations(lang: Optional[str] = None) -> Dict[str, callable]:
         'trans': lambda key, **kwargs: trans(key, lang=lang, **kwargs)
     }
 
-translations = {
-    lang: {
-        **translations_core.get(lang, {}),
-        **translations_quiz.get(lang, {}),
-        **translations_mailersend.get(lang, {}),
-        **translations_bill.get(lang, {}),
-        **translations_budget.get(lang, {}),
-        **translations_dashboard.get(lang, {}),
-        **translations_emergency_fund.get(lang, {}),
-        **translations_financial_health.get(lang, {}),
-        **translations_net_worth.get(lang, {}),
-        **translations_learning_hub.get(lang, {})
-    }
-    for lang in ['en', 'ha']
-}
+__all__ = ['trans']
