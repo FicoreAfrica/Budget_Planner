@@ -320,7 +320,31 @@ FINANCIAL_HEALTH_TRANSLATIONS = {
         'financial_health_Plan your expenses to avoid overspending and increase your savings.': 'Plan your expenses to avoid overspending and increase your savings.',
 
         # Course descriptions
-        'Learn the basics of budgeting and managing your money.': 'Learn the basics of budgeting and managing your money.'
+        'Learn the basics of budgeting and managing your money.': 'Learn the basics of budgeting and managing your money.',
+        # English (en) translations
+'financial_health_score_tooltip': 'Your overall financial health score, higher is better.',
+'financial_health_status_tooltip': 'Your overall financial health status based on your score.',
+'financial_health_monthly_income_tooltip': 'Your total income from all sources per month.',
+'financial_health_monthly_expenses_tooltip': 'Your total monthly expenditures.',
+'financial_health_total_debt_tooltip': 'The total amount of outstanding debt you currently hold.',
+'financial_health_average_interest_rate_tooltip': 'The average interest rate across all your debts.',
+'financial_health_debt_to_income_ratio_tooltip': 'The percentage of your gross monthly income that goes towards debt payments.',
+'financial_health_savings_rate_tooltip': 'The percentage of your income that you save each month.',
+'financial_health_interest_burden_tooltip': 'The proportion of your income spent on interest payments.',
+'financial_health_created_at_tooltip': 'The date and time this financial assessment was recorded.',
+'financial_health_financial_star_tooltip': 'Financial Star badge',
+'financial_health_savings_pro_tooltip': 'Savings Pro badge',
+'financial_health_debt_manager_tooltip': 'Debt Manager badge',
+'courses_budgeting_course_tooltip': 'Learn the fundamentals of budgeting to manage your money effectively.',
+'courses_continue_course_tooltip': 'Continue your progress in the Budgeting Basics course.',
+'courses_start_budgeting_course_tooltip': 'Begin your learning journey with the Budgeting Basics course.',
+'financial_health_rank_tooltip': 'Your rank among all users based on your financial health score.',
+'financial_health_total_users_tooltip': 'Total number of users in the system.',
+'financial_health_ahead_of_tooltip': 'The percentage of users whose score is lower than yours.',
+'financial_health_recalculate_score_tooltip': 'Update your financial information and get a new score.',
+'budget_create_budget_tooltip': 'Start creating a personalized budget to manage your spending.',
+'financial_health_explore_savings_options_tooltip': 'Discover various ways to save money and grow your wealth.',
+'financial_health_start_assessment_tooltip': 'Begin your financial health assessment to get started.'
     },
     'ha': {
         'financial_health_score': 'Makin Lafiyar Kuɗi',
@@ -642,6 +666,30 @@ FINANCIAL_HEALTH_TRANSLATIONS = {
         'financial_health_Plan your expenses to avoid overspending and increase your savings.': 'Shirya yadda za ka kashe kuɗi don kaucewa almubazzaranci da ƙara adana kuɗi.',
 
         # Course descriptions
-        'Learn the basics of budgeting and managing your money.': 'Koyi asalin kasafin kuɗi da yadda ake sarrafa kuɗi.'
+        'Learn the basics of budgeting and managing your money.': 'Koyi asalin kasafin kuɗi da yadda ake sarrafa kuɗi.',
+        # Hausa (ha) translations
+'financial_health_score_tooltip': 'Jimlar makin lafiyar kuɗin ku, mafi girma mafi kyau.',
+'financial_health_status_tooltip': 'Matsayin lafiyar kuɗin ku gabaɗaya dangane da makin ku.',
+'financial_health_monthly_income_tooltip': 'Jimlar kuɗin shiga daga duk tushe a kowane wata.',
+'financial_health_monthly_expenses_tooltip': 'Jimlar kuɗin da kuke kashewa a kowane wata.',
+'financial_health_total_debt_tooltip': 'Jimlar bashin da kuke bin bashi a halin yanzu.',
+'financial_health_average_interest_rate_tooltip': 'Matsakaicin adadin riba a kan duk basussukan ku.',
+'financial_health_debt_to_income_ratio_tooltip': 'Kashi na kuɗin shiga na wata-wata da ke zuwa ga biyan bashi.',
+'financial_health_savings_rate_tooltip': 'Kashi na kuɗin shiga da kuke ajiyewa kowane wata.',
+'financial_health_interest_burden_tooltip': 'Yawan kuɗin shiga da aka kashe akan biyan riba.',
+'financial_health_created_at_tooltip': 'Kwanan wata da lokacin da aka rubuta wannan kimantawar kuɗi.',
+'financial_health_financial_star_tooltip': 'Alamar Tauraron Kuɗi',
+'financial_health_savings_pro_tooltip': 'Alamar Kwararre na Ajiya',
+'financial_health_debt_manager_tooltip': 'Alamar Mai Gudanar da Bashi',
+'courses_budgeting_course_tooltip': 'Koyi tushen kasafin kuɗi don sarrafa kuɗin ku yadda ya kamata.',
+'courses_continue_course_tooltip': 'Ci gaba da ci gaban ku a cikin darasin Asali na Kasafin Kuɗi.',
+'courses_start_budgeting_course_tooltip': 'Fara tafiyar koyon ku tare da darasin Asali na Kasafin Kuɗi.',
+'financial_health_rank_tooltip': 'Matsayin ku a tsakanin duk masu amfani dangane da makin lafiyar kuɗin ku.',
+'financial_health_total_users_tooltip': 'Jimlar adadin masu amfani a cikin tsarin.',
+'financial_health_ahead_of_tooltip': 'Kashi na masu amfani waɗanda makin su ya fi naku ƙasa.',
+'financial_health_recalculate_score_tooltip': 'Sabunta bayanan kuɗin ku kuma sami sabon maki.',
+'budget_create_budget_tooltip': 'Fara ƙirƙirar kasafin kuɗi na musamman don sarrafa kashe kuɗin ku.',
+'financial_health_explore_savings_options_tooltip': 'Gano hanyoyi daban-daban don adana kuɗi da haɓaka arzikin ku.',
+'financial_health_start_assessment_tooltip': 'Fara kimantawar lafiyar kuɗin ku don farawa.'
     }
 }
