@@ -4,6 +4,8 @@ body {
     background: linear-gradient(135deg, #E3F2FD, #F5F7FA);
     color: #333;
     padding: 20px;
+    max-width: 100%;
+    overflow-x: hidden;
 }
 
 .container {
@@ -59,9 +61,23 @@ body {
     bottom: 0;
     width: 100%;
     z-index: 1000;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    word-break: break-word;
 }
 .consent-banner i {
     color: #0288D1;
+}
+.consent-banner .close-btn {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    color: #0288D1;
+    cursor: pointer;
+    padding: 0.5rem;
 }
 
 /* Buttons */
@@ -160,22 +176,23 @@ body {
 }
 .card-body {
     padding: 1.5rem;
+    text-align: center;
 }
 .card-title {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
     font-weight: 600;
     margin-bottom: 1rem;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: normal;
 }
 .card-title i {
     color: #0288D1;
-    font-size: 1.2rem;
-}
-.card-title .advisory-label {
-    font-size: 0.8rem;
-    color: #666;
-    font-style: italic;
+    font-size: 1.6rem;
 }
 .card-text {
     color: #6c757d;
@@ -615,10 +632,7 @@ h1, h3,
         font-size: 0.9rem;
     }
     .card-title i {
-        font-size: 1rem;
-    }
-    .card-title .advisory-label {
-        font-size: 0.7rem;
+        font-size: 1.4rem;
     }
     .tool-title {
         font-size: 1.4rem;
