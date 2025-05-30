@@ -4,7 +4,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
-{% endblock %}
+    {% endblock %}
 {% block content %}
 <div class="container">
     {% set tool_name = 'financial_health_dashboard' | default('Financial Health Dashboard') %}
@@ -28,25 +28,93 @@
                 <canvas id="scoreGauge" class="score-gauge"></canvas>
                 <p class="metric">
                     <strong>{{ trans('financial_health_your_score') | default('Your Score') }}:</strong>
-                    <span style="font-size: 1.5rem; color: #2E7D32;" id="score">{{ latest_record.score | default(0) }}</span>
+                    <span id="score"
+                          style="font-size: 1.5rem; color: #2E7D32;"
+                          data-bs-toggle="tooltip" data-bs-placement="top"
+                          title="{{ trans('financial_health_score_tooltip') | default('Your overall financial health score, higher is better.') }}">
+                        {{ latest_record.score | default(0) }}
+                    </span>
                 </p>
                 <p class="metric">
                     <strong>{{ trans('financial_health_status') | default('Status') }}:</strong>
-                    <span class="status-badge bg-{{ 'success' if latest_record.status == 'Excellent' or latest_record.status == 'Good' else 'warning' if latest_record.status == 'Needs Improvement' else 'danger' }}">
+                    <span class="status-badge bg-{{ 'success' if latest_record.status == 'Excellent' or latest_record.status == 'Good' else 'warning' if latest_record.status == 'Needs Improvement' else 'danger' }}"
+                          data-bs-toggle="tooltip" data-bs-placement="top"
+                          title="{{ trans('financial_health_status_tooltip') | default('Your overall financial health status based on your score.') }}">
                         <i class="fas fa-{{ 'check-circle' if latest_record.status == 'Excellent' or latest_record.status == 'Good' else 'exclamation-circle' if latest_record.status == 'Needs Improvement' else 'times-circle' }}"></i>
                         {{ trans('financial_health_' + latest_record.status.lower().replace(' ', '_')) | default(latest_record.status | default('Unknown')) }}
                     </span>
                 </p>
-                <p class="metric"><strong>{{ trans('financial_health_monthly_income') | default('Monthly Income') }}:</strong> ₦<span id="income">{{ latest_record.income | default(0) }}</span></p>
-                <p class="metric"><strong>{{ trans('financial_health_monthly_expenses') | default('Monthly Expenses') }}:</strong> ₦<span id="expenses">{{ latest_record.expenses | default(0) }}</span></p>
-                <p class="metric"><strong>{{ trans('financial_health_total_debt') | default('Total Debt') }}:</strong> ₦<span id="debt">{{ latest_record.debt | default(0) }}</span></p>
-                <p class="metric"><strong>{{ trans('financial_health_average_interest_rate') | default('Average Interest Rate') }}:</strong> <span id="interest_rate">{{ latest_record.interest_rate | default(0) }}</span>%</p>
-                <p class="metric"><strong>{{ trans('financial_health_debt_to_income_ratio') | default('Debt-to-Income Ratio') }}:</strong> <span id="debt_to_income">{{ latest_record.debt_to_income | default(0) }}</span>%</p>
-                <p class="metric"><strong>{{ trans('financial_health_savings_rate') | default('Savings Rate') }}:</strong> <span id="savings_rate">{{ latest_record.savings_rate | default(0) }}</span>%</p>
-                <p class="metric"><strong>{{ trans('financial_health_interest_burden') | default('Interest Burden') }}:</strong> <span id="interest_burden">{{ latest_record.interest_burden | default(0) }}</span>%</p>
-                <p class="metric"><strong>{{ trans('core_created_at') | default('Created At') }}:</strong> {{ latest_record.created_at | default('N/A') }}</p>
+                <p class="metric">
+                    <strong>{{ trans('financial_health_monthly_income') | default('Monthly Income') }}:</strong>
+                    <span id="income"
+                          data-bs-toggle="tooltip" data-bs-placement="top"
+                          title="{{ trans('financial_health_monthly_income_tooltip') | default('Your total income from all sources per month.') }}">
+                        ₦{{ latest_record.income | default(0) }}
+                    </span>
+                </p>
+                <p class="metric">
+                    <strong>{{ trans('financial_health_monthly_expenses') | default('Monthly Expenses') }}:</strong>
+                    <span id="expenses"
+                          data-bs-toggle="tooltip" data-bs-placement="top"
+                          title="{{ trans('financial_health_monthly_expenses_tooltip') | default('Your total monthly expenditures.') }}">
+                        ₦{{ latest_record.expenses | default(0) }}
+                    </span>
+                </p>
+                <p class="metric">
+                    <strong>{{ trans('financial_health_total_debt') | default('Total Debt') }}:</strong>
+                    <span id="debt"
+                          data-bs-toggle="tooltip" data-bs-placement="top"
+                          title="{{ trans('financial_health_total_debt_tooltip') | default('The total amount of outstanding debt you currently hold.') }}">
+                        ₦{{ latest_record.debt | default(0) }}
+                    </span>
+                </p>
+                <p class="metric">
+                    <strong>{{ trans('financial_health_average_interest_rate') | default('Average Interest Rate') }}:</strong>
+                    <span id="interest_rate"
+                          data-bs-toggle="tooltip" data-bs-placement="top"
+                          title="{{ trans('financial_health_average_interest_rate_tooltip') | default('The average interest rate across all your debts.') }}">
+                        {{ latest_record.interest_rate | default(0) }}%
+                    </span>
+                </p>
+                <p class="metric">
+                    <strong>{{ trans('financial_health_debt_to_income_ratio') | default('Debt-to-Income Ratio') }}:</strong>
+                    <span id="debt_to_income"
+                          data-bs-toggle="tooltip" data-bs-placement="top"
+                          title="{{ trans('financial_health_debt_to_income_ratio_tooltip') | default('The percentage of your gross monthly income that goes towards debt payments.') }}">
+                        {{ latest_record.debt_to_income | default(0) }}%
+                    </span>
+                </p>
+                <p class="metric">
+                    <strong>{{ trans('financial_health_savings_rate') | default('Savings Rate') }}:</strong>
+                    <span id="savings_rate"
+                          data-bs-toggle="tooltip" data-bs-placement="top"
+                          title="{{ trans('financial_health_savings_rate_tooltip') | default('The percentage of your income that you save each month.') }}">
+                        {{ latest_record.savings_rate | default(0) }}%
+                    </span>
+                </p>
+                <p class="metric">
+                    <strong>{{ trans('financial_health_interest_burden') | default('Interest Burden') }}:</strong>
+                    <span id="interest_burden"
+                          data-bs-toggle="tooltip" data-bs-placement="top"
+                          title="{{ trans('financial_health_interest_burden_tooltip') | default('The proportion of your income spent on interest payments.') }}">
+                        {{ latest_record.interest_burden | default(0) }}%
+                    </span>
+                </p>
+                <p class="metric">
+                    <strong>{{ trans('core_created_at') | default('Created At') }}:</strong>
+                    <span data-bs-toggle="tooltip" data-bs-placement="top"
+                          title="{{ trans('financial_health_created_at_tooltip') | default('The date and time this financial assessment was recorded.') }}">
+                        {{ latest_record.created_at | default('N/A') }}
+                    </span>
+                </p>
                 <script>
                     document.addEventListener('DOMContentLoaded', function() {
+                        // Initialize tooltips
+                        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+                        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                            return new bootstrap.Tooltip(tooltipTriggerEl)
+                        })
+
                         const formatNumber = (num, decimals = 0) => {
                             return num.toLocaleString('en-NG', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
                         };
@@ -74,7 +142,7 @@
                                 cutout: '70%',
                                 plugins: {
                                     legend: { display: false },
-                                    tooltip: { enabled: false },
+                                    tooltip: { enabled: false }, // Tooltip for gauge itself disabled as score is shown separately
                                     datalabels: {
                                         display: true,
                                         formatter: () => formatNumber({{ latest_record.score | default(0) }}),
@@ -149,7 +217,9 @@
                 <h3><i class="fas fa-trophy"></i> {{ trans('financial_health_badges') | default('Badges') }}</h3>
                 {% if latest_record.badges %}
                     {% for badge in latest_record.badges %}
-                        <span class="badge bg-{{ 'success' if badge == 'Financial Star' else 'primary' if badge == 'Savings Pro' else 'info' if badge == 'Debt Manager' else 'warning' }} mb-2">
+                        <span class="badge bg-{{ 'success' if badge == 'Financial Star' else 'primary' if badge == 'Savings Pro' else 'info' if badge == 'Debt Manager' else 'warning' }} mb-2"
+                              data-bs-toggle="tooltip" data-bs-placement="top"
+                              title="{{ trans('financial_health_' + badge.lower().replace(' ', '_') + '_tooltip') | default(badge + ' badge') }}">
                             <i class="fas fa-{{ 'trophy' if badge == 'Financial Star' else 'star' if badge == 'Savings Pro' else 'check-circle' if badge == 'Debt Manager' else 'hand-holding-usd' }}"></i>
                             {{ trans('financial_health_' + badge.lower().replace(' ', '_')) | default(badge) }}
                         </span>
@@ -168,9 +238,11 @@
                     {% endfor %}
                     <p>
                         <strong>{{ trans('courses_recommended_learning') | default('Recommended Learning') }}:</strong>
-                        <a href="{{ url_for('learning_hub.course_overview', course_id='budgeting_101') }}" 
+                        <a href="{{ url_for('learning_hub.course_overview', course_id='budgeting_101') }}"
                            class="course-link"
-                           aria-label="{{ trans('courses_start_budgeting_course') | default('Start Budgeting Basics Course') }}">
+                           aria-label="{{ trans('courses_start_budgeting_course') | default('Start Budgeting Basics Course') }}"
+                           data-bs-toggle="tooltip" data-bs-placement="top"
+                           title="{{ trans('courses_budgeting_course_tooltip') | default('Learn the fundamentals of budgeting to manage your money effectively.') }}">
                             <i class="fas fa-book"></i> {{ trans('courses_budgeting') | default('Budgeting Basics') }}
                         </a>
                     </p>
@@ -192,25 +264,29 @@
                         {{ trans('courses_progress') | default('Progress') }} {{ user_progress.progress.progress_percentage | default(0) }}%
                     </p>
                     <div class="progress mb-2">
-                        <div class="progress-bar bg-success" 
-                             role="progressbar" 
-                             style="width: {{ user_progress.progress.progress_percentage | default(0) }}%" 
-                             aria-valuenow="{{ user_progress.progress.progress_percentage | default(0) }}" 
-                             aria-valuemin="0" 
+                        <div class="progress-bar bg-success"
+                             role="progressbar"
+                             style="width: {{ user_progress.progress.progress_percentage | default(0) }}%"
+                             aria-valuenow="{{ user_progress.progress.progress_percentage | default(0) }}"
+                             aria-valuemin="0"
                              aria-valuemax="100">
                             {{ user_progress.progress.progress_percentage | default(0) }}%
                         </div>
                     </div>
-                    <a href="{{ url_for('learning_hub.course_overview', course_id='budgeting_101') }}" 
+                    <a href="{{ url_for('learning_hub.course_overview', course_id='budgeting_101') }}"
                        class="btn btn-primary"
-                       aria-label="{{ trans('courses_continue_budgeting_course') | default('Continue Budgeting Basics Course') }}">
+                       aria-label="{{ trans('courses_continue_budgeting_course') | default('Continue Budgeting Basics Course') }}"
+                       data-bs-toggle="tooltip" data-bs-placement="top"
+                       title="{{ trans('courses_continue_course_tooltip') | default('Continue your progress in the Budgeting Basics course.') }}">
                         <i class="fas fa-play"></i> {{ trans('courses_continue_course') | default('Continue Course') }}
                     </a>
                 {% else %}
                     <p>{{ trans('courses_no_course_progress') | default('You haven’t started any courses yet.') }}</p>
-                    <a href="{{ url_for('learning_hub.course_overview', course_id='budgeting_101') }}" 
+                    <a href="{{ url_for('learning_hub.course_overview', course_id='budgeting_101') }}"
                        class="btn btn-primary"
-                       aria-label="{{ trans('courses_start_budgeting_course') | default('Start Budgeting Basics Course') }}">
+                       aria-label="{{ trans('courses_start_budgeting_course') | default('Start Budgeting Basics Course') }}"
+                       data-bs-toggle="tooltip" data-bs-placement="top"
+                       title="{{ trans('courses_start_budgeting_course_tooltip') | default('Begin your learning journey with the Budgeting Basics course.') }}">
                         <i class="fas fa-book"></i> {{ trans('courses_start_budgeting_course') | default('Start Budgeting Basics') }}
                     </a>
                 {% endif %}
@@ -222,10 +298,10 @@
                 <div class="comparison-box">
                     {% if total_users >= 5 %}
                         <p>
-                            {{ trans('financial_health_your_rank') | default('Your Rank') }}: #{{ rank | default(0) }} {{ trans('core_out_of') | default('out of') }} {{ total_users | default(0) }} {{ trans('core_users') | default('users') }}
+                            {{ trans('financial_health_your_rank') | default('Your Rank') }}: #<span data-bs-toggle="tooltip" data-bs-placement="top" title="{{ trans('financial_health_rank_tooltip') | default('Your rank among all users based on your financial health score.') }}">{{ rank | default(0) }}</span> {{ trans('core_out_of') | default('out of') }} <span data-bs-toggle="tooltip" data-bs-placement="top" title="{{ trans('financial_health_total_users_tooltip') | default('Total number of users in the system.') }}">{{ total_users | default(0) }}</span> {{ trans('core_users') | default('users') }}
                         </p>
                         <p>
-                            {{ trans('financial_health_youre_ahead_of') | default("You're ahead of") }} {{ ((total_users - rank) / total_users * 100) | round(1) if total_users > 0 else 0 }}% {{ trans('core_of_users') | default('of users') }}
+                            {{ trans('financial_health_youre_ahead_of') | default("You're ahead of") }} <span data-bs-toggle="tooltip" data-bs-placement="top" title="{{ trans('financial_health_ahead_of_tooltip') | default('The percentage of users whose score is lower than yours.') }}">{{ ((total_users - rank) / total_users * 100) | round(1) if total_users > 0 else 0 }}</span>% {{ trans('core_of_users') | default('of users') }}
                         </p>
                         <p>
                             {% if rank <= total_users * 0.1 %}
@@ -296,13 +372,19 @@
         <div class="card mb-4">
             <div class="card-body">
                 <h3><i class="fas fa-bolt"></i> {{ trans('financial_health_call_to_actions') | default('Call to Actions') }}</h3>
-                <a href="{{ url_for('financial_health.step1') }}" class="btn btn-primary">
+                <a href="{{ url_for('financial_health.step1') }}" class="btn btn-primary"
+                   data-bs-toggle="tooltip" data-bs-placement="top"
+                   title="{{ trans('financial_health_recalculate_score_tooltip') | default('Update your financial information and get a new score.') }}">
                     <i class="fas fa-edit"></i> {{ trans('financial_health_recalculate_score') | default('Recalculate Score') }}
                 </a>
-                <a href="{{ url_for('budget.step1') }}" class="btn btn-primary">
+                <a href="{{ url_for('budget.step1') }}" class="btn btn-primary"
+                   data-bs-toggle="tooltip" data-bs-placement="top"
+                   title="{{ trans('budget_create_budget_tooltip') | default('Start creating a personalized budget to manage your spending.') }}">
                     <i class="fas fa-chart-pie"></i> {{ trans('budget_create_budget') | default('Create Budget') }}
                 </a>
-                <a href="#" class="btn btn-secondary">
+                <a href="#" class="btn btn-secondary"
+                   data-bs-toggle="tooltip" data-bs-placement="top"
+                   title="{{ trans('financial_health_explore_savings_options_tooltip') | default('Discover various ways to save money and grow your wealth.') }}">
                     <i class="fas fa-piggy-bank"></i> {{ trans('financial_health_explore_savings_options') | default('Explore Savings Options') }}
                 </a>
             </div>
@@ -338,7 +420,9 @@
         <div class="card mb-4">
             <div class="card-body">
                 <p>{{ trans('financial_health_no_financial_health_data_available') | default('No financial health data available') }}</p>
-                <a href="{{ url_for('financial_health.step1') }}" class="btn btn-primary">
+                <a href="{{ url_for('financial_health.step1') }}" class="btn btn-primary"
+                   data-bs-toggle="tooltip" data-bs-placement="top"
+                   title="{{ trans('financial_health_start_assessment_tooltip') | default('Begin your financial health assessment to get started.') }}">
                     <i class="fas fa-play"></i> {{ trans('financial_health_start_assessment') | default('Start Assessment') }}
                 </a>
             </div>
