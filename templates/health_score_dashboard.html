@@ -208,7 +208,7 @@
                     </a>
                 {% else %}
                     <p>{{ trans('courses_no_course_progress') | default('You haven’t started any courses yet.') }}</p>
-                    <a href="{{ url_for('clearning_hub.course_overview', course_id='budgeting_101') }}" 
+                    <a href="{{ url_for('learning_hub.course_overview', course_id='budgeting_101') }}" 
                        class="btn btn-primary"
                        aria-label="{{ trans('courses_start_budgeting_course') | default('Start Budgeting Basics Course') }}">
                         <i class="fas fa-book"></i> {{ trans('courses_start_budgeting_course') | default('Start Budgeting Basics') }}
