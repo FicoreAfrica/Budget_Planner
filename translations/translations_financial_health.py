@@ -307,7 +307,20 @@ FINANCIAL_HEALTH_TRANSLATIONS = {
         'Failed to send the financial health report to your email.': 'Failed to send the financial health report to your email.',
         'Financial health assessment completed successfully.': 'Financial health assessment completed successfully.',
         'Unable to load your financial health dashboard.': 'Unable to load your financial health dashboard.',
-        'Your personalized financial health score': 'Your personalized financial health score'
+        'Your personalized financial health score': 'Your personalized financial health score',
+         # Step instructions
+        'Enter your personal information': 'Enter your personal information',
+        'Enter your monthly income and expenses': 'Enter your monthly income and expenses',
+        'Enter your debt and interest details (optional)': 'Enter your debt and interest details (optional)',
+
+        # Dashboard/insight tips (sentence keys)
+        'financial_health_Not enough users for a comparison yet. Invite others to use this tool!': 'Not enough users for a comparison yet. Invite others to use this tool!',
+        'financial_health_Try joining a group savings plan (Ajo) to grow your savings steadily.': 'Try joining a group savings plan (Ajo) to grow your savings steadily.',
+        'financial_health_Pay off your debts regularly to improve your financial health.': 'Pay off your debts regularly to improve your financial health.',
+        'financial_health_Plan your expenses to avoid overspending and increase your savings.': 'Plan your expenses to avoid overspending and increase your savings.',
+
+        # Course descriptions
+        'Learn the basics of budgeting and managing your money.': 'Learn the basics of budgeting and managing your money.'
     },
     'ha': {
         'financial_health_score': 'Makin Lafiyar Kuɗi',
@@ -616,6 +629,19 @@ FINANCIAL_HEALTH_TRANSLATIONS = {
         'Failed to send the financial health report to your email.': 'An kasa aikawa da rahoton lafiyar kuɗi zuwa imel ɗinka.',
         'Financial health assessment completed successfully.': 'An kammala tantance lafiyar kuɗinka cikin nasara.',
         'Unable to load your financial health dashboard.': 'An kasa ɗora dashbodi na lafiyar kuɗinka.',
-        'Your personalized financial health score': 'Sakamakon lafiyar kuɗinka na musamman'
+        'Your personalized financial health score': 'Sakamakon lafiyar kuɗinka na musamman',
+        # Step instructions
+        'Enter your personal information': 'Shigar da bayanan kanka',
+        'Enter your monthly income and expenses': 'Shigar da kudin shigowa da kudin fita na wata-wata',
+        'Enter your debt and interest details (optional)': 'Shigar da bayanan bashinka da kudin ruwa (na zabi)',
+
+        # Dashboard/insight tips (sentence keys)
+        'financial_health_Not enough users for a comparison yet. Invite others to use this tool!': 'Ba a da isassun masu amfani don kwatanta a yanzu. Gayyaci wasu su yi amfani da wannan kayan aikin!',
+        'financial_health_Try joining a group savings plan (Ajo) to grow your savings steadily.': 'Gwada shiga tsarin adanawa tare da wasu (Ajo) don bunkasa ajiyarka a hankali.',
+        'financial_health_Pay off your debts regularly to improve your financial health.': 'Rika biyan bashin da kake bin mutane akai-akai don inganta lafiyar kuɗinka.',
+        'financial_health_Plan your expenses to avoid overspending and increase your savings.': 'Shirya yadda za ka kashe kuɗi don kaucewa almubazzaranci da ƙara adana kuɗi.',
+
+        # Course descriptions
+        'Learn the basics of budgeting and managing your money.': 'Koyi asalin kasafin kuɗi da yadda ake sarrafa kuɗi.'
     }
 }
