@@ -2,6 +2,8 @@ BUDGET_TRANSLATIONS = {
     'en': {
         # General Budget Fields
         'budget_summary': 'Budget Summary',
+        'budget_personal_info': 'Personal Information',
+        'Budget Planner': 'Budget Planner',
         'budget_summary_description': 'Here is your budget summary',
         'budget_personalized_summary': 'Your personalized budget summary',
         'budget_no_previous_budgets': 'No previous budgets',
@@ -758,6 +760,8 @@ BUDGET_TRANSLATIONS = {
         'budget_insight_needs_balance': 'Daidaici kudin shiga da kashe kuɗi don lafiyayyen kasafi.',
         'budget_insight_goal_met': 'Ka cimma manufar ajiyarka. Murna!',
         'budget_no_badges_earned_yet': 'Ba a sami alamomi ba tukuna',
-        'budget_tips_for_budgeting': 'Shawarwari don Kasafin Kuɗi'
+        'budget_tips_for_budgeting': 'Shawarwari don Kasafin Kuɗi',
+        'budget_personal_info': 'Bayanan Kai',
+        'Budget Planner': 'Mai Tsara Kasafin Kuɗi'
     }
 }
