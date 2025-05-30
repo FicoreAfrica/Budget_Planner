@@ -132,6 +132,7 @@ def init_storage_managers(app):
             logger.error(f"Failed to initialize {name} storage: {str(e)}", exc_info=True)
             raise RuntimeError(f"Cannot initialize {name} storage: {str(e)}")
     app.config['STORAGE_MANAGERS'] = storage_managers
+    logger.info(f"STORAGE_MANAGERS initialized with keys: {list(storage_managers.keys())}")  # Added logging
 
 def initialize_courses_data(app):
     with app.app_context():
