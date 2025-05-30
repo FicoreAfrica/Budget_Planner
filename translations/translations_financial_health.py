@@ -320,7 +320,9 @@ FINANCIAL_HEALTH_TRANSLATIONS = {
         'financial_health_Plan your expenses to avoid overspending and increase your savings.': 'Plan your expenses to avoid overspending and increase your savings.',
         'financial_health_recalculate_score_tooltip': 'Update your financial information and get a new score.',
         'budget_create_budget_tooltip': 'Start creating a personalized budget to manage your spending.',
-        'financial_health_explore_savings_options_tooltip': 'Discover various ways to save money and grow your wealth.'
+        'financial_health_explore_savings_options_tooltip': 'Discover various ways to save money and grow your wealth.',
+        'Language chnaged successfully!': 'Language changed successfully!',
+        'core_Language chnaged successfully!': 'Language changed successfully!'
     },
     'ha': {
         'financial_health_score': 'Makin Lafiyar Kuɗi',
@@ -643,6 +645,8 @@ FINANCIAL_HEALTH_TRANSLATIONS = {
         'financial_health_Plan your expenses to avoid overspending and increase your savings.': 'Tsara kashe kuɗin ku don guje wa kashe kuɗi fiye da kima da kuma haɓaka ajiyar ku.',
         'financial_health_recalculate_score_tooltip': 'Sabunta bayanan kuɗin ku kuma sami sabon maki.',
         'budget_create_budget_tooltip': 'Fara ƙirƙirar kasafin kuɗi na musamman don sarrafa kashe kuɗin ku.',
-        'financial_health_explore_savings_options_tooltip': 'Gano hanyoyi daban-daban don adana kuɗi da haɓaka arzikin ku.'
+        'financial_health_explore_savings_options_tooltip': 'Gano hanyoyi daban-daban don adana kuɗi da haɓaka arzikin ku.',
+        'Language chnaged successfully!': 'An canza harshe cikin nasara!',
+        'core_Language chnaged successfully!': 'An canza harshe cikin nasara!'
     }
 }
