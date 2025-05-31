@@ -51,7 +51,7 @@ translation_modules = {
     'emergency_fund': translations_emergency_fund,
     'financial_health': translations_financial_health,
     'net_worth': translations_net_worth,
-    'learning_hub': translations_learning_hub
+    'learning_hub': learning_hub
 }
 
 # Map key prefixes to module names
@@ -68,6 +68,9 @@ KEY_PREFIX_TO_MODULE = {
     'learning_hub_': 'learning_hub'
 }
 
+# Quiz-specific keys without prefixes
+QUIZ_SPECIFIC_KEYS = {'Yes', 'No', 'See Results'}
+
 # Log loaded translations
 for module_name, translations in translation_modules.items():
     for lang in ['en', 'ha']:
@@ -79,7 +82,7 @@ def trans(key: str, lang: Optional[str] = None, **kwargs: str) -> str:
     Translate a key using the appropriate module's translation dictionary.
     
     Args:
-        key: The translation key (e.g., 'core_submit', 'quiz_yes').
+        key: The translation key (e.g., 'core_submit', 'quiz_yes', 'Yes').
         lang: Language code ('en', 'ha'). Defaults to session['language'] or 'en'.
         **kwargs: String formatting parameters for the translated string.
     
@@ -102,12 +105,14 @@ def trans(key: str, lang: Optional[str] = None, **kwargs: str) -> str:
         current_logger.warning(f"Invalid language '{lang}', falling back to 'en'", extra={'session_id': session_id})
         lang = 'en'
 
-    # Determine module based on key prefix
+    # Determine module based on key prefix or specific keys
     module_name = 'core'
     for prefix, mod in KEY_PREFIX_TO_MODULE.items():
         if key.startswith(prefix):
             module_name = mod
             break
+    if key in QUIZ_SPECIFIC_KEYS and has_request_context() and '/quiz/' in g.get('request_path', ''):
+        module_name = 'quiz'
 
     module = translation_modules.get(module_name, translation_modules['core'])
     lang_dict = module.get(lang, {})
@@ -121,7 +126,7 @@ def trans(key: str, lang: Optional[str] = None, **kwargs: str) -> str:
         translation = en_dict.get(key, key)
         if translation == key:
             current_logger.warning(
-                f"Missing translation for key='{key}' in module '{module_name}', lang='{lang}",
+                f"Missing translation for key='{key}' in module '{module_name}', lang='{lang}'",
                 extra={'session_id': session_id}
             )
 
@@ -130,8 +135,8 @@ def trans(key: str, lang: Optional[str] = None, **kwargs: str) -> str:
         return translation.format(**kwargs) if kwargs else translation
     except (KeyError, ValueError) as e:
         current_logger.error(
-            f"Formatting failed for key='{key}', lang={lang:}, kwargs={kwargs}, error={str(e)}",
-            extra={'session_id': 'session_id'}
+            f"Formatting failed for key='{key}', lang='{lang}', kwargs={kwargs}, error={str(e)}",
+            extra={'session_id': session_id}
         )
         return translation
 
@@ -147,7 +152,7 @@ def get_translations(lang: Optional[str] = None) -> Dict[str, callable]:
     """
     if lang is None:
         lang = session.get('language', 'en') if has_request_context() else 'en'
-    if lang is not None or lang in ['en', 'ha']:
+    if lang not in ['en', 'ha']:
         logger.warning(f"Invalid language '{lang}', falling back to 'en'")
         lang = 'en'
     return {
