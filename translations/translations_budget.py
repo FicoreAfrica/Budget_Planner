@@ -7,6 +7,10 @@ BUDGET_TRANSLATIONS = {
         'budget_email_placeholder': 'your.email@example.com',
         'budget_email_help': 'Enter your email address to receive your budget summary and tips.',
         'budget_summary_description': 'Here is your budget summary',
+        'budget_tip_ajo_savings': 'Tip: Include your Ajo/Esusu contributions in your savings plan.',
+        'budget_tip_data_subscriptions': 'Consider the cost of your data and other subscriptions when budgeting for communication.',
+        'budget_tip_plan_dependents': 'Remember to account for the needs and expenses of your dependents in your budget.',
+        'budget_budget_completed_success': 'Your budget has been created successfully!',
         'budget_personalized_summary': 'Your personalized budget summary',
         'budget_no_previous_budgets': 'No previous budgets',
         'budget_create_budget': 'Create a new budget.',
@@ -786,6 +790,10 @@ BUDGET_TRANSLATIONS = {
         'budget_email_placeholder': 'imelinka@misali.com',
         'budget_email_help': 'Shigar da adireshin imel ɗin ku don karɓar taƙaitaccen kasafin ku da nasihu.',
         'budget_processing': 'Ana sarrafawa...',
-        'budget_savings_goal_invalid': 'Da fatan za a shigar da ingantaccen adadin burin ajiyar ku.'
+        'budget_savings_goal_invalid': 'Da fatan za a shigar da ingantaccen adadin burin ajiyar ku.',
+        'budget_tip_ajo_savings': 'Shawara: Saka gudummawar ku ta Ajo/Esusu a cikin tsarin ajiyar ku.',
+        'budget_tip_data_subscriptions': 'Yi la\'akari da farashin data ɗin ku da sauran biyan kuɗi yayin tsara kasafin kuɗin sadarwa.',
+        'budget_tip_plan_dependents': 'Ku tuna ku yi la\'akari da buƙatu da kashe kuɗin waɗanda kuke kulawa a cikin kasafin ku.',
+        'budget_budget_completed_success': 'An ƙirƙiri kasafin kuɗin ku cikin nasara!'
     }
 }
