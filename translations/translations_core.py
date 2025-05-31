@@ -5,6 +5,9 @@ CORE_TRANSLATIONS = {
         'core_close': 'Close',
         'core_all': 'All',
         'Email': 'Email',
+        'core_Your budget has been created successfully!': 'Your budget has been created successfully!',
+        'core_Unable to load budget dashboard. Please try again.': 'Unable to load budget dashboard. Please try again.',
+        'core_An error occurred': 'An error occurred',
         'Please correct the errors in the form.': 'Please correct the errors in the form.',
         'core_error_occurred': 'An error occurred. Please try again later.',
         'core_budget_missing_previous_steps': 'Please complete the previous steps to set up your budget.',
@@ -593,6 +596,9 @@ CORE_TRANSLATIONS = {
         'core_language': 'Zabi Yare',
         'core_language_en': 'English',
         'core_language_ha': 'Hausa',
+        'core_Your budget has been created successfully!': 'An ƙirƙiri kasafin kuɗin ku cikin nasara!',
+        'core_Unable to load budget dashboard. Please try again.': 'An kasa loda shafin kasafin ku. Da fatan za a sake gwadawa.',
+        'core_An error occurred': 'Wani kuskure ya faru',
 
         # Already previously requested keys (add if not already present)
         'Failed to send the financial health report to your email.': 'An kasa aikawa da rahoton lafiyar kuɗi zuwa imel ɗinka.',
