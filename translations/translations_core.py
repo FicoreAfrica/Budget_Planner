@@ -7,6 +7,10 @@ CORE_TRANSLATIONS = {
         'Email': 'Email',
         'core_Your budget has been created successfully!': 'Your budget has been created successfully!',
         'core_Unable to load budget dashboard. Please try again.': 'Unable to load budget dashboard. Please try again.',
+        'rmat_currency': '₦',
+        'Your budget has been created successfully!': 'Your budget has been created successfully!',
+        'Unable to load budget dashboard. Please try again.': 'Unable to load budget dashboard. Please try again.',
+        'An error occurred': 'An error occurred',
         'core_An error occurred': 'An error occurred',
         'Please correct the errors in the form.': 'Please correct the errors in the form.',
         'core_error_occurred': 'An error occurred. Please try again later.',
@@ -601,6 +605,10 @@ CORE_TRANSLATIONS = {
         'core_Unable to load budget dashboard. Please try again.': 'An kasa loda shafin kasafin ku. Da fatan za a sake gwadawa.',
         'core_An error occurred': 'Wani kuskure ya faru',
         'an_unexpected_error_occurred':'An unexpected error occurred',
+        'rmat_currency': '₦',
+        'Your budget has been created successfully!': 'An ƙirƙiri kasafin kuɗin ku cikin nasara!',
+        'Unable to load budget dashboard. Please try again.': 'An kasa loda shafin kasafin ku. Da fatan za a sake gwadawa.',
+        'An error occurred': 'Wani kuskure ya faru',
 
         # Already previously requested keys (add if not already present)
         'Failed to send the financial health report to your email.': 'An kasa aikawa da rahoton lafiyar kuɗi zuwa imel ɗinka.',
