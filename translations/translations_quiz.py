@@ -19,6 +19,7 @@ QUIZ_TRANSLATIONS = {
         'core_created_at': 'Created At',
         # Quiz-specific
         'An error occurred. Please try again.': 'An error occurred. Please try again.',
+        'Kuskure ya faru': 'An error occurred',
         'quiz_step_progress': 'Step {step_num} of {total_steps}',  # Updated to named placeholders
         'Enter Your Personal Information': 'Enter Your Personal Information',
         'quiz_personality_quiz': 'Financial Personality Quiz',
@@ -193,7 +194,9 @@ QUIZ_TRANSLATIONS = {
         'quiz_assess_literacy': 'Gwajin ilimin ku na kuɗi da halayen ku.',
         'quiz_step_progress': 'Mataki {step_num} na {total_steps}',  # Updated to named placeholders
         'Enter Your Personal Information': 'Shigar da Bayanan Ku na Sirri',
-        'quiz_start_personality_quiz': 'Fara Gwajin Halaye'
+        'quiz_start_personality_quiz': 'Fara Gwajin Halaye',
+        'Kuskure ya faru': 'Kuskure ya faru',
+        'Shigar da Bayanan Ka': 'Shigar da Bayanan Ka',
     }
 }
 
