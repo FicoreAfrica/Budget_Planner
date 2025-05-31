@@ -162,7 +162,7 @@
   "data": {
     "labels": {{ categories.keys() | list | tojson }},
     "datasets": [{
-      "data": {{ categories.values() | tojson }},
+      "data": {{ categories.values() | list | tojson }},
       "backgroundColor": [
         "#FF6384",
         "#36A2EB",
