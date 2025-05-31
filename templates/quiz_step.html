@@ -1,15 +1,19 @@
 {% extends "base.html" %}
+
 {% block title %}
     {{ trans('quiz_financial_personality_quiz', default='Financial Personality Quiz') }}
 {% endblock %}
+
 {% block extra_head %}
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 {% endblock %}
+
 {% block content %}
 <div class="container step-container">
     {% set tool_name = 'quiz_financial_personality_quiz' %}
     {% set tool_icon = 'fa-user-circle' %}
-    {% set subtitle = trans('quiz_step_progress', default='Step %s of %s')|format(step_num, total_steps) %}
+    {# Updated line to use string interpolation with .format() #}
+    {% set subtitle = trans('quiz_step_progress', default='Step {0} of {1}').format(step_num, total_steps) %}
     {% set step = step_num %}
     {% set total_steps = total_steps %}
     {% set step_labels = ['Personal Info', trans('quiz_questions_part1', default='Questions Part 1'), trans('quiz_questions_part2', default='Questions Part 2')] %}
