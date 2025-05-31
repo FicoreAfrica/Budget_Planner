@@ -18,7 +18,8 @@ net_worth_bp = Blueprint('net_worth', __name__, url_prefix='/net_worth')
 def init_storage(app):
     """Initialize storage with app context."""
     with app.app_context():
-        storage = JsonStorage('data/networth.json', logger_instance=current_app.logger)
+        # Fixed path to match logs - using /tmp/data/networth.json
+        storage = JsonStorage('/tmp/data/networth.json', logger_instance=current_app.logger)
         current_app.logger.debug("Initialized JsonStorage for net_worth")
         return storage
 
@@ -59,7 +60,6 @@ class Step2Form(FlaskForm):
             DataRequired(message=trans('net_worth_investments_required', lang=lang)),
             NumberRange(min=0, max=10000000000, message=trans('net_worth_investments_max', lang=lang))
         ]
-        self.property.label.text = trans('net_worth_property', lang=lang)  # Fixed: Removed f-string for label
         self.property.validators = [
             DataRequired(message=trans('net_worth_property_required', lang=lang)),
             NumberRange(min=0, max=10000000000, message=trans('net_worth_property_max', lang=lang))
@@ -96,7 +96,7 @@ class Step3Form(FlaskForm):
     loans = FloatField()
     submit = SubmitField()
 
-    def __init__(self, *args, **kwargs):  # Fixed: Added *args, **kwargs for consistency
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         lang = session.get('lang', 'en')
         self.loans.label.text = trans('net_worth_loans', lang=lang)
@@ -125,7 +125,8 @@ def step1():
     try:
         if request.method == 'POST' and form.validate_on_submit():
             form_data = form.data.copy()
-            session['net_worth_form_data'] = form_data  # Fixed: Consistent session key
+            # Use consistent session key
+            session['networth_step1_data'] = form_data
             current_app.logger.info(f"Net worth step1 form data saved for session {session['sid']}: {form_data}")
             return redirect(url_for('net_worth.step2'))
         return render_template('net_worth_step1.html', form=form, trans=trans, lang=lang)
@@ -149,7 +150,8 @@ def step2():
                 'property': float(form.property.data),
                 'submit': form.submit.data
             }
-            session['net_worth_step2_form_data'] = form_data  # Fixed: Consistent session key
+            # Use consistent session key
+            session['networth_step2_data'] = form_data
             current_app.logger.info(f"Net worth step2 form data saved for session {session['sid']}: {form_data}")
             return redirect(url_for('net_worth.step3'))
         return render_template('net_worth_step2.html', form=form, trans=trans, lang=lang)
@@ -167,9 +169,10 @@ def step3():
     form = Step3Form()
     try:
         if request.method == 'POST' and form.validate_on_submit():
-            step1_data = session.get('net_worth_form_data', {})
-            step2_data = session.get('net_worth_step2_form_data', {})
-            form_data = form.data.copy()  # Fixed: Added form data capture
+            # Use consistent session keys
+            step1_data = session.get('networth_step1_data', {})
+            step2_data = session.get('networth_step2_data', {})
+            form_data = form.data.copy()
 
             # Calculate assets and liabilities
             cash_savings = step2_data.get('cash_savings', 0)
@@ -192,9 +195,10 @@ def step3():
             if property >= total_assets * 0.5:
                 badges.append('net_worth_badge_property_mogul')
 
-            # Store record
+            # Store record with session_id for easy retrieval
             record = {
                 "id": str(uuid.uuid4()),
+                "session_id": session['sid'],  # Add session_id to record
                 "data": {
                     "first_name": step1_data.get('first_name', ''),
                     "email": step1_data.get('email', ''),
@@ -214,6 +218,10 @@ def step3():
             try:
                 storage = current_app.config['STORAGE_MANAGERS']['net_worth']
                 storage.append(record, user_email=step1_data.get('email'), session_id=session['sid'])
+                
+                # Store the record ID in session for easy retrieval
+                session['networth_record_id'] = record['id']
+                
             except Exception as storage_error:
                 current_app.logger.error(f"Failed to save net worth record: {str(storage_error)}", extra={'session_id': session['sid']})
                 flash(trans("net_worth_storage_error", lang=lang), "danger")
@@ -247,14 +255,12 @@ def step3():
                     current_app.logger.warning(f"Failed to send net worth email: {str(email_error)}", extra={'session_id': session['sid']})
                     flash(trans("net_worth_email_failed", lang=lang), "warning")
 
-            # Clear session
-            session.pop('net_worth_form_data', None)
-            session.pop('net_worth_step2_form_data', None)
+            # DON'T clear session data yet - dashboard needs it as fallback
             flash(trans("net_worth_success", lang=lang), "success")
             return redirect(url_for('net_worth.dashboard'))
         return render_template('net_worth_step3.html', form=form, trans=trans, lang=lang)
     except Exception as e:
-        current_app.logger.error(f"Error in net_worth.step3: {str(e)}", extra={'session_id': session['sid']})  # Fixed: Correct f-string syntax
+        current_app.logger.error(f"Error in net_worth.step3: {str(e)}", extra={'session_id': session['sid']})
         flash(trans("net_worth_calculation_error", lang=lang), "danger")
         return render_template('net_worth_step3.html', form=form, trans=trans, lang=lang), 500
 
@@ -267,18 +273,95 @@ def dashboard():
 
     try:
         storage = current_app.config['STORAGE_MANAGERS']['net_worth']
-        user_data = storage.filter_by_session(session['sid'])
-        records = [(record["id"], record["data"]) for record in user_data]
-        latest_record = records[-1][1] if records else {}
-
-        # Fallback: try to get by email if no session records
-        if not latest_record:
-            email = session.get('net_worth_form_data', {}).get('email')
-            if email:
+        
+        # Try multiple methods to get user data
+        user_data = []
+        latest_record = {}
+        
+        # Method 1: Filter by session ID
+        try:
+            user_data = storage.filter_by_session(session['sid'])
+            current_app.logger.info(f"Found {len(user_data)} records for session {session['sid']}")
+        except Exception as e:
+            current_app.logger.warning(f"filter_by_session failed: {str(e)}")
+            user_data = []
+        
+        # Method 2: If no data, try to get by record ID from session
+        if not user_data and 'networth_record_id' in session:
+            try:
                 all_records = storage.read_all()
-                filtered = [(rec["id"], rec["data"]) for rec in all_records if rec.get("data", {}).get("email") == email]
-                records = filtered
-                latest_record = records[-1][1] if records else {}
+                for record in all_records:
+                    if record.get('id') == session['networth_record_id']:
+                        user_data = [record]
+                        break
+                current_app.logger.info(f"Found record by ID: {len(user_data)} records")
+            except Exception as e:
+                current_app.logger.warning(f"Read by record ID failed: {str(e)}")
+        
+        # Method 3: If still no data, try to get by email from session
+        if not user_data:
+            step1_data = session.get('networth_step1_data', {})
+            email = step1_data.get('email')
+            if email:
+                try:
+                    all_records = storage.read_all()
+                    for record in all_records:
+                        if record.get('data', {}).get('email') == email:
+                            user_data.append(record)
+                    current_app.logger.info(f"Found {len(user_data)} records by email")
+                except Exception as e:
+                    current_app.logger.warning(f"Read by email failed: {str(e)}")
+        
+        # Method 4: If still no data, construct from session data
+        if not user_data:
+            step1_data = session.get('networth_step1_data', {})
+            step2_data = session.get('networth_step2_data', {})
+            
+            if step1_data and step2_data:
+                current_app.logger.info("Constructing record from session data")
+                
+                cash_savings = step2_data.get('cash_savings', 0)
+                investments = step2_data.get('investments', 0)
+                property = step2_data.get('property', 0)
+                loans = 0  # Default to 0 if not in session
+                
+                total_assets = cash_savings + investments + property
+                total_liabilities = loans
+                net_worth = total_assets - total_liabilities
+                
+                # Assign badges
+                badges = []
+                if net_worth > 0:
+                    badges.append('net_worth_badge_wealth_builder')
+                if total_liabilities == 0:
+                    badges.append('net_worth_badge_debt_free')
+                if cash_savings >= total_assets * 0.3:
+                    badges.append('net_worth_badge_savings_champion')
+                if property >= total_assets * 0.5:
+                    badges.append('net_worth_badge_property_mogul')
+                
+                latest_record = {
+                    "first_name": step1_data.get('first_name', ''),
+                    "email": step1_data.get('email', ''),
+                    "cash_savings": cash_savings,
+                    "investments": investments,
+                    "property": property,
+                    "loans": loans,
+                    "total_assets": total_assets,
+                    "total_liabilities": total_liabilities,
+                    "net_worth": net_worth,
+                    "badges": badges,
+                    "created_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                }
+        
+        # Process found records
+        if user_data and not latest_record:
+            records = [(record["id"], record["data"]) for record in user_data]
+            latest_record = records[-1][1] if records else {}
+        elif latest_record:
+            records = [("temp_id", latest_record)]
+        else:
+            records = []
 
         # Generate insights and tips
         insights = []
@@ -288,6 +371,7 @@ def dashboard():
             trans("net_worth_tip_pay_loans_early", lang=lang),
             trans("net_worth_tip_diversify_investments", lang=lang)
         ]
+        
         if latest_record:
             if latest_record.get('total_liabilities', 0) > latest_record.get('total_assets', 0) * 0.5:
                 insights.append(trans("net_worth_insight_high_loans", lang=lang))
@@ -298,6 +382,12 @@ def dashboard():
             if latest_record.get('net_worth', 0) <= 0:
                 insights.append(trans("net_worth_insight_negative_net_worth", lang=lang))
 
+        # Now it's safe to clear session data
+        session.pop('networth_step1_data', None)
+        session.pop('networth_step2_data', None)
+        
+        current_app.logger.info(f"Dashboard rendering with {len(records)} records")
+        
         return render_template(
             'net_worth_dashboard.html',
             records=records,
@@ -307,6 +397,7 @@ def dashboard():
             trans=trans,
             lang=lang
         )
+        
     except Exception as e:
         current_app.logger.error(f"Error in net_worth.dashboard: {str(e)}", extra={'session_id': session['sid']})
         flash(trans("net_worth_dashboard_load_error", lang=lang), "danger")
