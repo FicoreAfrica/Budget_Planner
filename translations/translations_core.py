@@ -11,6 +11,7 @@ CORE_TRANSLATIONS = {
         'Your emergency fund goal was set successfully!': 'Your emergency fund goal was set successfully!',
         'required_risk_tolerance': 'Required Risk Tolerance',
         'Budget missing previous steps' :'Budget missing previous steps',
+        'Enter Your Personal Information':'Enter Your Personal Information',
         'core_months': 'months',
         'core_not_provided': 'Not provided',
         'required_timeline': 'Required Timeline',
@@ -726,6 +727,7 @@ CORE_TRANSLATIONS = {
         'Your emergency fund goal was set successfully!': 'An saita burin ku na asusun gaggawa cikin nasara!',
         'core_months': 'watanni',
         'Budget missing previous steps':'Tsarin Baya ya bace',
+        'Enter Your Personal Information':'Shigar da bayanan ka',
         
         'Select how often you monitor your spending.': 'Zaɓi sau nawa kuke lura da kuɗin da kuke kashewa.',
         'Indicate your saving habits.': 'Nuna halayen ku na tanadi.',
