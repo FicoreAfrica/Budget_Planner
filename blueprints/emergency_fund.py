@@ -11,23 +11,25 @@ try:
     from app import trans
 except ImportError:
     def trans(key, lang=None, **kwargs):
+        """Fallback translation function."""
         return key.format(**kwargs)
 
 emergency_fund_bp = Blueprint('emergency_fund', __name__, url_prefix='/emergency_fund')
 
 def init_emergency_fund_storage(app):
-    """Initialize emergency_fund_storage within app context."""
+    """Initialize emergency fund storage within app context."""
     with app.app_context():
         app.logger.info("Initializing emergency fund storage")
         return JsonStorage('data/emergency_fund.json', logger_instance=app.logger)
 
 def init_budget_storage(app):
-    """Initialize budget_storage within app context."""
+    """Initialize budget storage within app context."""
     with app.app_context():
         app.logger.info("Initializing budget storage")
         return JsonStorage('data/budget.json', logger_instance=app.logger)
 
 class CommaSeparatedFloatField(FloatField):
+    """Custom FloatField to handle comma-separated number input."""
     def process_formdata(self, valuelist):
         if valuelist:
             try:
@@ -37,6 +39,7 @@ class CommaSeparatedFloatField(FloatField):
                 raise ValueError(self.gettext('Not a valid number'))
 
 class CommaSeparatedIntegerField(IntegerField):
+    """Custom IntegerField to handle comma-separated number input."""
     def process_formdata(self, valuelist):
         if valuelist:
             try:
@@ -46,95 +49,89 @@ class CommaSeparatedIntegerField(IntegerField):
                 raise ValueError(self.gettext('Not a number'))
 
 class Step1Form(FlaskForm):
+    """Form for Step 1 of the emergency fund process."""
+    first_name = StringField(validators=[DataRequired()])
+    email = StringField(validators=[Optional(), Email()])
+    email_opt_in = BooleanField(default=False)
+    submit = SubmitField()
+
     def __init__(self, *args, **kwargs):
-        # Get language before calling super().__init__
-        lang = session.get('lang', 'en')
+        """Initialize form with translated labels based on session language."""
         super().__init__(*args, **kwargs)
-        
-        # Define fields with validators
-        self.first_name = StringField(
-            label=trans('emergency_fund_first_name', lang=lang),
-            validators=[DataRequired(message=trans('required_first_name', lang=lang, default='Please enter your first name.'))]
-        )
-        self.email = StringField(
-            label=trans('emergency_fund_email', lang=lang),
-            validators=[Optional(), Email(message=trans('emergency_fund_email_invalid', lang=lang, default='Please enter a valid email address.'))]
-        )
-        self.email_opt_in = BooleanField(
-            label=trans('emergency_fund_send_email', lang=lang),
-            default=False
-        )
-        self.submit = SubmitField(trans('core_next', lang=lang))
+        lang = session.get('lang', 'en')
+        self.first_name.label.text = trans('emergency_fund_first_name', lang=lang)
+        self.first_name.validators[0].message = trans('required_first_name', lang=lang, default='Please enter your first name.')
+        self.email.label.text = trans('emergency_fund_email', lang=lang)
+        self.email.validators[1].message = trans('emergency_fund_email_invalid', lang=lang, default='Please enter a valid email address.')
+        self.email_opt_in.label.text = trans('emergency_fund_send_email', lang=lang)
+        self.submit.label.text = trans('core_next', lang=lang)
 
 class Step2Form(FlaskForm):
+    """Form for Step 2 of the emergency fund process."""
+    monthly_expenses = CommaSeparatedFloatField(validators=[DataRequired(), NumberRange(min=0, max=10000000000)])
+    monthly_income = CommaSeparatedFloatField(validators=[Optional(), NumberRange(min=0, max=10000000000)])
+    submit = SubmitField()
+
     def __init__(self, *args, **kwargs):
-        lang = session.get('lang', 'en')
+        """Initialize form with translated labels based on session language."""
         super().__init__(*args, **kwargs)
-        
-        self.monthly_expenses = CommaSeparatedFloatField(
-            label=trans('emergency_fund_monthly_expenses', lang=lang),
-            validators=[
-                DataRequired(message=trans('required_monthly_expenses', lang=lang, default='Please enter your monthly expenses.')),
-                NumberRange(min=0, max=10000000000, message=trans('emergency_fund_monthly_exceed', lang=lang, default='Amount exceeds maximum limit.'))
-            ]
-        )
-        self.monthly_income = CommaSeparatedFloatField(
-            label=trans('emergency_fund_monthly_income', lang=lang),
-            validators=[
-                Optional(),
-                NumberRange(min=0, max=10000000000, message=trans('emergency_fund_monthly_exceed', lang=lang, default='Amount exceeds maximum limit.'))
-            ]
-        )
-        self.submit = SubmitField(trans('core_next', lang=lang))
+        lang = session.get('lang', 'en')
+        self.monthly_expenses.label.text = trans('emergency_fund_monthly_expenses', lang=lang)
+        self.monthly_expenses.validators[0].message = trans('required_monthly_expenses', lang=lang, default='Please enter your monthly expenses.')
+        self.monthly_expenses.validators[1].message = trans('emergency_fund_monthly_exceed', lang=lang, default='Amount exceeds maximum limit.')
+        self.monthly_income.label.text = trans('emergency_fund_monthly_income', lang=lang)
+        self.monthly_income.validators[1].message = trans('emergency_fund_monthly_exceed', lang=lang, default='Amount exceeds maximum limit.')
+        self.submit.label.text = trans('core_next', lang=lang)
 
 class Step3Form(FlaskForm):
+    """Form for Step 3 of the emergency fund process."""
+    current_savings = CommaSeparatedFloatField(validators=[Optional(), NumberRange(min=0, max=10000000000)])
+    risk_tolerance_level = SelectField(validators=[DataRequired()], choices=[
+        ('low', 'Low'), ('medium', 'Medium'), ('high', 'High')
+    ])
+    dependents = CommaSeparatedIntegerField(validators=[Optional(), NumberRange(min=0, max=100)])
+    submit = SubmitField()
+
     def __init__(self, *args, **kwargs):
-        lang = session.get('lang', 'en')
+        """Initialize form with translated labels and choices based on session language."""
         super().__init__(*args, **kwargs)
-        
-        self.current_savings = CommaSeparatedFloatField(
-            label=trans('emergency_fund_current_savings', lang=lang),
-            validators=[
-                Optional(),
-                NumberRange(min=0, max=10000000000, message=trans('emergency_fund_savings_max', lang=lang, default='Amount exceeds maximum limit.'))
-            ]
-        )
-        self.risk_tolerance_level = SelectField(
-            label=trans('emergency_fund_risk_tolerance_level', lang=lang),
-            validators=[DataRequired(message=trans('required_risk_tolerance', lang=lang, default='Please select your risk tolerance.'))],
-            choices=[
-                ('low', trans('emergency_fund_risk_tolerance_level_low', lang=lang)),
-                ('medium', trans('emergency_fund_risk_tolerance_level_medium', lang=lang)),
-                ('high', trans('emergency_fund_risk_tolerance_level_high', lang=lang))
-            ]
-        )
-        self.dependents = CommaSeparatedIntegerField(
-            label=trans('emergency_fund_dependents', lang=lang),
-            validators=[
-                Optional(),
-                NumberRange(min=0, max=100, message=trans('emergency_fund_dependents_max', lang=lang, default='Number of dependents exceeds maximum.'))
-            ]
-        )
-        self.submit = SubmitField(trans('core_next', lang=lang))
+        lang = session.get('lang', 'en')
+        self.current_savings.label.text = trans('emergency_fund_current_savings', lang=lang)
+        self.current_savings.validators[1].message = trans('emergency_fund_savings_max', lang=lang, default='Amount exceeds maximum limit.')
+        self.risk_tolerance_level.label.text = trans('emergency_fund_risk_tolerance_level', lang=lang)
+        self.risk_tolerance_level.validators[0].message = trans('required_risk_tolerance', lang=lang, default='Please select your risk tolerance.')
+        self.risk_tolerance_level.choices = [
+            ('low', trans('emergency_fund_risk_tolerance_level_low', lang=lang)),
+            ('medium', trans('emergency_fund_risk_tolerance_level_medium', lang=lang)),
+            ('high', trans('emergency_fund_risk_tolerance_level_high', lang=lang))
+        ]
+        self.dependents.label.text = trans('emergency_fund_dependents', lang=lang)
+        self.dependents.validators[1].message = trans('emergency_fund_dependents_max', lang=lang, default='Number of dependents exceeds maximum.')
+        self.submit.label.text = trans('core_next', lang=lang)
 
 class Step4Form(FlaskForm):
+    """Form for Step 4 of the emergency fund process."""
+    timeline = SelectField(validators=[DataRequired()], choices=[
+        ('6', '6 Months'), ('12', '12 Months'), ('18', '18 Months')
+    ])
+    submit = SubmitField()
+
     def __init__(self, *args, **kwargs):
-        lang = session.get('lang', 'en')
+        """Initialize form with translated labels and choices based on session language."""
         super().__init__(*args, **kwargs)
-        
-        self.timeline = SelectField(
-            label=trans('emergency_fund_timeline', lang=lang),
-            validators=[DataRequired(message=trans('required_timeline', lang=lang, default='Please select a timeline.'))],
-            choices=[
-                ('6', trans('emergency_fund_6_months', lang=lang)),
-                ('12', trans('emergency_fund_12_months', lang=lang)),
-                ('18', trans('emergency_fund_18_months', lang=lang))
-            ]
-        )
-        self.submit = SubmitField(trans('emergency_fund_calculate_button', lang=lang))
+        lang = session.get('lang', 'en')
+        self.timeline.label.text = trans('emergency_fund_timeline', lang=lang)
+        self.timeline.validators[0].message = trans('required_timeline', lang=lang, default='Please select a timeline.')
+        self.timeline.choices = [
+            ('6', trans('emergency_fund_6_months', lang=lang)),
+            ('12', trans('emergency_fund_12_months', lang=lang)),
+            ('18', trans('emergency_fund_18_months', lang=lang))
+        ]
+        self.submit.label.text = trans('emergency_fund_calculate_button', lang=lang)
 
 @emergency_fund_bp.route('/step1', methods=['GET', 'POST'])
 def step1():
+    """Handle Step 1: Collect user name and email."""
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
     
@@ -144,12 +141,8 @@ def step1():
     try:
         if request.method == 'POST':
             current_app.logger.info(f"Step1 POST data: {request.form.to_dict()}")
-            current_app.logger.info(f"Form validation result: {form.validate_on_submit()}")
-            
-            if form.errors:
-                current_app.logger.warning(f"Step1 form errors: {form.errors}")
-            
             if form.validate_on_submit():
+                current_app.logger.info("Step1 form validated successfully")
                 session['emergency_fund_step1'] = {
                     'first_name': form.first_name.data,
                     'email': form.email.data,
@@ -158,7 +151,7 @@ def step1():
                 current_app.logger.info(f"Step1 data saved to session: {session['emergency_fund_step1']}")
                 return redirect(url_for('emergency_fund.step2'))
             else:
-                # Flash form errors for debugging
+                current_app.logger.warning(f"Step1 form errors: {form.errors}")
                 for field, errors in form.errors.items():
                     for error in errors:
                         flash(f"{field}: {error}", 'danger')
@@ -172,6 +165,7 @@ def step1():
 
 @emergency_fund_bp.route('/step2', methods=['GET', 'POST'])
 def step2():
+    """Handle Step 2: Collect monthly expenses and income."""
     if 'sid' not in session or 'emergency_fund_step1' not in session:
         flash(trans('emergency_fund_missing_step1', lang=session.get('lang', 'en'), default='Please complete step 1 first.'), 'danger')
         return redirect(url_for('emergency_fund.step1'))
@@ -182,12 +176,8 @@ def step2():
     try:
         if request.method == 'POST':
             current_app.logger.info(f"Step2 POST data: {request.form.to_dict()}")
-            current_app.logger.info(f"Form validation result: {form.validate_on_submit()}")
-            
-            if form.errors:
-                current_app.logger.warning(f"Step2 form errors: {form.errors}")
-            
             if form.validate_on_submit():
+                current_app.logger.info("Step2 form validated successfully")
                 session['emergency_fund_step2'] = {
                     'monthly_expenses': form.monthly_expenses.data,
                     'monthly_income': form.monthly_income.data
@@ -195,7 +185,7 @@ def step2():
                 current_app.logger.info(f"Step2 data saved to session: {session['emergency_fund_step2']}")
                 return redirect(url_for('emergency_fund.step3'))
             else:
-                # Flash form errors for debugging
+                current_app.logger.warning(f"Step2 form errors: {form.errors}")
                 for field, errors in form.errors.items():
                     for error in errors:
                         flash(f"{field}: {error}", 'danger')
@@ -209,6 +199,7 @@ def step2():
 
 @emergency_fund_bp.route('/step3', methods=['GET', 'POST'])
 def step3():
+    """Handle Step 3: Collect savings, risk tolerance, and dependents."""
     if 'sid' not in session or 'emergency_fund_step2' not in session:
         flash(trans('emergency_fund_missing_step2', lang=session.get('lang', 'en'), default='Please complete previous steps first.'), 'danger')
         return redirect(url_for('emergency_fund.step1'))
@@ -219,12 +210,8 @@ def step3():
     try:
         if request.method == 'POST':
             current_app.logger.info(f"Step3 POST data: {request.form.to_dict()}")
-            current_app.logger.info(f"Form validation result: {form.validate_on_submit()}")
-            
-            if form.errors:
-                current_app.logger.warning(f"Step3 form errors: {form.errors}")
-            
             if form.validate_on_submit():
+                current_app.logger.info("Step3 form validated successfully")
                 session['emergency_fund_step3'] = {
                     'current_savings': form.current_savings.data,
                     'risk_tolerance_level': form.risk_tolerance_level.data,
@@ -233,7 +220,7 @@ def step3():
                 current_app.logger.info(f"Step3 data saved to session: {session['emergency_fund_step3']}")
                 return redirect(url_for('emergency_fund.step4'))
             else:
-                # Flash form errors for debugging
+                current_app.logger.warning(f"Step3 form errors: {form.errors}")
                 for field, errors in form.errors.items():
                     for error in errors:
                         flash(f"{field}: {error}", 'danger')
@@ -247,6 +234,7 @@ def step3():
 
 @emergency_fund_bp.route('/step4', methods=['GET', 'POST'])
 def step4():
+    """Handle Step 4: Collect timeline and calculate emergency fund."""
     if 'sid' not in session or 'emergency_fund_step3' not in session:
         flash(trans('emergency_fund_missing_step3', lang=session.get('lang', 'en'), default='Please complete previous steps first.'), 'danger')
         return redirect(url_for('emergency_fund.step1'))
@@ -257,12 +245,8 @@ def step4():
     try:
         if request.method == 'POST':
             current_app.logger.info(f"Step4 POST data: {request.form.to_dict()}")
-            current_app.logger.info(f"Form validation result: {form.validate_on_submit()}")
-            
-            if form.errors:
-                current_app.logger.warning(f"Step4 form errors: {form.errors}")
-            
             if form.validate_on_submit():
+                current_app.logger.info("Step4 form validated successfully")
                 step1_data = session['emergency_fund_step1']
                 step2_data = session['emergency_fund_step2']
                 step3_data = session['emergency_fund_step3']
@@ -366,7 +350,7 @@ def step4():
                 
                 return redirect(url_for('emergency_fund.dashboard'))
             else:
-                # Flash form errors for debugging
+                current_app.logger.warning(f"Step4 form errors: {form.errors}")
                 for field, errors in form.errors.items():
                     for error in errors:
                         flash(f"{field}: {error}", 'danger')
@@ -380,6 +364,7 @@ def step4():
 
 @emergency_fund_bp.route('/dashboard', methods=['GET'])
 def dashboard():
+    """Display the emergency fund dashboard with user data and insights."""
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
     
