@@ -67,7 +67,7 @@ QUIZ_QUESTIONS = [
         'type': 'radio',
         'options': ['Yes', 'No'],
         'positive_answers': ['No'],
-        'negative_answers': ['Yes'],
+        'negative_answers': ['No'],
         'weight': 1
     },
     {
@@ -129,35 +129,35 @@ def init_quiz_questions(app):
 # Define the QuizForm
 class QuizForm(FlaskForm):
     first_name = StringField(
-        trans('core_first_name', default='First Name'),
+        trans('core_first_name', lang='en', default='First Name'),
         validators=[DataRequired()],
         render_kw={
-            'placeholder': trans('core_first_name_placeholder', default='e.g., Muhammad, Bashir, Umar'),
-            'title': trans('core_first_name_title', default='Enter your first name to personalize your quiz results')
+            'placeholder': trans('core_first_name_placeholder', lang='en', default='e.g., Muhammad, Bashir, Umar'),
+            'title': trans('core_first_name_title', lang='en', default='Enter your first name to personalize your quiz results')
         }
     )
     email = StringField(
-        trans('core_email', default='Email'),
+        trans('core_email', lang='en', default='Email'),
         validators=[DataRequired(), Email()],
         render_kw={
-            'placeholder': trans('core_email_placeholder', default='e.g., muhammad@example.com'),
-            'title': trans('core_email_title', default='Enter your email to receive quiz results')
+            'placeholder': trans('core_email_placeholder', lang='en', default='e.g., muhammad@example.com'),
+            'title': trans('core_email_title', lang='en', default='Enter your email to receive quiz results')
         }
     )
     language = SelectField(
-        trans('core_language', default='Language'),
-        choices=[('en', trans('core_language_en', default='English')), ('ha', trans('core_language_ha', default='Hausa'))],
+        trans('core_language', lang='en', default='Language'),
+        choices=[('en', trans('core_language_en', lang='en', default='English')), ('ha', trans('core_language_ha', lang='en', default='Hausa'))],
         default='en',
         validators=[Optional()]
     )
     send_email = BooleanField(
-        trans('core_send_email', default='Send Email'),
+        trans('core_send_email', lang='en', default='Send Email'),
         default=False,
         validators=[Optional()],
-        render_kw={'title': trans('core_send_email_title', default='Check to receive an email with your quiz results')}
+        render_kw={'title': trans('core_send_email_title', lang='en', default='Check to receive an email with your quiz results')}
     )
-    submit = SubmitField(trans('core_next', default='Next'))
-    back = SubmitField(trans('core_back', default='Back'))
+    submit = SubmitField(trans('core_next', lang='en', default='Next'))
+    back = SubmitField(trans('core_back', lang='en', default='Back'))
 
     def __init__(self, questions=None, language='en', formdata=None, personal_info=True, **kwargs):
         super().__init__(formdata=formdata, **kwargs)
@@ -306,7 +306,7 @@ def send_quiz_email_async(app, to_email, user_name, personality, personality_des
 @quiz_bp.route('/step1', methods=['GET', 'POST'])
 def step1():
     if not QUIZ_QUESTIONS:
-        flash(trans('quiz_config_error', default='Quiz configuration error. Please try again later.'), 'danger')
+        flash(trans('quiz_config_error', lang=language, default='Quiz configuration error. Please try again later.'), 'danger')
         return redirect(url_for('index'))
 
     try:
@@ -316,7 +316,7 @@ def step1():
             logger.debug(f"New session created with sid: {session['sid']}")
     except Exception as e:
         logger.error(f"Session initialization failed: {str(e)}")
-        flash(trans('session_error', default='Session error. Please try again.'), 'danger')
+        flash(trans('session_error', lang=language, default='Session error. Please try again.'), 'danger')
         return redirect(url_for('index'))
 
     language = session.get('language', 'en')
@@ -361,10 +361,10 @@ def step1():
                 return redirect(url_for('quiz.step2a', course_id=course_id))
             except Exception as e:
                 logger.error(f"Error processing step1 POST: {str(e)}")
-                flash(trans('server_error', default='An error occurred. Please try again.'), 'danger')
+                flash(trans('server_error', lang=language, default='An error occurred. Please try again.'), 'danger')
         else:
             logger.error(f"Form validation failed: {form.errors}")
-            flash(trans('form_errors', default='Please correct the errors below'), 'danger')
+            flash(trans('form_errors', lang=language, default='Please correct the errors below'), 'danger')
 
     logger.debug(f"Rendering step1 with session: {session}")
     return render_template(
@@ -384,16 +384,16 @@ def step1():
 @quiz_bp.route('/step2a', methods=['GET', 'POST'])
 def step2a():
     if not QUIZ_QUESTIONS:
-        flash(trans('quiz_config_error', default='Quiz configuration error. Please try again later.'), 'danger')
+        flash(trans('quiz_config_error', lang=language, default='Quiz configuration error. Please try again later.'), 'danger')
         return redirect(url_for('index'))
 
     try:
         if 'sid' not in session or 'quiz_data' not in session:
-            flash(trans('session_expired', default='Session expired. Please start again.'), 'danger')
+            flash(trans('session_expired', lang=language, default='Session expired. Please start again.'), 'danger')
             return redirect(url_for('quiz.step1', course_id=request.args.get('course_id', 'financial_quiz')))
     except Exception as e:
         logger.error(f"Session check failed: {str(e)}")
-        flash(trans('session_error', default='Session error. Please try again.'), 'danger')
+        flash(trans('session_error', lang=language, default='Session error. Please try again.'), 'danger')
         return redirect(url_for('index'))
 
     language = session.get('language', 'en')
@@ -445,10 +445,10 @@ def step2a():
                 return redirect(url_for('quiz.step2b', course_id=course_id))
             except Exception as e:
                 logger.error(f"Error processing step2a POST: {str(e)}")
-                flash(trans('server_error', default='An error occurred. Please try again.'), 'danger')
+                flash(trans('server_error', lang=language, default='An error occurred. Please try again.'), 'danger')
         else:
             logger.error(f"Form validation failed in step2a: {form.errors}")
-            flash(trans('form_errors', default='Please correct the errors below'), 'danger')
+            flash(trans('form_errors', lang=language, default='Please correct the errors below'), 'danger')
 
     if 'quiz_data' in session:
         for q in preprocessed_questions:
@@ -474,16 +474,16 @@ def step2a():
 @quiz_bp.route('/step2b', methods=['GET', 'POST'])
 def step2b():
     if not QUIZ_QUESTIONS:
-        flash(trans('quiz_config_error', default='Quiz configuration error. Please try again later.'), 'danger')
+        flash(trans('quiz_config_error', lang=language, default='Quiz configuration error. Please try again later.'), 'danger')
         return redirect(url_for('index'))
 
     try:
         if 'sid' not in session or 'quiz_data' not in session:
-            flash(trans('session_expired', default='Session expired. Please start again.'), 'danger')
+            flash(trans('session_expired', lang=language, default='Session expired. Please start again.'), 'danger')
             return redirect(url_for('quiz.step1', course_id=request.args.get('course_id', 'financial_quiz')))
     except Exception as e:
         logger.error(f"Session check failed: {str(e)}")
-        flash(trans('session_error', default='Session error. Please try again.'), 'danger')
+        flash(trans('session_error', lang=language, default='Session error. Please try again.'), 'danger')
         return redirect(url_for('index'))
 
     language = session.get('language', 'en')
