@@ -8,6 +8,7 @@ CORE_TRANSLATIONS = {
         'core_Your budget has been created successfully!': 'Your budget has been created successfully!',
         'core_Unable to load budget dashboard. Please try again.': 'Unable to load budget dashboard. Please try again.',
         'rmat_currency': '₦',
+        'Your current financial overview.': 'Your current financial overview.',
         'budget_dashboard_subtitle': 'Your current financial overview.',
         'Budget Dashboard': 'Budget Dashboard',
         'budget_no_data': 'No budget data available yet.',
@@ -631,6 +632,7 @@ CORE_TRANSLATIONS = {
         'core_delete': 'Goge',
         'Enter your monthly expenses': 'Shigar da kuɗin da kuke kashewa duk wata',
         'Enter your monthly income': 'Shigar da kuɗin da kuke samu duk wata',
+        'Your current financial overview.': 'Takaitaccen halin kuɗin ku na yanzu.',
 
         # Already previously requested keys (add if not already present)
         'Failed to send the financial health report to your email.': 'An kasa aikawa da rahoton lafiyar kuɗi zuwa imel ɗinka.',
