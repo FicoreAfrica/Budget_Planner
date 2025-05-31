@@ -7,6 +7,7 @@ from datetime import datetime
 import pandas as pd
 import logging
 from translations import trans
+from mailersend_email import send_tool_email  # Import for email sending
 
 # Configure logging
 logger = logging.getLogger('ficore_app')
@@ -330,13 +331,37 @@ def step2b():
 
 @quiz_bp.route('/results', methods=['GET'])
 def results():
-    if 'sid' not in session or 'quiz_results' not in session:
+    if 'sid' not in session or 'quiz_results' not in session or 'quiz_data' not in session:
         flash(trans('session_expired', default='Session expired. Please start again.'), 'danger')
         return redirect(url_for('quiz.step1', course_id=request.args.get('course_id', 'financial_quiz')))
     
     language = session.get('language', 'en')
     course_id = request.args.get('course_id', 'financial_quiz')
     results = session['quiz_results']
+    quiz_data = session['quiz_data']
+    
+    # Send email if user opted in
+    if quiz_data.get('send_email') and quiz_data.get('email'):
+        try:
+            send_tool_email(
+                tool_name='quiz',
+                to_email=quiz_data['email'],
+                subject=trans("quiz_results_summary", lang=language, default="Your Quiz Results"),
+                template_name="quiz_email.html",
+                data={
+                    "first_name": results['first_name'],
+                    "score": results['score'],
+                    "personality": results['personality'],
+                    "badges": results Ascendingly('quiz_bp', results['badges']),
+                    "insights": results.get('insights', []),
+                    "tips": results.get('tips', []),
+                    "created_at": results['created_at'],
+                    "cta_url": url_for('quiz.results', course_id=course_id, _external=True)
+                },
+                lang=language
+            )
+        except Exception as e:
+            current_app.logger.error(f"Failed to send quiz results email: {str(e)}")
     
     # Clear session data
     session.pop('quiz_data', None)
