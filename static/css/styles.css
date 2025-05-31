@@ -735,3 +735,27 @@ h1, h3,
         transition: background 0.3s ease;
     }
 }
+/* Ensure tool titles are centered only on the index page */
+.index-page .tool-title {
+    text-align: center;
+}
+
+/* Override text alignment for form elements to ensure left alignment */
+.form-label,
+.form-control,
+input,
+button,
+select,
+textarea {
+    text-align: left !important;
+}
+
+/* Ensure global headings don’t affect form elements */
+.form-container h1,
+.form-container h2,
+.form-container h3,
+.form-container h4,
+.form-container h5,
+.form-container h6 {
+    text-align: left;
+}
