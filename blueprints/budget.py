@@ -270,12 +270,20 @@ def step4():
                 savings_goal = step4_data.get('savings_goal', 0)
                 surplus_deficit = income - expenses - savings_goal
 
+                # FIXED: Include individual expense categories in the record
                 record = {
                     "income": income,
                     "fixed_expenses": expenses,
                     "variable_expenses": 0,
                     "savings_goal": savings_goal,
-                    "surplus_deficit": surplus_deficit
+                    "surplus_deficit": surplus_deficit,
+                    # Add individual expense categories for dashboard display
+                    "housing": step3_data.get('housing', 0),
+                    "food": step3_data.get('food', 0),
+                    "transport": step3_data.get('transport', 0),
+                    "dependents": step3_data.get('dependents', 0),
+                    "miscellaneous": step3_data.get('miscellaneous', 0),
+                    "others": step3_data.get('others', 0)
                 }
 
                 try:
@@ -353,8 +361,13 @@ def dashboard():
     session.permanent = True
     lang = session.get('lang', 'en')
     try:
+        current_app.logger.info(f"Request started for path: /budget/dashboard [session: {session['sid']}]")
+        
         budget_storage = current_app.config['STORAGE_MANAGERS']['budget']
         user_data = budget_storage.filter_by_session(session['sid'])
+        current_app.logger.info(f"Read {len(user_data)} records from budget storage [session: {session['sid']}]")
+        current_app.logger.info(f"Filtered {len(user_data)} records for session {session['sid']} in budget storage [session: {session['sid']}]")
+        
         budgets = [(record["id"], record["data"]) for record in user_data]
         latest_budget = budgets[-1][1] if budgets else {}
 
@@ -371,6 +384,19 @@ def dashboard():
                     flash(trans("budget_budget_delete_failed") or "Failed to delete budget", "danger")
                 return redirect(url_for('budget.dashboard'))
 
+        # FIXED: Create the categories dictionary that the template expects
+        categories = {}
+        if latest_budget:
+            # Extract expense categories from latest budget data
+            categories = {
+                'Housing/Rent': latest_budget.get('housing', 0),
+                'Food': latest_budget.get('food', 0),
+                'Transport': latest_budget.get('transport', 0),
+                'Dependents': latest_budget.get('dependents', 0),
+                'Miscellaneous': latest_budget.get('miscellaneous', 0),
+                'Others': latest_budget.get('others', 0)
+            }
+
         tips = [
             trans("budget_tip_track_expenses") or "Track your expenses regularly.",
             trans("budget_tip_ajo_savings") or "Consider group savings plans.",
@@ -386,10 +412,12 @@ def dashboard():
             insights.append(trans("budget_insight_set_savings_goal") or "Consider setting a savings goal.")
 
         current_app.logger.info(f"Rendering dashboard for session {session['sid']}: {len(budgets)} budgets found")
+        # FIXED: Pass categories to the template
         return render_template(
             'budget_dashboard.html',
             budgets=budgets,
             latest_budget=latest_budget,
+            categories=categories,  # CRITICAL FIX: Pass categories to template
             tips=tips,
             insights=insights,
             trans=trans,
@@ -398,10 +426,12 @@ def dashboard():
     except Exception as e:
         current_app.logger.exception(f"Unexpected error in budget.dashboard for session {session['sid']}: {str(e)}")
         flash(trans("budget_dashboard_load_error") or "Error loading dashboard", "danger")
+        # FIXED: Also provide empty categories in error case
         return render_template(
             'budget_dashboard.html',
             budgets=[],
             latest_budget={},
+            categories={},  # CRITICAL FIX: Provide empty categories for error case
             tips=[
                 trans("budget_tip_track_expenses") or "Track your expenses regularly.",
                 trans("budget_tip_ajo_savings") or "Consider group savings plans.",
