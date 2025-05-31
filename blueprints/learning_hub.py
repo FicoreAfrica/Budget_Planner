@@ -3,6 +3,8 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, BooleanField, SubmitField
 from wtforms.validators import DataRequired, Email, Optional
 from datetime import datetime
+from mailersend_email import send_email  # Import for email sending
+
 try:
     from app import trans
 except ImportError:
