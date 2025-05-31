@@ -37,7 +37,8 @@
         }
         return gk_fileData[filename] || "";
         }
-        </script>{% if tool_name %}
+</script>
+{% if tool_name %}
 <div class="tool-header">
   <div class="tool-header-container">
     <h2 class="tool-title">
@@ -47,7 +48,13 @@
       {{ trans(tool_name) | default(tool_name) }}
     </h2>
     {% if subtitle %}
-      <p class="tool-subtitle">{{ trans(subtitle) | default(subtitle) }}</p>
+      <p class="tool-subtitle">
+        {% if subtitle == 'quiz_step_progress' and step and total_steps %}
+          {{ trans(subtitle, default='Step {step_num} of {total_steps}', lang=language, step_num=step, total_steps=total_steps) }}
+        {% else %}
+          {{ trans(subtitle) | default(subtitle) }}
+        {% endif %}
+      </p>
     {% endif %}
     {% if step and total_steps and step_labels %}
       <div class="step-indicator">
