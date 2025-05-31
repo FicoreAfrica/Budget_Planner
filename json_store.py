@@ -212,3 +212,6 @@ class JsonStorage:
         except Exception as e:
             self.logger.error(f"Error deleting record {record_id} in {self.filename}: {str(e)}")
             raise
+
+def init_storage(filename, logger_instance):
+    return JsonStorage(filename, logger_instance)
