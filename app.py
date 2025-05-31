@@ -118,7 +118,7 @@ def init_storage_managers(app):
     for name, path, init_func in [
         ('financial_health', '/tmp/financial_health.json' if os.environ.get('RENDER') else 'data/financial_health.json', lambda app: JsonStorage(path, logger_instance=app.logger)),
         ('user_progress', '/tmp/user_progress.json' if os.environ.get('RENDER') else 'data/user_progress.json', lambda app: JsonStorage(path, logger_instance=app.logger)),
-        ('net_worth', '/tmp/networth.json' if os.environ.get('RENDER') else 'data/networth.json', init_storage),
+        ('net_worth', '/tmp/networth.json' if os.environ.get('RENDER') else 'data/networth.json', JsonStorage),
         ('emergency_fund', '/tmp/emergency_fund.json' if os.environ.get('RENDER') else 'data/emergency_fund.json', lambda app: JsonStorage(path, logger_instance=app.logger)),
         ('courses', '/tmp/courses.json' if os.environ.get('RENDER') else 'data/courses.json', lambda app: JsonStorage(path, logger_instance=app.logger)),
         ('budget', None, lambda app: JsonStorage('/tmp/budget.json' if os.environ.get('RENDER') else 'data/budget.json', logger_instance=app.logger)),
