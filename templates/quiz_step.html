@@ -61,22 +61,26 @@
                         {% endfor %}
                         <small class="form-text text-muted" id="help_{{ question.id }}">{{ trans(question.tooltip, default='', lang=language) }}</small>
                         {% if form[question.id].errors %}
-                            <div class="invalid-feedback d-block">{{ trans('quiz_choose_an_option', default='Choose an option.', lang=language) }}</div>
+                            <ul>
+                                {% for error in form[question.id].errors %}
+                                    <li class="error-message">{{ error }}</li>
+                                {% endfor %}
+                            </ul>
                         {% endif %}
                     </div>
                 {% endfor %}
                 <div class="d-flex justify-content-between">
-                    {% if step_num > 2 %}
+                    {% if step_num > 1 %}
                         <button type="submit" name="back" class="btn btn-secondary" aria-label="{{ trans('core_back', default='Back', lang=language) }}">
                             <i class="fas fa-arrow-left"></i> {{ trans('core_back', default='Back', lang=language) }}
                         </button>
                     {% else %}
-                        <button type="submit" name="back" class="btn btn-secondary" aria-label="{{ trans('core_back', default='Back', lang=language) }}">
+                        <button type="submit" name="back" class="btn btn-secondary" disabled aria-label="{{ trans('core_back', default='Back', lang=language) }}">
                             <i class="fas fa-arrow-left"></i> {{ trans('core_back', default='Back', lang=language) }}
                         </button>
                     {% endif %}
-                    <button type="submit" name="submit" class="btn btn-primary" aria-label="{{ trans(form.submit.label.text, default=form.submit.label.text, lang=language) }}">
-                        <i class="fas fa-arrow-right"></i> {{ trans(form.submit.label.text, default=form.submit.label.text, lang=language) }}
+                    <button type="submit" name="submit" class="btn btn-primary" aria-label="{{ trans('quiz_see_results' if step_num == 3 else 'core_next', default='See Results' if step_num == 3 else 'Next', lang=language) }}">
+                        <i class="fas fa-arrow-right"></i> {{ trans('quiz_see_results' if step_num == 3 else 'core_next', default='See Results' if step_num == 3 else 'Next', lang=language) }}
                     </button>
                 </div>
             </form>
