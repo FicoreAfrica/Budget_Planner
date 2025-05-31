@@ -51,13 +51,14 @@ translation_modules = {
     'emergency_fund': translations_emergency_fund,
     'financial_health': translations_financial_health,
     'net_worth': translations_net_worth,
-    'learning_hub': learning_hub
+    'learning_hub': translations_learning_hub
 }
 
 # Map key prefixes to module names
 KEY_PREFIX_TO_MODULE = {
     'core_': 'core',
     'quiz_': 'quiz',
+    'badge_': 'quiz',  # Route badge_ keys to QUIZ_TRANSLATIONS
     'mailersend_': 'mailersend',
     'bill_': 'bill',
     'budget_': 'budget',
@@ -111,7 +112,7 @@ def trans(key: str, lang: Optional[str] = None, **kwargs: str) -> str:
         if key.startswith(prefix):
             module_name = mod
             break
-    if key in QUIZ_SPECIFIC_KEYS and has_request_context() and '/quiz/' in g.get('request_path', ''):
+    if key in QUIZ_SPECIFIC_KEYS and has_request_context() and '/quiz/' in request.path:
         module_name = 'quiz'
 
     module = translation_modules.get(module_name, translation_modules['core'])
@@ -135,7 +136,7 @@ def trans(key: str, lang: Optional[str] = None, **kwargs: str) -> str:
         return translation.format(**kwargs) if kwargs else translation
     except (KeyError, ValueError) as e:
         current_logger.error(
-            f"Formatting failed for key='{key}', lang='{lang}', kwargs={kwargs}, error={str(e)}",
+            f"Formatting failed for key '{key}', lang='{lang}', kwargs={kwargs}, error={str(e)}",
             extra={'session_id': session_id}
         )
         return translation
