@@ -655,6 +655,15 @@ CORE_TRANSLATIONS = {
         'Let’s start with a few details': 'Bari mu fara da wasu ƴan bayanai',
         'Please enter a valid email': 'Da fatan za a shigar da adireshin imel mai inganci.',
         'Personal Information': 'Bayanan Kai',
-        'An error occurred':'An error occurred'
+        'An error occurred':'An error occurred',
+        
+        'Select how often you monitor your spending.': 'Zaɓi sau nawa kuke lura da kuɗin da kuke kashewa.',
+        'Indicate your saving habits.': 'Nuna halayen ku na tanadi.',
+        'Consider luxury or discretionary purchases.': 'Yi la\'akari da sayayya na alatu ko na zaɓi.',
+        'Indicate whether you typically plan your expenses in advance.': 'Nuna ko yawanci kuna tsara kuɗin da za ku kashe a gaba.',
+        'Reflect on unplanned buying decisions.': 'Yi tunani game da shawarar siye ba tare da tsari ba.',
+        'Continue': 'Ci gaba',
+        'An error occurred': 'Wani kuskure ya faru',
+        'Enter your personal information': 'Shigar da bayanan ku na sirri'
     }
 }
