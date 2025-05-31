@@ -5,6 +5,9 @@ QUIZ_TRANSLATIONS = {
         'quiz_financial_personality_quiz': 'Financial Personality Quiz',
         'quiz_enter_personal_information': 'Enter your personal information',
         'quiz_progress': 'Quiz Progress',
+        'quiz_plan_expenses_label': 'Do you plan your expenses?',
+        'quiz_plan_expenses_tooltip': 'Indicate whether you typically plan your expenses in advance.',
+        'quiz_plan_expenses_placeholder': 'Select an option',
         'core_close': 'Close',
         'quiz_form_errors': 'Please correct the errors in the form.',
         'quiz_start':'Start Quiz',
@@ -364,7 +367,10 @@ QUIZ_TRANSLATIONS = {
         'quiz_questions_part2': 'Tambayoyi: Sashe na 2',
         'quiz_choose_an_option': 'Zaɓi zaɓi',
         'quiz_start':'Fara Quiz',
-        'An error occurred':'An error occurred'
+        'An error occurred':'An error occurred',
+        'quiz_plan_expenses_label': 'Kuna tsara kuɗin da za ku kashe?',
+        'quiz_plan_expenses_tooltip': 'Nuna ko yawanci kuna tsara kuɗin da za ku kashe a gaba.',
+        'quiz_plan_expenses_placeholder': 'Zaɓi zaɓi',
     }
 }
 
