@@ -5,6 +5,7 @@ QUIZ_TRANSLATIONS = {
         'Kuskure ya faru': 'An error occurred',
         'quiz_step_progress': 'Step {step_num} of {total_steps}',  # Updated to named placeholders
         'Enter Your Personal Information': 'Enter Your Personal Information',
+        'badge_first_quiz_completed': 'First Quiz Completed!',
         'Step 3 of 3': 'Step 3 of 3',
         'See Results': 'See Results',
         'badge_financial_guru': 'Financial Guru',
@@ -153,6 +154,7 @@ QUIZ_TRANSLATIONS = {
         'quiz_tip_balanced_1': 'Gwada amfani da manhajar kasafin kuɗi don inganta halayenka.',
         'quiz_tip_spender_1': 'Kiyaye kashe kuɗinka don guje wa kashewa fiye da kima.',
         'quiz_tip_avoider_1': 'Fara da sauƙin kasafin kuɗi na wata-wata.',
+        'badge_first_quiz_completed': 'An Kammala Gwaji na Farko!',
         # Badges
         'badge_financial_guru': 'Guru na Kuɗi',
         'badge_financial_guru_desc': 'An ba da kyauta saboda kyakkyawan tsara kuɗi.',
