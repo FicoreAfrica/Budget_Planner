@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block title %}{{ trans('bill_bill_planner') | default('Bill Planner') }}{% endblock %}
 {% block content %}
-  <div class="container">
+  <div class="container step-container">
     {% set tool_name = 'bill_bill_planner' | default('Bill Planner') %}
     {% set tool_icon = 'fa-file-invoice' %}
     {% set subtitle = 'Let’s start with a few details' %}
@@ -10,7 +10,7 @@
         {% if messages %}
             {% for category, message in messages %}
                 <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                    {{ trans('bill_' + message) | default(message) }}
+                    {{ trans('bill_' + message) | default(message) | safe }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close') | default('Close') }}"></button>
                 </div>
             {% endfor %}
