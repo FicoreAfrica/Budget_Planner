@@ -149,12 +149,17 @@ def step1():
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
         current_app.logger.info(f"New session ID generated: {session['sid']}")
+        # Clear any stale budget data to start fresh
+        session.pop('budget_step1', None)
+        session.pop('budget_step2', None)
+        session.pop('budget_step3', None)
+        session.pop('budget_step4', None)
     session.permanent = True
     lang = session.get('lang', 'en')
     form = Step1Form()
     try:
         if request.method == 'POST':
-            current_app.logger.info(f"POST request received for step1, session {session['sid']}: Raw form data: {request.form}")
+            current_app.logger.info(f"POST request received for step1, session {session['sid']}: Raw form data: {dict(request.form)}")
             if form.validate_on_submit():
                 session['budget_step1'] = form.data
                 current_app.logger.info(f"Budget step1 form validated successfully for session {session['sid']}: {form.data}")
@@ -183,7 +188,7 @@ def step2():
             flash(trans("budget_missing_previous_steps") or "Please complete previous steps", "danger")
             return redirect(url_for('budget.step1'))
         if request.method == 'POST':
-            current_app.logger.info(f"POST request received for step2, session {session['sid']}: Raw form data: {request.form}")
+            current_app.logger.info(f"POST request received for step2, session {session['sid']}: Raw form data: {dict(request.form)}")
             if form.validate_on_submit():
                 session['budget_step2'] = form.data
                 current_app.logger.info(f"Budget step2 form validated successfully for session {session['sid']}: {form.data}")
@@ -212,7 +217,7 @@ def step3():
             flash(trans("budget_missing_previous_steps") or "Please complete previous steps", "danger")
             return redirect(url_for('budget.step1'))
         if request.method == 'POST':
-            current_app.logger.info(f"POST request received for step3, session {session['sid']}: Raw form data: {request.form}")
+            current_app.logger.info(f"POST request received for step3, session {session['sid']}: Raw form data: {dict(request.form)}")
             if form.validate_on_submit():
                 session['budget_step3'] = form.data
                 current_app.logger.info(f"Budget step3 form validated successfully for session {session['sid']}: {form.data}")
@@ -247,7 +252,7 @@ def step4():
             return redirect(url_for('budget.step1'))
 
         if request.method == 'POST':
-            current_app.logger.info(f"POST request received for step4, session {session['sid']}: Raw form data: {request.form}")
+            current_app.logger.info(f"POST request received for step4, session {session['sid']}: Raw form data: {dict(request.form)}")
             if form.validate_on_submit():
                 session['budget_step4'] = form.data
                 current_app.logger.info(f"Budget step4 form validated successfully for session {session['sid']}: {form.data}")
