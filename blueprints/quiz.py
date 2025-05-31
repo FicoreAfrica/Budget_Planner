@@ -166,19 +166,19 @@ class QuizForm(FlaskForm):
             for q in self.questions:
                 field_name = q['id']
                 question_key = q.get('key', '')
-                label_key = f"quiz_{question_key}_label_{language}"
+                label_key = q.get('text_key', f"quiz_{question_key}_label_{language}")
                 tooltip_key = f"quiz_{question_key}_tooltip_{language}"
                 placeholder_key = f"quiz_{question_key}_placeholder_{language}"
-                translated_text = trans(label_key, lang=language, default=q['text'])
-                translated_options = [(opt, trans(opt, lang=language, default=opt)) for opt in q['options']]
+                translated_text = trans(label_key, default=q['text'], lang=language)
+                translated_options = [(opt, trans(opt, default=opt, lang=language)) for opt in q['options']]
                 field = RadioField(
                     translated_text,
                     validators=[DataRequired() if q.get('required', True) else Optional()],
                     choices=translated_options,
                     id=field_name,
                     render_kw={
-                        'title': trans(tooltip_key, lang=language, default=''),
-                        'placeholder': trans(placeholder_key, lang=language, default='Select an option')
+                        'title': trans(tooltip_key, default='', lang=language),
+                        'placeholder': trans(placeholder_key, default='Select an option', lang=language)
                     }
                 )
                 self._fields[field_name] = field
@@ -322,16 +322,23 @@ def send_quiz_email_async(app, to_email, user_name, personality, personality_des
 @quiz_bp.route('/step1', methods=['GET', 'POST'])
 def step1():
     if not QUIZ_QUESTIONS:
-        flash(trans('Quiz configuration error. Please try again later.', lang=session.get('language', 'en')), 'error')
+        flash(trans('Quiz configuration error. Please try again later.', default='Quiz configuration error. Please try again later.', lang=session.get('language', 'en')), 'error')
         return redirect(url_for('index'))
 
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
+        session['language'] = 'en'  # Set default language
         session.modified = True
         with current_app.app_context():
-            current_app.logger.debug(f"New session created with sid: {session['sid']}")
+            current_app.logger.debug(f"New session created with sid: {session['sid']}, language: {session['language']}")
 
     language = session.get('language', 'en')
+    if language not in ['en', 'ha']:
+        current_app.logger.warning(f"Invalid language '{language}', falling back to 'en'")
+        language = 'en'
+        session['language'] = 'en'
+        session.modified = True
+
     trans_dict = get_translations(language)
     course_id = request.args.get('course_id', 'financial_quiz')
 
@@ -345,10 +352,10 @@ def step1():
             session['quiz_data'] = {
                 'first_name': form.first_name.data,
                 'email': form.email.data,
-                'language': form.language.data,
+                'language': form.language.data or 'en',
                 'send_email': form.send_email.data
             }
-            session['language'] = form.language.data
+            session['language'] = form.language.data or 'en'
             session.modified = True
             with current_app.app_context():
                 current_app.logger.info(f"Quiz step 1 validated successfully, session updated: {session['quiz_data']}")
@@ -399,14 +406,20 @@ def step1():
 @quiz_bp.route('/step2a', methods=['GET', 'POST'])
 def step2a():
     if not QUIZ_QUESTIONS:
-        flash(trans('Quiz configuration error. Please try again later.', lang=session.get('language', 'en')), 'error')
+        flash(trans('Quiz configuration error. Please try again later.', default='Quiz configuration error. Please try again later.', lang=session.get('language', 'en')), 'error')
         return redirect(url_for('index'))
 
     if 'sid' not in session or 'quiz_data' not in session:
-        flash(trans('Session Expired', lang=session.get('language', 'en')), 'error')
+        flash(trans('Session Expired', default='Session Expired', lang=session.get('language', 'en')), 'error')
         return redirect(url_for('quiz.step1', course_id=request.args.get('course_id', 'financial_quiz')))
 
     language = session.get('language', 'en')
+    if language not in ['en', 'ha']:
+        current_app.logger.warning(f"Invalid language '{language}', falling back to 'en'")
+        language = 'en'
+        session['language'] = 'en'
+        session.modified = True
+
     trans_dict = get_translations(language)
     course_id = request.args.get('course_id', 'financial_quiz')
 
@@ -415,16 +428,16 @@ def step2a():
             'id': q['id'],
             'key': q.get('key', ''),
             'text_key': q.get('text_key', ''),
-            'label': trans(q['text_key'], lang=language, default=q['text']),
-            'text': trans(q['text_key'], lang=language, default=q['text']),
+            'label': trans(q['text_key'], default=q['text'], lang=language),
+            'text': trans(q['text_key'], default=q['text'], lang=language),
             'type': q['type'],
-            'options': [trans(opt, lang=language, default=opt) for opt in q['options']],
+            'options': [trans(opt, default=opt, lang=language) for opt in q['options']],
             'required': q.get('required', True),
             'positive_answers': q.get('positive_answers', ['Yes']),
             'negative_answers': q.get('negative_answers', ['No']),
             'weight': q.get('weight', 1),
-            'tooltip': trans(f"quiz_{q.get('key', '')}_tooltip_{language}", lang=language, default=''),
-            'placeholder': trans(f"quiz_{q.get('key', '')}_placeholder_{language}", lang=language, default='Select an option')
+            'tooltip': trans(f"quiz_{q.get('key', '')}_tooltip_{language}", default='', lang=language),
+            'placeholder': trans(f"quiz_{q.get('key', '')}_placeholder_{language}", default='Select an option', lang=language)
         }
         for q in QUIZ_QUESTIONS[:5]
     ]
@@ -486,14 +499,20 @@ def step2a():
 @quiz_bp.route('/step2b', methods=['GET', 'POST'])
 def step2b():
     if not QUIZ_QUESTIONS:
-        flash(trans('Quiz configuration error. Please try again later.', lang=session.get('language', 'en')), 'error')
+        flash(trans('Quiz configuration error. Please try again later.', default='Quiz configuration error. Please try again later.', lang=session.get('language', 'en')), 'error')
         return redirect(url_for('index'))
 
     if 'sid' not in session or 'quiz_data' not in session:
-        flash(trans('Session Expired', lang=session.get('language', 'en')), 'error')
+        flash(trans('Session Expired', default='Session Expired', lang=session.get('language', 'en')), 'error')
         return redirect(url_for('quiz.step1', course_id=request.args.get('course_id', 'financial_quiz')))
 
     language = session.get('language', 'en')
+    if language not in ['en', 'ha']:
+        current_app.logger.warning(f"Invalid language '{language}', falling back to 'en'")
+        language = 'en'
+        session['language'] = 'en'
+        session.modified = True
+
     trans_dict = get_translations(language)
     course_id = request.args.get('course_id', 'financial_quiz')
 
@@ -502,16 +521,16 @@ def step2b():
             'id': q['id'],
             'key': q.get('key', ''),
             'text_key': q.get('text_key', ''),
-            'label': trans(q['text_key'], lang=language, default=q['text']),
-            'text': trans(q['text_key'], lang=language, default=q['text']),
+            'label': trans(q['text_key'], default=q['text'], lang=language),
+            'text': trans(q['text_key'], default=q['text'], lang=language),
             'type': q['type'],
-            'options': [trans(opt, lang=language, default=opt) for opt in q['options']],
+            'options': [trans(opt, default=opt, lang=language) for opt in q['options']],
             'required': q.get('required', True),
             'positive_answers': q.get('positive_answers', ['Yes']),
             'negative_answers': q.get('negative_answers', ['No']),
             'weight': q.get('weight', 1),
-            'tooltip': trans(f"quiz_{q.get('key', '')}_tooltip_{language}", lang=language, default=''),
-            'placeholder': trans(f"quiz_{q.get('key', '')}_placeholder_{language}", lang=language, default='Select an option')
+            'tooltip': trans(f"quiz_{q.get('key', '')}_tooltip_{language}", default='', lang=language),
+            'placeholder': trans(f"quiz_{q.get('key', '')}_placeholder_{language}", default='Select an option', lang=language)
         }
         for q in QUIZ_QUESTIONS[5:10]
     ]
@@ -541,7 +560,7 @@ def step2b():
                 'language': session['quiz_data'].get('language', 'en'),
                 'personality': personality,
                 'score': score,
-                **{f'question_{i}': trans(QUIZ_QUESTIONS[i-1]['text_key'], lang=language, default=QUIZ_QUESTIONS[i-1]['text']) for i in range(1, 11)},
+                **{f'question_{i}': trans(QUIZ_QUESTIONS[i-1]['text_key'], default=QUIZ_QUESTIONS[i-1]['text'], lang=language) for i in range(1, 11)},
                 **{f'answer_{i}': session['quiz_data'].get(f'question_{i}', '') for i in range(1, 11)}
             }])
 
@@ -557,7 +576,7 @@ def step2b():
                 session['quiz_data'].get('first_name', ''),
                 session['quiz_data'].get('email', ''),
                 session['quiz_data'].get('language', 'en'),
-                *[trans(QUIZ_QUESTIONS[i-1]['text_key'], lang=language, default=QUIZ_QUESTIONS[i-1]['text']) for i in range(1, 11)],
+                *[trans(QUIZ_QUESTIONS[i-1]['text_key'], default=QUIZ_QUESTIONS[i-1]['text'], lang=language) for i in range(1, 11)],
                 *[session['quiz_data'].get(f'question_{i}', '') for i in range(1, 11)],
                 personality,
                 str(score),
@@ -636,7 +655,8 @@ def step2b():
         base_url=current_app.config.get('BASE_URL', ''),
         FEEDBACK_FORM_URL=current_app.config.get('FEEDBACK_FORM_URL', ''),
         WAITLIST_FORM_URL=current_app.config.get('WAITLIST_FORM_URL', ''),
-        CONSULTANCY_FORM_URL=current_app.config.get('CONSULTANCY_FORM_URL', ''),
+        CONSUL
+TANCY_FORM_URL=current_app.config.get('CONSULTANCY_FORM_URL', ''),
         LINKEDIN_URL=current_app.config.get('LINKEDIN_URL', ''),
         TWITTER_URL=current_app.config.get('TWITTER_URL', ''),
         language=language,
@@ -647,6 +667,12 @@ def step2b():
 @quiz_bp.route('/results', methods=['GET'])
 def results():
     language = session.get('language', 'en')
+    if language not in ['en', 'ha']:
+        current_app.logger.warning(f"Invalid language '{language}', falling back to 'en'")
+        language = 'en'
+        session['language'] = 'en'
+        session.modified = True
+
     trans_dict = get_translations(language)
     course_id = request.args.get('course_id', 'financial_quiz')
     results = session.get('quiz_results', {})
