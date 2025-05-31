@@ -1,12 +1,18 @@
 from flask import Blueprint, render_template, session, request, redirect, url_for, flash, current_app
+from flask_wtf import FlaskForm
+from wtforms import StringField, BooleanField, SubmitField
+from wtforms.validators import DataRequired, Email, Optional
+from datetime import datetime
 try:
     from app import trans
 except ImportError:
     def trans(key, lang=None):
         return key
+from mailersend_email import send_tool_email  # Assuming this is available for email sending
+
 learning_hub_bp = Blueprint('learning_hub', __name__)
 
-# Define courses and quizzes data
+# Define courses and quizzes data (unchanged)
 courses_data = {
     "budgeting_101": {
         "id": "budgeting_101",
@@ -116,6 +122,24 @@ quizzes_data = {
     }
 }
 
+# Profile Form Definition
+class LearningHubProfileForm(FlaskForm):
+    first_name = StringField(validators=[DataRequired()])
+    email = StringField(validators=[Optional(), Email()])
+    send_email = BooleanField(default=False)
+    submit = SubmitField()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        lang = session.get('lang', 'en')
+        self.first_name.label.text = trans('core_first_name', lang=lang)
+        self.email.label.text = trans('core_email', lang=lang)
+        self.send_email.label.text = trans('core_send_email', lang=lang)
+        self.submit.label.text = trans('core_submit', lang=lang)
+        self.first_name.validators[0].message = trans('core_first_name_required', lang=lang)
+        if self.email.validators:
+            self.email.validators[1].message = trans('core_email_invalid', lang=lang)
+
 def init_storage(app):
     """Initialize storage with app context and logger."""
     with app.app_context():
@@ -199,9 +223,24 @@ def course_overview(course_id):
         flash(trans("learning_hub_error_loading", default="Error loading course", lang=lang), "danger")
         return redirect(url_for('learning_hub.courses'))
 
+@learning_hub_bp.route('/profile', methods=['GET', 'POST'])
+def profile():
+    """Handle user profile form for first name and email."""
+    lang = session.get('lang', 'en')
+    form = LearningHubProfileForm()
+    if request.method == 'POST' and form.validate_on_submit():
+        session['learning_hub_profile'] = {
+            'first_name': form.first_name.data,
+            'email': form.email.data,
+            'send_email': form.send_email.data
+        }
+        flash(trans('learning_hub_profile_saved', default='Profile saved successfully', lang=lang), 'success')
+        return redirect(url_for('learning_hub.courses'))
+    return render_template('learning_hub_profile.html', form=form, trans=trans, lang=lang)
+
 @learning_hub_bp.route('/courses/<course_id>/lesson/<lesson_id>', methods=['GET', 'POST'])
 def lesson(course_id, lesson_id):
-    """Display or process a lesson."""
+    """Display or process a lesson with email notification."""
     lang = session.get('lang', 'en')
     course = course_lookup(course_id)
     if not course:
@@ -214,13 +253,34 @@ def lesson(course_id, lesson_id):
 
     progress = get_progress()
     course_progress = progress.setdefault(course_id, {'lessons_completed': [], 'quiz_scores': {}, 'current_lesson': lesson_id})
-    try:
-        if request.method == 'POST':
-            if lesson_id not in course_progress['lessons_completed']:
-                course_progress['lessons_completed'].append(lesson_id)
-                course_progress['current_lesson'] = lesson_id
-                save_progress()
-                flash(trans("learning_hub_lesson_marked", default="Lesson marked as completed", lang=lang), "success")
+    if request.method == 'POST':
+        if lesson_id not in course_progress['lessons_completed']:
+            course_progress['lessons_completed'].append(lesson_id)
+            course_progress['current_lesson'] = lesson_id
+            save_progress()
+            flash(trans("learning_hub_lesson_marked", default="Lesson marked as completed", lang=lang), "success")
+
+            # Send email if user has provided details and opted in
+            profile = session.get('learning_hub_profile', {})
+            if profile.get('send_email') and profile.get('email'):
+                try:
+                    send_tool_email(
+                        tool_name='learning_hub',
+                        to_email=profile['email'],
+                        subject=trans("learning_hub_lesson_completed_subject", default="Lesson Completed", lang=lang),
+                        template_name="learning_hub_lesson_completed.html",
+                        data={
+                            "first_name": profile['first_name'],
+                            "course_title": trans(course['title_key'], lang=lang),
+                            "lesson_title": trans(lesson['title_key'], lang=lang),
+                            "completed_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                            "cta_url": url_for('learning_hub.course_overview', course_id=course_id, _external=True)
+                        },
+                        lang=lang
+                    )
+                except Exception as e:
+                    current_app.logger.error(f"Failed to send email: {str(e)}")
+
             next_lesson_id = None
             found = False
             for m in course['modules']:
@@ -235,13 +295,8 @@ def lesson(course_id, lesson_id):
             if next_lesson_id:
                 return redirect(url_for('learning_hub.lesson', course_id=course_id, lesson_id=next_lesson_id))
             else:
-                flash(trans("learning_hub_lesson_done", default="Course completed", lang=lang), "success")
                 return redirect(url_for('learning_hub.course_overview', course_id=course_id))
-        return render_template('learning_hub_lesson.html', course=course, lesson=lesson, module=module, progress=course_progress, trans=trans, lang=lang)
-    except Exception as e:
-        current_app.logger.error(f"Error processing lesson {lesson_id} for course {course_id}: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
-        flash(trans("learning_hub_error_loading", default="Error loading lesson", lang=lang), "danger")
-        return redirect(url_for('learning_hub.course_overview', course_id=course_id))
+    return render_template('learning_hub_lesson.html', course=course, lesson=lesson, module=module, progress=course_progress, trans=trans, lang=lang)
 
 @learning_hub_bp.route('/courses/<course_id>/quiz/<quiz_id>', methods=['GET', 'POST'])
 def quiz(course_id, quiz_id):
