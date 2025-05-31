@@ -2,6 +2,11 @@ BILL_TRANSLATIONS = {
     'en': {
         # From previously merged dictionary
         'bill_amount': 'Amount',
+        'bill_Pay bills early to avoid late fees. Use mobile money for quick payments.': 'Pay bills early to avoid late fees. Use mobile money for quick payments.',
+        'bill_Switch to energy-efficient utilities to save money.': 'Switch to energy-efficient utilities to save money.',
+        'bill_Plan monthly bills to manage your budget better.': 'Plan monthly bills to manage your budget better.',
+        'bill_Set up Ajo/Esusu/Adashe reminders to never miss a contribution.': 'Set up Ajo/Esusu/Adashe reminders to never miss a contribution.',
+        'bill_Top up your data in bundles to save costs.': 'Top up your data in bundles to save costs.',
         'bill_amount_required': 'Valid amount is required',
         'bill_Your budget has been created successfully!': 'Your budget has been created successfully!',
         'bill_Tip: Include your Ajo/Esusu contributions in your savings plan.': 'Tip: Include your Ajo/Esusu contributions in your savings plan.',
@@ -880,6 +885,11 @@ BILL_TRANSLATIONS = {
         'bill_bill_added_success': 'An ƙara takardar biya cikin nasara.',
         'core_Bill added successfully.': 'An ƙara takardar biya cikin nasara.',  # Added
         'core_all': 'Duka',
+        'bill_Pay bills early to avoid late fees. Use mobile money for quick payments.': 'Biya kuɗin wuri-wuri don guje wa kuɗin da ake ƙarawa a kan jinkiri. Yi amfani da kuɗin wayar hannu don biya cikin sauri.',
+        'bill_Switch to energy-efficient utilities to save money.': 'Canja zuwa kayan aiki masu amfani da wutar lantarki don adana kuɗi.',
+        'bill_Plan monthly bills to manage your budget better.': 'Tsara kuɗin da za ku biya duk wata don inganta kasafin kuɗin ku.',
+        'bill_Set up Ajo/Esusu/Adashe reminders to never miss a contribution.': 'Saita tunatarwa na Ajo/Esusu/Adashe don kada ku taɓa rasa gudunmawa.',
+        'bill_Top up your data in bundles to save costs.': 'Ƙara kuɗin data ɗinku a cikin fakiti don adana kuɗi.',
 
         # Action Buttons
         'bill_edit': 'Gyara',
