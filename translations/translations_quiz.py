@@ -199,20 +199,3 @@ QUIZ_TRANSLATIONS = {
         'Shigar da Bayanan Ka': 'Shigar da Bayanan Ka',
     }
 }
-
-def trans(key, default='', lang='en'):
-    """
-    Retrieve translation for a given key and language.
-    
-    Args:
-        key (str): Translation key.
-        default (str): Default text if translation is not found.
-        lang (str): Language code ('en' or 'ha').
-    
-    Returns:
-        str: Translated text or default if not found.
-    """
-    translation = TRANSLATIONS.get(lang, {}).get(key, default)
-    if translation == default and lang != 'en':
-        translation = TRANSLATIONS.get('en', {}).get(key, default)
-    return translation
