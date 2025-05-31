@@ -6,6 +6,7 @@ CORE_TRANSLATIONS = {
         'core_first_name': 'First Name',
         'core_first_name_placeholder': 'e.g., Muhammad, Bashir, Umar',
         'core_first_name_title': 'Enter your first name to personalize your quiz results',
+        'Enter your assets':'Enter your assets',
         'core_email': 'Email',
         'core_email_placeholder': 'e.g., muhammad@example.com',
         'Kuskure ya faru': 'Kuskure ya faru',
@@ -700,8 +701,7 @@ CORE_TRANSLATIONS = {
         'session_expired': 'Zaman ya ƙare. Da fatan za a sake farawa.',
         'Enter Your Personal Information': 'Shigar da Bayanan Ka',
         'An error occurred': 'Kuskure ya faru',
-
-
+        'Enter your assets':'Shigar da Kadarorinka',
         
         'Select how often you monitor your spending.': 'Zaɓi sau nawa kuke lura da kuɗin da kuke kashewa.',
         'Indicate your saving habits.': 'Nuna halayen ku na tanadi.',
