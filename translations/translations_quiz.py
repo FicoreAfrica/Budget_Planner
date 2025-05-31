@@ -10,6 +10,14 @@ QUIZ_TRANSLATIONS = {
         'quiz_plan_expenses_placeholder': 'Select an option',
         'core_close': 'Close',
         'quiz_form_errors': 'Please correct the errors in the form.',
+        'Select how often you monitor your spending.': 'Select how often you monitor your spending.',
+        'Indicate your saving habits.': 'Indicate your saving habits.',
+        'Consider luxury or discretionary purchases.': 'Consider luxury or discretionary purchases.',
+        'Indicate whether you typically plan your expenses in advance.': 'Indicate whether you typically plan your expenses in advance.',
+        'Reflect on unplanned buying decisions.': 'Reflect on unplanned buying decisions.',
+        'Continue': 'Continue',
+        'An error occurred': 'An error occurred',
+        'Enter your personal information': 'Enter your personal information',
         'quiz_start':'Start Quiz',
         'quiz_back_to_home': 'Back to Home',
         'quiz_start_quiz': 'Start Quiz',
@@ -371,6 +379,15 @@ QUIZ_TRANSLATIONS = {
         'quiz_plan_expenses_label': 'Kuna tsara kuɗin da za ku kashe?',
         'quiz_plan_expenses_tooltip': 'Nuna ko yawanci kuna tsara kuɗin da za ku kashe a gaba.',
         'quiz_plan_expenses_placeholder': 'Zaɓi zaɓi',
+        'Step %(step)s of %(total)s': 'Mataki na %(step)s cikin %(total)s',
+        'Select how often you monitor your spending.': 'Zaɓi sau nawa kuke lura da kuɗin da kuke kashewa.',
+        'Indicate your saving habits.': 'Nuna halayen ku na tanadi.',
+        'Consider luxury or discretionary purchases.': 'Yi la\'akari da sayayya na alatu ko na zaɓi.',
+        'Indicate whether you typically plan your expenses in advance.': 'Nuna ko yawanci kuna tsara kuɗin da za ku kashe a gaba.',
+        'Reflect on unplanned buying decisions.': 'Yi tunani game da shawarar siye ba tare da tsari ba.',
+        'Continue': 'Ci gaba',
+        'An error occurred': 'Wani kuskure ya faru',
+        'Enter your personal information': 'Shigar da bayanan ku na sirri'
     }
 }
 
