@@ -12,7 +12,9 @@ DASHBOARD_TRANSLATIONS = {
         'dashboard_net_worth': 'Net Worth',
         'dashboard_savings_gap': 'Savings Gap',
         'dashboard_monthly_savings_goal': 'Monthly Savings Goal',
-        'dashboard_key_insight': 'Key Insight'
+        'dashboard_key_insight': 'Key Insight',
+        'Yes': 'Yes',
+        'No': 'No'
     },
     'ha': {
         'dashboard_general_dashboard': 'Allon Sarrafa Gabaɗaya',
@@ -27,6 +29,8 @@ DASHBOARD_TRANSLATIONS = {
         'dashboard_net_worth': 'Dukiyar Kuɗi',
         'dashboard_savings_gap': 'Gibin Ajiya',
         'dashboard_monthly_savings_goal': 'Manufar Ajiya ta Wata',
-        'dashboard_key_insight': 'Haske Mai Mahimmanci'
+        'dashboard_key_insight': 'Haske Mai Mahimmanci',
+        'Yes': 'Eh',
+        'No': 'A,a',
     }
 }
