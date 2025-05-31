@@ -18,17 +18,6 @@ from blueprints.learning_hub import learning_hub_bp
 from json_store import JsonStorage
 from jinja2 import environment
 
-def format_currency(value):
-    try:
-        # Format number as USD currency with 2 decimal places
-        return "${:,.2f}".format(float(value))
-    except (ValueError, TypeError):
-        return value  # Return as-is if formatting fails
-
-def init_app(app: Flask):
-    # Register the format_currency filter with Jinja2
-    app.jinja_env.filters['format_currency'] = format_currency
-
 # Constants
 SAMPLE_COURSES = [
     {
@@ -200,6 +189,14 @@ def create_app():
     app.config['BASE_URL'] = os.environ.get('BASE_URL', 'http://localhost:5000')
     Session(app)
     CSRFProtect(app)
+
+    # Add format_currency filter
+    def format_currency(value):
+        try:
+            return "${:,.2f}".format(float(value))
+        except (ValueError, TypeError):
+            return str(value)  # Fallback to string if formatting fails
+    app.jinja_env.filters['format_currency'] = format_currency
 
     with app.app_context():
         logger.info("Starting storage initialization")
