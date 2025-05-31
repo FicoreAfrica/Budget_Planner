@@ -9,7 +9,7 @@
 <div class="container step-container">
     {% set tool_name = 'quiz_financial_personality_quiz' %}
     {% set tool_icon = 'fa-user-circle' %}
-    {% set subtitle = trans('quiz_step_progress', default='Step {0} of {1}', lang=language).format(step_num, total_steps) %}
+    {% set subtitle = trans('quiz_step_progress', default='Step {step_num} of {total_steps}', lang=language, step_num=step_num, total_steps=total_steps) %}
     {% set step = step_num %}
     {% set total_steps = total_steps %}
     {% set step_labels = ['Personal Info', trans('quiz_questions_part1', default='Questions Part 1', lang=language), trans('quiz_questions_part2', default='Questions Part 2', lang=language)] %}
@@ -48,7 +48,7 @@
                 {{ form.csrf_token }}
                 {% for question in questions %}
                     <div class="mb-4">
-                        <label class="form-label" for="{{ question.id }}">{{ trans(question.text_key, default=question.text, lang=language) }}</label>
+                        <label class="form-label" for="{{ question.id }}">{{ trans(question_data.text_key, default=question.text, lang=language) }}</label>
                         {% for choice_value, choice_label in form[question.id].choices %}
                             <div class="form-check">
                                 <input type="radio" class="form-check-input{{ ' is-invalid' if form[question.id].errors else '' }}"
@@ -61,8 +61,9 @@
                         {% endfor %}
                         <small class="form-text text-muted" id="help_{{ question.id }}">{{ trans(question.tooltip, default='', lang=language) }}</small>
                         {% if form[question.id].errors %}
+                        %} {% for error in errors %}
                             <div class="invalid-feedback d-block">{{ trans('quiz_choose_an_option', default='Choose an option.', lang=language) }}</div>
-                        {% endif %}
+                        {% endfor %}
                     </div>
                 {% endfor %}
                 <div class="d-flex justify-content-between">
