@@ -2,6 +2,9 @@ CORE_TRANSLATIONS = {
     'en': {
         'core_home': 'Home',
         'First Name': 'First Name',
+        'Here\'s a summary of your emergency fund plan.': 'Here\'s a summary of your emergency fund plan.',
+        'Tell us how much you\'ve already saved.': 'Tell us how much you\'ve already saved.',
+        'Let\'s calculate your ideal emergency fund amount.': 'Let\'s calculate your ideal emergency fund amount.',
          # Core UI elements
         'core_first_name': 'First Name',
         'core_first_name_placeholder': 'e.g., Muhammad, Bashir, Umar',
@@ -728,6 +731,9 @@ CORE_TRANSLATIONS = {
         'core_months': 'watanni',
         'Budget missing previous steps':'Tsarin Baya ya bace',
         'Enter Your Personal Information':'Shigar da bayanan ka',
+        'Here\'s a summary of your emergency fund plan.': 'Ga taƙaitaccen bayanin tsarin asusun gaggawar ku.',
+        'Tell us how much you\'ve already saved.': 'Faɗa mana adadin kuɗin da kuka riga kuka tara.',
+        'Let\'s calculate your ideal emergency fund amount.': 'Bari mu lissafa adadin da ya dace na asusun gaggawar ku.',
         
         'Select how often you monitor your spending.': 'Zaɓi sau nawa kuke lura da kuɗin da kuke kashewa.',
         'Indicate your saving habits.': 'Nuna halayen ku na tanadi.',
