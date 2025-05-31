@@ -134,6 +134,7 @@ def step1():
     """Handle Step 1: Collect user name and email."""
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
+        session.modified = True
     
     lang = session.get('lang', 'en')
     form = Step1Form()
@@ -148,6 +149,7 @@ def step1():
                     'email': form.email.data,
                     'email_opt_in': form.email_opt_in.data
                 }
+                session.modified = True
                 current_app.logger.info(f"Step1 data saved to session: {session['emergency_fund_step1']}")
                 return redirect(url_for('emergency_fund.step2'))
             else:
@@ -182,6 +184,7 @@ def step2():
                     'monthly_expenses': form.monthly_expenses.data,
                     'monthly_income': form.monthly_income.data
                 }
+                session.modified = True
                 current_app.logger.info(f"Step2 data saved to session: {session['emergency_fund_step2']}")
                 return redirect(url_for('emergency_fund.step3'))
             else:
@@ -217,6 +220,7 @@ def step3():
                     'risk_tolerance_level': form.risk_tolerance_level.data,
                     'dependents': form.dependents.data
                 }
+                session.modified = True
                 current_app.logger.info(f"Step3 data saved to session: {session['emergency_fund_step3']}")
                 return redirect(url_for('emergency_fund.step4'))
             else:
@@ -342,11 +346,18 @@ def step4():
                     except Exception as email_error:
                         current_app.logger.error(f"Failed to send email: {email_error}")
                 
+                # Store step 4 data in session
+                session['emergency_fund_step4'] = {
+                    'timeline': months
+                }
+                session.modified = True
+                
                 flash(trans('emergency_fund_completed_successfully', lang=lang, default='Emergency fund calculation completed successfully!'), 'success')
                 
-                # Clear session data
-                for key in ['emergency_fund_step1', 'emergency_fund_step2', 'emergency_fund_step3']:
+                # Clear only steps 2 and 3, keep step1 for dashboard email fallback
+                for key in ['emergency_fund_step2', 'emergency_fund_step3']:
                     session.pop(key, None)
+                session.modified = True
                 
                 return redirect(url_for('emergency_fund.dashboard'))
             else:
@@ -367,6 +378,7 @@ def dashboard():
     """Display the emergency fund dashboard with user data and insights."""
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
+        session.modified = True
     
     lang = session.get('lang', 'en')
     
@@ -417,6 +429,11 @@ def dashboard():
                     cross_tool_insights.append(trans('emergency_fund_cross_tool_savings_possible', lang=lang, 
                                                    amount=savings_possible,
                                                    default='Based on your budget, you could save {amount} monthly.'))
+        
+        # Clear all session data after rendering the dashboard
+        for key in ['emergency_fund_step1', 'emergency_fund_step4']:
+            session.pop(key, None)
+        session.modified = True
         
         return render_template(
             'emergency_fund_dashboard.html',
