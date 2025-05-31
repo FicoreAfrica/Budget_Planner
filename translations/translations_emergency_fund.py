@@ -9,6 +9,14 @@ EMERGENCY_FUND_TRANSLATIONS = {
         'emergency_fund_start_emergency_fund': 'Start building your emergency fund',
         'emergency_fund_step1_subtitle': 'Let\'s calculate your ideal emergency fund amount.',
         'emergency_fund_step3_subtitle': 'Tell us how much you\'ve already saved.',
+        'emergency_fund_dashboard_title': 'Your Emergency Fund Plan',
+        'emergency_fund_dashboard_subtitle': 'Here\'s a summary of your emergency fund plan.',
+        'emergency_fund_latest_plan': 'Latest Plan',
+        'emergency_fund_recommended_months': 'Recommended Coverage',
+        'emergency_fund_target_amount': 'Target Amount',
+        'emergency_fund_savings_gap': 'Savings Gap',
+        'emergency_fund_monthly_savings': 'Monthly Savings',
+        'emergency_fund_tips': 'Emergency Fund Tips',
         'core_months': 'months',
         'core_dear': 'Dear',
         'core_hello': 'Hello',
@@ -288,6 +296,14 @@ EMERGENCY_FUND_TRANSLATIONS = {
         'emergency_fund_step1_label': 'Menene ainihin kuɗin da kuke kashewa duk wata?',
         'emergency_fund_step2_label': 'Adadin watanni nawa na ainihin kuɗin da kuke kashewa kuke son rufewa?',
         'emergency_fund_step3_label': 'Nawa kuka riga kuka tara don gaggawa?',
-        'emergency_fund_step4_label': 'Menene adadin kuɗin gaggawa da kuke son cimmawa?'
+        'emergency_fund_step4_label': 'Menene adadin kuɗin gaggawa da kuke son cimmawa?',
+        'emergency_fund_dashboard_title': 'Tsarin Asusun Gaggawar Ku',
+        'emergency_fund_dashboard_subtitle': 'Ga taƙaitaccen bayanin tsarin asusun gaggawar ku.',
+        'emergency_fund_latest_plan': 'Shiri na Ƙarshe',
+        'emergency_fund_recommended_months': 'Shawarar Rufewa',
+        'emergency_fund_target_amount': 'Adadin da Aka Yi Nufi',
+        'emergency_fund_savings_gap': 'Tazarar Tanadi',
+        'emergency_fund_monthly_savings': 'Tanadin Duk Wata',
+        'emergency_fund_tips': 'Nasihu Don Asusun Gaggawa'
     }
 }
