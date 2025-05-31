@@ -5,6 +5,7 @@ CORE_TRANSLATIONS = {
         'core_close': 'Close',
         'core_all': 'All',
         'Email': 'Email',
+        'core_continue': 'Continue',
         'An error occurred':'An error occurred',
         'core_Your budget has been created successfully!': 'Your budget has been created successfully!',
         'core_Unable to load budget dashboard. Please try again.': 'Unable to load budget dashboard. Please try again.',
@@ -634,6 +635,7 @@ CORE_TRANSLATIONS = {
         'Enter your monthly expenses': 'Shigar da kuɗin da kuke kashewa duk wata',
         'Enter your monthly income': 'Shigar da kuɗin da kuke samu duk wata',
         'Your current financial overview.': 'Takaitaccen halin kuɗin ku na yanzu.',
+        'core_continue': 'Ci gaba',
 
         # Already previously requested keys (add if not already present)
         'Failed to send the financial health report to your email.': 'An kasa aikawa da rahoton lafiyar kuɗi zuwa imel ɗinka.',
