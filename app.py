@@ -10,7 +10,7 @@ from flask_wtf.csrf import CSRFProtect, CSRFError
 from translations import trans
 from blueprints.financial_health import financial_health_bp
 from blueprints.budget import budget_bp
-from blueprints.quiz import quiz_bp
+from blueprints.quiz import quiz_bp, init_quiz_questions
 from blueprints.bill import bill_bp
 from blueprints.net_worth import net_worth_bp, init_storage
 from blueprints.emergency_fund import emergency_fund_bp
@@ -198,12 +198,24 @@ def create_app():
             return str(value)  # Fallback to string if formatting fails
     app.jinja_env.filters['format_currency'] = format_currency
 
+    # Register blueprints
+    app.register_blueprint(financial_health_bp)
+    app.register_blueprint(budget_bp)
+    app.register_blueprint(quiz_bp)
+    app.register_blueprint(bill_bp)
+    app.register_blueprint(net_worth_bp)
+    app.register_blueprint(emergency_fund_bp)
+    app.register_blueprint(learning_hub_bp)
+
     with app.app_context():
         logger.info("Starting storage initialization")
         init_storage_managers(app)
         logger.info("Starting data initialization")
         initialize_courses_data(app)
         logger.info("Completed data initialization")
+        # Initialize quiz questions
+        init_quiz_questions(app)
+        logger.info("Initialized quiz questions")
 
     def translate(key, lang='en', logger=logger, **kwargs):
         translation = trans(key, lang=lang, **kwargs)
@@ -410,14 +422,6 @@ def create_app():
         lang = session.get('language', 'en')
         logger.error(f"404 error: {str(error)}")
         return render_template('404.html', t=translate, lang=lang), 404
-
-    app.register_blueprint(financial_health_bp)
-    app.register_blueprint(budget_bp)
-    app.register_blueprint(quiz_bp)
-    app.register_blueprint(bill_bp)
-    app.register_blueprint(net_worth_bp)
-    app.register_blueprint(emergency_fund_bp)
-    app.register_blueprint(learning_hub_bp)
 
     logger.info("App creation completed")
     return app
