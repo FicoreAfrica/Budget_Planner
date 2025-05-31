@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime
 import pandas as pd
 import logging
-from translations_quiz import trans
+from translations import trans
 
 # Configure logging
 logger = logging.getLogger('ficore_app')
