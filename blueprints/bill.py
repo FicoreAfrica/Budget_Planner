@@ -146,8 +146,11 @@ def form():
                         },
                         lang=lang
                     )
-                flash(trans("bill_bill_added_dynamic").format(bill_name=data['bill_name']), "success")
-                return redirect(url_for('bill.form'))  # Redirect to form to allow adding another bill
+                flash(trans("bill_bill_added_dynamic_dashboard").format(
+                    bill_name=data['bill_name'],
+                    dashboard_url=url_for('bill.dashboard')
+                ), "success")
+                return redirect(url_for('bill.dashboard'))  # Redirect to dashboard
             except Exception as e:
                 current_app.logger.exception(f"Error processing bill form: {str(e)}")
                 flash(trans("bill_bill_add_error"), "danger")
