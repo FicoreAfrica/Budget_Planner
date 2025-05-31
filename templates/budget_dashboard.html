@@ -103,7 +103,7 @@
                                 <tbody>
                                     {% for budget_id, budget in budgets %}
                                         <tr>
-                                            <td>{{ budget.created_at | default('N/A') }}</td>
+                                            <td>{{ budget.get('created_at', 'N/A') }}</td> <!-- Handle missing created_at -->
                                             <td>{{ budget.income | format_currency }}</td>
                                             <td>{{ budget.fixed_expenses | format_currency }}</td>
                                             <td>{{ budget.savings_goal | format_currency }}</td>
@@ -153,95 +153,187 @@
         <a href="{{ url_for('budget.step1') }}" class="btn btn-primary">{{ trans('budget_create_new') | default('Create New Budget') }}</a>
     </div>
 </div>
+
+<!-- Chart.js Expense Breakdown -->
+{% if categories %}
+```chartjs
+{
+  "type": "pie",
+  "data": {
+    "labels": {{ categories.keys() | tojson }},
+    "datasets": [{
+      "data": {{ categories.values() | tojson }},
+      "backgroundColor": [
+        "#FF6384",
+        "#36A2EB",
+        "#FFCE56",
+        "#4BC0C0",
+        "#9966FF",
+        "#FF9F40"
+      ],
+      "borderColor": "#fff",
+      "borderWidth": 2
+    }]
+  },
+  "options": {
+    "responsive": true,
+    "plugins": {
+      "legend": {
+        "position": "top",
+        "labels": {
+          "color": "#333",
+          "font": {
+            "size": 14
+          }
+        }
+      },
+      "tooltip": {
+        "callbacks": {
+          "label": function(context) {
+            let label = context.label || '';
+            let value = context.raw || 0;
+            return `${label}: ${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value)}`;
+          }
+        }
+      }
+    }
+  }
+}
+```
+{% endif %}
+
+<!-- Chart.js Savings Goal Progress -->
+{% if latest_budget %}
+```chartjs
+{
+  "type": "doughnut",
+  "data": {
+    "labels": [
+      "{{ trans('budget_savings_goal') | default('Savings Goal') }}",
+      "{{ trans('budget_remaining') | default('Remaining') }}"
+    ],
+    "datasets": [{
+      "data": [
+        {{ latest_budget.savings_goal | default(0) }},
+        {{ latest_budget.surplus_deficit | default(0) }}
+      ],
+      "backgroundColor": ["#36A2EB", "#E0E0E0"],
+      "borderColor": "#fff",
+      "borderWidth": 2
+    }]
+  },
+  "options": {
+    "responsive": true,
+    "plugins": {
+      "legend": {
+        "position": "top",
+        "labels": {
+          "color": "#333",
+          "font": {
+            "size": 14
+          }
+        }
+      },
+      "tooltip": {
+        "callbacks": {
+          "label": function(context) {
+            let label = context.label || '';
+            let value = context.raw || 0;
+            return `${label}: ${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value)}`;
+          }
+        }
+      }
+    }
+  }
+}
+```
+{% endif %}
 {% endblock %}
 {% block extra_scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-// Currency formatting filter
-const currencyFormatter = new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD'
-});
-
-// Expense Chart
-{% if categories %}
-const expenseCtx = document.getElementById('expenseChart').getContext('2d');
-const expenseChart = new Chart(expenseCtx, {
-    type: 'pie',
-    data: {
-        labels: {{ categories.keys() | tojson }},
-        datasets: [{
-            data: {{ categories.values() | tojson }},
-            backgroundColor: [
-                '#FF6384',
-                '#36A2EB',
-                '#FFCE56',
-                '#4BC0C0',
-                '#9966FF',
-                '#FF9F40'
-            ],
-            borderColor: '#fff',
-            borderWidth: 2
-        }]
-    },
-    options: {
-        responsive: true,
-        plugins: {
-            legend: {
-                position: 'top'
-            },
-            tooltip: {
-                callbacks: {
-                    label: function(context) {
-                        let label = context.label || '';
-                        let value = context.raw || 0;
-                        return `${label}: ${currencyFormatter.format(value)}`;
+// Ensure charts are rendered after DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Expense Chart
+    {% if categories %}
+    const expenseCtx = document.getElementById('expenseChart').getContext('2d');
+    new Chart(expenseCtx, {
+        type: 'pie',
+        data: {
+            labels: {{ categories.keys() | tojson }},
+            datasets: [{
+                data: {{ categories.values() | tojson }},
+                backgroundColor: [
+                    '#FF6384',
+                    '#36A2EB',
+                    '#FFCE56',
+                    '#4BC0C0',
+                    '#9966FF',
+                    '#FF9F40'
+                ],
+                borderColor: '#fff',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.label || '';
+                            let value = context.raw || 0;
+                            return `${label}: ${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value)}`;
+                        }
                     }
                 }
             }
         }
-    }
-});
-{% endif %}
+    });
+    {% endif %}
 
-// Savings Goal Progress Chart
-{% if latest_budget %}
-const savingsCtx = document.getElementById('savingsChart').getContext('2d');
-const savingsChart = new Chart(savingsCtx, {
-    type: 'doughnut',
-    data: {
-        labels: [
-            '{{ trans("budget_savings_goal") | default("Savings Goal") }}',
-            '{{ trans("budget_remaining") | default("Remaining") }}'
-        ],
-        datasets: [{
-            data: [
-                {{ latest_budget.savings_goal | default(0) }},
-                {{ latest_budget.surplus_deficit | default(0) }}
+    // Savings Goal Progress Chart
+    {% if latest_budget %}
+    const savingsCtx = document.getElementById('savingsChart').getContext('2d');
+    new Chart(savingsCtx, {
+        type: 'doughnut',
+        data: {
+            labels: [
+                '{{ trans("budget_savings_goal") | default("Savings Goal") }}',
+                '{{ trans("budget_remaining") | default("Remaining") }}'
             ],
-            backgroundColor: ['#36A2EB', '#E0E0E0'],
-            borderColor: '#fff',
-            borderWidth: 2
-        }]
-    },
-    options: {
-        responsive: true,
-        plugins: {
-            legend: {
-                position: 'top'
-            },
-            tooltip: {
-                callbacks: {
-                    label: function(context) {
-                        let label = context.label || '';
-                        let value = context.raw || 0;
-                        return `${label}: ${currencyFormatter.format(value)}`;
+            datasets: [{
+                data: [
+                    {{ latest_budget.savings_goal | default(0) }},
+                    {{ latest_budget.surplus_deficit | default(0) }}
+                ],
+                backgroundColor: ['#36A2EB', '#E0E0E0'],
+                borderColor: '#fff',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.label || '';
+                            let value = context.raw || 0;
+                            return `${label}: ${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value)}`;
+                        }
                     }
                 }
             }
         }
-    }
+    });
+    {% endif %}
 });
-{% endif %}
 </script>
 {% endblock %}
