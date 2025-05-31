@@ -5,6 +5,7 @@ BUDGET_TRANSLATIONS = {
         'budget_dashboard_subtitle': 'Your current financial overview.',
         'Budget Dashboard': 'Budget Dashboard',
         'budget_no_data': 'No budget data available yet.',
+        'budget_tip_monthly_savings': 'Tip: Aim to save a portion of your monthly income.',
         'budget_remaining': 'Remaining',
         'budget_history': 'Budget History',
         'budget_no_history': 'No past budgets available.',
@@ -833,6 +834,7 @@ BUDGET_TRANSLATIONS = {
         'budget_remaining': 'Sauran',
         'Enter your monthly expenses': 'Shigar da kuɗin da kuke kashewa duk wata',
         'Enter your monthly income': 'Shigar da kuɗin da kuke samu duk wata',
+        'budget_tip_monthly_savings': 'Shawara: Ku yi ƙoƙarin adana wani ɓangare na kuɗin shigar ku na kowane wata.'
 
     }
 }
