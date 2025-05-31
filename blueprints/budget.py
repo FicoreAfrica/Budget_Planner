@@ -267,7 +267,6 @@ def step4():
                     step3_data.get('others', 0)
                 ])
                 savings_goal = step4_data.get('savings_goal', 0)
-                # FIXED: Calculate surplus_deficit as income - expenses
                 surplus_deficit = income - expenses
 
                 record = {
@@ -372,7 +371,6 @@ def dashboard():
         for record in user_data:
             budget_id = record["id"]
             budget_data = record["data"]
-            # FIXED: Recalculate fixed_expenses and surplus_deficit
             budget_data['fixed_expenses'] = sum([
                 budget_data.get('housing', 0),
                 budget_data.get('food', 0),
