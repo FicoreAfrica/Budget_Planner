@@ -8,7 +8,9 @@ CORE_TRANSLATIONS = {
         'core_first_name_title': 'Enter your first name to personalize your quiz results',
         'core_email': 'Email',
         'core_email_placeholder': 'e.g., muhammad@example.com',
+        'Kuskure ya faru': 'Kuskure ya faru',
         'core_email_title': 'Enter your email to receive quiz results',
+        'An error occurred': 'An error occurred',
         'core_language': 'Language',
         'core_language_en': 'English',
         'core_language_ha': 'Hausa',
@@ -696,6 +698,10 @@ CORE_TRANSLATIONS = {
         'global_error_message': 'Kuskure ya faru',
         'csrf_error': 'Alamar CSRF ba ta da inganci',
         'session_expired': 'Zaman ya ƙare. Da fatan za a sake farawa.',
+        'Enter Your Personal Information': 'Shigar da Bayanan Ka',
+        'An error occurred': 'Kuskure ya faru',
+
+
         
         'Select how often you monitor your spending.': 'Zaɓi sau nawa kuke lura da kuɗin da kuke kashewa.',
         'Indicate your saving habits.': 'Nuna halayen ku na tanadi.',
