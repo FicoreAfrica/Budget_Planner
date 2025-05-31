@@ -2,6 +2,17 @@ BUDGET_TRANSLATIONS = {
     'en': {
         # General Budget Fields
         'budget_summary': 'Budget Summary',
+        'budget_dashboard_subtitle': 'Your current financial overview.',
+        'Budget Dashboard': 'Budget Dashboard',
+        'budget_no_data': 'No budget data available yet.',
+        'budget_history': 'Budget History',
+        'budget_no_history': 'No past budgets available.',
+        'budget_tips_insights': 'Budget Tips & Insights',
+        'budget_create_new': 'Create New Budget',
+        'budget_savings_progress': 'Savings Progress',
+        'core_delete': 'Delete',
+        'Enter your monthly expenses': 'Enter your monthly expenses',
+        'Enter your monthly income': 'Enter your monthly income',
         'budget_insight_budget_deficit': 'Your budget shows a deficit.',
         'budget_insight_budget_surplus': 'You have a budget surplus.',
         'budget_insight_set_savings_goal': 'Consider setting a savings goal.',
@@ -808,6 +819,18 @@ BUDGET_TRANSLATIONS = {
         'budget_insight_set_savings_goal': 'Yi la\'akari da saita burin ajiyar kuɗi.',
         'core_Your budget has been created successfully!': 'An ƙirƙiri kasafin kuɗin ku cikin nasara!',
         'core_Unable to load budget dashboard. Please try again.': 'An kasa loda shafin kasafin ku. Da fatan za a sake gwadawa.',
-        'core_An error occurred': 'Wani kuskure ya faru'
+        'core_An error occurred': 'Wani kuskure ya faru',
+        'budget_dashboard_subtitle': 'Takaitaccen halin kuɗin ku na yanzu.',
+        'Budget Dashboard': 'Shafin Kasafin Kuɗi',
+        'budget_no_data': 'Babu bayanan kasafin kuɗi tukuna.',
+        'budget_history': 'Tarihin Kasafin Kuɗi',
+        'budget_no_history': 'Babu tsoffin kasafin kuɗi da ake samu.',
+        'budget_tips_insights': 'Nasihu da Fahimtar Kasafin Kuɗi',
+        'budget_create_new': 'Ƙirƙiri Sabon Kasafin Kuɗi',
+        'budget_savings_progress': 'Ci Gaban Ajiyar Kuɗi',
+        'core_delete': 'Goge',
+        'Enter your monthly expenses': 'Shigar da kuɗin da kuke kashewa duk wata',
+        'Enter your monthly income': 'Shigar da kuɗin da kuke samu duk wata',
+
     }
 }
