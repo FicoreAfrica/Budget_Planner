@@ -2,6 +2,8 @@ CORE_TRANSLATIONS = {
     'en': {
         'core_home': 'Home',
         'First Name': 'First Name',
+        'core_close': 'Close',
+        'core_all': 'All',
         'Email': 'Email',
         'Please correct the errors in the form.': 'Please correct the errors in the form.',
         'core_error_occurred': 'An error occurred. Please try again later.',
@@ -583,6 +585,8 @@ CORE_TRANSLATIONS = {
         'An error occurred': 'An error occurred',
         'Please enter your first name.': 'Da fatan za a shigar da sunan ku na farko.',
         'core_budget_missing_previous_steps': 'Da fatan za a kammala matakai na baya don saita kasafin ku.',
+        'core_close': 'Rufe',
+        'core_all': 'Dukansu',
 
         # Already previously requested keys (add if not already present)
         'Failed to send the financial health report to your email.': 'An kasa aikawa da rahoton lafiyar kuɗi zuwa imel ɗinka.',
