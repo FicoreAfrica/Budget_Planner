@@ -1,7 +1,7 @@
 import logging
 import os
 import sys
-from flask import Flask, jsonify, render_template, request, session, redirect, url_for, flash, send_from_directory, has_request_context, g, current_app 
+from flask import Flask, jsonify, render_template, request, session, redirect, url_for, flash, send_from_directory, has_request_context, g, current_app
 from flask_session import Session
 from flask_wtf.csrf import CSRFProtect, CSRFError
 from translations import trans
@@ -257,7 +257,9 @@ def create_app():
     def inject_translations():
         lang = session.get('language', 'en')
         def context_trans(key, **kwargs):
-            return translate(key, lang=lang, logger=g.get('logger', logger), **kwargs)
+            # Use template-provided lang if available, else fall back to session lang
+            used_lang = kwargs.pop('lang', lang)
+            return translate(key, lang=used_lang, logger=g.get('logger', logger), **kwargs)
         return {
             'trans': context_trans,
             'current_year': datetime.now().year,
