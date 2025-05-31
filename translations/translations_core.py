@@ -7,7 +7,8 @@ CORE_TRANSLATIONS = {
         'core_first_name_placeholder': 'e.g., Muhammad, Bashir, Umar',
         'core_first_name_title': 'Enter your first name to personalize your quiz results',
         'Enter your assets':'Enter your assets',:'Your personalized net worth summary',
-        'Your personalized net worth summary'
+        'required_monthly_expenses': 'Required Monthly Expenses',
+        'Decide the duration you want your emergency fund to cover.': 'Decide the duration you want your emergency fund to cover.',
         'core_email': 'Email',
         'core_email_placeholder': 'e.g., muhammad@example.com',
         'Enter your liabilities (optional)':'Enter your liabilities (optional)',
@@ -708,6 +709,8 @@ CORE_TRANSLATIONS = {
         'Enter your liabilities (optional)':'Shigar da basussukan da ake binka',
         'Your net worth calculated successfully!':'Darajar arziki ya samu!',
         'Your personalized net worth summary':'Takaitaccen bayanin darajar arzikinku',
+        'required_monthly_expenses': 'Ainihin Kuɗin da Ake Kashewa Duk Wata',
+        'Decide the duration you want your emergency fund to cover.': 'Yanke shawara kan tsawon lokacin da kuke son asusun gaggawar ku ya ɗauka.',
         
         'Select how often you monitor your spending.': 'Zaɓi sau nawa kuke lura da kuɗin da kuke kashewa.',
         'Indicate your saving habits.': 'Nuna halayen ku na tanadi.',
