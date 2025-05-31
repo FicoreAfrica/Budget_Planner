@@ -245,6 +245,10 @@ NET_WORTH_TRANSLATIONS = {
         'net_worth_review_property_values_periodically_with_local_experts': 'Review property values periodically with local experts.',
         'net_worth_pay_off_mobile_money_loans_early_to_avoid_high_interest': 'Pay off mobile money loans early to avoid high interest.',
         'net_worth_diversify_investments_beyond_farming_for_stability': 'Diversify investments beyond farming for stability.',
+        'Enter your assets': 'Enter your assets',
+        'Enter your liabilities (optional)': 'Enter your liabilities (optional)',
+        'Your net worth calculated successfully!': 'Your net worth calculated successfully!',
+        'Your personalized net worth summary': 'Your personalized net worth summary'
     },
     'ha': {
         # From translations_translations_net_worth.py
@@ -491,6 +495,10 @@ NET_WORTH_TRANSLATIONS = {
         'net_worth_track_your_ajo/esusu/adashe_contributions_monthly': 'Bibiyar gudummawar ku ta Ajo/Esusu/Adashe duk wata.',
         'net_worth_review_property_values_periodically_with_local_experts': 'Duba ƙimar kadarori lokaci-lokaci tare da ƙwararrun yankin.',
         'net_worth_pay_off_mobile_money_loans_early_to_avoid_high_interest': 'Biya basussukan kuɗin wayar hannu da wuri don guje wa babban riba.',
-        'net_worth_diversify_investments_beyond_farming_for_stability': 'Bambanta saka hannun jari fiye da noma don samun kwanciyar hankali.'
+        'net_worth_diversify_investments_beyond_farming_for_stability': 'Bambanta saka hannun jari fiye da noma don samun kwanciyar hankali.',
+        'Enter your assets': 'Shigar da kadarorin ku',
+        'Enter your liabilities (optional)': 'Shigar da abubuwan da ake bin ku (ba dole ba)',
+        'Your net worth calculated successfully!': 'An ƙididdige ƙimar dukiyar ku cikin nasara!',
+        'Your personalized net worth summary': 'Takaitaccen ƙimar dukiyar ku na musamman'
     }
 }
