@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block title %}
-{{ trans('quiz_your_financial_personality_results', lang=language) }}
+    {{ trans('quiz_your_financial_personality_results', default='Your Financial Personality Results', lang=language) }}
 {% endblock %}
 {% block extra_head %}
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
@@ -9,19 +9,19 @@
 <div class="container">
     {% set tool_name = 'quiz_your_financial_personality_results' %}
     {% set tool_icon = 'fa-user-circle' %}
-    {% set subtitle = trans('quiz_your_financial_personality_results_subtitle', lang=language, default='Discover your financial personality and insights') %}
+    {% set subtitle = trans('quiz_your_financial_personality_results_subtitle', default='Discover your financial personality and insights', lang=language) %}
     {% include 'tool_header.html' %}
     <div class="card mb-4">
         <div class="card-body">
-            <p><strong>{{ trans('core_first_name', lang=language) }}</strong>: {{ latest_record.first_name }}</p>
-            <p><strong>{{ trans('quiz_your_personality', lang=language) }}</strong>: {{ trans('quiz_' + latest_record.personality.lower() + '_description', lang=language) }}</p>
-            <p><strong>{{ trans('quiz_score', lang=language) }}</strong>: {{ latest_record.score }} / 30</p>
-            <p><strong>{{ trans('core_created_at', lang=language) }}</strong>: {{ latest_record.created_at }}</p>
+            <p><strong>{{ trans('core_first_name', default='First Name', lang=language) }}</strong>: {{ latest_record.first_name }}</p>
+            <p><strong>{{ trans('quiz_your_personality', default='Your Personality', lang=language) }}</strong>: {{ trans('quiz_' + latest_record.personality.lower() + '_description', default=latest_record.personality, lang=language) }}</p>
+            <p><strong>{{ trans('quiz_score', default='Score', lang=language) }}</strong>: {{ latest_record.score }} / 30</p>
+            <p><strong>{{ trans('core_created_at', default='Created At', lang=language) }}</strong>: {{ latest_record.created_at }}</p>
         </div>
     </div>
     <div class="card mb-4">
         <div class="card-body">
-            <h3><i class="fas fa-trophy"></i> {{ trans('quiz_badges', lang=language) }}</h3>
+            <h3><i class="fas fa-trophy"></i> {{ trans('quiz_badges', default='Badges', lang=language) }}</h3>
             {% if latest_record.badges %}
                 <div>
                     {% for badge in latest_record.badges %}
@@ -29,31 +29,17 @@
                     {% endfor %}
                 </div>
             {% else %}
-                <p>{{ trans('quiz_no_badges', lang=language, default='No badges earned yet') }}</p>
+                <p>{{ trans('quiz_no_badges', default='No badges earned yet', lang=language) }}</p>
             {% endif %}
         </div>
     </div>
     <div class="card mb-4">
         <div class="card-body">
-            <h3><i class="fas fa-tools"></i> {{ trans('quiz_recommended_tools', lang=language) }}</h3>
-            {% if latest_record.resources %}
-                <div class="resources">
-                    {% for resource in latest_record.resources %}
-                        <a href="{{ base_url + resource.url }}">{{ trans(resource.label, lang=language) }}</a>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <p>{{ trans('quiz_no_quiz_data_available', lang=language) }}</p>
-            {% endif %}
-        </div>
-    </div>
-    <div class="card mb-4">
-        <div class="card-body">
-            <h3><i class="fas fa-lightbulb"></i> {{ trans('quiz_insights', lang=language) }}</h3>
+            <h3><i class="fas fa-lightbulb"></i> {{ trans('quiz_insights', default='Insights', lang=language) }}</h3>
             <div class="insights-box">
                 <ul>
                     {% for insight in insights %}
-                        <li>{{ trans('quiz_' + insight.lower().replace(' ', '_'), lang=language, default=insight) }}</li>
+                        <li>{{ insight }}</li>
                     {% endfor %}
                 </ul>
             </div>
@@ -61,21 +47,18 @@
     </div>
     <div class="card mb-4">
         <div class="card-body">
-            <h3><i class="fas fa-rocket"></i> {{ trans('quiz_tips_for_improving_financial_habits', lang=language) }}</h3>
+            <h3><i class="fas fa-rocket"></i> {{ trans('quiz_tips_for_improving_financial_habits', default='Tips for Improving Financial Habits', lang=language) }}</h3>
             <ul>
                 {% for tip in tips %}
-                    <li>{{ trans('quiz_' + tip.lower().replace(' ', '_'), lang=language, default=tip) }}</li>
+                    <li>{{ tip }}</li>
                 {% endfor %}
             </ul>
         </div>
     </div>
     <div class="card mb-4">
         <div class="card-body">
-            <a href="{{ base_url }}/quiz/step1?course_id={{ course_id }}" class="btn btn-primary">
-                <i class="fas fa-redo"></i> {{ trans('quiz_retake_quiz', lang=language) }}
-            </a>
-            <a href="{{ base_url }}/quiz/history?course_id={{ course_id }}" class="btn btn-secondary">
-                <i class="fas fa-history"></i> {{ trans('quiz_history', lang=language) }}
+            <a href="{{ url_for('quiz.step1', course_id=course_id) }}" class="btn btn-primary">
+                <i class="fas fa-redo"></i> {{ trans('quiz_retake_quiz', default='Retake Quiz', lang=language) }}
             </a>
         </div>
     </div>
