@@ -7,7 +7,7 @@ from datetime import datetime
 import pandas as pd
 import logging
 from translations import trans
-from mailersend_email import send_tool_email  # Import for email sending
+from mailersend_email import send_email  # Import for email sending
 
 # Configure logging
 logger = logging.getLogger('ficore_app')
@@ -343,8 +343,9 @@ def results():
     # Send email if user opted in
     if quiz_data.get('send_email') and quiz_data.get('email'):
         try:
-            send_tool_email(
-                tool_name='quiz',
+            send_email(
+                app=current_app,
+                logger=current_app.logger,
                 to_email=quiz_data['email'],
                 subject=trans("quiz_results_summary", lang=language, default="Your Quiz Results"),
                 template_name="quiz_email.html",
@@ -352,7 +353,7 @@ def results():
                     "first_name": results['first_name'],
                     "score": results['score'],
                     "personality": results['personality'],
-                    "badges": results Ascendingly('quiz_bp', results['badges']),
+                    "badges": results['badges'],  # Removed erroneous Ascendingly('quiz_bp', ...)
                     "insights": results.get('insights', []),
                     "tips": results.get('tips', []),
                     "created_at": results['created_at'],
@@ -362,6 +363,7 @@ def results():
             )
         except Exception as e:
             current_app.logger.error(f"Failed to send quiz results email: {str(e)}")
+            flash(trans("email_send_failed", lang=language), "warning")
     
     # Clear session data
     session.pop('quiz_data', None)
