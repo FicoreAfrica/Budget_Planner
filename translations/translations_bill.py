@@ -3,7 +3,12 @@ BILL_TRANSLATIONS = {
         # From previously merged dictionary
         'bill_amount': 'Amount',
         'bill_amount_required': 'Valid amount is required',
+        'bill_Your budget has been created successfully!': 'Your budget has been created successfully!',
+        'bill_Tip: Include your Ajo/Esusu contributions in your savings plan.': 'Tip: Include your Ajo/Esusu contributions in your savings plan.',
+        'bill_Consider the cost of your data and other subscriptions when budgeting for communication.': 'Consider the cost of your data and other subscriptions when budgeting for communication.',
+        'bill_Remember to account for the needs and expenses of your dependents in your budget.': 'Remember to account for the needs and expenses of your dependents in your budget.',
         'bill_bill_added_dynamic': 'Bill for {bill_name} added!',
+        'bill_Keep tracking your expenses every month.': 'Keep tracking your expenses every month.',
         'bill_no_bills_empty_state': 'No bills added yet. Start by adding one!',
         'bill_confirm_delete_prompt': 'Are you sure you want to delete this bill?',
         'bill_budget_budget_completed_success': 'Your budget and bills have been successfully set up!',
@@ -886,6 +891,10 @@ BILL_TRANSLATIONS = {
         'bill_add_another_bill': 'Ƙara Wani Kuɗi',
         'bill_back_to_index': 'Komawa Shafin Farko',
         'bill_budget_budget_completed_success': 'An yi nasarar saita kasafin kuɗin ku da kuɗaɗen da ake bi!',
+        'bill_Your budget has been created successfully!': 'An ƙirƙiri kasafin kuɗin ku cikin nasara!',
+        'bill_Tip: Include your Ajo/Esusu contributions in your savings plan.': 'Shawara: Saka gudummawar ku ta Ajo/Esusu a cikin tsarin ajiyar ku.',
+        'bill_Consider the cost of your data and other subscriptions when budgeting for communication.': 'Yi la\'akari da farashin data ɗin ku da sauran biyan kuɗi yayin tsara kasafin kuɗin sadarwa.',
+        'bill_Remember to account for the needs and expenses of your dependents in your budget.': 'Ku tuna ku yi la\'akari da buƙatu da kashe kuɗin waɗanda kuke kulawa a cikin kasafin ku.',
 
         # Tips
         'bill_tip_pay_early': 'Biya takardun biya da wuri don guje wa kuɗin jinkiri. Yi amfani da kuɗin waya don biya cikin sauri.',
