@@ -9,6 +9,7 @@ CORE_TRANSLATIONS = {
         'Enter your assets':'Enter your assets',
         'core_email': 'Email',
         'core_email_placeholder': 'e.g., muhammad@example.com',
+        'Enter your liabilities (optional)':'Enter your liabilities (optional)',
         'Kuskure ya faru': 'Kuskure ya faru',
         'core_email_title': 'Enter your email to receive quiz results',
         'An error occurred': 'An error occurred',
@@ -702,6 +703,7 @@ CORE_TRANSLATIONS = {
         'Enter Your Personal Information': 'Shigar da Bayanan Ka',
         'An error occurred': 'Kuskure ya faru',
         'Enter your assets':'Shigar da Kadarorinka',
+        'Enter your liabilities (optional)':'Shigar da basussukan da ake binka',
         
         'Select how often you monitor your spending.': 'Zaɓi sau nawa kuke lura da kuɗin da kuke kashewa.',
         'Indicate your saving habits.': 'Nuna halayen ku na tanadi.',
