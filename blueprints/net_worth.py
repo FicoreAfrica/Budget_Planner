@@ -232,6 +232,8 @@ def step3():
             if send_email_flag and email:
                 try:
                     send_email(
+                        app=current_app,
+                        logger=current_app.logger,
                         to_email=email,
                         subject=trans("net_worth_net_worth_summary", lang=lang),
                         template_name="net_worth_email.html",
@@ -250,8 +252,8 @@ def step3():
                         },
                         lang=lang
                     )
-                except Exception as email_error:
-                    current_app.logger.warning(f"Failed to send net worth email: {str(email_error)}", extra={'session_id': session['sid']})
+                except Exception as e:
+                    current_app.logger.error(f"Failed to send email: {str(e)}")
                     flash(trans("net_worth_email_failed", lang=lang), "warning")
 
             flash(trans("net_worth_success", lang=lang), "success")
