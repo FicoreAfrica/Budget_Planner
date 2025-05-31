@@ -8,6 +8,7 @@ from datetime import datetime
 import pandas as pd
 import threading
 import logging
+from copy import deepcopy
 from translations import trans
 
 # Configure logging
@@ -121,10 +122,19 @@ def init_quiz_questions(app):
     """Initialize QUIZ_QUESTIONS with IDs and keys."""
     global QUIZ_QUESTIONS
     with app.app_context():
+        if not QUIZ_QUESTIONS:
+            logger.error("QUIZ_QUESTIONS is empty. Cannot initialize.")
+            return
+        quiz_questions_copy = deepcopy(QUIZ_QUESTIONS)
         for i, key in enumerate(QUESTION_KEYS):
-            QUIZ_QUESTIONS[i]['id'] = f'question_{i+1}'
-            QUIZ_QUESTIONS[i]['key'] = key
-        logger.debug(f"Initialized QUIZ_QUESTIONS: {[q['id'] for q in QUIZ_QUESTIONS]}")
+            if i >= len(quiz_questions_copy):
+                logger.error(f"QUESTION_KEYS length ({len(QUESTION_KEYS)}) exceeds QUIZ_QUESTIONS length ({len(quiz_questions_copy)})")
+                break
+            quiz_questions_copy[i]['id'] = f'question_{i+1}'
+            quiz_questions_copy[i]['key'] = key
+            logger.debug(f"Assigned id: {quiz_questions_copy[i]['id']} and key: {key} to question {i+1}")
+        QUIZ_QUESTIONS = quiz_questions_copy
+        logger.info(f"Initialized QUIZ_QUESTIONS: {[q.get('id', 'MISSING') for q in QUIZ_QUESTIONS]}")
 
 # Define the QuizForm
 class QuizForm(FlaskForm):
@@ -162,7 +172,7 @@ class QuizForm(FlaskForm):
     def __init__(self, questions=None, language='en', formdata=None, personal_info=True, **kwargs):
         super().__init__(formdata=formdata, **kwargs)
         self.questions = questions or []
-        logger.debug(f"Initializing QuizForm with personal_info={personal_info}, questions: {[q['id'] for q in self.questions]}, formdata={formdata}")
+        logger.debug(f"Initializing QuizForm with personal_info={personal_info}, questions: {[q.get('id', 'MISSING') for q in self.questions]}, formdata={formdata}")
 
         if not personal_info:
             for q in self.questions:
@@ -387,6 +397,12 @@ def step2a():
         flash(trans('quiz_config_error', default='Quiz configuration error. Please try again later.'), 'danger')
         return redirect(url_for('index'))
 
+    # Check if QUIZ_QUESTIONS is initialized with IDs
+    if not all('id' in q for q in QUIZ_QUESTIONS):
+        logger.error(f"QUIZ_QUESTIONS not properly initialized: {[q for q in QUIZ_QUESTIONS if 'id' not in q]}")
+        flash(trans('quiz_config_error', default='Quiz configuration error. Please try again later.'), 'danger')
+        return redirect(url_for('index'))
+
     try:
         if 'sid' not in session or 'quiz_data' not in session:
             flash(trans('session_expired', default='Session expired. Please start again.'), 'danger')
@@ -399,8 +415,12 @@ def step2a():
     language = session.get('language', 'en')
     course_id = request.args.get('course_id', 'financial_quiz')
 
-    preprocessed_questions = [
-        {
+    preprocessed_questions = []
+    for q in QUIZ_QUESTIONS[:5]:
+        if 'id' not in q:
+            logger.error(f"Question missing 'id': {q}")
+            continue
+        preprocessed_questions.append({
             'id': q['id'],
             'key': q.get('key', ''),
             'text_key': q.get('text_key', ''),
@@ -414,9 +434,12 @@ def step2a():
             'weight': q.get('weight', 1),
             'tooltip': trans(f"quiz_{q.get('key', '')}_tooltip", default=''),
             'placeholder': trans(f"quiz_{q.get('key', '')}_placeholder", default='Select an option')
-        }
-        for q in QUIZ_QUESTIONS[:5]
-    ]
+        })
+
+    if not preprocessed_questions:
+        logger.error("No valid questions available for step2a.")
+        flash(trans('quiz_config_error', default='Quiz configuration error. Please try again later.'), 'danger')
+        return redirect(url_for('quiz.step1', course_id=course_id))
 
     form = QuizForm(questions=preprocessed_questions, language=language, personal_info=False, formdata=request.form if request.method == 'POST' else None)
     form.submit.label.text = trans('core_continue', default='Continue')
@@ -477,6 +500,12 @@ def step2b():
         flash(trans('quiz_config_error', default='Quiz configuration error. Please try again later.'), 'danger')
         return redirect(url_for('index'))
 
+    # Check if QUIZ_QUESTIONS is initialized with IDs
+    if not all('id' in q for q in QUIZ_QUESTIONS):
+        logger.error(f"QUIZ_QUESTIONS not properly initialized: {[q for q in QUIZ_QUESTIONS if 'id' not in q]}")
+        flash(trans('quiz_config_error', default='Quiz configuration error. Please try again later.'), 'danger')
+        return redirect(url_for('index'))
+
     try:
         if 'sid' not in session or 'quiz_data' not in session:
             flash(trans('session_expired', default='Session expired. Please start again.'), 'danger')
@@ -489,8 +518,12 @@ def step2b():
     language = session.get('language', 'en')
     course_id = request.args.get('course_id', 'financial_quiz')
 
-    preprocessed_questions = [
-        {
+    preprocessed_questions = []
+    for q in QUIZ_QUESTIONS[5:10]:
+        if 'id' not in q:
+            logger.error(f"Question missing 'id': {q}")
+            continue
+        preprocessed_questions.append({
             'id': q['id'],
             'key': q.get('key', ''),
             'text_key': q.get('text_key', ''),
@@ -504,9 +537,12 @@ def step2b():
             'weight': q.get('weight', 1),
             'tooltip': trans(f"quiz_{q.get('key', '')}_tooltip", default=''),
             'placeholder': trans(f"quiz_{q.get('key', '')}_placeholder", default='Select an option')
-        }
-        for q in QUIZ_QUESTIONS[5:10]
-    ]
+        })
+
+    if not preprocessed_questions:
+        logger.error("No valid questions available for step2b.")
+        flash(trans('quiz_config_error', default='Quiz configuration error. Please try again later.'), 'danger')
+        return redirect(url_for('quiz.step1', course_id=course_id))
 
     form = QuizForm(questions=preprocessed_questions, language=language, personal_info=False, formdata=request.form if request.method == 'POST' else None)
     form.submit.label.text = trans('quiz_see_results', default='See Results')
