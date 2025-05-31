@@ -4,6 +4,7 @@ CORE_TRANSLATIONS = {
         'First Name': 'First Name',
         'Email': 'Email',
         'Please correct the errors in the form.': 'Please correct the errors in the form.',
+        'core_budget_missing_previous_steps': 'Please complete the previous steps to set up your budget.',
         'Personal Information': 'Personal Information',
         'An error occurred': 'An error occurred',
         'This field is required.': 'This field is required.',
@@ -577,6 +578,7 @@ CORE_TRANSLATIONS = {
         'Please correct the errors in the form.': 'Da fatan za a gyara kurakuran da ke cikin fom ɗin.',
         'This field is required.': 'Wannan filin wajibi ne.',
         'An error occurred': 'An error occurred',
+        'core_budget_missing_previous_steps': 'Da fatan za a kammala matakai na baya don saita kasafin ku.',
 
         # Already previously requested keys (add if not already present)
         'Failed to send the financial health report to your email.': 'An kasa aikawa da rahoton lafiyar kuɗi zuwa imel ɗinka.',
