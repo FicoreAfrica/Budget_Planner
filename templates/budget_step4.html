@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}{{ trans('budget_budget_planner') | default('Budget Planner') }}{% endblock %}
 {% block content %}
-<div class="container form-container">
+<div class="container step-container">
     {% set tool_name = trans('budget_budget_planner') | default('Budget Planner') %}
     {% set tool_icon = 'fa-calculator' %}
     {% set subtitle = trans('budget_set_monthly_savings_goal') | default('Set your monthly savings goal') %}
