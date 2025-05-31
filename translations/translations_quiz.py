@@ -3,6 +3,16 @@
 QUIZ_TRANSLATIONS = {
     'en': {
         'quiz_financial_personality_quiz': 'Financial Personality Quiz',
+        'quiz_enter_personal_information': 'Enter your personal information',
+        'quiz_progress': 'Quiz Progress',
+        'core_close': 'Close',
+        'quiz_form_errors': 'Please correct the errors in the form.',
+        'quiz_back_to_home': 'Back to Home',
+        'quiz_start_quiz': 'Start Quiz',
+        'quiz_step_progress': 'Step {current} of {total}',
+        'quiz_questions_part1': 'Questions: Part 1',
+        'quiz_questions_part2': 'Questions: Part 2',
+        'quiz_choose_an_option': 'Choose an option',
         'quiz_back_to_home':'Back to Home',
         'quiz_enter_personal_information': 'Enter your personal information',
         'quiz_answer_questions_for_personality': 'Answer these questions to discover your financial personality',
@@ -341,7 +351,17 @@ QUIZ_TRANSLATIONS = {
         'quiz_your_answers': 'Amsoshin Ku',
         'quiz_score': 'Maki',
         'quiz_questions': 'Tambayoyi',
-        'quiz_back_to_home':'Koma Pejin Farko'
+        'quiz_back_to_home':'Koma Pejin Farko',
+        'quiz_enter_personal_information': 'Shigar da bayanan ku na sirri',
+        'quiz_progress': 'Ci gaban Tambayoyi',
+        'core_close': 'Rufe',
+        'quiz_form_errors': 'Da fatan za a gyara kurakuran da ke cikin fom ɗin.',
+        'quiz_back_to_home': 'Komawa Gida',
+        'quiz_start_quiz': 'Fara Tambayoyi',
+        'quiz_step_progress': 'Mataki {current} na {total}',
+        'quiz_questions_part1': 'Tambayoyi: Sashe na 1',
+        'quiz_questions_part2': 'Tambayoyi: Sashe na 2',
+        'quiz_choose_an_option': 'Zaɓi zaɓi'
     }
 }
 
