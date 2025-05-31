@@ -7,6 +7,7 @@ QUIZ_TRANSLATIONS = {
         'quiz_progress': 'Quiz Progress',
         'core_close': 'Close',
         'quiz_form_errors': 'Please correct the errors in the form.',
+        'quiz_start':'Start Quiz',
         'quiz_back_to_home': 'Back to Home',
         'quiz_start_quiz': 'Start Quiz',
         'quiz_step_progress': 'Step {current} of {total}',
@@ -361,7 +362,9 @@ QUIZ_TRANSLATIONS = {
         'quiz_step_progress': 'Mataki {current} na {total}',
         'quiz_questions_part1': 'Tambayoyi: Sashe na 1',
         'quiz_questions_part2': 'Tambayoyi: Sashe na 2',
-        'quiz_choose_an_option': 'Zaɓi zaɓi'
+        'quiz_choose_an_option': 'Zaɓi zaɓi',
+        'quiz_start':'Fara Quiz',
+        'An error occurred':'An error occurred'
     }
 }
 
