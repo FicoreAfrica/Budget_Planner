@@ -320,6 +320,8 @@ def step4():
                 if step1_data['email_opt_in'] and step1_data['email']:
                     try:
                         send_email(
+                            app=current_app,
+                            logger=current_app.logger,
                             to_email=step1_data['email'],
                             subject=trans('emergency_fund_email_subject', lang=lang, default='Your Emergency Fund Plan'),
                             template_name="emergency_fund_email.html",
@@ -343,13 +345,15 @@ def step4():
                             },
                             lang=lang
                         )
-                    except Exception as email_error:
-                        current_app.logger.error(f"Failed to send email: {email_error}")
+                    except Exception as e:
+                        current_app.logger.error(f"Failed to send email: {str(e)}")
+                        flash(trans("email_send_failed", lang=lang), "warning")
                 
                 # Store step 4 data in session
                 session['emergency_fund_step4'] = {
                     'timeline': months
-                }
+                
+```python
                 session.modified = True
                 
                 flash(trans('emergency_fund_completed_successfully', lang=lang, default='Emergency fund calculation completed successfully!'), 'success')
