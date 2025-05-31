@@ -160,7 +160,7 @@
 {
   "type": "pie",
   "data": {
-    "labels": {{ categories.keys() | tojson }},
+    "labels": {{ categories.keys() | list | tojson }},
     "datasets": [{
       "data": {{ categories.values() | tojson }},
       "backgroundColor": [
