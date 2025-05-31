@@ -1,22 +1,5 @@
 QUIZ_TRANSLATIONS = {
     'en': {
-        # Core UI elements
-        'core_first_name': 'First Name',
-        'core_first_name_placeholder': 'e.g., Muhammad, Bashir, Umar',
-        'core_first_name_title': 'Enter your first name to personalize your quiz results',
-        'core_email': 'Email',
-        'core_email_placeholder': 'e.g., muhammad@example.com',
-        'core_email_title': 'Enter your email to receive quiz results',
-        'core_language': 'Language',
-        'core_language_en': 'English',
-        'core_language_ha': 'Hausa',
-        'core_send_email': 'Send Email',
-        'core_send_email_title': 'Check to receive an email with your quiz results',
-        'core_next': 'Next',
-        'core_back': 'Back',
-        'core_continue': 'Continue',
-        'core_close': 'Close',
-        'core_created_at': 'Created At',
         # Quiz-specific
         'An error occurred. Please try again.': 'An error occurred. Please try again.',
         'Kuskure ya faru': 'An error occurred',
@@ -99,23 +82,6 @@ QUIZ_TRANSLATIONS = {
         'badge_first_quiz_desc': 'Completed your first financial quiz.',
     },
     'ha': {
-        # Core UI elements
-        'core_first_name': 'Sunan Farko',
-        'core_first_name_placeholder': 'Misali, Muhammad, Bashir, Umar',
-        'core_first_name_title': 'Shigar da sunanka na farko don keɓance sakamakon tambayoyinka',
-        'core_email': 'Imel',
-        'core_email_placeholder': 'Misali, muhammad@example.com',
-        'core_email_title': 'Shigar da imel ɗinka don karɓar sakamakon tambayoyinka',
-        'core_language': 'Yare',
-        'core_language_en': 'Turanci',
-        'core_language_ha': 'Hausa',
-        'core_send_email': 'Aika Imel',
-        'core_send_email_title': 'Zaɓi don karɓar imel tare da sakamakon tambayoyinka',
-        'core_next': 'Na Gaba',
-        'core_back': 'Koma',
-        'core_continue': 'Ci Gaba',
-        'core_close': 'Rufe',
-        'core_created_at': 'An Ƙirƙira A',
         # Quiz-specific
         'quiz_financial_personality_quiz': 'Tambayoyin Halin Kuɗi',
         'quiz_your_financial_personality_results': 'Sakamakon Halin Kuɗin Ka',
