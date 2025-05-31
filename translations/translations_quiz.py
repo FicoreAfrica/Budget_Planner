@@ -5,6 +5,13 @@ QUIZ_TRANSLATIONS = {
         'Kuskure ya faru': 'An error occurred',
         'quiz_step_progress': 'Step {step_num} of {total_steps}',  # Updated to named placeholders
         'Enter Your Personal Information': 'Enter Your Personal Information',
+        'Step 3 of 3': 'Step 3 of 3',
+        'See Results': 'See Results',
+        'badge_financial_guru': 'Financial Guru',
+        'badge_financial_guru_desc': 'Completed the financial personality quiz with a strong understanding.',
+        'badge_first_quiz': 'First Quiz Taker',
+        'badge_first_quiz_desc': 'Completed their first financial personality quiz.',
+        'Discover your financial personality and insights': 'Discover your financial personality and insights',
         'quiz_personality_quiz': 'Financial Personality Quiz',
         'quiz_assess_literacy': 'Assess your financial literacy and personality.',
         'quiz_start_personality_quiz': 'Start Personality Quiz',
@@ -161,5 +168,12 @@ QUIZ_TRANSLATIONS = {
         'quiz_start_personality_quiz': 'Fara Gwajin Halaye',
         'Kuskure ya faru': 'Kuskure ya faru',
         'Shigar da Bayanan Ka': 'Shigar da Bayanan Ka',
+        'Step 3 of 3': 'Mataki na 3 cikin 3',
+        'See Results': 'Duba Sakamako',
+        'badge_financial_guru': 'Gwarzon Kuɗi',
+        'badge_financial_guru_desc': 'An kammala gwajin halayen kuɗi tare da fahimta mai ƙarfi.',
+        'badge_first_quiz': 'Wanda Ya Fara Ɗaukar Gwaji',
+        'badge_first_quiz_desc': 'An kammala gwajin halayen kuɗi na farko.',
+        'Discover your financial personality and insights': 'Gano halayen ku na kuɗi da fahimta',
     }
 }
