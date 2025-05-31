@@ -10,6 +10,7 @@ CORE_TRANSLATIONS = {
         'Your personalized net worth summary':'Your personalized net worth summary',
         'Your emergency fund goal was set successfully!': 'Your emergency fund goal was set successfully!',
         'required_risk_tolerance': 'Required Risk Tolerance',
+        'Budget missing previous steps' :'Budget missing previous steps',
         'core_months': 'months',
         'core_not_provided': 'Not provided',
         'required_timeline': 'Required Timeline',
@@ -724,6 +725,7 @@ CORE_TRANSLATIONS = {
         'Define your savings target and expected completion date.': 'Ƙayyade burin ajiyar ku da ranar kammalawa da kuke tsammani.',
         'Your emergency fund goal was set successfully!': 'An saita burin ku na asusun gaggawa cikin nasara!',
         'core_months': 'watanni',
+        'Budget missing previous steps':'Tsarin Baya ya bace',
         
         'Select how often you monitor your spending.': 'Zaɓi sau nawa kuke lura da kuɗin da kuke kashewa.',
         'Indicate your saving habits.': 'Nuna halayen ku na tanadi.',
