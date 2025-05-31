@@ -1,29 +1,29 @@
 import logging
 import os
 import sys
-import json
-import uuid
-from datetime import datetime, timedelta
-from flask import Flask, render_template, request, session, redirect, url_for, flash, send_from_directory, has_request_context, g, jsonify, current_app
+from flask import Flask, jsonify, render_template, request, session, redirect, url_for, flash, send_from_directory, has_request_context, g
 from flask_session import Session
 from flask_wtf.csrf import CSRFProtect, CSRFError
 from translations import trans
 from blueprints.financial_health import financial_health_bp
 from blueprints.budget import budget_bp
-from blueprints.quiz import quiz_bp, init_quiz_questions
+from blueprints.quiz import quiz_bp
 from blueprints.bill import bill_bp
-from blueprints.net_worth import net_worth_bp, init_storage
+from blueprints.net_worth import net_worth_bp
 from blueprints.emergency_fund import emergency_fund_bp
 from blueprints.learning_hub import learning_hub_bp
 from json_store import JsonStorage
 from jinja2 import environment
+import json
+import uuid
+from datetime import datetime, timedelta
 
 # Constants
 SAMPLE_COURSES = [
     {
-        'id': 'budgeting_101',
+        'id': 'budgeting_learning_101',
         'title_key': 'learning_hub_course_budgeting101_title',
-        'title_en': 'Budgeting 101',
+        'title_en': 'Budgeting Learning 101',
         'title_ha': 'Tsarin Kudi 101',
         'description_en': 'Learn the basics of budgeting.',
         'description_ha': 'Koyon asalin tsarin kudi.',
@@ -213,9 +213,6 @@ def create_app():
         logger.info("Starting data initialization")
         initialize_courses_data(app)
         logger.info("Completed data initialization")
-        # Initialize quiz questions
-        init_quiz_questions(app)
-        logger.info("Initialized quiz questions")
 
     def translate(key, lang='en', logger=logger, **kwargs):
         translation = trans(key, lang=lang, **kwargs)
