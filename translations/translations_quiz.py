@@ -18,6 +18,10 @@ QUIZ_TRANSLATIONS = {
         'core_close': 'Close',
         'core_created_at': 'Created At',
         # Quiz-specific
+        'An error occurred. Please try again.': 'An error occurred. Please try again.',
+        'quiz_personality_quiz': 'Financial Personality Quiz',
+        'quiz_assess_literacy': 'Assess your financial literacy and personality.',
+        'quiz_start_personality_quiz': 'Start Personality Quiz',
         'quiz_financial_personality_quiz': 'Financial Personality Quiz',
         'quiz_your_financial_personality_results': 'Your Financial Personality Results',
         'quiz_your_financial_personality_results_subtitle': 'Discover your financial personality and insights',
@@ -182,6 +186,10 @@ QUIZ_TRANSLATIONS = {
         'badge_savings_star_desc': 'An gane shi saboda halayen ajiya akai-akai.',
         'badge_first_quiz': 'An Kammala Tambayoyin Farko',
         'badge_first_quiz_desc': 'Ka kammala tambayoyin kuɗi na farko.',
+        'An error occurred. Please try again.': 'Wani kuskure ya faru. Da fatan za a sake gwadawa.',
+        'quiz_personality_quiz': 'Gwaji Halayen Kuɗi',
+        'quiz_assess_literacy': 'Gwajin ilimin ku na kuɗi da halayen ku.',
+        'quiz_start_personality_quiz': 'Fara Gwajin Halaye'
     }
 }
 
