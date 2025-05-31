@@ -270,20 +270,20 @@ def step4():
                 savings_goal = step4_data.get('savings_goal', 0)
                 surplus_deficit = income - expenses - savings_goal
 
-                # FIXED: Include individual expense categories in the record
+                # FIXED: Include created_at timestamp in the record
                 record = {
                     "income": income,
                     "fixed_expenses": expenses,
                     "variable_expenses": 0,
                     "savings_goal": savings_goal,
                     "surplus_deficit": surplus_deficit,
-                    # Add individual expense categories for dashboard display
                     "housing": step3_data.get('housing', 0),
                     "food": step3_data.get('food', 0),
                     "transport": step3_data.get('transport', 0),
                     "dependents": step3_data.get('dependents', 0),
                     "miscellaneous": step3_data.get('miscellaneous', 0),
-                    "others": step3_data.get('others', 0)
+                    "others": step3_data.get('others', 0),
+                    "created_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Add timestamp
                 }
 
                 try:
