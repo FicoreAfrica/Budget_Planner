@@ -5,6 +5,7 @@ CORE_TRANSLATIONS = {
         'core_close': 'Close',
         'core_all': 'All',
         'Email': 'Email',
+        'An error occurred':'An error occurred',
         'core_Your budget has been created successfully!': 'Your budget has been created successfully!',
         'core_Unable to load budget dashboard. Please try again.': 'Unable to load budget dashboard. Please try again.',
         'rmat_currency': '₦',
@@ -642,6 +643,7 @@ CORE_TRANSLATIONS = {
         'required_first_name': 'Da fatan za a shigar da sunan ku na farko.',
         'Let’s start with a few details': 'Bari mu fara da wasu ƴan bayanai',
         'Please enter a valid email': 'Da fatan za a shigar da adireshin imel mai inganci.',
-        'Personal Information': 'Bayanan Kai'
+        'Personal Information': 'Bayanan Kai',
+        'An error occurred':'An error occurred'
     }
 }
