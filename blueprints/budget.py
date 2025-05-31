@@ -307,8 +307,9 @@ def step4():
                 send_email_flag = step1_data.get('send_email', False)
                 if send_email_flag and email:
                     try:
-                        current_app.logger.info(f"Sending email for session {session['sid']} to {email}")
                         send_email(
+                            app=current_app,
+                            logger=current_app.logger,
                             to_email=email,
                             subject=trans("budget_plan_summary") or "Your Budget Plan Summary",
                             template_name="budget_email.html",
@@ -329,9 +330,9 @@ def step4():
                             },
                             lang=lang
                         )
-                        current_app.logger.info(f"Email sent successfully for session {session['sid']}")
                     except Exception as e:
-                        current_app.logger.error(f"Email send failed for session {session['sid']}: {str(e)}")
+                        current_app.logger.error(f"Failed to send email: {str(e)}")
+                        flash(trans("email_send_failed", lang=lang), "warning")
 
                 session.pop('budget_step1', None)
                 session.pop('budget_step2', None)
