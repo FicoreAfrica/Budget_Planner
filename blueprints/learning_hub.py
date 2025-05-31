@@ -8,7 +8,7 @@ try:
 except ImportError:
     def trans(key, lang=None):
         return key
-from mailersend_email import send_tool_email  # Assuming this is available for email sending
+from mailersend_email import send_email  # Updated to import send_email
 
 learning_hub_bp = Blueprint('learning_hub', __name__)
 
@@ -264,8 +264,9 @@ def lesson(course_id, lesson_id):
             profile = session.get('learning_hub_profile', {})
             if profile.get('send_email') and profile.get('email'):
                 try:
-                    send_tool_email(
-                        tool_name='learning_hub',
+                    send_email(
+                        app=current_app,
+                        logger=current_app.logger,
                         to_email=profile['email'],
                         subject=trans("learning_hub_lesson_completed_subject", default="Lesson Completed", lang=lang),
                         template_name="learning_hub_lesson_completed.html",
@@ -280,6 +281,7 @@ def lesson(course_id, lesson_id):
                     )
                 except Exception as e:
                     current_app.logger.error(f"Failed to send email: {str(e)}")
+                    flash(trans("email_send_failed", lang=lang), "warning")
 
             next_lesson_id = None
             found = False
