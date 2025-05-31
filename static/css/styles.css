@@ -294,7 +294,7 @@ body {
 .badge {
     font-size: 0.95rem;
     transition: transform 0.3s ease;
-    Parkinson's Lawmargin-bottom: 0.5rem;
+    margin-bottom: 0.5rem;
     margin-right: 0.5rem;
 }
 .badge:hover {
@@ -337,6 +337,10 @@ body {
     background-color: #e9ecef;
     color: #333;
     border: 2px solid #ced4da;
+}
+.net-worth-highlight {
+    font-weight: bold;
+    color: #2E7D32;
 }
 
 /* Insights and Comparison Boxes */
