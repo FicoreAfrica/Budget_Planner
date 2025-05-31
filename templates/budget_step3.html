@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}{{ trans('budget_budget_planner') | default('Budget Planner') }}{% endblock %}
 {% block content %}
-<div class="container">
+<div class="container form-container">
     {% set tool_name = trans('budget_budget_planner') | default('Budget Planner') %}
     {% set tool_icon = 'fa-calculator' %}
     {% set subtitle = trans('budget_enter_monthly_expenses') | default('Let’s start with a few details') %}
@@ -14,7 +14,7 @@
             {% for category, message in messages %}
                 <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
                     {{ trans('core_' + message) | default(message) }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close') | default('Close') }}</button>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close') | default('Close') }}"></button>
                 </div>
             {% endfor %}
         {% endif %}
@@ -50,8 +50,7 @@
                 </div>
                 <div class="mb-3">
                     <label class="form-label">{{ trans('budget_others') | default('Others') }}</label>
-                    {{ form.others(class="form-control", placeholder=trans('budget_others_placeholder') | default('e.g., 15,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('budget_others_tooltip') | default('Other no
-n-specific expenses'), 'aria-describedby': 'others_help'}) }}
+                    {{ form.others(class="form-control", placeholder=trans('budget_others_placeholder') | default('e.g., 15,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('budget_others_tooltip') | default('Other non-specific expenses'), 'aria-describedby': 'others_help'}) }}
                     <div class="invalid-feedback">{{ trans('budget_others_required') | default('Other expenses are required') }}</div>
                 </div>
                 <div class="d-flex justify-content-between">
