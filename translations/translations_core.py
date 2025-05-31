@@ -8,6 +8,9 @@ CORE_TRANSLATIONS = {
         'Please correct the errors in the form.': 'Please correct the errors in the form.',
         'core_error_occurred': 'An error occurred. Please try again later.',
         'core_budget_missing_previous_steps': 'Please complete the previous steps to set up your budget.',
+        'core_language': 'Language',
+        'core_language_en': 'English',
+        'core_language_ha': 'Hausa',
         'Please enter your first name.': 'Please enter your first name.',
         'Personal Information': 'Personal Information',
         'An error occurred': 'An error occurred',
@@ -587,6 +590,9 @@ CORE_TRANSLATIONS = {
         'core_budget_missing_previous_steps': 'Da fatan za a kammala matakai na baya don saita kasafin ku.',
         'core_close': 'Rufe',
         'core_all': 'Dukansu',
+        'core_language': 'Zabi Yare',
+        'core_language_en': 'English',
+        'core_language_ha': 'Hausa',
 
         # Already previously requested keys (add if not already present)
         'Failed to send the financial health report to your email.': 'An kasa aikawa da rahoton lafiyar kuɗi zuwa imel ɗinka.',
