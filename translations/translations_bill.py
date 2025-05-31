@@ -4,6 +4,7 @@ BILL_TRANSLATIONS = {
         'bill_amount': 'Amount',
         'bill_Pay bills early to avoid late fees. Use mobile money for quick payments.': 'Pay bills early to avoid late fees. Use mobile money for quick payments.',
         'bill_Switch to energy-efficient utilities to save money.': 'Switch to energy-efficient utilities to save money.',
+        'bill_bill_added_dynamic_dashboard": "Successfully added {bill_name}. Check your list of bills on the <a href='{dashboard_url}'>dashboard</a>.',
         'bill_Plan monthly bills to manage your budget better.': 'Plan monthly bills to manage your budget better.',
         'bill_Set up Ajo/Esusu/Adashe reminders to never miss a contribution.': 'Set up Ajo/Esusu/Adashe reminders to never miss a contribution.',
         'bill_Top up your data in bundles to save costs.': 'Top up your data in bundles to save costs.',
@@ -890,6 +891,8 @@ BILL_TRANSLATIONS = {
         'bill_Plan monthly bills to manage your budget better.': 'Tsara kuɗin da za ku biya duk wata don inganta kasafin kuɗin ku.',
         'bill_Set up Ajo/Esusu/Adashe reminders to never miss a contribution.': 'Saita tunatarwa na Ajo/Esusu/Adashe don kada ku taɓa rasa gudunmawa.',
         'bill_Top up your data in bundles to save costs.': 'Ƙara kuɗin data ɗinku a cikin fakiti don adana kuɗi.',
+        'bill_bill_added_dynamic_dashboard": "An adana maka {bill_name}. Duba dukkan ajiyarka <a href='{dashboard_url}'>dashboard</a>.',
+
 
         # Action Buttons
         'bill_edit': 'Gyara',
