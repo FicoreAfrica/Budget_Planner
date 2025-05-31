@@ -2,6 +2,12 @@ BUDGET_TRANSLATIONS = {
     'en': {
         # General Budget Fields
         'budget_summary': 'Budget Summary',
+        'budget_insight_budget_deficit': 'Your budget shows a deficit.',
+        'budget_insight_budget_surplus': 'You have a budget surplus.',
+        'budget_insight_set_savings_goal': 'Consider setting a savings goal.',
+        'core_Your budget has been created successfully!': 'Your budget has been created successfully!',
+        'core_Unable to load budget dashboard. Please try again.': 'Unable to load budget dashboard. Please try again.',
+        'core_An error occurred': 'An error occurred',
         'budget_personal_info': 'Personal Information',
         'Budget Planner': 'Budget Planner',
         'budget_email_placeholder': 'your.email@example.com',
@@ -794,6 +800,12 @@ BUDGET_TRANSLATIONS = {
         'budget_tip_ajo_savings': 'Shawara: Saka gudummawar ku ta Ajo/Esusu a cikin tsarin ajiyar ku.',
         'budget_tip_data_subscriptions': 'Yi la\'akari da farashin data ɗin ku da sauran biyan kuɗi yayin tsara kasafin kuɗin sadarwa.',
         'budget_tip_plan_dependents': 'Ku tuna ku yi la\'akari da buƙatu da kashe kuɗin waɗanda kuke kulawa a cikin kasafin ku.',
-        'budget_budget_completed_success': 'An ƙirƙiri kasafin kuɗin ku cikin nasara!'
+        'budget_budget_completed_success': 'An ƙirƙiri kasafin kuɗin ku cikin nasara!',
+        'budget_insight_budget_deficit': 'Kasafin ku ya nuna gibin kuɗi.',
+        'budget_insight_budget_surplus': 'Kuna da rarar kuɗi a kasafin ku.',
+        'budget_insight_set_savings_goal': 'Yi la\'akari da saita burin ajiyar kuɗi.',
+        'core_Your budget has been created successfully!': 'An ƙirƙiri kasafin kuɗin ku cikin nasara!',
+        'core_Unable to load budget dashboard. Please try again.': 'An kasa loda shafin kasafin ku. Da fatan za a sake gwadawa.',
+        'core_An error occurred': 'Wani kuskure ya faru'
     }
 }
