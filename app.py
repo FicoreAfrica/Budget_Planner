@@ -193,7 +193,7 @@ def create_app():
     # Add format_currency filter
     def format_currency(value):
         try:
-            return "${:,.2f}".format(float(value))
+            return "₦{:,.2f}".format(float(value))
         except (ValueError, TypeError):
             return str(value)  # Fallback to string if formatting fails
     app.jinja_env.filters['format_currency'] = format_currency
