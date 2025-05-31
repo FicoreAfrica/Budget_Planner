@@ -130,22 +130,30 @@ def form():
                 }
                 bill_storage = current_app.config['STORAGE_MANAGERS']['bills']
                 bill_storage.append(record, user_email=data['email'], session_id=session['sid'])
+                
                 if data['send_email'] and data['email']:
-                    send_email(
-                        to_email=data['email'],
-                        subject=trans("bill_payment_reminder"),
-                        template_name="bill_reminder.html",
-                        data={
-                            "first_name": data['first_name'],
-                            "bill_name": data['bill_name'],
-                            "amount": data['amount'],
-                            "due_date": data['due_date'],
-                            "category": trans(f"bill_category_{data['category']}"),
-                            "status": trans(f"bill_status_{status}"),
-                            "cta_url": url_for('bill.dashboard', _external=True)
-                        },
-                        lang=lang
-                    )
+                    try:
+                        send_email(
+                            app=current_app,
+                            logger=current_app.logger,
+                            to_email=data['email'],
+                            subject=trans("bill_payment_reminder"),
+                            template_name="bill_reminder.html",
+                            data={
+                                "first_name": data['first_name'],
+                                "bill_name": data['bill_name'],
+                                "amount": data['amount'],
+                                "due_date": data['due_date'],
+                                "category": trans(f"bill_category_{data['category']}"),
+                                "status": trans(f"bill_status_{status}"),
+                                "cta_url": url_for('bill.dashboard', _external=True)
+                            },
+                            lang=lang
+                        )
+                    except Exception as e:
+                        current_app.logger.error(f"Failed to send email: {str(e)}")
+                        flash(trans("email_send_failed", lang=lang), "warning")
+                
                 flash(trans("bill_bill_added_dynamic_dashboard").format(
                     bill_name=data['bill_name'],
                     dashboard_url=url_for('bill.dashboard')
