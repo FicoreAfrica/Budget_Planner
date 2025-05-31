@@ -101,7 +101,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {% for budget_id, budget in budgets %}
+                                    {% for budget_id, budget in budgets.items() %}
                                         <tr>
                                             <td>{{ budget.get('created_at', 'N/A') }}</td>
                                             <td>{{ budget.income | format_currency }}</td>
