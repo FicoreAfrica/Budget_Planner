@@ -662,6 +662,23 @@ CORE_TRANSLATIONS = {
         'Enter your monthly income': 'Shigar da kuɗin da kuke samu duk wata',
         'Your current financial overview.': 'Takaitaccen halin kuɗin ku na yanzu.',
         'core_continue': 'Ci gaba',
+        # Core UI elements
+        'core_first_name': 'Sunan Farko',
+        'core_first_name_placeholder': 'Misali, Muhammad, Bashir, Umar',
+        'core_first_name_title': 'Shigar da sunanka na farko don keɓance sakamakon tambayoyinka',
+        'core_email': 'Imel',
+        'core_email_placeholder': 'Misali, muhammad@example.com',
+        'core_email_title': 'Shigar da imel ɗinka don karɓar sakamakon tambayoyinka',
+        'core_language': 'Yare',
+        'core_language_en': 'Turanci',
+        'core_language_ha': 'Hausa',
+        'core_send_email': 'Aika Imel',
+        'core_send_email_title': 'Zaɓi don karɓar imel tare da sakamakon tambayoyinka',
+        'core_next': 'Na Gaba',
+        'core_back': 'Koma',
+        'core_continue': 'Ci Gaba',
+        'core_close': 'Rufe',
+        'core_created_at': 'An Ƙirƙira A',
 
         # Already previously requested keys (add if not already present)
         'Failed to send the financial health report to your email.': 'An kasa aikawa da rahoton lafiyar kuɗi zuwa imel ɗinka.',
