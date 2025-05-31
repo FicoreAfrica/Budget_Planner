@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}{{ trans('emergency_fund_step1_title') | default('Personal Information') }}{% endblock %}
 {% block content %}
-<div class="container">
+<div class="container step-container">
     {% set tool_name = 'emergency_fund_calculator' | default('Emergency Fund Calculator') %}
     {% set tool_icon = 'fa-piggy-bank' %}
     {% set subtitle = trans('emergency_fund_step1_subtitle') | default('Let’s start with a few details') %}
