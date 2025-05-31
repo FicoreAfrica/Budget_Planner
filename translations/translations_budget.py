@@ -5,6 +5,7 @@ BUDGET_TRANSLATIONS = {
         'budget_dashboard_subtitle': 'Your current financial overview.',
         'Budget Dashboard': 'Budget Dashboard',
         'budget_no_data': 'No budget data available yet.',
+        'budget_remaining': 'Remaining',
         'budget_history': 'Budget History',
         'budget_no_history': 'No past budgets available.',
         'budget_tips_insights': 'Budget Tips & Insights',
@@ -829,6 +830,7 @@ BUDGET_TRANSLATIONS = {
         'budget_create_new': 'Ƙirƙiri Sabon Kasafin Kuɗi',
         'budget_savings_progress': 'Ci Gaban Ajiyar Kuɗi',
         'core_delete': 'Goge',
+        'budget_remaining': 'Sauran',
         'Enter your monthly expenses': 'Shigar da kuɗin da kuke kashewa duk wata',
         'Enter your monthly income': 'Shigar da kuɗin da kuke samu duk wata',
 
