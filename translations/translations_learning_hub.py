@@ -11,6 +11,7 @@ LEARNING_HUB_TRANSLATIONS = {
         'learning_hub_lesson_not_found': 'Lesson not found.',
         'learning_hub_lesson_marked': 'Lesson marked as completed!',
         'learning_hub_lesson_done': 'You have finished all lessons in this course.',
+        'learning_hub_courses_subtitle': 'Explore our range of financial literacy courses.',
         'learning_hub_quiz_not_found': 'Quiz not found.',
         'learning_hub_quiz_completed': 'Quiz completed!',
         'learning_hub_success_language_updated':'Language chnaged successfully!',
@@ -193,6 +194,7 @@ LEARNING_HUB_TRANSLATIONS = {
         'learning_hub_no_course_progress': 'Ba a sami ci gaba a kan kwas ɗin ba tukuna.',
         'learning_hub_my_courses': 'Kwas ɗina',
         'learning_hub_progress': 'Ci gaban Kwas',
+        'learning_hub_courses_subtitle': 'Binciko kewayon darussan ilimin kuɗi da muke da su.',
         'learning_hub_success_language_updated':'An Canza Yare Cikin Nasara!'       
     }
 }
