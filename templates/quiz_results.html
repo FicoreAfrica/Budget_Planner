@@ -15,7 +15,7 @@
         <div class="card-body">
             <p><strong>{{ trans('core_first_name', default='First Name', lang=language) }}</strong>: {{ latest_record.first_name }}</p>
             <p><strong>{{ trans('quiz_your_personality', default='Your Personality', lang=language) }}</strong>: {{ trans('quiz_' + latest_record.personality.lower() + '_description', default=latest_record.personality, lang=language) }}</p>
-            <p><strong>{{ trans('quiz_score', default='Score', lang=language) }}</strong>: {{ latest_record.score }} / 65</p>
+            <p><strong>{{ trans('quiz_score', default='Score', lang=language) }}</strong>: {{ latest_record.score }} / 26</p>
             <p><strong>{{ trans('core_created_at', default='Created At', lang=language) }}</strong>: {{ latest_record.created_at }}</p>
         </div>
     </div>
@@ -25,8 +25,8 @@
             {% if latest_record.badges %}
                 <div>
                     {% for badge in latest_record.badges %}
-                        <span class="badge {{ badge.color_class }}" title="{{ trans('badge_' + badge.name.lower() + '_desc', default=badge.description, lang=language) }}">
-                            {{ trans('badge_' + badge.name.lower(), default=badge.name, lang=language) }}
+                        <span class="badge {{ badge.color_class }}" title="{{ trans('badge_' + badge.name.lower().replace(' ', '_') + '_desc', default=badge.description, lang=language) }}">
+                            {{ trans('badge_' + badge.name.lower().replace(' ', '_'), default=badge.name, lang=language) }}
                         </span>
                     {% endfor %}
                 </div>
@@ -41,7 +41,7 @@
             <div class="insights-box">
                 <ul>
                     {% for insight in insights %}
-                        <li>{{ trans('quiz_insight_' + insight, default=insight, lang=language) }}</li>
+                        <li>{{ insight }}</li>
                     {% endfor %}
                 </ul>
             </div>
@@ -52,7 +52,7 @@
             <h3><i class="fas fa-rocket"></i> {{ trans('quiz_tips_for_improving_financial_habits', default='Tips for Improving Financial Habits', lang=language) }}</h3>
             <ul>
                 {% for tip in tips %}
-                    <li>{{ trans('quiz_tip_' + tip, default=tip, lang=language) }}</li>
+                    <li>{{ tip }}</li>
                 {% endfor %}
             </ul>
         </div>
