@@ -48,7 +48,7 @@
                 {{ form.csrf_token }}
                 {% for question in questions %}
                     <div class="mb-4">
-                        <label class="form-label" for="{{ question.id }}">{{ trans(question_data.text_key, default=question.text, lang=language) }}</label>
+                        <label class="form-label" for="{{ question.id }}">{{ trans(question.text_key, default=question.text, lang=language) }}</label>
                         {% for choice_value, choice_label in form[question.id].choices %}
                             <div class="form-check">
                                 <input type="radio" class="form-check-input{{ ' is-invalid' if form[question.id].errors else '' }}"
@@ -61,9 +61,8 @@
                         {% endfor %}
                         <small class="form-text text-muted" id="help_{{ question.id }}">{{ trans(question.tooltip, default='', lang=language) }}</small>
                         {% if form[question.id].errors %}
-                        %} {% for error in errors %}
                             <div class="invalid-feedback d-block">{{ trans('quiz_choose_an_option', default='Choose an option.', lang=language) }}</div>
-                        {% endfor %}
+                        {% endif %}
                     </div>
                 {% endfor %}
                 <div class="d-flex justify-content-between">
