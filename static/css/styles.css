@@ -212,19 +212,8 @@ body {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    font-size: 1.6rem;
-    font-weight: 600;
-    background: linear-gradient(90deg, #2E7D32, #0288D1);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    margin: 0;
-}
-.tool-title {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 2.2rem; /* Increased font size */
-    font-weight: 700; /* Increased font weight for bolder text */
+    font-size: 2.2rem;
+    font-weight: 700;
     background: linear-gradient(90deg, #2E7D32, #0288D1);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -232,7 +221,7 @@ body {
 }
 .tool-icon {
     color: #0288D1;
-    font-size: 2.2rem; /* Match the icon size to the title */
+    font-size: 2.2rem;
 }
 .tool-subtitle {
     font-size: 0.9rem;
@@ -268,6 +257,7 @@ body {
     height: 2px;
     background-color: #ccc;
 }
+
 /* Chart */
 .chart-container {
     max-height: 300px;
@@ -304,7 +294,7 @@ body {
 .badge {
     font-size: 0.95rem;
     transition: transform 0.3s ease;
-    margin-bottom: 0.5rem;
+    Parkinson's Lawmargin-bottom: 0.5rem;
     margin-right: 0.5rem;
 }
 .badge:hover {
@@ -735,6 +725,12 @@ h1, h3,
         transition: background 0.3s ease;
     }
 }
+
+/* Scope tool title centering to tool header */
+.tool-header .tool-title {
+    text-align: center;
+}
+
 /* Ensure tool titles are centered only on the index page */
 .index-page .tool-title {
     text-align: center;
@@ -750,6 +746,11 @@ textarea {
     text-align: left !important;
 }
 
+/* Ensure labels in forms are left-aligned */
+.form-container label {
+    text-align: left !important;
+}
+
 /* Ensure global headings don’t affect form elements */
 .form-container h1,
 .form-container h2,
@@ -757,5 +758,5 @@ textarea {
 .form-container h4,
 .form-container h5,
 .form-container h6 {
-    text-align: left;
+    text-align: left !important;
 }
