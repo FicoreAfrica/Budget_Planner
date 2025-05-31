@@ -689,7 +689,7 @@ h1, h3,
     }
     .language-btn {
         font-size: 0.9rem;
-        padding: 0.4rem 0.8rem;
+        padding: 0.4rem 0.8px;
         min-width: 80px;
     }
     .language-btn i {
@@ -704,9 +704,9 @@ h1, h3,
     .card-body {
         padding: 1rem;
     }
-    .btn-primary, .btn-secondary, .btn-success, .course-link {
+    .btn-primary, .btn-secondary, .btn-success {
         font-size: 0.9rem;
-        padding: 0.5rem 1rem;
+        padding: 0.5rem;
     }
     .chart-container {
         max-height: 200px;
@@ -717,50 +717,51 @@ h1, h3,
     .tool-title {
         font-size: 1.4rem;
     }
-    .tool-icon {
-        font-size: 1.4rem;
-    }
 }
 
 /* Desktop Button Hover Effect */
 @media (min-width: 769px) {
     .btn-primary:hover {
         background: linear-gradient(135deg, #1B5E20, #01579B);
-        transition: background 0.3s ease;
+        transition: background 0.3s;
     }
 }
 
-/* Scope tool title centering to tool header */
-.tool-header .tool-title {
-    text-align: center;
+/* Override centering for form labels and inputs in quiz forms */
+.step-container .card-body,
+.quiz-container .card-body {
+    text-align: left !important;
+}
+.step-container .form-label,
+.quiz-container .form-label,
+.step-container .form-control,
+.quiz-container .form-control {
+    text-align: left !important;
 }
 
-/* Ensure tool titles are centered only on the index page */
-.index-page .tool-title {
-    text-align: center;
-}
-
-/* Override text alignment for form elements to ensure left alignment */
+/* Remove redundant .form-label, .form-control rules */
 .form-label,
 .form-control,
 input,
 button,
 select,
 textarea {
-    text-align: left !important;
+    /* Already covered by .step-container, .quiz-container rules */
 }
 
-/* Ensure labels in forms are left-aligned */
-.form-container label {
-    text-align: left !important;
-}
-
-/* Ensure global headings don’t affect form elements */
+/* Remove redundant .form-container rules */
+.form-container label,
 .form-container h1,
 .form-container h2,
 .form-container h3,
 .form-container h4,
 .form-container h5,
 .form-container h6 {
-    text-align: left !important;
+    /* Already covered by .step-container, .quiz-container rules */
+}
+
+/* Ensure tool titles are centered only on index page */
+.index-page .tool-title,
+.index-container .tool-card .card-title {
+    text-align: center !important;
 }
