@@ -3,7 +3,7 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, FloatField, IntegerField, SelectField, BooleanField, SubmitField
 from wtforms.validators import DataRequired, Optional, Email, NumberRange
 from json_store import JsonStorage
-from mailersend_email import send_email
+from mailersend_email import send_email, EMAIL_CONFIG  # Modified import to include EMAIL_CONFIG
 from datetime import datetime
 import uuid
 
@@ -188,7 +188,7 @@ def step2():
                 current_app.logger.info(f"Step2 data saved to session: {session['emergency_fund_step2']}")
                 return redirect(url_for('emergency_fund.step3'))
             else:
-                current_app.logger.warning(f"Step2 form errors: {form.errors}")
+                current_app.logger.warning(f"Stepjob2 form errors: {form.errors}")
                 for field, errors in form.errors.items():
                     for error in errors:
                         flash(f"{field}: {error}", 'danger')
@@ -319,12 +319,15 @@ def step4():
                 # Send email if opted in
                 if step1_data['email_opt_in'] and step1_data['email']:
                     try:
+                        config = EMAIL_CONFIG["emergency_fund"]
+                        subject = trans(config["subject_key"], lang=lang)
+                        template = config["template"]
                         send_email(
                             app=current_app,
                             logger=current_app.logger,
                             to_email=step1_data['email'],
-                            subject=trans('emergency_fund_email_subject', lang=lang, default='Your Emergency Fund Plan'),
-                            template_name="emergency_fund_email.html",
+                            subject=subject,
+                            template_name=template,
                             data={
                                 'first_name': step1_data['first_name'],
                                 'language': lang,
@@ -352,8 +355,7 @@ def step4():
                 # Store step 4 data in session
                 session['emergency_fund_step4'] = {
                     'timeline': months
-                
-```python
+                }
                 session.modified = True
                 
                 flash(trans('emergency_fund_completed_successfully', lang=lang, default='Emergency fund calculation completed successfully!'), 'success')
