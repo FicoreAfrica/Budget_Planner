@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block title %}
-    {{ trans('quiz_financial_personality_quiz', default='Financial Personality Quiz', lang=language) }}
+    {{ trans('quiz_financial_personality_quiz', default='Financial Personality Quiz', lang=lang) }}
 {% endblock %}
 {% block extra_head %}
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
@@ -12,10 +12,10 @@
     {% set subtitle = 'quiz_step_progress' %}
     {% set step = step_num %}
     {% set total_steps = total_steps %}
-    {% set step_labels = ['Personal Info', trans('quiz_questions_part1', default='Questions Part 1', lang=language), trans('quiz_questions_part2', default='Questions Part 2', lang=language)] %}
+    {% set step_labels = ['Personal Info', trans('quiz_questions_part1', default='Questions Part 1', lang=lang), trans('quiz_questions_part2', default='Questions Part 2', lang=lang)] %}
     {% include 'tool_header.html' %}
     <div class="progress mb-3">
-        <div class="progress-bar" role="progressbar" style="width: {{ (step_num / total_steps * 100) | round(1) }}%;" aria-valuenow="{{ (step_num / total_steps * 100) | round(1) }}" aria-valuemin="0" aria-valuemax="100" aria-label="{{ trans('quiz_progress', default='Quiz Progress', lang=language) }}">
+        <div class="progress-bar" role="progressbar" style="width: {{ (step_num / total_steps * 100) | round(1) }}%;" aria-valuenow="{{ (step_num / total_steps * 100) | round(1) }}" aria-valuemin="0" aria-valuemax="100" aria-label="{{ trans('quiz_progress', default='Quiz Progress', lang=lang) }}">
             {{ (step_num / total_steps * 100) | round(1) }}%
         </div>
     </div>
@@ -24,22 +24,22 @@
             {% for category, message in messages %}
                 <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert" aria-live="assertive">
                     {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close', default='Close', lang=language) }}"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close', default='Close', lang=lang) }}"></button>
                 </div>
             {% endfor %}
         {% endif %}
     {% endwith %}
     {% if form.errors %}
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            {{ trans('quiz_form_errors', default='Please correct the errors in the form.', lang=language) }}
+            {{ trans('quiz_form_errors', default='Please correct the errors in the form.', lang=lang) }}
             <ul>
                 {% for field, errors in form.errors.items() %}
                     {% for error in errors %}
-                        <li>{{ trans('quiz_' + field, default=field | capitalize, lang=language) }}: {{ error }}</li>
+                        <li>{{ trans('quiz_' + field, default=field | capitalize, lang=lang) }}: {{ error }}</li>
                     {% endfor %}
                 {% endfor %}
             </ul>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close', default='Close', lang=language) }}"></button>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close', default='Close', lang=lang) }}"></button>
         </div>
     {% endif %}
     <div class="card">
@@ -48,18 +48,18 @@
                 {{ form.csrf_token }}
                 {% for question in questions %}
                     <div class="mb-4">
-                        <label class="form-label" for="{{ question.id }}">{{ trans(question.text_key, default=question.text, lang=language) }}</label>
+                        <label class="form-label" for="{{ question.id }}">{{ trans(question.text_key, default=question.text, lang=lang) }}</label>
                         {% for choice_value, choice_label in form[question.id].choices %}
                             <div class="form-check">
                                 <input type="radio" class="form-check-input{{ ' is-invalid' if form[question.id].errors else '' }}"
                                     name="{{ question.id }}" value="{{ choice_value }}" id="{{ question.id }}_{{ loop.index }}"
                                     {% if form[question.id].data == choice_value %}checked{% endif %}
-                                    aria-label="{{ trans(question.text_key, default=question.text, lang=language) }}: {{ trans(choice_value, default=choice_label, lang=language) }}"
+                                    aria-label="{{ trans(question.text_key, default=question.text, lang=lang) }}: {{ trans(choice_value, default=choice_label, lang=lang) }}"
                                     aria-describedby="help_{{ question.id }}">
-                                <label class="form-check-label" for="{{ question.id }}_{{ loop.index }}">{{ trans(choice_value, default=choice_label, lang=language) }}</label>
+                                <label class="form-check-label" for="{{ question.id }}_{{ loop.index }}">{{ trans(choice_value, default=choice_label, lang=lang) }}</label>
                             </div>
                         {% endfor %}
-                        <small class="form-text text-muted" id="help_{{ question.id }}">{{ trans(question.tooltip, default='', lang=language) }}</small>
+                        <small class="form-text text-muted" id="help_{{ question.id }}">{{ trans(question.tooltip, default='', lang=lang) }}</small>
                         {% if form[question.id].errors %}
                             <ul>
                                 {% for error in form[question.id].errors %}
@@ -71,16 +71,16 @@
                 {% endfor %}
                 <div class="d-flex justify-content-between">
                     {% if step_num > 1 %}
-                        <button type="submit" name="back" class="btn btn-secondary" aria-label="{{ trans('core_back', default='Back', lang=language) }}">
-                            <i class="fas fa-arrow-left"></i> {{ trans('core_back', default='Back', lang=language) }}
+                        <button type="submit" name="back" class="btn btn-secondary" aria-label="{{ trans('core_back', default='Back', lang=lang) }}">
+                            <i class="fas fa-arrow-left"></i> {{ trans('core_back', default='Back', lang=lang) }}
                         </button>
                     {% else %}
-                        <button type="submit" name="back" class="btn btn-secondary" disabled aria-label="{{ trans('core_back', default='Back', lang=language) }}">
-                            <i class="fas fa-arrow-left"></i> {{ trans('core_back', default='Back', lang=language) }}
+                        <button type="submit" name="back" class="btn btn-secondary" disabled aria-label="{{ trans('core_back', default='Back', lang=lang) }}">
+                            <i class="fas fa-arrow-left"></i> {{ trans('core_back', default='Back', lang=lang) }}
                         </button>
                     {% endif %}
-                    <button type="submit" name="submit" class="btn btn-primary" aria-label="{{ trans('quiz_see_results' if step_num == 3 else 'core_next', default='See Results' if step_num == 3 else 'Next', lang=language) }}">
-                        <i class="fas fa-arrow-right"></i> {{ trans('quiz_see_results' if step_num == 3 else 'core_next', default='See Results' if step_num == 3 else 'Next', lang=language) }}
+                    <button type="submit" name="submit" class="btn btn-primary" aria-label="{{ trans('quiz_see_results' if step_num == 3 else 'core_next', default='See Results' if step_num == 3 else 'Next', lang=lang) }}">
+                        <i class="fas fa-arrow-right"></i> {{ trans('quiz_see_results' if step_num == 3 else 'core_next', default='See Results' if step_num == 3 else 'Next', lang=lang) }}
                     </button>
                 </div>
             </form>
