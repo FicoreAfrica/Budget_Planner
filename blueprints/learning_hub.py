@@ -3,14 +3,13 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, BooleanField, SubmitField
 from wtforms.validators import DataRequired, Email, Optional
 from datetime import datetime
-from mailersend_email import send_email  # Import for email sending
+from mailersend_email import send_email, EMAIL_CONFIG  # Modified import
 
 try:
     from app import trans
 except ImportError:
     def trans(key, lang=None):
         return key
-from mailersend_email import send_email  # Updated to import send_email
 
 learning_hub_bp = Blueprint('learning_hub', __name__)
 
@@ -265,13 +264,16 @@ def lesson(course_id, lesson_id):
             # Send email if user has provided details and opted in
             profile = session.get('learning_hub_profile', {})
             if profile.get('send_email') and profile.get('email'):
+                config = EMAIL_CONFIG["learning_hub_lesson_completed"]
+                subject = trans(config["subject_key"], lang=lang)
+                template = config["template"]
                 try:
                     send_email(
                         app=current_app,
                         logger=current_app.logger,
                         to_email=profile['email'],
-                        subject=trans("learning_hub_lesson_completed_subject", default="Lesson Completed", lang=lang),
-                        template_name="learning_hub_lesson_completed.html",
+                        subject=subject,
+                        template_name=template,
                         data={
                             "first_name": profile['first_name'],
                             "course_title": trans(course['title_key'], lang=lang),
