@@ -3,7 +3,7 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, FloatField, SelectField, BooleanField, SubmitField
 from wtforms.validators import DataRequired, NumberRange, Optional, Email, ValidationError
 from json_store import JsonStorage
-from mailersend_email import send_email
+from mailersend_email import send_email, EMAIL_CONFIG  # Modified to include EMAIL_CONFIG
 from datetime import datetime
 import uuid
 
@@ -344,12 +344,15 @@ def step3():
             if send_email_flag and email:
                 current_app.logger.info(f"Sending email to {email}")
                 try:
+                    config = EMAIL_CONFIG["financial_health"]
+                    subject = trans(config["subject_key"], lang=lang)
+                    template = config["template"]
                     send_email(
-                        app=current_app,  # Added
-                        logger=current_app.logger,  # Added
+                        app=current_app,
+                        logger=current_app.logger,
                         to_email=email,
-                        subject=trans("financial_health_financial_health_report", lang=lang),
-                        template_name="health_score_email.html",
+                        subject=subject,
+                        template_name=template,
                         data={
                             "first_name": record["first_name"],
                             "score": record["score"],
@@ -558,7 +561,7 @@ def dashboard():
         else:
             insights.append(trans("financial_health_insight_no_data", lang=lang))
 
-        progress_storage = current_app.config['STORAGE_MANAGERS'].get('progress')  # Modified to use .get
+        progress_storage = current_app.config['STORAGE_MANAGERS'].get('progress')
         progress_records = []
         if progress_storage and 'sid' in session:
             try:
