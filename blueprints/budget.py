@@ -317,7 +317,7 @@ def step4():
                             subject=subject,
                             template_name=template,
                             data={
-                                "first_name":               = step1_data.get('first_name', ''),
+                                "first_name":               step1_data.get('first_name', ''),
                                 "income"                   = income,
                                 "expenses"                 = expenses,
                                 "housing"                  = step3_data.get('housing', 0),
