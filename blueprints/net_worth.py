@@ -4,6 +4,7 @@ from wtforms import StringField, FloatField, BooleanField, SubmitField
 from wtforms.validators import DataRequired, NumberRange, Optional, Email, ValidationError
 from json_store import JsonStorage
 from mailersend_email import send_email
+from mailersend_email import EMAIL_CONFIG  # Added this import
 from datetime import datetime
 import uuid
 
@@ -231,12 +232,15 @@ def step3():
             send_email_flag = step1_data.get('send_email', False)
             if send_email_flag and email:
                 try:
+                    config = EMAIL_CONFIG["net_worth"]
+                    subject = trans(config["subject_key"], lang=lang)
+                    template = config["template"]
                     send_email(
                         app=current_app,
                         logger=current_app.logger,
                         to_email=email,
-                        subject=trans("net_worth_net_worth_summary", lang=lang),
-                        template_name="net_worth_email.html",
+                        subject=subject,
+                        template_name=template,
                         data={
                             "first_name": record["data"]["first_name"],
                             "cash_savings": record["data"]["cash_savings"],
