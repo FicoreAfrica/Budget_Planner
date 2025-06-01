@@ -5,19 +5,17 @@
       {% if tool_icon %}
         <i class="fas {{ tool_icon }} tool-icon"></i>
       {% endif %}
-      {{ trans('lang') | default('lang_name') }}
-    {% if lang %}
-      <p class="tool-subtitle">
-        {% if lang == 'quiz_step_started' and step and total_steps %}
-          {{ trans('Started', lang='lang', step_num=1, total_steps=total_steps) }}
-        {% else %}
-          {{ trans('lang') | default('lang') }}
-        {% endif %}
-      </p>
+      {# Use translation for tool_name if available, otherwise just print tool_name #}
+      {{ trans(tool_name) | default(tool_name) }}
+    </h2>
+    {% if subtitle %}
+      <p class="tool-subtitle">{{ subtitle }}</p>
     {% endif %}
     {% if step and total_steps and step_labels %}
       <div class="step-indicator">
-        <span class="step-text">Step {{ step }} of {{ total_steps }} – {{ step_labels[step - 1] }}</span>
+        <span class="step-text">
+          Step {{ step }} of {{ total_steps }} – {{ step_labels[step - 1] }}
+        </span>
         <div class="step-progress">
           {% for i in range(total_steps) %}
             <span class="step-dot {{ 'active' if i < step else '' }}"></span>
