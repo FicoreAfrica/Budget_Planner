@@ -7,7 +7,7 @@ from datetime import datetime
 import pandas as pd
 import logging
 from translations import trans
-from mailersend_email import send_email  # Import for email sending
+from mailersend_email import send_email, EMAIL_CONFIG  # Modified import
 
 # Configure logging
 logger = logging.getLogger('ficore_app')
@@ -343,17 +343,20 @@ def results():
     # Send email if user opted in
     if quiz_data.get('send_email') and quiz_data.get('email'):
         try:
+            config = EMAIL_CONFIG["quiz"]
+            subject = trans(config["subject_key"], lang=language)
+            template = config["template"]
             send_email(
                 app=current_app,
                 logger=current_app.logger,
                 to_email=quiz_data['email'],
-                subject=trans("quiz_results_summary", lang=language, default="Your Quiz Results"),
-                template_name="quiz_email.html",
+                subject=subject,
+                template_name=template,
                 data={
                     "first_name": results['first_name'],
                     "score": results['score'],
                     "personality": results['personality'],
-                    "badges": results['badges'],  # Removed erroneous Ascendingly('quiz_bp', ...)
+                    "badges": results['badges'],
                     "insights": results.get('insights', []),
                     "tips": results.get('tips', []),
                     "created_at": results['created_at'],
