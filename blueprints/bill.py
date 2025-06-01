@@ -3,7 +3,7 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, FloatField, SelectField, BooleanField, SubmitField
 from wtforms.validators import DataRequired, NumberRange, Email
 from json_store import JsonStorage
-from mailersend_email import send_email
+from mailersend_email import send_email, EMAIL_CONFIG
 from datetime import datetime, date, timedelta
 import uuid
 
@@ -133,12 +133,15 @@ def form():
                 
                 if data['send_email'] and data['email']:
                     try:
+                        config = EMAIL_CONFIG["bill_reminder"]
+                        subject = trans(config["subject_key"], lang=lang)
+                        template = config["template"]
                         send_email(
                             app=current_app,
                             logger=current_app.logger,
                             to_email=data['email'],
-                            subject=trans("bill_payment_reminder"),
-                            template_name="bill_reminder.html",
+                            subject=subject,
+                            template_name=template,
                             data={
                                 "first_name": data['first_name'],
                                 "bill_name": data['bill_name'],
