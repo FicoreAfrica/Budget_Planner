@@ -143,6 +143,7 @@ def send_email(
                 raise RuntimeError(f"MailerSend API error: {response.text}")
         except requests.RequestException as e:
             if attempt < max_retries:
+                delay = 2 ** attempt  # 2s, 4s, 8s
                 logger.warning(f"Network error sending email to {to_email}: {str(e)}. Retrying... (attempt {attempt})", extra={'session_id': session_id})
                 continue
             else:
