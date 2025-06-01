@@ -295,7 +295,7 @@ def step4():
                         'first_name': step1_data.get('first_name'),
                         'email': step1_data.get('email'),
                         'email_opt_in': step1_data.get('email_opt_in'),
-                        'language': lang,
+                        'lang': lang,
                         'monthly_expenses': step2_data.get('monthly_expenses'),
                         'monthly_income': step2_data.get('monthly_income'),
                         'current_savings': step3_data.get('current_savings', 0),
@@ -330,7 +330,7 @@ def step4():
                             template_name=template,
                             data={
                                 'first_name': step1_data['first_name'],
-                                'language': lang,
+                                'lang': lang,
                                 'monthly_expenses': step2_data['monthly_expenses'],
                                 'monthly_income': step2_data['monthly_income'],
                                 'current_savings': step3_data.get('current_savings', 0),
