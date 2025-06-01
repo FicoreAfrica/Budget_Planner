@@ -56,7 +56,7 @@ def send_email(
         subject: Email subject.
         template_name: Name of the email template (e.g., 'budget_email.html').
         data: Data to pass to the template for rendering.
-        lang: Language code ('en' or 'ha'). Defaults to session['language'] or 'en'.
+        lang: Language code ('en' or 'ha'). Defaults to session['lang'] or 'en'.
 
     Raises:
         ValueError: If API token, from email, or template name is invalid.
@@ -70,7 +70,7 @@ def send_email(
     """
     # Default language from session
     if lang is None:
-        lang = session.get('language', 'en') if has_request_context() else 'en'
+        lang = session.get('lang', 'en') if has_request_context() else 'en'
     if lang not in ['en', 'ha']:
         logger.warning(f"Invalid language '{lang}', falling back to 'en'")
         lang = 'en'
