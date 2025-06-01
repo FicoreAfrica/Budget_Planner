@@ -3,8 +3,7 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, FloatField, BooleanField, SubmitField
 from wtforms.validators import DataRequired, NumberRange, Optional, Email, ValidationError
 from json_store import JsonStorage
-from mailersend_email import send_email
-from mailersend_email import EMAIL_CONFIG  # Added this import
+from mailersend_email import send_email, EMAIL_CONFIG
 from datetime import datetime
 import uuid
 
@@ -120,14 +119,14 @@ def step1():
     """Handle net worth step 1 form (personal info)."""
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
-        session.modified = True  # Ensure session is marked as modified
+        session.permanent = True
     lang = session.get('lang', 'en')
     form = Step1Form()
     try:
         if request.method == 'POST' and form.validate_on_submit():
             form_data = form.data.copy()
             session['networth_step1_data'] = form_data
-            session.modified = True  # Explicitly mark session as modified
+            session.modified = True
             current_app.logger.info(f"Net worth step1 form data saved for session {session['sid']}: {form_data}")
             return redirect(url_for('net_worth.step2'))
         return render_template('net_worth_step1.html', form=form, trans=trans, lang=lang)
@@ -141,7 +140,7 @@ def step2():
     """Handle net worth step 2 form (assets)."""
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
-        session.modified = True
+        session.permanent = True
     lang = session.get('lang', 'en')
     form = Step2Form()
     try:
@@ -158,7 +157,7 @@ def step2():
             return redirect(url_for('net_worth.step3'))
         return render_template('net_worth_step2.html', form=form, trans=trans, lang=lang)
     except Exception as e:
-        current_app.logger.error(f"Error in net_worth.step2: {str(e)}", extra={'session_id': session['sid']})
+        current_app.logger.error(f"Error in net_worth.step2: {str(e)}", extra={'session_id': session.get('sid')})
         flash(trans("net_worth_error_assets", lang=lang), "danger")
         return render_template('net_worth_step2.html', form=form, trans=trans, lang=lang), 500
 
@@ -167,7 +166,7 @@ def step3():
     """Calculate net worth."""
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
-        session.modified = True
+        session.permanent = True
     lang = session.get('lang', 'en')
     form = Step3Form()
     try:
@@ -204,6 +203,7 @@ def step3():
                 "data": {
                     "first_name": step1_data.get('first_name', ''),
                     "email": step1_data.get('email', ''),
+                    "send_email": step1_data.get('send_email', False),
                     "cash_savings": cash_savings,
                     "investments": investments,
                     "property": property,
@@ -219,7 +219,7 @@ def step3():
             # Save to storage
             try:
                 storage = current_app.config['STORAGE_MANAGERS']['net_worth']
-                storage.append(record, user_email=step1_data.get('email'), session_id=session['sid'])
+                storage.append(record, user_email=step1_data.get('email'), session_id=session['sid'], lang=lang)
                 session['networth_record_id'] = record['id']
                 session.modified = True
             except Exception as storage_error:
@@ -252,7 +252,8 @@ def step3():
                             "net_worth": record["data"]["net_worth"],
                             "badges": record["data"]["badges"],
                             "created_at": record["data"]["created_at"],
-                            "cta_url": url_for('net_worth.dashboard', _external=True)
+                            "cta_url": url_for('net_worth.dashboard', _external=True),
+                            "unsubscribe_url": url_for('net_worth.unsubscribe', email=email, _external=True)
                         },
                         lang=lang
                     )
@@ -264,7 +265,7 @@ def step3():
             return redirect(url_for('net_worth.dashboard'))
         return render_template('net_worth_step3.html', form=form, trans=trans, lang=lang)
     except Exception as e:
-        current_app.logger.error(f"Error in net_worth.step3: {str(e)}", extra={'session_id': session['sid']})
+        current_app.logger.error(f"Error in net_worth.step3: {str(e)}", extra={'session_id': session.get('sid')})
         flash(trans("net_worth_calculation_error", lang=lang), "danger")
         return render_template('net_worth_step3.html', form=form, trans=trans, lang=lang), 500
 
@@ -273,7 +274,7 @@ def dashboard():
     """Display net worth dashboard."""
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
-        session.modified = True
+        session.permanent = True
     lang = session.get('lang', 'en')
 
     try:
@@ -330,6 +331,7 @@ def dashboard():
                 latest_record = {
                     "first_name": step1_data.get('first_name', ''),
                     "email": step1_data.get('email', ''),
+                    "send_email": step1_data.get('send_email', False),
                     "cash_savings": cash_savings,
                     "investments": investments,
                     "property": property,
@@ -405,3 +407,27 @@ def dashboard():
             trans=trans,
             lang=lang
         ), 500
+
+@net_worth_bp.route('/unsubscribe/<email>')
+def unsubscribe(email):
+    """Unsubscribe user from net worth emails."""
+    try:
+        storage = current_app.config['STORAGE_MANAGERS']['net_worth']
+        user_data = storage.get_all()
+        updated = False
+        for record in user_data:
+            if record.get('user_email') == email and record['data'].get('send_email', False):
+                record['data']['send_email'] = False
+                if storage.update_by_id(record['id'], record):
+                    updated = True
+        lang = session.get('lang', 'en')
+        if updated:
+            flash(trans("net_worth_unsubscribed_success", lang=lang), "success")
+        else:
+            flash(trans("net_worth_unsubscribe_failed", lang=lang), "danger")
+            current_app.logger.error(f"Failed to unsubscribe email {email}")
+        return redirect(url_for('index'))
+    except Exception as e:
+        current_app.logger.exception(f"Error in net_worth.unsubscribe: {str(e)}")
+        flash(trans("net_worth_unsubscribe_error", lang=lang), "danger")
+        return redirect(url_for('index'))
