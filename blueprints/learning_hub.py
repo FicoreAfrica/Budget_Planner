@@ -3,17 +3,19 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, BooleanField, SubmitField
 from wtforms.validators import DataRequired, Email, Optional
 from datetime import datetime
-from mailersend_email import send_email, EMAIL_CONFIG  # Modified import
+from mailersend_email import send_email, EMAIL_CONFIG
+import uuid
 
 try:
     from app import trans
 except ImportError:
-    def trans(key, lang=None):
-        return key
+    def trans(key, lang=None, **kwargs):
+        """Fallback translation function."""
+        return key.format(**kwargs)
 
 learning_hub_bp = Blueprint('learning_hub', __name__)
 
-# Define courses and quizzes data (unchanged)
+# Define courses and quizzes data
 courses_data = {
     "budgeting_101": {
         "id": "budgeting_101",
@@ -199,6 +201,10 @@ def lesson_lookup(course, lesson_id):
 @learning_hub_bp.route('/courses')
 def courses():
     """Display available courses."""
+    if 'sid' not in session:
+        session['sid'] = str(uuid.uuid4())
+        session.permanent = True
+        session.modified = True
     lang = session.get('lang', 'en')
     progress = get_progress()
     try:
@@ -211,6 +217,10 @@ def courses():
 @learning_hub_bp.route('/courses/<course_id>')
 def course_overview(course_id):
     """Display course overview."""
+    if 'sid' not in session:
+        session['sid'] = str(uuid.uuid4())
+        session.permanent = True
+        session.modified = True
     lang = session.get('lang', 'en')
     course = course_lookup(course_id)
     if not course:
@@ -227,6 +237,10 @@ def course_overview(course_id):
 @learning_hub_bp.route('/profile', methods=['GET', 'POST'])
 def profile():
     """Handle user profile form for first name and email."""
+    if 'sid' not in session:
+        session['sid'] = str(uuid.uuid4())
+        session.permanent = True
+        session.modified = True
     lang = session.get('lang', 'en')
     form = LearningHubProfileForm()
     if request.method == 'POST' and form.validate_on_submit():
@@ -235,6 +249,8 @@ def profile():
             'email': form.email.data,
             'send_email': form.send_email.data
         }
+        session.permanent = True
+        session.modified = True
         flash(trans('learning_hub_profile_saved', default='Profile saved successfully', lang=lang), 'success')
         return redirect(url_for('learning_hub.courses'))
     return render_template('learning_hub_profile.html', form=form, trans=trans, lang=lang)
@@ -242,6 +258,10 @@ def profile():
 @learning_hub_bp.route('/courses/<course_id>/lesson/<lesson_id>', methods=['GET', 'POST'])
 def lesson(course_id, lesson_id):
     """Display or process a lesson with email notification."""
+    if 'sid' not in session:
+        session['sid'] = str(uuid.uuid4())
+        session.permanent = True
+        session.modified = True
     lang = session.get('lang', 'en')
     course = course_lookup(course_id)
     if not course:
@@ -279,7 +299,8 @@ def lesson(course_id, lesson_id):
                             "course_title": trans(course['title_key'], lang=lang),
                             "lesson_title": trans(lesson['title_key'], lang=lang),
                             "completed_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                            "cta_url": url_for('learning_hub.course_overview', course_id=course_id, _external=True)
+                            "cta_url": url_for('learning_hub.course_overview', course_id=course_id, _external=True),
+                            "unsubscribe_url": url_for('learning_hub.unsubscribe', email=profile['email'], _external=True)
                         },
                         lang=lang
                     )
@@ -307,6 +328,10 @@ def lesson(course_id, lesson_id):
 @learning_hub_bp.route('/courses/<course_id>/quiz/<quiz_id>', methods=['GET', 'POST'])
 def quiz(course_id, quiz_id):
     """Display or process a quiz."""
+    if 'sid' not in session:
+        session['sid'] = str(uuid.uuid4())
+        session.permanent = True
+        session.modified = True
     lang = session.get('lang', 'en')
     course = course_lookup(course_id)
     if not course:
@@ -325,7 +350,7 @@ def quiz(course_id, quiz_id):
             score = 0
             for i, q in enumerate(quiz['questions']):
                 user_answer = answers.get(f'q{i}')
-                if user_answer and user_answer == q['answer_key']:
+                if user_answer and user_answer == trans(q['answer_key'], lang=lang):
                     score += 1
             course_progress['quiz_scores'][quiz_id] = score
             save_progress()
@@ -340,6 +365,10 @@ def quiz(course_id, quiz_id):
 @learning_hub_bp.route('/dashboard')
 def dashboard():
     """Display learning hub dashboard."""
+    if 'sid' not in session:
+        session['sid'] = str(uuid.uuid4())
+        session.permanent = True
+        session.modified = True
     lang = session.get('lang', 'en')
     progress = get_progress()
     progress_summary = []
@@ -355,3 +384,24 @@ def dashboard():
         current_app.logger.error(f"Error rendering dashboard: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
         flash(trans("learning_hub_error_loading", default="Error loading dashboard", lang=lang), "danger")
         return render_template('learning_hub_dashboard.html', progress_summary=[], trans=trans, lang=lang), 500
+
+@learning_hub_bp.route('/unsubscribe/<email>')
+def unsubscribe(email):
+    """Unsubscribe user from learning hub emails."""
+    try:
+        lang = session.get('lang', 'en')
+        profile = session.get('learning_hub_profile', {})
+        if profile.get('email') == email and profile.get('send_email', False):
+            profile['send_email'] = False
+            session['learning_hub_profile'] = profile
+            session.permanent = True
+            session.modified = True
+            flash(trans("learning_hub_unsubscribed_success", lang=lang), "success")
+        else:
+            flash(trans("learning_hub_unsubscribe_failed", lang=lang), "danger")
+            current_app.logger.error(f"Failed to unsubscribe email {email}: No matching profile or already unsubscribed")
+        return redirect(url_for('index'))
+    except Exception as e:
+        current_app.logger.exception(f"Error in learning_hub.unsubscribe: {str(e)}")
+        flash(trans("learning_hub_unsubscribe_error", lang=lang), "danger")
+        return redirect(url_for('index'))
