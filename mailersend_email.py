@@ -1,39 +1,62 @@
 import logging
 import os
+import smtplib
 import requests
+from email.mime.text import MIMEText
 from flask import Flask, session, has_request_context, render_template
 from typing import Dict, Optional
 from translations import trans
 
-# Email configuration dictionary
+# Email configuration dictionary with provider-specific templates
 EMAIL_CONFIG = {
     "financial_health": {
         "subject_key": "financial_health_financial_health_report",
-        "template": "health_score_email.html"
+        "template": {
+            "mailersend": "health_score_email.html",
+            "gmail": "health_score_email_gmail.html"  # Optional: separate template for Gmail
+        }
     },
     "budget": {
         "subject_key": "budget_plan_summary",
-        "template": "budget_email.html"
+        "template": {
+            "mailersend": "budget_email.html",
+            "gmail": "budget_email_gmail.html"
+        }
     },
     "quiz": {
         "subject_key": "quiz_results_summary",
-        "template": "quiz_email.html"
+        "template": {
+            "mailersend": "quiz_email.html",
+            "gmail": "quiz_email_gmail.html"
+        }
     },
     "bill_reminder": {
         "subject_key": "bill_payment_reminder",
-        "template": "bill_reminder.html"
+        "template": {
+            "mailersend": "bill_reminder.html",
+            "gmail": "bill_reminder_gmail.html"
+        }
     },
     "net_worth": {
         "subject_key": "net_worth_net_worth_summary",
-        "template": "net_worth_email.html"
+        "template": {
+            "mailersend": "net_worth_email.html",
+            "gmail": "net_worth_email_gmail.html"
+        }
     },
     "emergency_fund": {
         "subject_key": "emergency_fund_email_subject",
-        "template": "emergency_fund_email.html"
+        "template": {
+            "mailersend": "emergency_fund_email.html",
+            "gmail": "emergency_fund_email_gmail.html"
+        }
     },
     "learning_hub_lesson_completed": {
         "subject_key": "learning_hub_lesson_completed_subject",
-        "template": "learning_hub_lesson_completed.html"
+        "template": {
+            "mailersend": "learning_hub_lesson_completed.html",
+            "gmail": "learning_hub_lesson_completed_gmail.html"
+        }
     }
 }
 
@@ -42,31 +65,32 @@ def send_email(
     logger: logging.LoggerAdapter,
     to_email: str,
     subject: str,
-    template_name: str,
+    template_key: str,
     data: Dict,
     lang: Optional[str] = None
 ) -> None:
     """
-    Send an email using MailerSend API with a rendered template.
+    Send an email using a prioritized list of providers (MailerSend, Gmail) with provider-specific templates.
 
     Args:
         app: Flask application instance for context.
         logger: Logger instance with SessionAdapter for session-aware logging.
         to_email: Recipient's email address.
         subject: Email subject.
-        template_name: Name of the email template (e.g., 'budget_email.html').
+        template_key: Key in EMAIL_CONFIG (e.g., 'budget', 'quiz').
         data: Data to pass to the template for rendering.
         lang: Language code ('en' or 'ha'). Defaults to session['lang'] or 'en'.
 
     Raises:
-        ValueError: If API token, from email, or template name is invalid.
-        RuntimeError: If template rendering or API request fails.
+        ValueError: If API token, from email, or template is invalid.
+        RuntimeError: If all providers fail to send the email.
 
     Notes:
-        - Requires environment variables: MAILERSEND_API_TOKEN, MAILERSEND_FROM_EMAIL.
-        - Uses Flask's context processor for 'trans' in templates.
-        - Logs errors with session ID for debugging.
-        - Includes fallbacks for missing data keys and retry logic for API failures.
+        - Requires environment variables: MAILERSEND_API_TOKEN, MAILERSEND_FROM_EMAIL,
+          GMAIL_SMTP_USER, GMAIL_SMTP_PASSWORD.
+        - Uses provider-specific templates from EMAIL_CONFIG, falling back to 'mailersend' template if needed.
+        - Logs errors with session ID and provider details for debugging.
+        - Includes retry logic for API/network failures and provider fallback.
     """
     # Default language from session
     if lang is None:
@@ -76,76 +100,101 @@ def send_email(
         lang = 'en'
 
     session_id = session.get('sid', 'no-session-id') if has_request_context() else 'no-session-id'
+    config = EMAIL_CONFIG.get(template_key)
+    if not config:
+        logger.error(f"Invalid template_key '{template_key}'", extra={'session_id': session_id})
+        raise ValueError(f"Template key {template_key} not found in EMAIL_CONFIG")
 
-    # Validate environment variables
-    api_token = os.environ.get('MAILERSEND_API_TOKEN')
-    from_email = os.environ.get('MAILERSEND_FROM_EMAIL')
-    if not api_token:
-        logger.error("MailerSend API token not set", extra={'session_id': session_id})
-        raise ValueError("MAILERSEND_API_TOKEN environment variable is required")
-    if not from_email:
-        logger.error("MailerSend from email not set", extra={'session_id': session_id})
-        raise ValueError("MAILERSEND_FROM_EMAIL environment variable is required")
+    # Define provider priority (extendable for future providers)
+    providers = ['mailersend', 'gmail']
+    last_error = None
 
-    # Validate template name
-    if not template_name.endswith('.html'):
-        template_name += '.html'
-    template_path = os.path.join(app.template_folder, template_name)
-    if not os.path.exists(template_path):
-        logger.error(f"Template {template_name} not found at {template_path}", extra={'session_id': session_id})
-        raise ValueError(f"Email template {template_name} does not exist")
-
-    # Render email template with fallback for missing keys
-    with app.app_context():
+    for provider in providers:
         try:
-            html_content = render_template(template_name, **data, lang=lang)
-        except KeyError as e:
-            logger.warning(f"Missing key {e} in data for template {template_name}, using empty string", extra={'session_id': session_id})
-            data[str(e)] = ""
-            html_content = render_template(template_name, **data, lang=lang)
+            # Select template based on provider (fallback to mailersend template if not specified)
+            template_name = config["template"].get(provider, config["template"].get('mailersend', config["template"])) if isinstance(config["template"], dict) else config["template"]
+            if not template_name.endswith('.html'):
+                template_name += '.html'
+            template_path = os.path.join(app.template_folder, template_name)
+            if not os.path.exists(template_path):
+                raise ValueError(f"Template {template_name} for provider {provider} not found at {template_path}")
+
+            # Render email template with fallback for missing keys
+            with app.app_context():
+                try:
+                    html_content = render_template(template_name, **data, lang=lang)
+                except KeyError as e:
+                    logger.warning(f"Missing key {e} in data for template {template_name}, using empty string", extra={'session_id': session_id})
+                    data[str(e)] = ""
+                    html_content = render_template(template_name, **data, lang=lang)
+                except Exception as e:
+                    raise RuntimeError(f"Cannot render email template {template_name}: {str(e)}")
+
+            if provider == 'mailersend':
+                # Validate MailerSend environment variables
+                api_token = os.environ.get('MAILERSEND_API_TOKEN')
+                from_email = os.environ.get('MAILERSEND_FROM_EMAIL')
+                if not api_token or not from_email:
+                    raise ValueError(f"MailerSend {'API token' if not api_token else 'from email'} not set")
+
+                # Configure MailerSend API request
+                url = "https://api.mailersend.com/v1/email"
+                headers = {
+                    "Authorization": f"Bearer {api_token}",
+                    "Content-Type": "application/json"
+                }
+                payload = {
+                    "from": {"email": from_email, "name": "FiCore Africa"},
+                    "to": [{"email": to_email}],
+                    "subject": subject,
+                    "html": html_content
+                }
+
+                # Send with retry logic
+                max_retries = 3
+                for attempt in range(1, max_retries + 1):
+                    try:
+                        response = requests.post(url, json=payload, headers=headers, timeout=10)
+                        if 200 <= response.status_code < 300:
+                            logger.info(f"Email sent successfully to {to_email} via {provider}", extra={'session_id': session_id, 'provider': provider})
+                            return  # Success, exit
+                        else:
+                            raise RuntimeError(f"MailerSend API error: {response.status_code} {response.text}")
+                    except requests.RequestException as e:
+                        if attempt < max_retries:
+                            delay = 2 ** attempt
+                            logger.warning(f"Network error sending email to {to_email} via {provider}: {str(e)}. Retrying... (attempt {attempt})", extra={'session_id': session_id, 'provider': provider})
+                            continue
+                        raise
+
+            elif provider == 'gmail':
+                # Validate Gmail environment variables
+                smtp_user = os.environ.get('GMAIL_SMTP_USER')
+                smtp_password = os.environ.get('GMAIL_SMTP_PASSWORD')
+                if not smtp_user or not smtp_password:
+                    raise ValueError(f"Gmail {'SMTP user' if not smtp_user else 'SMTP password'} not set")
+
+                # Configure Gmail SMTP
+                msg = MIMEText(html_content, 'html')
+                msg['Subject'] = subject
+                msg['From'] = f"FiCore Africa <{smtp_user}>"
+                msg['To'] = to_email
+
+                # Send via Gmail SMTP
+                try:
+                    with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
+                        server.login(smtp_user, smtp_password)
+                        server.send_message(msg)
+                    logger.info(f"Email sent successfully to {to_email} via {provider}", extra={'session_id': session_id, 'provider': provider})
+                    return  # Success, exit
+                except smtplib.SMTPException as e:
+                    raise RuntimeError(f"Gmail SMTP error: {str(e)}")
+
         except Exception as e:
-            logger.error(f"Failed to render email template {template_name}: {str(e)}", extra={'session_id': session_id})
-            raise RuntimeError(f"Cannot render email template {template_name}: {str(e)}")
+            logger.error(f"Failed to send email to {to_email} via {provider}: {str(e)}", extra={'session_id': session_id, 'provider': provider})
+            last_error = e
+            continue
 
-    # Configure MailerSend API request
-    url = "https://api.mailersend.com/v1/email"
-    headers = {
-        "Authorization": f"Bearer {api_token}",
-        "Content-Type": "application/json"
-    }
-    payload = {
-        "from": {
-            "email": from_email,
-            "name": "FiCore Africa"
-        },
-        "to": [
-            {
-                "email": to_email
-            }
-        ],
-        "subject": subject,
-        "html": html_content
-    }
-
-    # Send email with retry logic
-    max_retries = 3
-    for attempt in range(1, max_retries + 1):
-        try:
-            response = requests.post(url, json=payload, headers=headers, timeout=10)
-            if 200 <= response.status_code < 300:
-                logger.info(f"Email sent successfully to {to_email}", extra={'session_id': session_id})
-                break
-            else:
-                logger.error(
-                    f"Failed to send email to {to_email}: {response.status_code} {response.text}",
-                    extra={'session_id': session_id}
-                )
-                raise RuntimeError(f"MailerSend API error: {response.text}")
-        except requests.RequestException as e:
-            if attempt < max_retries:
-                delay = 2 ** attempt  # 2s, 4s, 8s
-                logger.warning(f"Network error sending email to {to_email}: {str(e)}. Retrying... (attempt {attempt})", extra={'session_id': session_id})
-                continue
-            else:
-                logger.error(f"Network error sending email to {to_email}: {str(e)}", extra={'session_id': session_id})
-                raise RuntimeError(f"Cannot send email to {to_email}: {str(e)}")
+    # If all providers fail
+    logger.error(f"All providers failed to send email to {to_email}", extra={'session_id': session_id, 'providers_attempted': providers})
+    raise RuntimeError(f"All email providers failed: {str(last_error)}")
