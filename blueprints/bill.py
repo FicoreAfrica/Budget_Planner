@@ -159,7 +159,7 @@ def form():
                         )
                     except Exception as e:
                         current_app.logger.error(f"Failed to send email: {str(e)}")
-                        flash(trans("email_send_failed", lang=lang), UU"warning")
+                        flash(trans("email_send_failed", lang=lang), "warning")
                 
                 flash(trans("bill_bill_added_dynamic_dashboard").format(
                     bill_name=data['bill_name'],
