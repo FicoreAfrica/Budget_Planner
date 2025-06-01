@@ -121,6 +121,10 @@ class JsonStorage:
         """Retrieve all records from the JSON file."""
         return self._read()
 
+    def get_all(self) -> List[Dict[str, Any]]:
+        """Return all records (alias for read_all)."""
+        return self.read_all()
+
     def append(self, record: Dict[str, Any], user_email: Optional[str] = None, session_id: Optional[str] = None) -> str:
         """Append a new record to the JSON file.
 
@@ -165,6 +169,17 @@ class JsonStorage:
             return filtered
         except Exception as e:
             self.logger.error(f"Error filtering {self.filename} by session_id {session_id}: {str(e)}")
+            raise
+
+    def filter_by_id(self, record_id: str) -> List[Dict[str, Any]]:
+        """Retrieve records matching the record ID."""
+        try:
+            records = self._read()
+            filtered = [r for r in records if r.get("id") == record_id]
+            self.logger.info(f"Filtered {len(filtered)} records for ID {record_id} in {self.filename}")
+            return filtered
+        except Exception as e:
+            self.logger.error(f"Error filtering {self.filename} by ID {record_id}: {str(e)}")
             raise
 
     def get_by_id(self, record_id: str) -> Optional[Dict[str, Any]]:

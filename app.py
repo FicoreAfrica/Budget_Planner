@@ -13,6 +13,7 @@ from blueprints.net_worth import net_worth_bp
 from blueprints.emergency_fund import emergency_fund_bp
 from blueprints.learning_hub import learning_hub_bp
 from json_store import JsonStorage
+from scheduler_setup import init_scheduler
 from jinja2 import environment
 import json
 import uuid
@@ -198,6 +199,16 @@ def create_app():
             return str(value)  # Fallback to string if formatting fails
     app.jinja_env.filters['format_currency'] = format_currency
 
+    # Initialize storage managers
+    with app.app_context():
+        logger.info("Starting storage initialization")
+        init_storage_managers(app)
+        logger.info("Starting scheduler initialization")
+        init_scheduler(app)
+        logger.info("Starting data initialization")
+        initialize_courses_data(app)
+        logger.info("Completed data initialization")
+
     # Register blueprints
     app.register_blueprint(financial_health_bp)
     app.register_blueprint(budget_bp)
@@ -206,13 +217,6 @@ def create_app():
     app.register_blueprint(net_worth_bp)
     app.register_blueprint(emergency_fund_bp)
     app.register_blueprint(learning_hub_bp)
-
-    with app.app_context():
-        logger.info("Starting storage initialization")
-        init_storage_managers(app)
-        logger.info("Starting data initialization")
-        initialize_courses_data(app)
-        logger.info("Completed data initialization")
 
     def translate(key, lang='en', logger=logger, **kwargs):
         translation = trans(key, lang=lang, **kwargs)
