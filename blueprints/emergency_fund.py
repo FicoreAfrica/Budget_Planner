@@ -3,7 +3,7 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, FloatField, IntegerField, SelectField, BooleanField, SubmitField
 from wtforms.validators import DataRequired, Optional, Email, NumberRange
 from json_store import JsonStorage
-from mailersend_email import send_email, EMAIL_CONFIG  # Modified import to include EMAIL_CONFIG
+from mailersend_email import send_email, EMAIL_CONFIG
 from datetime import datetime
 import uuid
 
@@ -120,9 +120,9 @@ class Step4Form(FlaskForm):
         """Initialize form with translated labels and choices based on session language."""
         super().__init__(*args, **kwargs)
         lang = session.get('lang', 'en')
-        self.timeline.label.text = trans('emergency_fund_timeline', lang=lang)
-        self.timeline.validators[0].message = trans('required_timeline', lang=lang, default='Please select a timeline.')
-        self.timeline.choices = [
+        self.timing.label.text = trans('emergency_fund_timeline', lang=lang)
+        self.timing.validators[0].message = trans('required_timeline', lang=lang, default='Please select a timeline.')
+        self.timing.choices = [
             ('6', trans('emergency_fund_6_months', lang=lang)),
             ('12', trans('emergency_fund_12_months', lang=lang)),
             ('18', trans('emergency_fund_18_months', lang=lang))
@@ -134,6 +134,7 @@ def step1():
     """Handle Step 1: Collect user name and email."""
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
+        session.permanent = True
         session.modified = True
     
     lang = session.get('lang', 'en')
@@ -169,6 +170,8 @@ def step1():
 def step2():
     """Handle Step 2: Collect monthly expenses and income."""
     if 'sid' not in session or 'emergency_fund_step1' not in session:
+        session['sid'] = str(uuid.uuid4())
+        session.permanent = True
         flash(trans('emergency_fund_missing_step1', lang=session.get('lang', 'en'), default='Please complete step 1 first.'), 'danger')
         return redirect(url_for('emergency_fund.step1'))
     
@@ -188,7 +191,7 @@ def step2():
                 current_app.logger.info(f"Step2 data saved to session: {session['emergency_fund_step2']}")
                 return redirect(url_for('emergency_fund.step3'))
             else:
-                current_app.logger.warning(f"Stepjob2 form errors: {form.errors}")
+                current_app.logger.warning(f"Step2 form errors: {form.errors}")
                 for field, errors in form.errors.items():
                     for error in errors:
                         flash(f"{field}: {error}", 'danger')
@@ -204,6 +207,8 @@ def step2():
 def step3():
     """Handle Step 3: Collect savings, risk tolerance, and dependents."""
     if 'sid' not in session or 'emergency_fund_step2' not in session:
+        session['sid'] = str(uuid.uuid4())
+        session.permanent = True
         flash(trans('emergency_fund_missing_step2', lang=session.get('lang', 'en'), default='Please complete previous steps first.'), 'danger')
         return redirect(url_for('emergency_fund.step1'))
     
@@ -240,6 +245,8 @@ def step3():
 def step4():
     """Handle Step 4: Collect timeline and calculate emergency fund."""
     if 'sid' not in session or 'emergency_fund_step3' not in session:
+        session['sid'] = str(uuid.uuid4())
+        session.permanent = True
         flash(trans('emergency_fund_missing_step3', lang=session.get('lang', 'en'), default='Please complete previous steps first.'), 'danger')
         return redirect(url_for('emergency_fund.step1'))
     
@@ -273,9 +280,9 @@ def step4():
                 gap = target_amount - (step3_data['current_savings'] or 0)
                 monthly_savings = gap / months if gap > 0 else 0
                 
-                percent_of_income_needed = None
+                percent_of_income = None
                 if step2_data['monthly_income'] and step2_data['monthly_income'] > 0:
-                    percent_of_income_needed = (monthly_savings / step2_data['monthly_income']) * 100
+                    percent_of_income = (monthly_savings / step2_data['monthly_income']) * 100
                 
                 # Generate badges
                 badges = []
@@ -306,7 +313,7 @@ def step4():
                         'target_amount': target_amount,
                         'savings_gap': gap,
                         'monthly_savings': monthly_savings,
-                        'percent_of_income': percent_of_income_needed,
+                        'percent_of_income': percent_of_income,
                         'badges': badges,
                         'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                     }
@@ -334,23 +341,24 @@ def step4():
                                 'monthly_expenses': step2_data['monthly_expenses'],
                                 'monthly_income': step2_data['monthly_income'],
                                 'current_savings': step3_data.get('current_savings', 0),
-                                'risk_tolerance': step3_data['risk_tolerance_level'],
+                                'risk_tolerance_level': step3_data['risk_tolerance_level'],
                                 'dependents': step3_data.get('dependents', 0),
-                                'months': months,
+                                'timeline': months,
                                 'recommended_months': recommended_months,
                                 'target_amount': target_amount,
                                 'savings_gap': gap,
-                                'monthly_savings_amount': monthly_savings,
-                                'percentage_of_income_needed': percent_of_income_needed,
+                                'monthly_savings': monthly_savings,
+                                'percent_of_income': percent_of_income,
                                 'badges': badges,
                                 'created_at': record['data']['created_at'],
-                                'cta_url': url_for('emergency_fund.dashboard', _external=True)
+                                'cta_url': url_for('emergency_fund.dashboard', _external=True),
+                                'unsubscribe_url': url_for('emergency_fund.unsubscribe', email=step1_data['email'], _external=True)
                             },
                             lang=lang
                         )
                     except Exception as e:
                         current_app.logger.error(f"Failed to send email: {str(e)}")
-                        flash(trans("email_send_failed", lang=lang), "warning")
+                        flash(trans("email_send_failed", lang=lang), "danger")
                 
                 # Store step 4 data in session
                 session['emergency_fund_step4'] = {
@@ -384,6 +392,7 @@ def dashboard():
     """Display the emergency fund dashboard with user data and insights."""
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
+        session.permanent = True
         session.modified = True
     
     lang = session.get('lang', 'en')
@@ -475,3 +484,27 @@ def dashboard():
             trans=trans,
             lang=lang
         )
+
+@emergency_fund_bp.route('/unsubscribe/<email>')
+def unsubscribe(email):
+    """Unsubscribe user from emergency fund emails."""
+    try:
+        storage = current_app.config['STORAGE_MANAGERS']['emergency_fund']
+        user_data = storage.get_all()
+        updated = False
+        for record in user_data:
+            if record.get('user_email') == email and record['data'].get('email_opt_in', False):
+                record['data']['email_opt_in'] = False
+                if storage.update_by_id(record['id'], record):
+                    updated = True
+        lang = session.get('lang', 'en')
+        if updated:
+            flash(trans("emergency_fund_unsubscribed_success", lang=lang), "success")
+        else:
+            flash(trans("emergency_fund_unsubscribe_failed", lang=lang), "danger")
+            current_app.logger.error(f"Failed to unsubscribe email {email}")
+        return redirect(url_for('index'))
+    except Exception as e:
+        current_app.logger.exception(f"Error in emergency_fund.unsubscribe: {str(e)}")
+        flash(trans("emergency_fund_unsubscribe_error", lang=lang), "danger")
+        return redirect(url_for('index'))
