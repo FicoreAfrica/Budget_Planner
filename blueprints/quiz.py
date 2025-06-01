@@ -7,7 +7,7 @@ from datetime import datetime
 import pandas as pd
 import logging
 from translations import trans
-from mailersend_email import send_email, EMAIL_CONFIG  # Modified import
+from mailersend_email import send_email, EMAIL_CONFIG
 
 # Configure logging
 logger = logging.getLogger('ficore_app')
@@ -25,22 +25,22 @@ class QuizStep1Form(FlaskForm):
         'placeholder': trans('core_email_placeholder', default='e.g., muhammad@example.com'),
         'title': trans('core_email_title', default='Enter your email to receive quiz results')
     })
-    language = SelectField(choices=[('en', 'English'), ('ha', 'Hausa')], default='en', validators=[Optional()])
+    lang = SelectField(choices=[('en', 'English'), ('ha', 'Hausa')], default='en', validators=[Optional()])
     send_email = BooleanField(default=False, validators=[Optional()], render_kw={
         'title': trans('core_send_email_title', default='Check to receive an email with your quiz results')
     })
     submit = SubmitField()
 
-    def __init__(self, language='en', *args, **kwargs):
+    def __init__(self, lang='en', *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.first_name.label.text = trans('core_first_name', default='First Name', lang=language)
-        self.email.label.text = trans('core_email', default='Email', lang=language)
-        self.language.label.text = trans('core_language', default='Language', lang=language)
-        self.send_email.label.text = trans('core_send_email', default='Send Email', lang=language)
-        self.submit.label.text = trans('quiz_start_quiz', default='Start Quiz', lang=language)
-        self.language.choices = [
-            ('en', trans('core_language_en', default='English', lang=language)),
-            ('ha', trans('core_language_ha', default='Hausa', lang=language))
+        self.first_name.label.text = trans('core_first_name', default='First Name', lang=lang)
+        self.email.label.text = trans('core_email', default='Email', lang=lang)
+        self.lang.label.text = trans('core_language', default='Language', lang=lang)
+        self.send_email.label.text = trans('core_send_email', default='Send Email', lang=lang)
+        self.submit.label.text = trans('quiz_start_quiz', default='Start Quiz', lang=lang)
+        self.lang.choices = [
+            ('en', trans('core_language_en', default='English', lang=lang)),
+            ('ha', trans('core_language_ha', default='Hausa', lang=lang))
         ]
 
 # Form for Step 2a: Questions 1-5
@@ -53,7 +53,7 @@ class QuizStep2aForm(FlaskForm):
     submit = SubmitField()
     back = SubmitField()
 
-    def __init__(self, language='en', *args, **kwargs):
+    def __init__(self, lang='en', *args, **kwargs):
         super().__init__(*args, **kwargs)
         questions = [
             {'id': 'question_1', 'text_key': 'quiz_track_expenses_label', 'text': 'Do you track your expenses regularly?', 'tooltip_key': 'quiz_track_expenses_tooltip'},
@@ -64,11 +64,11 @@ class QuizStep2aForm(FlaskForm):
         ]
         for q in questions:
             field = getattr(self, q['id'])
-            field.label.text = trans(q['text_key'], default=q['text'], lang=language)
-            field.description = trans(q['tooltip_key'], default='', lang=language)
-            field.choices = [(opt, trans(opt, default=opt, lang=language)) for opt in ['Yes', 'No']]
-        self.submit.label.text = trans('core_continue', default='Continue', lang=language)
-        self.back.label.text = trans('core_back', default='Back', lang=language)
+            field.label.text = trans(q['text_key'], default=q['text'], lang=lang)
+            field.description = trans(q['tooltip_key'], default='', lang=lang)
+            field.choices = [(opt, trans(opt, default=opt, lang=lang)) for opt in ['Yes', 'No']]
+        self.submit.label.text = trans('core_continue', default='Continue', lang=lang)
+        self.back.label.text = trans('core_back', default='Back', lang=lang)
 
 # Form for Step 2b: Questions 6-10
 class QuizStep2bForm(FlaskForm):
@@ -80,7 +80,7 @@ class QuizStep2bForm(FlaskForm):
     submit = SubmitField()
     back = SubmitField()
 
-    def __init__(self, language='en', *args, **kwargs):
+    def __init__(self, lang='en', *args, **kwargs):
         super().__init__(*args, **kwargs)
         questions = [
             {'id': 'question_6', 'text_key': 'quiz_spend_impulse_label', 'text': 'Do you often spend money on impulse?', 'tooltip_key': 'quiz_spend_impulse_tooltip'},
@@ -91,11 +91,11 @@ class QuizStep2bForm(FlaskForm):
         ]
         for q in questions:
             field = getattr(self, q['id'])
-            field.label.text = trans(q['text_key'], default=q['text'], lang=language)
-            field.description = trans(q['tooltip_key'], default='', lang=language)
-            field.choices = [(opt, trans(opt, default=opt, lang=language)) for opt in ['Yes', 'No']]
-        self.submit.label.text = trans('quiz_see_results', default='See Results', lang=language)
-        self.back.label.text = trans('core_back', default='Back', lang=language)
+            field.label.text = trans(q['text_key'], default=q['text'], lang=lang)
+            field.description = trans(q['tooltip_key'], default='', lang=lang)
+            field.choices = [(opt, trans(opt, default=opt, lang=lang)) for opt in ['Yes', 'No']]
+        self.submit.label.text = trans('quiz_see_results', default='See Results', lang=lang)
+        self.back.label.text = trans('core_back', default='Back', lang=lang)
 
 # Helper Functions
 def calculate_score(answers):
@@ -114,61 +114,61 @@ def calculate_score(answers):
             score -= 1
     return max(0, score)
 
-def assign_personality(score, language='en'):
+def assign_personality(score, lang='en'):
     if score >= 21:
         return {
             'name': 'Planner',
-            'description': trans('quiz_planner_description', default='You plan your finances meticulously.', lang=language),
-            'insights': [trans('quiz_insight_planner_1', default='You have a strong grasp of financial planning.', lang=language)],
-            'tips': [trans('quiz_tip_planner_1', default='Continue setting long-term goals.', lang=language)]
+            'description': trans('quiz_planner_description', default='You plan your finances meticulously.', lang=lang),
+            'insights': [trans('quiz_insight_planner_1', default='You have a strong grasp of financial planning.', lang=lang)],
+            'tips': [trans('quiz_tip_planner_1', default='Continue setting long-term goals.', lang=lang)]
         }
     elif score >= 13:
         return {
             'name': 'Saver',
-            'description': trans('quiz_saver_description', default='You prioritize saving consistently.', lang=language),
-            'insights': [trans('quiz_insight_saver_1', default='You excel at saving regularly.', lang=language)],
-            'tips': [trans('quiz_tip_saver_1', default='Consider investing to grow your savings.', lang=language)]
+            'description': trans('quiz_saver_description', default='You prioritize saving consistently.', lang=lang),
+            'insights': [trans('quiz_insight_saver_1', default='You excel at saving regularly.', lang=lang)],
+            'tips': [trans('quiz_tip_saver_1', default='Consider investing to grow your savings.', lang=lang)]
         }
     elif score >= 7:
         return {
             'name': 'Balanced',
-            'description': trans('quiz_balanced_description', default='You maintain a balanced financial approach.', lang=language),
-            'insights': [trans('quiz_insight_balanced_1', default='You balance saving and spending well.', lang=language)],
-            'tips': [trans('quiz_tip_balanced_1', default='Try a budgeting app to optimize habits.', lang=language)]
+            'description': trans('quiz_balanced_description', default='You maintain a balanced financial approach.', lang=lang),
+            'insights': [trans('quiz_insight_balanced_1', default='You balance saving and spending well.', lang=lang)],
+            'tips': [trans('quiz_tip_balanced_1', default='Try a budgeting app to optimize habits.', lang=lang)]
         }
     elif score >= 3:
         return {
             'name': 'Spender',
-            'description': trans('quiz_spender_description', default='You enjoy spending freely.', lang=language),
-            'insights': [trans('quiz_insight_spender_1', default='Spending is a strength, but can be controlled.', lang=language)],
-            'tips': [trans('quiz_tip_spender_1', default='Track expenses to avoid overspending.', lang=language)]
+            'description': trans('quiz_spender_description', default='You enjoy spending freely.', lang=lang),
+            'insights': [trans('quiz_insight_spender_1', default='Spending is a strength, but can be controlled.', lang=lang)],
+            'tips': [trans('quiz_tip_spender_1', default='Track expenses to avoid overspending.', lang=lang)]
         }
     else:
         return {
             'name': 'Avoider',
-            'description': trans('quiz_avoider_description', default='You avoid financial planning.', lang=language),
-            'insights': [trans('quiz_insight_avoider_1', default='Planning feels challenging but is learnable.', lang=language)],
-            'tips': [trans('quiz_tip_avoider_1', default='Start with a simple monthly budget.', lang=language)]
+            'description': trans('quiz_avoider_description', default='You avoid financial planning.', lang=lang),
+            'insights': [trans('quiz_insight_avoider_1', default='Planning feels challenging but is learnable.', lang=lang)],
+            'tips': [trans('quiz_tip_avoider_1', default='Start with a simple monthly budget.', lang=lang)]
         }
 
-def assign_badges(score, language='en'):
+def assign_badges(score, lang='en'):
     badges = []
     if score >= 21:
         badges.append({
-            'name': trans('badge_financial_guru', default='Financial Guru', lang=language),
+            'name': trans('badge_financial_guru', default='Financial Guru', lang=lang),
             'color_class': 'bg-primary',
-            'description': trans('badge_financial_guru_desc', default='Awarded for excellent financial planning.', lang=language)
+            'description': trans('badge_financial_guru_desc', default='Awarded for excellent financial planning.', lang=lang)
         })
     elif score >= 13:
         badges.append({
-            'name': trans('badge_savings_star', default='Savings Star', lang=language),
+            'name': trans('badge_savings_star', default='Savings Star', lang=lang),
             'color_class': 'bg-success',
-            'description': trans('badge_savings_star_desc', default='Recognized for consistent saving habits.', lang=language)
+            'description': trans('badge_savings_star_desc', default='Recognized for consistent saving habits.', lang=lang)
         })
     badges.append({
-        'name': trans('badge_first_quiz', default='First Quiz Completed', lang=language),
+        'name': trans('badge_first_quiz', default='First Quiz Completed', lang=lang),
         'color_class': 'bg-info',
-        'description': trans('badge_first_quiz_desc', default='Completed your first financial quiz.', lang=language)
+        'description': trans('badge_first_quiz_desc', default='Completed your first financial quiz.', lang=lang)
     })
     return badges
 
@@ -179,18 +179,18 @@ def step1():
         session['sid'] = str(uuid.uuid4())
         session.modified = True
         logger.debug(f"New session created with sid: {session['sid']}")
-    language = session.get('language', 'en')
+    lang = session.get('lang', 'en')
     course_id = request.args.get('course_id', 'financial_quiz')
-    form = QuizStep1Form(language=language, formdata=request.form if request.method == 'POST' else None)
+    form = QuizStep1Form(lang=lang, formdata=request.form if request.method == 'POST' else None)
     
     if request.method == 'POST' and form.validate_on_submit():
         session['quiz_data'] = {
             'first_name': form.first_name.data,
             'email': form.email.data,
-            'language': form.language.data or 'en',
+            'lang': form.lang.data or 'en',
             'send_email': form.send_email.data
         }
-        session['language'] = form.language.data or 'en'
+        session['lang'] = form.lang.data or 'en'
         session.modified = True
         logger.info(f"Quiz step 1 validated successfully, session updated: {session['quiz_data']}")
         return redirect(url_for('quiz.step2a', course_id=course_id))
@@ -202,7 +202,7 @@ def step1():
         'quiz_step1.html',
         form=form,
         course_id=course_id,
-        language=language,
+        lang=lang,
         total_steps=3
     )
 
@@ -212,9 +212,9 @@ def step2a():
         flash(trans('session_expired', default='Session expired. Please start again.'), 'danger')
         return redirect(url_for('quiz.step1', course_id=request.args.get('course_id', 'financial_quiz')))
     
-    language = session['quiz_data'].get('language', 'en')
+    lang = session['quiz_data'].get('lang', 'en')
     course_id = request.args.get('course_id', 'financial_quiz')
-    form = QuizStep2aForm(language=language, formdata=request.form if request.method == 'POST' else None)
+    form = QuizStep2aForm(lang=lang, formdata=request.form if request.method == 'POST' else None)
     
     # Preprocessed questions for template (hardcoded to match form fields)
     questions = [
@@ -253,7 +253,7 @@ def step2a():
         form=form,
         questions=questions,
         course_id=course_id,
-        language=language,
+        lang=lang,
         step_num=2,
         total_steps=3
     )
@@ -264,9 +264,9 @@ def step2b():
         flash(trans('session_expired', default='Session expired. Please start again.'), 'danger')
         return redirect(url_for('quiz.step1', course_id=request.args.get('course_id', 'financial_quiz')))
     
-    language = session['quiz_data'].get('language', 'en')
+    lang = session['quiz_data'].get('lang', 'en')
     course_id = request.args.get('course_id', 'financial_quiz')
-    form = QuizStep2bForm(language=language, formdata=request.form if request.method == 'POST' else None)
+    form = QuizStep2bForm(lang=lang, formdata=request.form if request.method == 'POST' else None)
     
     # Preprocessed questions for template (hardcoded to match form fields)
     questions = [
@@ -294,8 +294,8 @@ def step2b():
             # Calculate results
             answers = [session['quiz_data'].get(f'question_{i}') for i in range(1, 11)]
             score = calculate_score(answers)
-            personality = assign_personality(score, language)
-            badges = assign_badges(score, language)
+            personality = assign_personality(score, lang)
+            badges = assign_badges(score, lang)
             
             # Store results in session
             session['quiz_results'] = {
@@ -324,7 +324,7 @@ def step2b():
         form=form,
         questions=questions,
         course_id=course_id,
-        language=language,
+        lang=lang,
         step_num=3,
         total_steps=3
     )
@@ -335,7 +335,7 @@ def results():
         flash(trans('session_expired', default='Session expired. Please start again.'), 'danger')
         return redirect(url_for('quiz.step1', course_id=request.args.get('course_id', 'financial_quiz')))
     
-    language = session.get('language', 'en')
+    lang = session.get('lang', 'en')
     course_id = request.args.get('course_id', 'financial_quiz')
     results = session['quiz_results']
     quiz_data = session['quiz_data']
@@ -344,7 +344,7 @@ def results():
     if quiz_data.get('send_email') and quiz_data.get('email'):
         try:
             config = EMAIL_CONFIG["quiz"]
-            subject = trans(config["subject_key"], lang=language)
+            subject = trans(config["subject_key"], lang=lang)
             template = config["template"]
             send_email(
                 app=current_app,
@@ -362,11 +362,11 @@ def results():
                     "created_at": results['created_at'],
                     "cta_url": url_for('quiz.results', course_id=course_id, _external=True)
                 },
-                lang=language
+                lang=lang
             )
         except Exception as e:
             current_app.logger.error(f"Failed to send quiz results email: {str(e)}")
-            flash(trans("email_send_failed", lang=language), "warning")
+            flash(trans("email_send_failed", lang=lang), "warning")
     
     # Clear session data
     session.pop('quiz_data', None)
@@ -379,5 +379,5 @@ def results():
         insights=results.get('insights', []),
         tips=results.get('tips', []),
         course_id=course_id,
-        language=language
+        lang=lang
     )
