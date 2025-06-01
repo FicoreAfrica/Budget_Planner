@@ -84,7 +84,7 @@ def trans(key: str, lang: Optional[str] = None, **kwargs: str) -> str:
     
     Args:
         key: The translation key (e.g., 'core_submit', 'quiz_yes', 'Yes').
-        lang: Language code ('en', 'ha'). Defaults to session['language'] or 'en'.
+        lang: Language code ('en', 'ha'). Defaults to session['lang'] or 'en'.
         **kwargs: String formatting parameters for the translated string.
     
     Returns:
@@ -92,7 +92,7 @@ def trans(key: str, lang: Optional[str] = None, **kwargs: str) -> str:
         Applies string formatting with kwargs if provided.
     
     Notes:
-        - Uses session['language'] if lang is None and request context exists.
+        - Uses session['lang'] if lang is None and request context exists.
         - Logs warnings for missing translations.
         - Uses g.logger if available, else the default logger.
     """
@@ -101,7 +101,7 @@ def trans(key: str, lang: Optional[str] = None, **kwargs: str) -> str:
 
     # Default to session language or 'en'
     if lang is None:
-        lang = session.get('language', 'en') if has_request_context() else 'en'
+        lang = session.get('lang', 'en') if has_request_context() else 'en'
     if lang not in ['en', 'ha']:
         current_logger.warning(f"Invalid language '{lang}', falling back to 'en'", extra={'session_id': session_id})
         lang = 'en'
@@ -146,13 +146,13 @@ def get_translations(lang: Optional[str] = None) -> Dict[str, callable]:
     Return a dictionary with a trans callable for the specified language.
 
     Args:
-        lang: Language code ('en', 'ha'). Defaults to session['language'] or 'en'.
+        lang: Language code ('en', 'ha'). Defaults to session['lang'] or 'en'.
 
     Returns:
         A dictionary with a 'trans' function that translates keys for the specified language.
     """
     if lang is None:
-        lang = session.get('language', 'en') if has_request_context() else 'en'
+        lang = session.get('lang', 'en') if has_request_context() else 'en'
     if lang not in ['en', 'ha']:
         logger.warning(f"Invalid language '{lang}', falling back to 'en'")
         lang = 'en'
