@@ -1,56 +1,80 @@
-<script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
-
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
-                var filteredData = jsonData.filter(row => row.some(filledCell));
-
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
-                var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                );
-                // Fallback
-                if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
-                }
-
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
-            }
-        }
-        return gk_fileData[filename] || "";
-        }
-        </script><!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="{{ lang | default('en') }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lesson Completed</title>
+    <title>{{ trans('learning_hub_lesson_completed_subject', lang=lang) }}</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #2E7D32, #0288D1);
+            color: white;
+            padding: 15px;
+            text-align: center;
+            border-radius: 8px 8px 0 0;
+        }
+        .content {
+            background: #fff;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 0 0 8px 8px;
+        }
+        .footer {
+            text-align: center;
+            font-size: 12px;
+            color: #777;
+            padding: 10px;
+        }
+        a {
+            color: #0288D1;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #2E7D32, #0288D1);
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+        .btn:hover {
+            background: linear-gradient(135deg, #1B5E20, #01579B);
+        }
+    </style>
 </head>
 <body>
-    <p>Dear {{ first_name }},</p>
-    <p>You have successfully completed the lesson "<strong>{{ lesson_title }}</strong>" in the course "<strong>{{ course_title }}</strong>".</p>
-    <p>Completed on: {{ completed_at }}</p>
-    <p>Keep up the great work! You can continue your learning by visiting the course overview.</p>
-    <p><a href="{{ cta_url }}">Back to Course</a></p>
-    <br>
-    <p>Best regards,<br>FiCore Africa Team</p>
+    <div class="container">
+        <div class="header">
+            <h1>{{ trans('learning_hub_lesson_completed_title', lang=lang) }}</h1>
+        </div>
+        <div class="content">
+            <p>{{ trans('core_dear', lang=lang) }} {{ first_name | default(trans('core_user', lang=lang)) }},</p>
+            <p>{{ trans('learning_hub_lesson_completed_message', lang=lang, lesson_title=lesson_title, course_title=course_title) }}</p>
+            <p><strong>{{ trans('core_created_at', lang=lang) }}</strong>: {{ completed_at }}</p>
+            <p>{{ trans('learning_hub_continue_learning', lang=lang) }}</p>
+            <p><a href="{{ cta_url }}" class="btn">{{ trans('learning_hub_back_to_course', lang=lang) }}</a></p>
+            <p>{{ trans('core_thank_you', lang=lang) }}</p>
+        </div>
+        <div class="footer">
+            <p>{{ trans('core_powered_by', lang=lang) }}</p>
+        </div>
+    </div>
 </body>
 </html>
