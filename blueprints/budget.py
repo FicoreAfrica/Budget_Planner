@@ -329,7 +329,7 @@ def step4():
                                 "savings_goal":             savings_goal,
                                 "surplus_deficit":          surplus_deficit,
                                 "created_at":               datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                                "cta_url"                  = url_for('budget.dashboard', _external=True)
+                                "cta_url":                   url_for('budget.dashboard', _external=True)
                             },
                             lang=lang
                         )
