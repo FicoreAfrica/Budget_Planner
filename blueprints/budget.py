@@ -3,7 +3,7 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, FloatField, BooleanField, SubmitField
 from wtforms.validators import DataRequired, NumberRange, Optional, Email, ValidationError
 from json_store import JsonStorage
-from mailersend_email import send_email
+from mailersend_email import send_email, EMAIL_CONFIG
 from datetime import datetime
 import uuid
 import re
@@ -307,26 +307,29 @@ def step4():
                 send_email_flag = step1_data.get('send_email', False)
                 if send_email_flag and email:
                     try:
+                        config = EMAIL_CONFIG["budget"]
+                        subject = trans(config["subject_key"], lang=lang)
+                        template = config["template"]
                         send_email(
                             app=current_app,
                             logger=current_app.logger,
                             to_email=email,
-                            subject=trans("budget_plan_summary") or "Your Budget Plan Summary",
-                            template_name="budget_email.html",
+                            subject=subject,
+                            template_name=template,
                             data={
-                                "first_name": step1_data.get('first_name', ''),
-                                "income": income,
-                                "expenses": expenses,
-                                "housing": step3_data.get('housing', 0),
-                                "food": step3_data.get('food', 0),
-                                "transport": step3_data.get('transport', 0),
-                                "dependents": step3_data.get('dependents', 0),
-                                "miscellaneous": step3_data.get('miscellaneous', 0),
-                                "others": step3_data.get('others', 0),
-                                "savings_goal": savings_goal,
-                                "surplus_deficit": surplus_deficit,
-                                "created_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                                "cta_url": url_for('budget.dashboard', _external=True)
+                                "first_name":               = step1_data.get('first_name', ''),
+                                "income"                   = income,
+                                "expenses"                 = expenses,
+                                "housing"                  = step3_data.get('housing', 0),
+                                "food"                     = step3_data.get('food', 0),
+                                "transport"                = step3_data.get('transport', 0),
+                                "dependents"               = step3_data.get('dependents', 0),
+                                "miscellaneous"            = step3_data.get('miscellaneous', 0),
+                                "others"                   = step3_data.get('others', 0),
+                                "savings_goal"             = savings_goal,
+                                "surplus_deficit"          = surplus_deficit,
+                                "created_at"               = datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                                "cta_url"                  = url_for('budget.dashboard', _external=True)
                             },
                             lang=lang
                         )
