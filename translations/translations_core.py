@@ -585,7 +585,7 @@ CORE_TRANSLATIONS = {
         'Please correct the errors below': 'Da fatan za a gyara kurakuran da ke ƙasa',
         'core_ficore_africa': 'FiCore Afirka',
         'core_home': 'Gida',
-        'core_welcome_to_ficore': 'Barka da zuwa FiCore',
+        'core_welcome_to_ficore': 'Barka da zuwa FiCore Afirka',
         'core_ficore_africa_logo': 'Alamar FiCore Afirka',
         'core_change_language': 'Canza Harshe',
         'core_toggle_navigation': 'Kunna Kewayawa',
