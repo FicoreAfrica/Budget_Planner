@@ -15,6 +15,7 @@ LEARNING_HUB_TRANSLATIONS = {
         'learning_hub_quiz_not_found': 'Quiz not found.',
         'learning_hub_quiz_completed': 'Quiz completed!',
         'learning_hub_success_language_updated':'Language chnaged successfully!',
+        'learning_hub_set_profile': 'Set up your profile.',
         
         # Modules and Lessons
         'learning_hub_module_income_title': 'Understanding Income',
@@ -185,6 +186,7 @@ LEARNING_HUB_TRANSLATIONS = {
         'learning_hub_lessons_completed_label': 'An kammala darasi',
         'learning_hub_continue': 'Ci gaba',
         'learning_hub_browse_courses': 'Bincika Kwasuna',
+        'learning_hub_set_profile': 'Shigar da Bayananku',
 
         # Additional Course-Related Keys
         'learning_hub_budgeting': 'Kwas ɗin kasafin kuɗi da ake samu don koyo.',
