@@ -4,6 +4,8 @@ import uuid
 from datetime import datetime
 from flask import session, has_request_context
 from typing import List, Dict, Optional, Any
+import fcntl
+import shutil
 
 class JsonStorage:
     """Custom JSON storage class to manage records with session ID and timestamps."""
@@ -25,12 +27,10 @@ class JsonStorage:
         if not logger_instance:
             raise ValueError("Logger instance is required")
 
-        # Use /tmp for JSON files on Render
         base_dir = '/tmp' if os.environ.get('RENDER') else os.path.join(os.path.dirname(__file__), '..')
         self.filename = filename if os.path.isabs(filename) else os.path.join(base_dir, filename)
         self.logger = logger_instance
 
-        # Create directory if it doesn't exist
         dir_path = os.path.dirname(self.filename)
         if dir_path:
             self.logger.info(f"Ensuring directory exists: {dir_path}")
@@ -55,16 +55,10 @@ class JsonStorage:
             raise PermissionError(f"Cannot write to {self.filename}")
 
     def is_writable(self) -> bool:
-        """Check if the JSON file is writable.
-
-        Returns:
-            bool: True if the file is writable, False otherwise.
-        """
+        """Check if the JSON file is writable."""
         try:
-            # Check if file exists and is writable
             if os.path.exists(self.filename):
                 return os.access(self.filename, os.W_OK)
-            # If file doesn't exist, check if directory is writable
             dir_path = os.path.dirname(self.filename) or '.'
             return os.access(dir_path, os.W_OK)
         except Exception as e:
@@ -72,7 +66,7 @@ class JsonStorage:
             return False
 
     def _read(self) -> List[Dict[str, Any]]:
-        """Read all records from the JSON file."""
+        """Read all records from the JSON file, restoring from backup if empty."""
         try:
             if os.path.exists(self.filename):
                 with open(self.filename, 'r') as f:
@@ -80,8 +74,13 @@ class JsonStorage:
                 if not isinstance(data, list):
                     self.logger.error(f"Invalid data format in {self.filename}: expected list, got {type(data)}")
                     raise ValueError(f"Invalid data format in {self.filename}")
-                
-                # Validate record structure
+                if not data:
+                    self.logger.warning(f"Empty file {self.filename}, attempting to restore from backup")
+                    if self.restore_from_backup():
+                        with open(self.filename, 'r') as f:
+                            data = json.load(f)
+                    else:
+                        return []
                 valid_records = []
                 for record in data:
                     if not isinstance(record, dict):
@@ -91,27 +90,58 @@ class JsonStorage:
                         self.logger.warning(f"Skipping record with missing keys in {self.filename}: {record}")
                         continue
                     valid_records.append(record)
-                
                 self.logger.info(f"Read {len(valid_records)} records from {self.filename}")
                 return valid_records
-            self.logger.info(f"File {self.filename} not found. Returning empty list.")
+            self.logger.info(f"File {self.filename} not found. Attempting to restore from backup.")
+            if self.restore_from_backup():
+                return self._read()
             return []
         except json.JSONDecodeError as e:
             self.logger.error(f"Error decoding JSON from {self.filename}: {str(e)}")
+            if self.restore_from_backup():
+                return self._read()
             raise
         except IOError as e:
             self.logger.error(f"Error reading {self.filename}: {str(e)}")
             raise
 
     def _write(self, data: List[Dict[str, Any]]) -> None:
-        """Write data to the JSON file."""
+        """Write data to the JSON file with file locking."""
         try:
             with open(self.filename, 'w') as f:
+                fcntl.flock(f.fileno(), fcntl.LOCK_EX)
                 json.dump(data, f, indent=4)
+                fcntl.flock(f.fileno(), fcntl.LOCK_UN)
             self.logger.info(f"Successfully wrote {len(data)} records to {self.filename}")
         except IOError as e:
             self.logger.error(f"Error writing to {self.filename}: {str(e)}")
             raise
+
+    def backup(self) -> None:
+        """Create a backup of the JSON file."""
+        try:
+            backup_path = f"{self.filename}.backup"
+            shutil.copy(self.filename, backup_path)
+            self.logger.info(f"Backed up {self.filename} to {backup_path}")
+        except Exception as e:
+            self.logger.error(f"Failed to backup {self.filename}: {str(e)}")
+            raise
+
+    def restore_from_backup(self) -> bool:
+        """Restore JSON file from backup if it exists."""
+        try:
+            backup_path = f"{self.filename}.backup"
+            if os.path.exists(backup_path):
+                with open(backup_path, 'r') as f:
+                    data = json.load(f)
+                self._write(data)
+                self.logger.info(f"Restored {self.filename} from {backup_path}")
+                return True
+            self.logger.warning(f"No backup found at {backup_path}")
+            return False
+        except Exception as e:
+            self.logger.error(f"Failed to restore from {backup_path}: {str(e)}")
+            return False
 
     def write(self, data: List[Dict[str, Any]]) -> None:
         """Public method to write data to the JSON file."""
@@ -126,20 +156,7 @@ class JsonStorage:
         return self.read_all()
 
     def append(self, record: Dict[str, Any], user_email: Optional[str] = None, session_id: Optional[str] = None, lang: Optional[str] = None) -> str:
-        """Append a new record to the JSON file.
-
-        Args:
-            record: Data to store.
-            user_email: Optional email associated with the record.
-            session_id: Optional session ID; defaults to Flask session['sid'] if not provided.
-            lang: Optional language code for the record.
-
-        Returns:
-            The record ID.
-
-        Raises:
-            RuntimeError: If the record cannot be appended.
-        """
+        """Append a new record to the JSON file and cache in session."""
         if not session_id:
             session_id = session.get('sid', 'no-session-id') if has_request_context() else 'no-session-id'
         try:
@@ -157,6 +174,10 @@ class JsonStorage:
                 record_with_metadata["lang"] = lang
             records.append(record_with_metadata)
             self._write(records)
+            self.backup()
+            if has_request_context():
+                session['networth_cache'] = session.get('networth_cache', []) + [record_with_metadata]
+                session.modified = True
             self.logger.info(f"Appended record {record_id} to {self.filename}")
             return record_id
         except Exception as e:
@@ -164,8 +185,13 @@ class JsonStorage:
             raise RuntimeError(f"Cannot append record to {self.filename}: {str(e)}")
 
     def filter_by_session(self, session_id: str) -> List[Dict[str, Any]]:
-        """Retrieve records matching the session ID."""
+        """Retrieve records matching the session ID, checking session cache first."""
         try:
+            if has_request_context() and 'networth_cache' in session:
+                cached_records = [r for r in session.get('networth_cache', []) if r.get("session_id") == session_id]
+                if cached_records:
+                    self.logger.info(f"Retrieved {len(cached_records)} records from session cache for session {session_id}")
+                    return cached_records
             records = self._read()
             filtered = [r for r in records if r.get("session_id") == session_id]
             self.logger.info(f"Filtered {len(filtered)} records for session {session_id} in {self.filename}")
@@ -207,6 +233,7 @@ class JsonStorage:
                 if record.get("id") == record_id:
                     record["data"] = updated_data
                     self._write(records)
+                    self.backup()
                     self.logger.info(f"Updated record {record_id} in {self.filename}")
                     return
             self.logger.warning(f"Record {record_id} not found for update in {self.filename}")
@@ -223,6 +250,7 @@ class JsonStorage:
             records = [r for r in records if r.get("id") != record_id]
             if len(records) < initial_len:
                 self._write(records)
+                self.backup()
                 self.logger.info(f"Deleted record {record_id} from {self.filename}")
             else:
                 self.logger.warning(f"Record {record_id} not found for deletion in {self.filename}")
