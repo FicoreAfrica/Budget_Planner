@@ -624,7 +624,7 @@ CORE_TRANSLATIONS = {
         'core_faq': 'Tambayoyin da aka saba yi',
         'faq_fund_handling': 'Shin Ficore yana sarrafa kuɗina?',
         'faq_fund_handling_answer': 'A’a, Ficore ba banki ba ne kuma ba ya riƙe ko motsa kuɗi. Muna baku kayan aiki masu sauki ne don tsarewa da kuma tsara lamuran kuɗinku.',
-        'core_learn_more': 'Ƙara koyo',
+        'core_learn_more': 'Duba Karin Bayani',
         'learning_hub_error_message': 'An samu kuskure',
         'learning_hub_success_language_updated': 'An sabunta harshe cikin nasara',
         'learning_hub_success_logout': 'An fita cikin nasara',
