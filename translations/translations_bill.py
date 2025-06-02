@@ -2,6 +2,10 @@ BILL_TRANSLATIONS = {
     'en': {
         # From previously merged dictionary
         'bill_amount': 'Amount',
+        'bill_reminder_days_required': 'Please enter the number of days before the due date for the reminder.',
+        'bill_reminder_days': 'Reminder (days before due date)',
+        'bill_reminder_days_placeholder': 'e.g., 2',
+        'bill_reminder_days_tooltip': 'Enter the number of days before the bill\'s due date you want to receive a reminder.',
         'bill_Pay bills early to avoid late fees. Use mobile money for quick payments.': 'Pay bills early to avoid late fees. Use mobile money for quick payments.',
         'bill_Switch to energy-efficient utilities to save money.': 'Switch to energy-efficient utilities to save money.',
         'bill_bill_added_dynamic_dashboard': "Successfully added {bill_name}. Check your list of bills on the <a href='{dashboard_url}'>dashboard</a>.",
@@ -890,6 +894,10 @@ BILL_TRANSLATIONS = {
         'bill_Set up Ajo/Esusu/Adashe reminders to never miss a contribution.': 'Saita tunatarwa na Ajo/Esusu/Adashe don kada ku taɓa rasa gudunmawa.',
         'bill_Top up your data in bundles to save costs.': 'Ƙara kuɗin data ɗinku a cikin fakiti don adana kuɗi.',
         'bill_bill_added_dynamic_dashboard': "An adana maka {bill_name}. Duba dukkan ajiyarka <a href='{dashboard_url}'>dashboard</a>.",
+        'bill_reminder_days_required': 'Don Allah a shigar da adadin kwanaki kafin ranar da za a biya don tunatarwa.',
+        'bill_reminder_days': 'Tunatarwa (kwanaki kafin ranar biya)',
+        'bill_reminder_days_placeholder': 'misali, 2',
+        'bill_reminder_days_tooltip': 'Shigar da adadin kwanaki kafin ranar da za a biya kuɗin da kuke son karɓar tunatarwa.',
 
 
         # Action Buttons
