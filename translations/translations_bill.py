@@ -371,7 +371,6 @@ BILL_TRANSLATIONS = {
         'bill_review_bills': 'Don Allah duba lissafin kuɗin da ke ya',
         'bill_reminder': 'Tunatarwar Lissafin Kuɗi',
         'bill_due_date_soon': 'Lissaan da Kuɗin ka ya yana kusa da biya da',
-        'Ka biya yanzu don guje wa jarima',
         'bill_thank_you_ficore': 'Na gode da amfani da Ficore Africa',
         'bill_spending_limit_exceeded': 'Ka ya wuce ₦{limit} a kan {category} a wannan watan',
         'bill_tips_for_bills': 'Shawarwari don Gudanar da Kuɗaɗe',
