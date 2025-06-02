@@ -667,6 +667,18 @@ FINANCIAL_HEALTH_TRANSLATIONS = {
         'financial_health_you_earned_the_debt_manager_badge._tooltip': 'Taya murna! Kun sami lambar yabo ta Manajan Bashi saboda ƙwarewar ku wajen sarrafa bashi.',
         'financial_health_you_earned_the_debt_manager_badge.': 'Kun sami lambar yabo ta Manajan Bashi.',
         'financial_health_your_financial_health_status_needs_improvement':'Ana bukatar inganta mataki',
-        'financial_health_Your debt level is high.':'Bashi yayi yawa'
+        'financial_health_Your debt level is high.':'Bashi yayi yawa',
+        'financial_health_financial_health_report': 'Rahoton Lafiyar Kuɗi',
+        'financial_health_matsayin_lafiyar_kuɗin_ka_yana_da_kyau.': 'Matsayin lafiyar kuɗin ka yana da kyau.',
+        'financial_health_ka_sami_alamar_ƙwararren_ajiya._tooltip': 'Ka sami alamar Ƙwararren Ajiya. Wannan yana nuna cewa kana da ƙwarewa sosai wajen adana kuɗi.',
+        'financial_health_ka_sami_alamar_ƙwararren_ajiya.': 'Ka sami alamar Ƙwararren Ajiya.',
+        'financial_health_Kana da ajiya mai kyau. Ci gaba haka!': 'Kana da ajiya mai kyau. Ci gaba haka!',
+        'financial_health_Biyan ribar ka yana da yawa. Nemi hanyoyin rage riba.': 'Biyan ribar ka yana da yawa. Nemi hanyoyin rage riba.',
+        'financial_health_Ba a da isassun masu amfani don kwatanta a yanzu. Gayyaci wasu su yi amfani da wannan kayan aikin!': 'Ba a da isassun masu amfani don kwatanta a yanzu. Gayyaci wasu su yi amfani da wannan kayan aikin!',
+        'financial_health_Bibiyar kashe kuɗin kamar biɗan bayanai da fita kowane mako.': 'Bibiyar kashe kuɗin kamar biɗan bayanai da fita kowane mako.',
+        'financial_health_Gwada shiga hadin gwiwar ajiya (Ajo) don bunkasa ajiyarka a hankali.': 'Gwada shiga haɗin gwiwar ajiya (Ajo) don bunkasa ajiyarka a hankali.',
+        'financial_health_Rika biyan bashin da kake bin mutane akai-akai don inganta lafiyar kuɗinka.': 'Rika biyan bashin da kake bin mutane akai-akai don inganta lafiyar kuɗinka.',
+        'financial_health_Shirya yadda za ka kashe kuɗi don kaucewa almubazzaranci da ƙara adana kuɗi.': 'Shirya yadda za ka kashe kuɗi don kaucewa almubazzaranci da ƙara adana kuɗi.',
+        'financial_health_matsayin_lafiyar_kuɗin_ka_yana_da_kyau.': 'Matsayin lafiyar kuɗin ka yana da kyau.'
     }
 }
