@@ -54,7 +54,7 @@
                 <div class="card tool-card custom-card">
                     <div class="card-body">
                         <h3 class="card-title"><i class="fas fa-balance-scale"></i> {{ trans('net_worth_net_worth_calculator') | default('Net Worth Tracker') }}</h3>
-                        <p class="card-text">{{ trans('net_worth_calculate_net_worth') | default('Net worth is assets minus liabilities') }}</p>
+                        <p class="card-text">{{ trans('net_worth_description') | default('Your Net worth is your assets minus liabilities') }}</p>
                         <a href="{{ url_for('net_worth.step1') }}" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ trans('core_advisory_only') | default('This is an advisory tool only. Ficore does not store or access your funds.') }}" aria-label="{{ trans('net_worth_start_net_worth') | default('Start Net Worth Tracker') }}">{{ trans('core_start') | default('Start') }}</a>
                     </div>
                 </div>
