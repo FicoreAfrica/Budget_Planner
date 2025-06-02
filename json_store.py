@@ -213,7 +213,7 @@ class JsonStorage:
             self.logger.info(f"Filtered {len(filtered)} records for ID {record_id} in {self.filename}")
             return filtered
         except Exception as e:
-            self.logger.error(f"Error filtering {self.filename) by ID {record_id}: {str(e)}")
+            self.logger.error(f"Error filtering {self.filename} by ID {record_id}: {str(e)}")
             raise
 
     def get_by_id(self, record_id: str) -> Optional[Dict[str, Any]]:
