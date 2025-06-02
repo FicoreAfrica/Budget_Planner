@@ -1,7 +1,7 @@
 import logging
 import os
 import sys
-from flask import Flask, jsonify, render_template, request, session, redirect, url_for, flash, send_from_directory, has_request_context, g, current_app
+from flask import Flask, jsonify, render_template, request, session, redirect, url_for, flash, send_from_directory, has_request_context, g, current_app, make_response
 from flask_session import Session
 from flask_wtf.csrf import CSRFProtect, CSRFError
 from translations import trans
