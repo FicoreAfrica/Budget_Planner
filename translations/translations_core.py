@@ -362,6 +362,9 @@ CORE_TRANSLATIONS = {
         'courses_budgeting': 'Budgeting',
         'courses_my_courses': 'My Courses',
         'courses_no_course_progress': 'No course progress yet. Start learning today!',
+        'Language chnaged successfully!': 'Language changed successfully!',
+        'core_Language chnaged successfully!': 'Language changed successfully!',
+        
          # Already previously requested keys (add if not already present)
         'Failed to send the financial health report to your email.': 'Failed to send the financial health report to your email.',
         'Financial health assessment completed successfully.': 'Financial health assessment completed successfully.',
@@ -380,6 +383,7 @@ CORE_TRANSLATIONS = {
         'core_csrf_error': 'Alamar CSRF ta ɓace ko ba ta da inganci',
         'core_page_not_found': 'Ba a sami shafin ba',
         'core_language_changed': 'An canza harshe cikin nasara',
+        'core_Language chnaged successfully!':'An canza harshe cikin nasara',
         'core_invalid_language': 'Harshe mara inganci',
         'core_logged_out': 'An fitar da kai',
         'core_ficore_africa': 'Ficore Afrika',
