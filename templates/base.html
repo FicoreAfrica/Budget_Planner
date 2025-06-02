@@ -1,84 +1,72 @@
-<!DOCTYPE html>
-<html lang="{{ session.get('lang', 'en') }}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    {% block extra_head %}
-        <!-- Base stylesheet for global styles -->
-        <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-    {% endblock %}
-</head>
-<body>
-    {% if not session.get('consent_acknowledged') %}
-        <div class="consent-banner">
-            <form method="POST" action="{{ url_for('acknowledge_consent') }}">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <p>
-                    <span class="shield-icon"></span>
-                    {{ trans('core_consent_banner') | default('By using Ficore, you understand that we provide tools for planning only, not banking.') }}
-                </p>
-                <button type="submit" class="close-btn">X</button>
-            </form>
+{% block extra_head %}{% endblock %}
+
+
+{% if not session.get('consent_acknowledged') %}
+    <div class="consent-banner">
+        <form method="POST" action="{{ url_for('acknowledge_consent') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            {{ trans('core_consent_banner') | default('By using Ficore, you understand that we provide tools for planning only, not banking.') }}
+            <button type="submit" class="close-btn">X</button>
+        </form>
+    </div>
+{% endif %}
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="flash-messages">
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">
+                    {{ trans(message) | default(message) }}
+                </div>
+            {% endfor %}
         </div>
     {% endif %}
+{% endwith %}
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            <div class="flash-messages">
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }}">
-                        {{ trans(message) | default(message) }}
-                    </div>
-                {% endfor %}
-            </div>
-        {% endif %}
-    {% endwith %}
+<div class="welcome-section">
+    {{ trans('core_welcome_to_ficore') | default('Welcome to Ficore Africa Tools Suite: Use Ficore to Track your income, net worth, budgets, and bills, to grow your money with confidence.') }}
+</div>
 
-    <div class="welcome-section">
-        {{ trans('core_welcome_to_ficore') | default('Welcome to Ficore Africa Tools Suite: Use Ficore to Track your income, net worth, budgets, and bills, to grow your money with confidence.') }}
+<div class="nav-section">
+    <div class="language-switcher">
+        <a href="{{ url_for('set_language', lang='ha' if session.lang == 'en' else 'en') }}">
+            {{ 'Hausa' if session.lang == 'en' else 'English' }}
+        </a>
     </div>
+    <nav>
+        <ul>
+            <li><a href="{{ url_for('index') }}">{{ trans('core_home') | default('Home') }}</a></li>
+            <li><a href="#">{{ trans('core_tools') | default('Tools') }}</a></li>
+            <li><a href="{{ url_for('general_dashboard') }}">{{ trans('core_general_dashboard') | default('General Dashboard') }}</a></li>
+            <li><a href="{{ FEEDBACK_FORM_URL }}">{{ trans('core_feedback') | default('Feedback') }}</a></li>
+            <li><a href="{{ url_for('logout') }}">{{ trans('core_logout') | default('Logout') }}</a></li>
+        </ul>
+    </nav>
+</div>
 
-    <div class="nav-section">
-        <div class="language-switcher">
-            <a href="{{ url_for('set_language', lang='ha' if session.lang == 'en' else 'en') }}">
-                {{ 'Hausa' if session.lang == 'en' else 'English' }}
-            </a>
+<div class="content">
+    {% block content %}{% endblock %}
+</div>
+
+<footer>
+    <div class="footer-content">
+        {{ trans('core_about_ficore_africa') | default('About Ficore Africa') }}: {{ trans('core_empowering_financial_growth') | default('Empowering financial growth across Africa since 2025') }}
+
+        {{ trans('core_disclaimer') | default('Ficore is not a bank and does not hold or move funds.') }} {{ trans('core_learn_more') | default('Learn more') }}
+
+        <div class="social-links">
+            <a href="{{ LINKEDIN_URL }}">LinkedIn</a>
+            <a href="{{ TWITTER_URL }}">Twitter</a>
+            <a href="{{ FACEBOOK_URL }}">Facebook</a>
         </div>
-        <nav>
-            <ul>
-                <li><a href="{{ url_for('index') }}">{{ trans('core_home') | default('Home') }}</a></li>
-                <li><a href="#">{{ trans('core_tools') | default('Tools') }}</a></li>
-                <li><a href="{{ url_for('general_dashboard') }}">{{ trans('core_general_dashboard') | default('General Dashboard') }}</a></li>
-                <li><a href="{{ FEEDBACK_FORM_URL }}">{{ trans('core_feedback') | default('Feedback') }}</a></li>
-                <li><a href="{{ url_for('logout') }}">{{ trans('core_logout') | default('Logout') }}</a></li>
-            </ul>
-        </nav>
-    </div>
-
-    <div class="content">
-        {% block content %}{% endblock %}
-    </div>
-
-    <footer>
-        <div class="footer-content">
-            <p>{{ trans('core_about_ficore_africa') | default('About Ficore Africa') }}: {{ trans('core_empowering_financial_growth') | default('Empowering financial growth across Africa since 2025') }}</p>
-            <p>{{ trans('core_disclaimer') | default('Ficore is not a bank and does not hold or move funds.') }} <a href="#">{{ trans('core_learn_more') | default('Learn more') }}</a></p>
-            <div class="social-links">
-                <a href="{{ LINKEDIN_URL }}">LinkedIn</a>
-                <a href="{{ TWITTER_URL }}">Twitter</a>
-                <a href="{{ FACEBOOK_URL }}">Facebook</a>
-            </div>
-            <div class="footer-links">
-                <a href="{{ CONSULTANCY_FORM_URL }}">{{ trans('core_contact_us') | default('Contact Us') }}</a>
-                <a href="{{ FEEDBACK_FORM_URL }}">{{ trans('core_provide_feedback') | default('Provide Feedback') }}</a>
-                <a href="{{ url_for('logout') }}">{{ trans('core_logout') | default('Logout') }}</a>
-            </div>
+        <div class="footer-links">
+            {{ trans('core_contact_us') | default('Contact Us') }}
+            {{ trans('core_provide_feedback') | default('Provide Feedback') }}
+            {{ trans('core_logout') | default('Logout') }}
         </div>
-    </footer>
+    </div>
+</footer>
 
-    {% block base_scripts %}
-    {% endblock %}
-    {% block extra_scripts %}
-    {% endblock %}
-</body>
-    </html>
+{% block base_scripts %}
+{% endblock %}
+{% block extra_scripts %}{% endblock %}
