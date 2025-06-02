@@ -6,22 +6,12 @@ from flask import session, has_request_context
 from typing import List, Dict, Optional, Any
 import fcntl
 import shutil
+import time
 
 class JsonStorage:
     """Custom JSON storage class to manage records with session ID and timestamps."""
     
     def __init__(self, filename: str, logger_instance: 'logging.LoggerAdapter'):
-        """
-        Initialize JsonStorage with a file path and logger.
-
-        Args:
-            filename: Path to the JSON file (relative to project root or absolute).
-            logger_instance: Logger instance with SessionAdapter.
-
-        Raises:
-            ValueError: If filename is empty or logger_instance is invalid.
-            PermissionError: If file or directory is not writable.
-        """
         if not filename:
             raise ValueError("Filename cannot be empty")
         if not logger_instance:
@@ -117,15 +107,24 @@ class JsonStorage:
             self.logger.error(f"Error writing to {self.filename}: {str(e)}")
             raise
 
-    def backup(self) -> None:
-        """Create a backup of the JSON file."""
-        try:
-            backup_path = f"{self.filename}.backup"
-            shutil.copy(self.filename, backup_path)
-            self.logger.info(f"Backed up {self.filename} to {backup_path}")
-        except Exception as e:
-            self.logger.error(f"Failed to backup {self.filename}: {str(e)}")
-            raise
+    def backup(self, retries: int = 3, delay: float = 0.5) -> None:
+        """Create a backup of the JSON file with retry logic."""
+        backup_path = f"{self.filename}.backup"
+        for attempt in range(retries):
+            try:
+                if os.path.exists(self.filename):
+                    shutil.copy(self.filename, backup_path)
+                    self.logger.info(f"Backed up {self.filename} to {backup_path}")
+                    return
+                self.logger.warning(f"Cannot backup, {self.filename} does not exist")
+                return
+            except Exception as e:
+                self.logger.error(f"Backup attempt {attempt + 1}/{retries} failed for {self.filename}: {str(e)}")
+                if attempt < retries - 1:
+                    time.sleep(delay)
+                else:
+                    self.logger.error(f"All backup attempts failed for {self.filename}")
+                    raise
 
     def restore_from_backup(self) -> bool:
         """Restore JSON file from backup if it exists."""
@@ -146,6 +145,7 @@ class JsonStorage:
     def write(self, data: List[Dict[str, Any]]) -> None:
         """Public method to write data to the JSON file."""
         self._write(data)
+        self.backup()
 
     def read_all(self) -> List[Dict[str, Any]]:
         """Retrieve all records from the JSON file."""
@@ -178,6 +178,7 @@ class JsonStorage:
             if has_request_context():
                 session['networth_cache'] = session.get('networth_cache', []) + [record_with_metadata]
                 session.modified = True
+                self.logger.info(f"Cached record {record_id} in session for {session_id}")
             self.logger.info(f"Appended record {record_id} to {self.filename}")
             return record_id
         except Exception as e:
