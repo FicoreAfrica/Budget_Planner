@@ -11,6 +11,7 @@ CORE_TRANSLATIONS = {
         'courses_budgeting_course_tooltip': 'Learn how to create a budget and manage your finances effectively.',
         'courses_start_budgeting_course_tooltip': 'Start learning how to budget.',
         'email: Please enter a valid email': 'Please enter a valid email',
+        'Please correct the errors in the form.': 'Please correct the errors in the form.',
         'core_mission_statement_content': 'To empower individuals and businesses across Africa with accessible and intuitive financial tools and knowledge, fostering financial literacy and driving economic growth.',
         'core_why_ficore_africa': 'The Vision Behind Ficore Africa',
         'core_team_why_content': 'Ficore Africa was born from a shared passion to bridge the financial literacy gap in Africa and provide practical, user-friendly solutions that address the unique financial challenges faced by individuals and businesses in the region. We believe that by equipping Africans with the right tools and understanding, we can unlock their economic potential and build a more prosperous future for the continent.',
@@ -759,6 +760,7 @@ CORE_TRANSLATIONS = {
 
         'Select how often you monitor your spending.': 'Zaɓi sau nawa kuke lura da kuɗin da kuke kashewa.',
         'Invalid CSRF token": "Invalid security token',
+        'Please correct the errors in the form.': 'Don Allah a gyara kurakuran da ke cikin fom ɗin.',
         'An error occurred": "An error occurred',
         'core_email_invalid': 'Imel din baida kyau',
         'Indicate your saving habits.': 'Nuna halayen ku na tanadi.',
