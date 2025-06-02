@@ -614,7 +614,7 @@ BUDGET_TRANSLATIONS = {
         'budget_others_required': 'Dole ne a saka sauran kudade',
         'budget_others_placeholder': 'misali, 15,000',
         'budget_others_tooltip': 'Sauran kashe kuɗin da ba a keɓance ba',
-        'budget_miscellaneous': 'Na Daban-daban',
+        'budget_miscellaneous': 'Abubuwa Masu Tasowa',
         'budget_example_miscellaneous': 'misali, 10,000',
         'budget_data_gifts_outings': 'Biyan kudin data, kyauta, shakatawa',
         'budget_miscellaneous_cost_required': 'Ana buƙatar kuɗin daban-daban',
