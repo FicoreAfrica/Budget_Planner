@@ -5,6 +5,8 @@ CORE_TRANSLATIONS = {
         'Here\'s a summary of your emergency fund plan.': 'Here\'s a summary of your emergency fund plan.',
         'Tell us how much you\'ve already saved.': 'Tell us how much you\'ve already saved.',
         'Let\'s calculate your ideal emergency fund amount.': 'Let\'s calculate your ideal emergency fund amount.',
+        'Invalid CSRF token": "Invalid security token',
+        'An error occurred": "An error occurred',
         'core_our_mission': 'Our Mission',
         'core_mission_statement_content': 'To empower individuals and businesses across Africa with accessible and intuitive financial tools and knowledge, fostering financial literacy and driving economic growth.',
         'core_why_ficore_africa': 'The Vision Behind Ficore Africa',
@@ -750,6 +752,8 @@ CORE_TRANSLATIONS = {
 
 
         'Select how often you monitor your spending.': 'Zaɓi sau nawa kuke lura da kuɗin da kuke kashewa.',
+        'Invalid CSRF token": "Invalid security token',
+        'An error occurred": "An error occurred',
         'core_email_invalid': 'Imel din baida kyau',
         'Indicate your saving habits.': 'Nuna halayen ku na tanadi.',
         'Consider luxury or discretionary purchases.': 'Yi la\'akari da sayayya na alatu ko na zaɓi.',
