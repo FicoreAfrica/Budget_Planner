@@ -315,6 +315,7 @@ def step3():
                 "interest_burden": interest_burden,
                 "score": score,
                 "status": status,
+                "status_key": status_key,
                 "badges": badges,
                 "created_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             }
