@@ -5,7 +5,7 @@ EMERGENCY_FUND_TRANSLATIONS = {
         'emergency_fund_send_email_tooltip': 'Opt-in to receive guidance and updates on building your emergency fund.',
         'core_hausa': 'Hausa',
         'core_not_provided': 'Not provided',
-        'emergency_fund_goal': 'Set your emergency fund goal',
+        'emergency_fund_goal': 'Set your emergency money goals',
         'emergency_fund_start_emergency_fund': 'Start building your emergency fund',
         'emergency_fund_step1_subtitle': 'Let\'s calculate your ideal emergency fund amount.',
         'emergency_fund_step3_subtitle': 'Tell us how much you\'ve already saved.',
@@ -143,7 +143,7 @@ EMERGENCY_FUND_TRANSLATIONS = {
         'emergency_fund_no_badges_earned': 'No badges earned yet'
     },
     'ha': {
-        'emergency_fund_calculator': 'Kalkuleta na Asusun Gaggawa',
+        'emergency_fund_calculator': 'Asusun Gaggawa',
         'emergency_fund_plan_emergency_fund': 'Tsara asusun gaggawa tare da Ficore Africa',
         'emergency_fund_dashboard': 'Dashboard na Asusun Gaggawa',
         'emergency_fund_emergency_fund_completed_success': 'An ƙirƙiri shirin asusun cikin nasara',
@@ -269,9 +269,8 @@ EMERGENCY_FUND_TRANSLATIONS = {
         'emergency_fund_badge_fund_master': 'Jagoran asusu',
         'emergency_fund_no_badges': 'Babu alamomi a yanzu',
         'emergency_fund_no_badges_earned': 'Babu alamomin da aka samu a yanzu',
-        'emergency_fund_goal': 'Manufar Asusun Gaggawa',
         'emergency_fund_start_emergency_fund': 'Fara Asusun Gaggawa',
-        'emergency_fund_goal': 'Tsara kudi don biyan bukatun gaggawa',
+        'emergency_fund_goal': 'Tsara kudi don biyan bukatun gaggawa kamar asara ko rashin lafiya',
         'emergency_fund_start_emergency_fund': 'Tsara Kudin Gaggawa',
         'An unexpected error occurred.': 'An unexpected error occurred.',
         'emergency_fund_send_email': 'Aika mini da nasihu masu amfani da tunatarwa game da asusun gaggawa na',
