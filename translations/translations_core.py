@@ -734,7 +734,11 @@ CORE_TRANSLATIONS = {
         'Here\'s a summary of your emergency fund plan.': 'Ga taƙaitaccen bayanin tsarin asusun gaggawar ku.',
         'Tell us how much you\'ve already saved.': 'Faɗa mana adadin kuɗin da kuka riga kuka tara.',
         'Let\'s calculate your ideal emergency fund amount.': 'Bari mu lissafa adadin da ya dace na asusun gaggawar ku.',
-        
+        'core_An kasa aika rahoton lafiyar kuɗi zuwa imel ɗin ka.': 'An kasa aika rahoton lafiyar kuɗi zuwa imel ɗin ka.',
+        'core_An kammala tantance lafiyar kuɗi cikin nasara.': 'An kammala tantance lafiyar kuɗi cikin nasara.',
+        'courses_budgeting_course_tooltip': 'Koyi yadda ake ƙirƙirar kasafin kuɗi da kuma sarrafa kuɗin ku yadda ya kamata.',
+        'courses_start_budgeting_course_tooltip': 'Fara koyon yadda ake tsara kasafin kuɗi.',
+
         'Select how often you monitor your spending.': 'Zaɓi sau nawa kuke lura da kuɗin da kuke kashewa.',
         'Indicate your saving habits.': 'Nuna halayen ku na tanadi.',
         'Consider luxury or discretionary purchases.': 'Yi la\'akari da sayayya na alatu ko na zaɓi.',
