@@ -1,4 +1,4 @@
-from flask import Blueprint, request, session, redirect, url_for, render_template, flash, current_app
+from flask import Blueprint, request, session, redirect, url_for, render_template, flash, current_app, jsonify
 from flask_wtf import FlaskForm
 from wtforms import StringField, FloatField, BooleanField, SubmitField
 from wtforms.validators import DataRequired, NumberRange, Optional, Email, ValidationError
@@ -175,12 +175,10 @@ def step3():
             step2_data = session.get('networth_step2_data', {})
             form_data = form.data.copy()
 
-            # Store step3 data in session
             session['networth_step3_data'] = {'loans': form_data.get('loans', 0) or 0}
             session.modified = True
             current_app.logger.info(f"Net worth step3 form data saved for session {session['sid']}: {session['networth_step3_data']}")
 
-            # Calculate assets and liabilities
             cash_savings = step2_data.get('cash_savings', 0)
             investments = step2_data.get('investments', 0)
             property = step2_data.get('property', 0)
@@ -190,7 +188,6 @@ def step3():
             total_liabilities = loans
             net_worth = total_assets - total_liabilities
 
-            # Assign badges
             badges = []
             if net_worth > 0:
                 badges.append('net_worth_badge_wealth_builder')
@@ -201,7 +198,6 @@ def step3():
             if property >= total_assets * 0.5:
                 badges.append('net_worth_badge_property_mogul')
 
-            # Store record with session_id for easy retrieval
             record = {
                 "id": str(uuid.uuid4()),
                 "session_id": session['sid'],
@@ -221,7 +217,6 @@ def step3():
                 }
             }
 
-            # Save to storage with logging
             storage = current_app.config['STORAGE_MANAGERS']['net_worth']
             try:
                 storage.append(record, user_email=step1_data.get('email'), session_id=session['sid'], lang=lang)
@@ -233,7 +228,6 @@ def step3():
                 flash(trans("net_worth_storage_error", lang=lang), "danger")
                 return render_template('net_worth_step3.html', form=form, trans=trans, lang=lang), 500
 
-            # Send email if requested
             email = step1_data.get('email')
             send_email_flag = step1_data.get('send_email', False)
             if send_email_flag and email:
@@ -288,15 +282,25 @@ def dashboard():
         user_data = []
         latest_record = {}
 
-        # Step 1: Try to get data from storage by session ID
+        # Try session ID first
         try:
             user_data = storage.filter_by_session(session['sid'])
             current_app.logger.info(f"Found {len(user_data)} records for session {session['sid']}")
         except Exception as e:
             current_app.logger.warning(f"filter_by_session failed: {str(e)}", extra={'session_id': session['sid']})
-            user_data = []
 
-        # Step 2: If no data, try to get by record ID
+        # Fallback to email if session ID fails
+        if not user_data and 'networth_step1_data' in session:
+            email = session['networth_step1_data'].get('email')
+            if email:
+                try:
+                    all_records = storage.read_all()
+                    user_data = [r for r in all_records if r.get('user_email') == email]
+                    current_app.logger.info(f"Found {len(user_data)} records for email {email}")
+                except Exception as e:
+                    current_app.logger.warning(f"Email-based retrieval failed: {str(e)}", extra={'session_id': session['sid']})
+
+        # Fallback to record ID
         if not user_data and 'networth_record_id' in session:
             try:
                 all_records = storage.read_all()
@@ -307,9 +311,8 @@ def dashboard():
                 current_app.logger.info(f"Found {len(user_data)} records by record ID {session['networth_record_id']}")
             except Exception as e:
                 current_app.logger.warning(f"Read by record ID failed: {str(e)}", extra={'session_id': session['sid']})
-                user_data = []
 
-        # Step 3: If still no data, construct from session data
+        # Reconstruct from session data if no records found
         if not user_data:
             step1_data = session.get('networth_step1_data', {})
             step2_data = session.get('networth_step2_data', {})
@@ -351,8 +354,6 @@ def dashboard():
                     "created_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 }
                 user_data = [{"id": session['sid'], "data": latest_record}]
-            else:
-                current_app.logger.info(f"No session data available for construction for session {session['sid']}")
 
         # Process records
         if user_data and not latest_record:
@@ -363,11 +364,9 @@ def dashboard():
         else:
             records = []
 
-        # Additional logging for debugging
         current_app.logger.info(f"records: {records}")
         current_app.logger.info(f"latest_record: {latest_record}")
 
-        # Generate insights and tips
         insights = []
         tips = [
             trans("net_worth_tip_track_ajo", lang=lang),
@@ -386,7 +385,6 @@ def dashboard():
             if latest_record.get('net_worth', 0) <= 0:
                 insights.append(trans("net_worth_insight_negative_net_worth", lang=lang))
 
-        # Clear session data only after successful rendering
         if latest_record:
             session.pop('networth_step1_data', None)
             session.pop('networth_step2_data', None)
@@ -432,7 +430,7 @@ def unsubscribe(email):
         for record in user_data:
             if record.get('user_email') == email and record['data'].get('send_email', False):
                 record['data']['send_email'] = False
-                if storage.update_by_id(record['id'], record):
+                if storage.update_by_id(record['id'], record['data']):
                     updated = True
         lang = session.get('lang', 'en')
         if updated:
@@ -445,3 +443,18 @@ def unsubscribe(email):
         current_app.logger.exception(f"Error in net_worth.unsubscribe: {str(e)}")
         flash(trans("net_worth_unsubscribe_error", lang=lang), "danger")
         return redirect(url_for('index'))
+
+@net_worth_bp.route('/debug/storage', methods=['GET'])
+def debug_storage():
+    """Debug endpoint to inspect storage and session cache contents."""
+    storage = current_app.config['STORAGE_MANAGERS']['net_worth']
+    try:
+        file_records = storage.read_all()
+        session_records = session.get('networth_cache', []) if has_request_context() else []
+        return jsonify({
+            "file_records": file_records,
+            "session_records": session_records
+        })
+    except Exception as e:
+        current_app.logger.error(f"Debug storage failed: {str(e)}")
+        return jsonify({"error": str(e)}), 500
