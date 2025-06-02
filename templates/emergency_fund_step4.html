@@ -40,8 +40,8 @@
                         <div class="invalid-feedback">{{ trans(error) | default(error) }}</div>
                     {% endfor %}
                 </div>
-                <button type="submit" class="btn btn-primary">{{ trans('emergency_fund_calculate_button') | default('Calculate') }}</button>
                 <a href="{{ url_for('emergency_fund.step3') }}" class="btn btn-secondary">{{ trans('core_back') | default('Back') }}</a>
+                <button type="submit" class="btn btn-primary">{{ trans('emergency_fund_calculate_button') | default('Calculate') }}</button>
             </form>
         </div>
     </div>
