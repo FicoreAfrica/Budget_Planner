@@ -219,10 +219,10 @@ def step3():
 
             storage = current_app.config['STORAGE_MANAGERS']['net_worth']
             try:
-                storage.append(record, user_email=step1_data.get('email'), session_id=session['sid'], lang=lang)
-                session['networth_record_id'] = record['id']
+                record_id = storage.append(record, user_email=step1_data.get('email'), session_id=session['sid'], lang=lang)
+                session['networth_record_id'] = record_id
                 session.modified = True
-                current_app.logger.info(f"Successfully saved record {record['id']} for session {session['sid']}")
+                current_app.logger.info(f"Successfully saved record {record_id} for session {session['sid']}")
             except Exception as storage_error:
                 current_app.logger.error(f"Failed to save net worth record: {str(storage_error)}", extra={'session_id': session['sid']})
                 flash(trans("net_worth_storage_error", lang=lang), "danger")
@@ -303,11 +303,9 @@ def dashboard():
         # Fallback to record ID
         if not user_data and 'networth_record_id' in session:
             try:
-                all_records = storage.read_all()
-                for record in all_records:
-                    if record.get('id') == session['networth_record_id']:
-                        user_data = [record]
-                        break
+                record = storage.get_by_id(session['networth_record_id'])
+                if record:
+                    user_data = [record]
                 current_app.logger.info(f"Found {len(user_data)} records by record ID {session['networth_record_id']}")
             except Exception as e:
                 current_app.logger.warning(f"Read by record ID failed: {str(e)}", extra={'session_id': session['sid']})
@@ -430,8 +428,8 @@ def unsubscribe(email):
         for record in user_data:
             if record.get('user_email') == email and record['data'].get('send_email', False):
                 record['data']['send_email'] = False
-                if storage.update_by_id(record['id'], record['data']):
-                    updated = True
+                storage.update_by_id(record['id'], record['data'])
+                updated = True
         lang = session.get('lang', 'en')
         if updated:
             flash(trans("net_worth_unsubscribed_success", lang=lang), "success")
@@ -451,10 +449,18 @@ def debug_storage():
     try:
         file_records = storage.read_all()
         session_records = session.get('networth_cache', []) if has_request_context() else []
-        return jsonify({
+        file_exists = os.path.exists(storage.filename)
+        backup_exists = os.path.exists(f"{storage.filename}.backup")
+        response = {
             "file_records": file_records,
-            "session_records": session_records
-        })
+            "session_records": session_records,
+            "file_exists": file_exists,
+            "backup_exists": backup_exists,
+            "file_path": storage.filename,
+            "backup_path": f"{storage.filename}.backup"
+        }
+        current_app.logger.info(f"Debug storage: {response}")
+        return jsonify(response)
     except Exception as e:
         current_app.logger.error(f"Debug storage failed: {str(e)}")
         return jsonify({"error": str(e)}), 500
