@@ -743,6 +743,9 @@ CORE_TRANSLATIONS = {
         'An Canza Yare Cikin Nasara!': 'An Canza Yare Cikin Nasara!',
         'Shirin Kasafi': 'Shirin Kasafi',
         'core_An Canza Yare Cikin Nasara!': 'An Canza Yare Cikin Nasara!',
+        'An ƙirƙiri kasafin kuɗin ku cikin nasara!': 'An ƙirƙiri kasafin kuɗin ku cikin nasara!',
+        'Allon Kasafin Kuɗi': 'Allon Kasafin Kuɗi',
+        'core_An ƙirƙiri kasafin kuɗin ku cikin nasara!': 'An ƙirƙiri kasafin kuɗin ku cikin nasara!',
 
 
         'Select how often you monitor your spending.': 'Zaɓi sau nawa kuke lura da kuɗin da kuke kashewa.',
