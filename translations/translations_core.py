@@ -362,6 +362,7 @@ CORE_TRANSLATIONS = {
         'courses_no_course_progress': 'No course progress yet. Start learning today!',
         'Language chnaged successfully!': 'Language changed successfully!',
         'core_Language chnaged successfully!': 'Language changed successfully!',
+        'core_email_invalid': 'Invalid email address.',
         
          # Already previously requested keys (add if not already present)
         'Failed to send the financial health report to your email.': 'Failed to send the financial health report to your email.',
@@ -749,6 +750,7 @@ CORE_TRANSLATIONS = {
 
 
         'Select how often you monitor your spending.': 'Zaɓi sau nawa kuke lura da kuɗin da kuke kashewa.',
+        'core_email_invalid': 'Imel din baida kyau',
         'Indicate your saving habits.': 'Nuna halayen ku na tanadi.',
         'Consider luxury or discretionary purchases.': 'Yi la\'akari da sayayya na alatu ko na zaɓi.',
         'Indicate whether you typically plan your expenses in advance.': 'Nuna ko yawanci kuna tsara kuɗin da za ku kashe a gaba.',
