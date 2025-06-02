@@ -47,18 +47,20 @@
             <form method="POST" action="{{ url_for('quiz.step' ~ ('2a' if step_num == 2 else '2b'), course_id=course_id) }}">
                 {{ form.csrf_token }}
                 {% for question in questions %}
-                    <div class="mb-4">
-                        <label class="form-label" for="{{ question.id }}">{{ trans(question.text_key, default=question.text, lang=lang) }}</label>
-                        {% for choice_value, choice_label in form[question.id].choices %}
-                            <div class="form-check">
-                                <input type="radio" class="form-check-input{{ ' is-invalid' if form[question.id].errors else '' }}"
-                                    name="{{ question.id }}" value="{{ choice_value }}" id="{{ question.id }}_{{ loop.index }}"
-                                    {% if form[question.id].data == choice_value %}checked{% endif %}
-                                    aria-label="{{ trans(question.text_key, default=question.text, lang=lang) }}: {{ trans(choice_value, default=choice_label, lang=lang) }}"
-                                    aria-describedby="help_{{ question.id }}">
-                                <label class="form-check-label" for="{{ question.id }}_{{ loop.index }}">{{ trans(choice_value, default=choice_label, lang=lang) }}</label>
-                            </div>
-                        {% endfor %}
+                    <div class="question-block border-bottom pb-3 mb-3">
+                        <div class="mb-2">
+                            <label class="form-label fw-bold" for="{{ question.id }}">
+                                <span class="question-icon">{{ question.icon }}</span>
+                                {{ trans(question.text_key, default=question.text, lang=lang) }}
+                                <span class="question-status"></span>
+                            </label>
+                        </div>
+                        <div class="btn-group" role="group" aria-label="{{ trans(question.text_key, default=question.text, lang=lang) }}">
+                            {% for choice_value, choice_label in form[question.id].choices %}
+                                <input type="radio" class="btn-check" name="{{ question.id }}" id="{{ question.id }}_{{ loop.index }}" value="{{ choice_value }}" autocomplete="off" {% if form[question.id].data == choice_value %}checked{% endif %}>
+                                <label class="btn btn-outline-primary" for="{{ question.id }}_{{ loop.index }}">{{ trans(choice_value, default=choice_label, lang=lang) }}</label>
+                            {% endfor %}
+                        </div>
                         <small class="form-text text-muted" id="help_{{ question.id }}">{{ trans(question.tooltip, default='', lang=lang) }}</small>
                         {% if form[question.id].errors %}
                             <ul>
@@ -87,4 +89,20 @@
         </div>
     </div>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const questions = document.querySelectorAll('.question-block');
+    questions.forEach(question => {
+        const radios = question.querySelectorAll('input[type="radio"]');
+        const statusSpan = question.querySelector('.question-status');
+        radios.forEach(radio => {
+            radio.addEventListener('change', function() {
+                if (this.checked) {
+                    statusSpan.innerHTML = '<i class="fas fa-check text-success"></i>';
+                }
+            });
+        });
+    });
+});
+</script>
 {% endblock %}
