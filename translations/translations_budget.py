@@ -830,6 +830,7 @@ BUDGET_TRANSLATIONS = {
         'budget_tips_insights': 'Nasihu da Fahimtar Kasafin Kuɗi',
         'budget_create_new': 'Ƙirƙiri Sabon Kasafin Kuɗi',
         'budget_savings_progress': 'Ci Gaban Ajiyar Kuɗi',
+        'budget_create_budget_tooltip': 'Ƙirƙiri kasafin kuɗin ku don sarrafa kuɗin ku da kyau.',
         'core_delete': 'Goge',
         'budget_remaining': 'Sauran',
         'Enter your monthly expenses': 'Shigar da kuɗin da kuke kashewa duk wata',
