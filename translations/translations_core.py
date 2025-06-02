@@ -627,7 +627,7 @@ CORE_TRANSLATIONS = {
         'core_disclaimer': 'Ficore ba banki ba ne kuma ba ya riƙe ko motsa kuɗi.',
         'core_learn_more_content': 'Ficore Africa tana ba da kayan aiki don taimaka muku bin diddigin kuɗin shiga, darajar kuɗi, kasafin kuɗi, da lissafin kuɗi, wanda ke ba ku damar haɓaka kuɗin ku tare da amincewa.',
         'core_consent_banner': 'Ta amfani da Ficore, kun fahimci cewa muna ba da kayan aiki don tsarawa kawai, ba banki ba.',
-        'core_money_control': 'Ɗauki iko da kuɗin ku tare da kayan aikin Ficore.',
+        'core_money_control': 'Rike ikon Sarrafa kuɗin ku tare da kayan aikin Ficore.',
         'core_no_fund_handling': 'Ficore ba ya sarrafa ko motsa kuɗi.',
         'core_advisory_only': 'Ficore yana ba da kayan aikin shawara kawai.',
         'core_Failed to send the financial health report to your email.': 'An kasa aikawa da rahoton lafiyar kuɗi zuwa imel ɗinka.',
