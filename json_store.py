@@ -7,6 +7,7 @@ from typing import List, Dict, Optional, Any
 import fcntl
 import shutil
 import time
+import logging
 
 class JsonStorage:
     """Custom JSON storage class to manage records with session ID and timestamps."""
@@ -18,7 +19,7 @@ class JsonStorage:
             raise ValueError("Logger instance is required")
 
         base_dir = '/tmp' if os.environ.get('RENDER') else os.path.join(os.path.dirname(__file__), '..')
-        self.filename = filename if os.path.isabs(filename) else os.path.join(base_dir, filename)
+        self.filename = filename if os.path.isabs(filename) else os.path.join(base_dir, 'data', 'networth.json')
         self.logger = logger_instance
 
         dir_path = os.path.dirname(self.filename)
@@ -112,11 +113,11 @@ class JsonStorage:
         backup_path = f"{self.filename}.backup"
         for attempt in range(retries):
             try:
-                if os.path.exists(self.filename):
+                if os.path.exists(self.filename) and os.path.getsize(self.filename) > 0:
                     shutil.copy(self.filename, backup_path)
                     self.logger.info(f"Backed up {self.filename} to {backup_path}")
                     return
-                self.logger.warning(f"Cannot backup, {self.filename} does not exist")
+                self.logger.warning(f"Cannot backup, {self.filename} is empty or does not exist")
                 return
             except Exception as e:
                 self.logger.error(f"Backup attempt {attempt + 1}/{retries} failed for {self.filename}: {str(e)}")
@@ -130,13 +131,13 @@ class JsonStorage:
         """Restore JSON file from backup if it exists."""
         try:
             backup_path = f"{self.filename}.backup"
-            if os.path.exists(backup_path):
+            if os.path.exists(backup_path) and os.path.getsize(backup_path) > 0:
                 with open(backup_path, 'r') as f:
                     data = json.load(f)
                 self._write(data)
                 self.logger.info(f"Restored {self.filename} from {backup_path}")
                 return True
-            self.logger.warning(f"No backup found at {backup_path}")
+            self.logger.warning(f"No valid backup found at {backup_path}")
             return False
         except Exception as e:
             self.logger.error(f"Failed to restore from {backup_path}: {str(e)}")
@@ -160,6 +161,8 @@ class JsonStorage:
         if not session_id:
             session_id = session.get('sid', 'no-session-id') if has_request_context() else 'no-session-id'
         try:
+            # Backup existing data before appending
+            self.backup()
             records = self._read()
             record_id = str(uuid.uuid4())
             record_with_metadata = {
@@ -172,13 +175,14 @@ class JsonStorage:
                 record_with_metadata["user_email"] = user_email
             if lang:
                 record_with_metadata["lang"] = lang
-            records.append(record_with_metadata)
-            self._write(records)
-            self.backup()
+            # Cache record in session before writing to file
             if has_request_context():
                 session['networth_cache'] = session.get('networth_cache', []) + [record_with_metadata]
                 session.modified = True
                 self.logger.info(f"Cached record {record_id} in session for {session_id}")
+            records.append(record_with_metadata)
+            self._write(records)
+            self.backup()
             self.logger.info(f"Appended record {record_id} to {self.filename}")
             return record_id
         except Exception as e:
@@ -209,7 +213,7 @@ class JsonStorage:
             self.logger.info(f"Filtered {len(filtered)} records for ID {record_id} in {self.filename}")
             return filtered
         except Exception as e:
-            self.logger.error(f"Error filtering {self.filename} by ID {record_id}: {str(e)}")
+            self.logger.error(f"Error filtering {self.filename) by ID {record_id}: {str(e)}")
             raise
 
     def get_by_id(self, record_id: str) -> Optional[Dict[str, Any]]:
