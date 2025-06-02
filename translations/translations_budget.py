@@ -597,7 +597,7 @@ BUDGET_TRANSLATIONS = {
         'budget_transport_required': 'Dole ne a saka kuɗin hanya',
         'budget_transport_placeholder': 'misali, 20,000',
         'budget_transport_tooltip': 'Man fetur, sufurin jama’a, kula da abin hawa',
-        'budget_dependents_support': 'Tallafin Masu Dogara da Kai',
+        'budget_dependents_support': 'Tallafin Wanda Suka Dogara da Kai',
         'budget_example_dependents': 'misali, 30,000',
         'budget_support_family_dependents': 'Tallafi ga iyali ko masu dogara da kai',
         'budget_dependents_cost_required': 'Ana buƙatar kuɗin tallafin masu dogara',
