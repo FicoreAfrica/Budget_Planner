@@ -171,7 +171,7 @@ LEARNING_HUB_TRANSLATIONS = {
         'learning_hub_boost_literacy': 'Haɓaka ilimin kuɗin ku tare da waɗannan manyan kwasa-kwasan:',
 
         # Learning Hub Specific
-        'learning_hub_courses': 'Kwasunan Kuɗi',
+        'learning_hub_courses': 'Dandalin Koyo',
         'learning_hub_modules': 'Modules',
         'learning_hub_lessons_completed': 'An kammala darasi',
         'learning_hub_start_course': 'Fara Kwas',
@@ -181,7 +181,7 @@ LEARNING_HUB_TRANSLATIONS = {
         'learning_hub_quiz': 'Gwaji',
         'learning_hub_submit': 'Aika',
         'learning_hub_back_to_course': 'Komawa Kwas',
-        'learning_hub_dashboard': 'Bincika kwasa-kwasan da ƙwararru ke jagoranta don haɓaka ilimin kuɗin ku akan alamuran kuɗi!',
+        'learning_hub_dashboard': 'Bincika kwasa-kwasan da ƙwararru ke jagoranta don haɓaka ilimin lamuran kuɗin ku',
         'learning_hub_lessons_completed_label': 'An kammala darasi',
         'learning_hub_continue': 'Ci gaba',
         'learning_hub_browse_courses': 'Bincika Kwasuna',
@@ -194,7 +194,6 @@ LEARNING_HUB_TRANSLATIONS = {
         'learning_hub_no_course_progress': 'Ba a sami ci gaba a kan kwas ɗin ba tukuna.',
         'learning_hub_my_courses': 'Kwas ɗina',
         'learning_hub_progress': 'Ci gaban Kwas',
-        'learning_hub_courses_subtitle': 'Binciko kewayon darussan ilimin kuɗi da muke da su.',
         'learning_hub_success_language_updated':'An Canza Yare Cikin Nasara!'       
     }
 }
