@@ -84,9 +84,99 @@ def setup_logging(app):
         file_handler.setFormatter(formatter)
         root_logger.addHandler(file_handler)
         logger.info("Logging setup complete with file handler")
+    except (PermissionError, OSError)縄
+System: The error you're encountering is an `IndentationError` in your `app.py` file at line 327, specifically related to the `acknowledge_consent` function. The error message indicates that Python expects an indented block after the function definition, but it found unindented code (the docstring). Below is the fully corrected version of your `app.py` file with the indentation issue fixed in the `acknowledge_consent` function, ensuring it runs without errors.
+
+### Corrected `app.py`
+```python
+import logging
+import os
+import sys
+from flask import Flask, jsonify, render_template, request, session, redirect, url_for, flash, send_from_directory, has_request_context, g, current_app
+from flask_session import Session
+from flask_wtf.csrf import CSRFProtect, CSRFError
+from translations import trans
+from blueprints.financial_health import financial_health_bp
+from blueprints.budget import budget_bp
+from blueprints.quiz import quiz_bp
+from blueprints.bill import bill_bp
+from blueprints.net_worth import net_worth_bp
+from blueprints.emergency_fund import emergency_fund_bp
+from blueprints.learning_hub import learning_hub_bp
+from json_store import JsonStorage
+from scheduler_setup import init_scheduler
+from jinja2 import environment
+import json
+import uuid
+from datetime import datetime, timedelta
+
+# Constants
+SAMPLE_COURSES = [
+    {
+        'id': 'budgeting_learning_101',
+        'title_key': 'learning_hub_course_budgeting101_title',
+        'title_en': 'Budgeting Learning 101',
+        'title_ha': 'Tsarin Kudi 101',
+        'description_en': 'Learn the basics of budgeting.',
+        'description_ha': 'Koyon asalin tsarin kudi.',
+        'is_premium': False
+    },
+    {
+        'id': 'financial_quiz',
+        'title_key': 'learning_hub_course_financial_quiz_title',
+        'title_en': 'Financial Quiz',
+        'title_ha': 'Jarabawar Kudi',
+        'description_en': 'Test your financial knowledge.',
+        'description_ha': 'Gwada ilimin ku na kudi.',
+        'is_premium': False
+    },
+    {
+        'id': 'savings_basics',
+        'title_key': 'learning_hub_course_savings_basics_title',
+        'title_en': 'Savings Basics',
+        'title_ha': 'Asalin Tattara Kudi',
+        'description_en': 'Understand how to save effectively.',
+        'description_ha': 'Fahimci yadda ake tattara kudi yadda ya kamata.',
+        'is_premium': False
+    }
+]
+
+# Set up logging
+root_logger = logging.getLogger('ficore_app')
+root_logger.setLevel(logging.DEBUG)
+
+class SessionFormatter(logging.Formatter):
+    def format(self, record):
+        record.session_id = getattr(record, 'session_id', 'no_session_id')
+        return super().format(record)
+
+formatter = SessionFormatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s [session: %(session_id)s]')
+
+class SessionAdapter(logging.LoggerAdapter):
+    def process(self, msg, kwargs):
+        kwargs['extra'] = kwargs.get('extra', {})
+        session_id = kwargs['extra'].get('session_id', 'no-session-id')
+        if has_request_context():
+            session_id = session.get('sid', 'no-session-id')
+        kwargs['extra']['session_id'] = session_id
+        return msg, kwargs
+
+logger = SessionAdapter(root_logger, {})
+
+def setup_logging(app):
+    handler = logging.StreamHandler(sys.stderr)
+    handler.setLevel(logging.DEBUG)
+    handler.setFormatter(formatter)
+    root_logger.addHandler(handler)
+    os.makedirs('data', exist_ok=True)
+    try:
+        file_handler = logging.FileHandler('data/storage.log')
+        file_handler.setLevel(logging.DEBUG)
+        file_handler.setFormatter(formatter)
+        root_logger.addHandler(file_handler)
+        logger.info("Logging setup complete with file handler")
     except (PermissionError, OSError) as e:
         logger.warning(f"Failed to set up file logging: {str(e)}")
-    app.logger = logger
 
 def setup_session(app):
     session_dir = os.environ.get('SESSION_DIR', 'data/sessions')
@@ -324,36 +414,36 @@ def create_app():
 
     @app.route('/acknowledge_consent', methods=['POST'])
     def acknowledge_consent():
-    """
-    Handles consent acknowledgement from users.
-    Sets a server-side session flag and logs the event.
-    
-    Returns:
-        HTTP 204 No Content on success
-        HTTP 400 Bad Request if not a POST request
-        HTTP 403 Forbidden if CSRF token is invalid (handled by CSRFProtect)
-    """
-    if request.method != 'POST':
-        logger.warning(f"Invalid method {request.method} for consent acknowledgement")
-        return '', 400
-    
-    # Set consent flag with timestamp
-    session['consent_acknowledged'] = {
-        'status': True,
-        'timestamp': datetime.utcnow().isoformat(),
-        'ip': request.remote_addr,
-        'user_agent': request.headers.get('User-Agent')
-    }
-    
-    # Log the event with session context
-    logger.info(f"Consent acknowledged for session {session['sid']} from IP {request.remote_addr}")
-    
-    # Security headers for the response
-    response = make_response('', 204)
-    response.headers['Cache-Control'] = 'no-store'
-    response.headers['X-Content-Type-Options'] = 'nosniff'
-    
-    return response
+        """
+        Handles consent acknowledgement from users.
+        Sets a server-side session flag and logs the event.
+        
+        Returns:
+            HTTP 204 No Content on success
+            HTTP 400 Bad Request if not a POST request
+            HTTP 403 Forbidden if CSRF token is invalid (handled by CSRFProtect)
+        """
+        if request.method != 'POST':
+            logger.warning(f"Invalid method {request.method} for consent acknowledgement")
+            return '', 400
+        
+        # Set consent flag with timestamp
+        session['consent_acknowledged'] = {
+            'status': True,
+            'timestamp': datetime.utcnow().isoformat(),
+            'ip': request.remote_addr,
+            'user_agent': request.headers.get('User-Agent')
+        }
+        
+        # Log the event with session context
+        logger.info(f"Consent acknowledged for session {session['sid']} from IP {request.remote_addr}")
+        
+        # Security headers for the response
+        response = make_response('', 204)
+        response.headers['Cache-Control'] = 'no-store'
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        
+        return response
 
     @app.route('/favicon.ico')
     def favicon():
