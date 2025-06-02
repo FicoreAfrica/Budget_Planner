@@ -120,9 +120,9 @@ class Step4Form(FlaskForm):
         """Initialize form with translated labels and choices based on session language."""
         super().__init__(*args, **kwargs)
         lang = session.get('lang', 'en')
-        self.timing.label.text = trans('emergency_fund_timeline', lang=lang)
-        self.timing.validators[0].message = trans('required_timeline', lang=lang, default='Please select a timeline.')
-        self.timing.choices = [
+        self.timeline.label.text = trans('emergency_fund_timeline', lang=lang)
+        self.timeline.validators[0].message = trans('required_timeline', lang=lang, default='Please select a timeline.')
+        self.timeline.choices = [
             ('6', trans('emergency_fund_6_months', lang=lang)),
             ('12', trans('emergency_fund_12_months', lang=lang)),
             ('18', trans('emergency_fund_18_months', lang=lang))
