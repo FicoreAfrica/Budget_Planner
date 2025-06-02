@@ -613,7 +613,7 @@ CORE_TRANSLATIONS = {
         'core_about_ficore_africa': 'Game da Ficore Africa',
         'core_empowering_financial_growth': 'Ƙarfafa ci gaban kuɗi a cikin Afirka tun 2025',
         'core_disclaimer': 'Ficore ba banki ba ne kuma ba ya riƙe ko motsa kuɗi.',
-        'core_learn_more_content': 'Ficore Africa tana ba da kayan aiki don taimaka muku bin diddigin kuɗin shiga, darajar kuɗi, kasafin kuɗi, da lissafin kuɗi, wanda ke ba ku damar haɓaka kuɗin ku tare da amincewa.',
+        'core_learn_more_content': 'Ficore Africa tana ba da kayan aiki don taimaka muku wajen bin diddigin kuɗin shigarku, duba darajar arzikinku, tsara kasafin kuɗinku, dakuma lissafin yau da kullum, wanda ke ba ku damar haɓaka kuɗin ku cikin aminci.',
         'core_consent_banner': 'Ta amfani da Ficore, kun fahimci cewa muna ba da kayan aiki don tsarawa kawai, ba banki ba.',
         'core_money_control': 'Rike ikon Sarrafa kuɗin ku tare da kayan aikin Ficore.',
         'core_no_fund_handling': 'Ficore ba ya sarrafa ko motsa kuɗi.',
