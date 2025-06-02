@@ -5,8 +5,8 @@ CORE_TRANSLATIONS = {
         'Here\'s a summary of your emergency fund plan.': 'Here\'s a summary of your emergency fund plan.',
         'Tell us how much you\'ve already saved.': 'Tell us how much you\'ve already saved.',
         'Let\'s calculate your ideal emergency fund amount.': 'Let\'s calculate your ideal emergency fund amount.',
-        'Invalid CSRF token": "Invalid security token',
-        'An error occurred": "An error occurred',
+        'Invalid CSRF token': 'Invalid security token',
+        'An error occurred': 'An error occurred',
         'core_our_mission': 'Our Mission',
         'Error loading bill form': 'An error occurred while loading the bill form.',
         'courses_budgeting_course_tooltip': 'Learn how to create a budget and manage your finances effectively.',
@@ -761,9 +761,9 @@ CORE_TRANSLATIONS = {
 
 
         'Select how often you monitor your spending.': 'Zaɓi sau nawa kuke lura da kuɗin da kuke kashewa.',
-        'Invalid CSRF token": "Invalid security token',
+        'Invalid CSRF token': 'Invalid security token',
         'Please correct the errors in the form.': 'Don Allah a gyara kurakuran da ke cikin fom ɗin.',
-        'An error occurred": "An error occurred',
+        'An error occurred': 'An error occurred',
         'core_email_invalid': 'Imel din baida kyau',
         'Indicate your saving habits.': 'Nuna halayen ku na tanadi.',
         'Consider luxury or discretionary purchases.': 'Yi la\'akari da sayayya na alatu ko na zaɓi.',
