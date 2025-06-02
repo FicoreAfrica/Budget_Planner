@@ -322,6 +322,15 @@ def create_app():
         flash(translate('learning_hub_success_language_updated', default='Language updated successfully', lang=new_lang) if new_lang in valid_langs else translate('Invalid language', default='Invalid language', lang=new_lang), 'success' if new_lang in valid_langs else 'danger')
         return redirect(request.referrer or url_for('index'))
 
+    # New route to acknowledge consent
+    @app.route('/acknowledge_consent', methods=['POST'])
+    def acknowledge_consent():
+        # Set a session variable to indicate that the user has acknowledged the consent
+        session['consent_acknowledged'] = True
+        logger.info(f"Consent acknowledged for session ID: {session.get('sid')}")
+        # Return a 204 No Content status, as no content needs to be sent back
+        return '', 204
+
     @app.route('/favicon.ico')
     def favicon():
         logger.info("Serving favicon.ico")
