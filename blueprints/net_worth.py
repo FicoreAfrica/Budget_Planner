@@ -175,6 +175,11 @@ def step3():
             step2_data = session.get('networth_step2_data', {})
             form_data = form.data.copy()
 
+            # Store step3 data in session
+            session['networth_step3_data'] = {'loans': form_data.get('loans', 0) or 0}
+            session.modified = True
+            current_app.logger.info(f"Net worth step3 form data saved for session {session['sid']}: {session['networth_step3_data']}")
+
             # Calculate assets and liabilities
             cash_savings = step2_data.get('cash_savings', 0)
             investments = step2_data.get('investments', 0)
@@ -216,12 +221,13 @@ def step3():
                 }
             }
 
-            # Save to storage
+            # Save to storage with logging
+            storage = current_app.config['STORAGE_MANAGERS']['net_worth']
             try:
-                storage = current_app.config['STORAGE_MANAGERS']['net_worth']
                 storage.append(record, user_email=step1_data.get('email'), session_id=session['sid'], lang=lang)
                 session['networth_record_id'] = record['id']
                 session.modified = True
+                current_app.logger.info(f"Successfully saved record {record['id']} for session {session['sid']}")
             except Exception as storage_error:
                 current_app.logger.error(f"Failed to save net worth record: {str(storage_error)}", extra={'session_id': session['sid']})
                 flash(trans("net_worth_storage_error", lang=lang), "danger")
@@ -288,6 +294,7 @@ def dashboard():
             current_app.logger.info(f"Found {len(user_data)} records for session {session['sid']}")
         except Exception as e:
             current_app.logger.warning(f"filter_by_session failed: {str(e)}", extra={'session_id': session['sid']})
+            user_data = []
 
         # Step 2: If no data, try to get by record ID
         if not user_data and 'networth_record_id' in session:
@@ -297,9 +304,10 @@ def dashboard():
                     if record.get('id') == session['networth_record_id']:
                         user_data = [record]
                         break
-                current_app.logger.info(f"Found {len(user_data)} records by record ID {session.get('networth_record_id')}")
+                current_app.logger.info(f"Found {len(user_data)} records by record ID {session['networth_record_id']}")
             except Exception as e:
                 current_app.logger.warning(f"Read by record ID failed: {str(e)}", extra={'session_id': session['sid']})
+                user_data = []
 
         # Step 3: If still no data, construct from session data
         if not user_data:
@@ -343,6 +351,8 @@ def dashboard():
                     "created_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 }
                 user_data = [{"id": session['sid'], "data": latest_record}]
+            else:
+                current_app.logger.info(f"No session data available for construction for session {session['sid']}")
 
         # Process records
         if user_data and not latest_record:
@@ -352,6 +362,10 @@ def dashboard():
             records = [(session['sid'], latest_record)]
         else:
             records = []
+
+        # Additional logging for debugging
+        current_app.logger.info(f"records: {records}")
+        current_app.logger.info(f"latest_record: {latest_record}")
 
         # Generate insights and tips
         insights = []
