@@ -13,7 +13,7 @@ EMAIL_CONFIG = {
         "subject_key": "financial_health_financial_health_report",
         "template": {
             "mailersend": "health_score_email.html",
-            "gmail": "health_score_email_gmail.html"  # Optional: separate template for Gmail
+            "gmail": "health_score_email_gmail.html"
         }
     },
     "budget": {
@@ -65,9 +65,10 @@ def send_email(
     logger: logging.LoggerAdapter,
     to_email: str,
     subject: str,
-    template_key: str,
-    data: Dict,
-    lang: Optional[str] = None
+    template_key: Optional[str] = None,
+    data: Dict = None,
+    lang: Optional[str] = None,
+    template_name: Optional[str] = None
 ) -> None:
     """
     Send an email using a prioritized list of providers (MailerSend, Gmail) with provider-specific templates.
@@ -77,15 +78,17 @@ def send_email(
         logger: Logger instance with SessionAdapter for session-aware logging.
         to_email: Recipient's email address.
         subject: Email subject.
-        template_key: Key in EMAIL_CONFIG (e.g., 'budget', 'quiz').
-        data: Data to pass to the template for rendering.
+        template_key: Key in EMAIL_CONFIG (e.g., 'budget', 'quiz'). Preferred argument.
+        data: Data to pass to the template for rendering. Defaults to empty dict if None.
         lang: Language code ('en' or 'ha'). Defaults to session['lang'] or 'en'.
+        template_name: Deprecated. Fallback for template_key. Issues a warning if used.
 
     Raises:
-        ValueError: If API token, from email, or template is invalid.
+        ValueError: If API token, from email, template, or template_key/template_name is invalid.
         RuntimeError: If all providers fail to send the email.
 
     Notes:
+        - Prioritizes template_key over template_name. Warns if template_name is used.
         - Requires environment variables: MAILERSEND_API_TOKEN, MAILERSEND_FROM_EMAIL,
           GMAIL_SMTP_USER, GMAIL_SMTP_PASSWORD.
         - Uses provider-specific templates from EMAIL_CONFIG, falling back to 'mailersend' template if needed.
@@ -99,11 +102,27 @@ def send_email(
         logger.warning(f"Invalid language '{lang}', falling back to 'en'")
         lang = 'en'
 
+    # Ensure data is a dictionary
+    data = data or {}
+    if not isinstance(data, dict):
+        logger.error(f"Data must be a dictionary, got {type(data)}", extra={'session_id': session.get('sid', 'no-session-id')})
+        raise ValueError("Data must be a dictionary")
+
     session_id = session.get('sid', 'no-session-id') if has_request_context() else 'no-session-id'
+
+    # Prioritize template_key, fall back to template_name
+    if template_key is None and template_name is None:
+        logger.error("Neither template_key nor template_name provided", extra={'session_id': session_id})
+        raise ValueError("Either template_key or template_name must be provided")
+    
+    if template_key is None and template_name is not None:
+        logger.warning(f"Deprecated argument 'template_name' used: {template_name}. Use 'template_key' instead.", extra={'session_id': session_id})
+        template_key = template_name
+
     config = EMAIL_CONFIG.get(template_key)
     if not config:
         logger.error(f"Invalid template_key '{template_key}'", extra={'session_id': session_id})
-        raise ValueError(f"Template key {template_key} not found in EMAIL_CONFIG")
+        raise ValueError(f"Template key '{template_key}' not found in EMAIL_CONFIG. Valid keys: {list(EMAIL_CONFIG.keys())}")
 
     # Define provider priority (extendable for future providers)
     providers = ['mailersend', 'gmail']
