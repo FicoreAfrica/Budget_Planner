@@ -33,7 +33,7 @@
             <form method="POST" novalidate>
                 {{ form.hidden_tag() }}
                 <div class="mb-3">
-                    <label class="form-label" for="{{ form.monthly_expenses.id }}">{{ form.monthly_expenses.label }}</label>
+                    <label class="form-label" for="{{ form.monthFy_expenses.id }}">{{ form.monthly_expenses.label }}</label>
                     {{ form.monthly_expenses(class="form-control number-input" + (" is-invalid" if form.monthly_expenses.errors else ""), id="monthly_expenses", placeholder=trans('emergency_fund_monthly_expenses_placeholder') | default('e.g., 30,000'), **{'data-bs-toggle': 'tooltip', 'title': trans('emergency_fund_monthly_expenses_tooltip') | default('Money you spend monthly on food, okada, rent, etc.'), 'aria-describedby': 'expensesHelp'}) }}
                     <small id="expensesHelp" class="form-text text-muted">{{ trans('emergency_fund_monthly_expenses_example') | default('Example: ₦30,000 for food, transport, and data') }}</small>
                     {% for error in form.monthly_expenses.errors %}
@@ -48,8 +48,8 @@
                         <div class="invalid-feedback">{{ trans(error) | default(error) }}</div>
                     {% endfor %}
                 </div>
-                <button type="submit" class="btn btn-primary">{{ trans('core_next') | default('Next') }}</button>
                 <a href="{{ url_for('emergency_fund.step1') }}" class="btn btn-secondary">{{ trans('core_back') | default('Back') }}</a>
+                <button type="submit" class="btn btn-primary">{{ trans('core_next') | default('Next') }}</button>
             </form>
         </div>
     </div>
