@@ -740,6 +740,9 @@ CORE_TRANSLATIONS = {
         'courses_start_budgeting_course_tooltip': 'Fara koyon yadda ake tsara kasafin kuɗi.',
         'An kasa aika rahoton lafiyar kuɗi zuwa imel ɗin ka.': 'An kasa aika rahoton lafiyar kuɗi zuwa imel ɗin ka.',
         'An kammala tantance lafiyar kuɗi cikin nasara.': 'An kammala tantance lafiyar kuɗi cikin nasara.',
+        'An Canza Yare Cikin Nasara!': 'An Canza Yare Cikin Nasara!',
+        'Shirin Kasafi': 'Shirin Kasafi',
+        'core_An Canza Yare Cikin Nasara!': 'An Canza Yare Cikin Nasara!',
 
 
         'Select how often you monitor your spending.': 'Zaɓi sau nawa kuke lura da kuɗin da kuke kashewa.',
