@@ -8,6 +8,9 @@ CORE_TRANSLATIONS = {
         'Invalid CSRF token": "Invalid security token',
         'An error occurred": "An error occurred',
         'core_our_mission': 'Our Mission',
+        'courses_budgeting_course_tooltip': 'Learn how to create a budget and manage your finances effectively.',
+        'courses_start_budgeting_course_tooltip': 'Start learning how to budget.',
+        'email: Please enter a valid email': 'Please enter a valid email',
         'core_mission_statement_content': 'To empower individuals and businesses across Africa with accessible and intuitive financial tools and knowledge, fostering financial literacy and driving economic growth.',
         'core_why_ficore_africa': 'The Vision Behind Ficore Africa',
         'core_team_why_content': 'Ficore Africa was born from a shared passion to bridge the financial literacy gap in Africa and provide practical, user-friendly solutions that address the unique financial challenges faced by individuals and businesses in the region. We believe that by equipping Africans with the right tools and understanding, we can unlock their economic potential and build a more prosperous future for the continent.',
@@ -748,6 +751,9 @@ CORE_TRANSLATIONS = {
         'core_our_mission': 'Manufarmu',
         'core_mission_statement_content': 'Don ƙarfafa arzikin mutane da kasuwanci a faɗin Afirka tare da kayan aiki dakuma bada ilimi na kuɗi masu sauƙin fahimta ko amfani, don haɓaka tattalin arzikin Afirka.',
         'core_why_ficore_africa': 'Meyasa Ficore Africa?',
+        'courses_budgeting_course_tooltip': 'Koyi yadda ake ƙirƙirar kasafin kuɗi da kuma sarrafa kuɗin ku yadda ya kamata.',
+        'courses_start_budgeting_course_tooltip': 'Fara koyon yadda ake tsara kasafin kuɗi.',
+        'email: Please enter a valid email': 'Don Allah a shigar da imel mai inganci.',
         'core_team_why_content': 'An ƙirƙiri Ficore Africa ne daga sha\'awar da muke da ita don cike gibin ilimin kuɗi a Afirka da kuma samar da hanyoyin magance matsalolin kuɗi na musamman da mutane da kasuwanci ke fuskanta a yankin. Mun yi imanin cewa ta hanyar samar wa \'yan Afirka da kayan aiki da fahimta da suka dace, za mu iya buɗe ƙarfinsu na tattalin arziki da kuma gina makoma mai wadata ga nahiyar.',
 
 
