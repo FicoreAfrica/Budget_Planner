@@ -163,8 +163,8 @@ QUIZ_TRANSLATIONS = {
         'badge_first_quiz': 'An Kammala Tambayoyin Farko',
         'badge_first_quiz_desc': 'Ka kammala tambayoyin kuɗi na farko.',
         'An error occurred. Please try again.': 'Wani kuskure ya faru. Da fatan za a sake gwadawa.',
-        'quiz_personality_quiz': 'Gwaji Halayen Kuɗi',
-        'quiz_assess_literacy': 'Gwajin ilimin ku na kuɗi da halayen ku.',
+        'quiz_personality_quiz': 'Gwajin Hali',
+        'quiz_assess_literacy': 'Gwada hali da ilimin ku akan kuɗi',
         'quiz_step_progress': 'Mataki {step_num} na {total_steps}',  # Updated to named placeholders
         'Enter Your Personal Information': 'Shigar da Bayanan Ku na Sirri',
         'quiz_start_personality_quiz': 'Fara Gwajin Halaye',
