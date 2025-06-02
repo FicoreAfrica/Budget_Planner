@@ -799,6 +799,7 @@ textarea {
     font-size: 1rem;
     line-height: 1.7;
     color: #333;
+    margin-bottom: 2rem; /* Add some space after the main content */
 }
 
 .about-content p {
@@ -810,24 +811,49 @@ textarea {
     font-style: italic;
 }
 
-/* Optional: Mission Statement Styling */
+/* Mission Statement Styling */
 .mission-statement {
     margin-top: 3rem;
     padding: 20px;
     background-color: #F8F9FA;
     border-left: 5px solid #0288D1; /* Accent color */
     border-radius: 4px;
+    margin-bottom: 2rem; /* Add space after the section */
 }
 
 .mission-statement h3 {
-    font-size: 1.5rem;
+    font-size: 1.7rem;
     color: #0288D1;
     margin-bottom: 1rem;
+    font-weight: 600;
 }
 
 .mission-statement p {
     font-size: 1rem;
     color: #555;
+    line-height: 1.7;
+}
+
+/* Team/Why Behind Ficore Africa Styling */
+.team-why {
+    margin-top: 2rem;
+    padding: 20px;
+    background-color: #E3F2FD; /* A slightly different background */
+    border-radius: 4px;
+    margin-bottom: 2rem; /* Add space after the section */
+}
+
+.team-why h3 {
+    font-size: 1.7rem;
+    color: #2E7D32; /* Use your secondary accent color */
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.team-why p {
+    font-size: 1rem;
+    color: #555;
+    line-height: 1.7;
 }
 
 /* Optional: Call to Action Styling */
@@ -849,5 +875,13 @@ textarea {
     }
     .about-container {
         padding: 20px;
+    }
+    .mission-statement h3,
+    .team-why h3 {
+        font-size: 1.5rem;
+    }
+    .mission-statement,
+    .team-why {
+        padding: 15px;
     }
 }
