@@ -632,7 +632,7 @@ BUDGET_TRANSLATIONS = {
         'budget_saving': 'Ajiya',
         'budget_savings_goal': 'Manufar Ajiya',
         'budget_savings_goal_alt': 'Manufar Ajiya',
-        'budget_monthly_savings_goal': 'Manufar Ajiya ta Wata',
+        'budget_monthly_savings_goal': 'Adadin Ajiya Duk Wata',
         'budget_set_monthly_savings_goal': 'Saita manufar ajiya ta wata',
         'budget_desired_monthly_savings': 'Adadin ajiya na wata da ake so.',
         'budget_example_savings': 'misali ₦5,000',
