@@ -114,10 +114,15 @@ class JsonStorage:
         for attempt in range(retries):
             try:
                 if os.path.exists(self.filename) and os.path.getsize(self.filename) > 0:
-                    shutil.copy(self.filename, backup_path)
-                    self.logger.info(f"Backed up {self.filename} to {backup_path}")
+                    with open(self.filename, 'r') as f:
+                        data = json.load(f)
+                    if isinstance(data, list) and data:
+                        shutil.copy(self.filename, backup_path)
+                        self.logger.info(f"Backed up {self.filename} to {backup_path}")
+                        return
+                    self.logger.warning(f"Cannot backup, {self.filename} contains invalid or empty data")
                     return
-                self.logger.warning(f"Cannot backup, {self.filename} is empty or does not exist")
+                self.logger.warning(f"Cannot backup, {self.filename} does not exist")
                 return
             except Exception as e:
                 self.logger.error(f"Backup attempt {attempt + 1}/{retries} failed for {self.filename}: {str(e)}")
@@ -128,16 +133,22 @@ class JsonStorage:
                     raise
 
     def restore_from_backup(self) -> bool:
-        """Restore JSON file from backup if it exists."""
+        """Restore JSON file from backup if it exists and is valid."""
+        backup_path = f"{self.filename}.backup"
         try:
-            backup_path = f"{self.filename}.backup"
             if os.path.exists(backup_path) and os.path.getsize(backup_path) > 0:
                 with open(backup_path, 'r') as f:
                     data = json.load(f)
-                self._write(data)
-                self.logger.info(f"Restored {self.filename} from {backup_path}")
-                return True
+                if isinstance(data, list):
+                    self._write(data)
+                    self.logger.info(f"Restored {self.filename} from {backup_path} with {len(data)} records")
+                    return True
+                self.logger.warning(f"Invalid backup data at {backup_path}: not a list")
+                return False
             self.logger.warning(f"No valid backup found at {backup_path}")
+            return False
+        except json.JSONDecodeError as e:
+            self.logger.error(f"Failed to decode backup {backup_path}: {str(e)}")
             return False
         except Exception as e:
             self.logger.error(f"Failed to restore from {backup_path}: {str(e)}")
