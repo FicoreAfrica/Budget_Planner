@@ -1,154 +1,91 @@
-<script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
-
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
-                var filteredData = jsonData.filter(row => row.some(filledCell));
-
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
-                var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                );
-                // Fallback
-                if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
-                }
-
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
-            }
-        }
-        return gk_fileData[filename] || "";
-        }
-        </script>{% extends 'base.html' %}
-{% block title %}{{ trans('bill_bill_planner') | default('Bill Planner') }}{% endblock %}
+{% extends 'base.html' %}
+{% block title %}{{ trans('bill_bill_planner', lang=lang) | default('Bill Planner') }} - {{ trans('bill_step1', lang=lang) | default('Step 1: Basic Info') }}{% endblock %}
 {% block content %}
-  <div class="container step-container">
-    {% set tool_name = 'bill_bill_planner' | default('Bill Planner') %}
+<div class="container step-container">
+    {% set tool_name = trans('bill_bill_planner', lang=lang) | default('Bill Planner') %}
     {% set tool_icon = 'fa-file-invoice' %}
-    {% set subtitle = 'Let’s start with a few details' %}
+    {% set subtitle = trans('bill_step1_subtitle', lang=lang) | default('Enter the basic details of your bill') %}
     {% include 'tool_header.html' %}
+    <div class="progress mb-3" role="progressbar" aria-label="{{ trans('bill_progress_step1', lang=lang) | default('Step 1 of 2') }}" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100">
+        <div class="progress-bar" style="width: 50%;">{{ trans('bill_step1_progress', lang=lang) | default('Step 1 of 2') }}</div>
+    </div>
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
                 <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                    {{ trans('bill_' + message) | default(message) | safe }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close') | default('Close') }}"></button>
+                    {{ trans(message, lang=lang) | default(message) | safe }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close', lang=lang) | default('Close') }}"></button>
                 </div>
             {% endfor %}
         {% endif %}
     {% endwith %}
     <div class="card">
-      <div class="card-body">
-        <form method="POST" action="{{ url_for('bill.form') }}">
-          {{ form.csrf_token }}
-          <div class="mb-3">
-            <label for="first_name" class="form-label">{{ trans('core_first_name') | default('First Name') }}</label>
-            {{ form.first_name(class="form-control", placeholder=trans('core_first_name_placeholder') | default('e.g., Chukwuma'), **{'data-bs-toggle': 'tooltip', 'title': trans('core_first_name_tooltip') | default('Enter your first name')}) }}
-            <div class="invalid-feedback">{{ trans('core_first_name_required') | default('First name is required') }}</div>
-          </div>
-          <div class="mb-3">
-            <label for="email" class="form-label">{{ trans('core_email') | default('Email') }}</label>
-            {{ form.email(class="form-control", placeholder=trans('core_email_placeholder') | default('e.g., chukwuma@example.com'), **{'data-bs-toggle': 'tooltip', 'title': trans('core_email_tooltip') | default('Enter your email address')}) }}
-            <div class="invalid-feedback">{{ trans('core_email_required') | default('Valid email is required') }}</div>
-          </div>
-          <div class="mb-3">
-            <label for="bill_name" class="form-label">{{ trans('bill_bill_name') | default('Bill Name') }}</label>
-            {{ form.bill_name(class="form-control", placeholder=trans('bill_bill_name_placeholder') | default('e.g., NEPA, MTN Data, Ajo Contribution'), **{'data-bs-toggle': 'tooltip', 'title': trans('bill_bill_name_tooltip') | default('Enter the name of the bill')}) }}
-            <div class="invalid-feedback">{{ trans('bill_bill_name_required') | default('Bill name is required') }}</div>
-          </div>
-          <div class="mb-3">
-            <label for="amount" class="form-label">{{ trans('bill_amount') | default('Amount') }}</label>
-            {{ form.amount(class="form-control", id="amountInput", placeholder=trans('bill_amount_placeholder') | default('e.g., ₦5000'), **{'data-bs-toggle': 'tooltip', 'title': trans('bill_amount_tooltip') | default('Enter the amount in Naira, e.g., ₦5,000 for MTN Data')}) }}
-            <div class="invalid-feedback">{{ trans('bill_amount_required') | default('Valid amount is required') }}</div>
-          </div>
-          <div class="mb-3">
-            <label for="due_date" class="form-label">{{ trans('bill_due_date') | default('Due Date') }}</label>
-            {{ form.due_date(class="form-control", type="date", placeholder=trans('bill_due_date_placeholder') | default('YYYY-MM-DD'), **{'data-bs-toggle': 'tooltip', 'title': trans('bill_due_date_tooltip') | default('Enter the due date in YYYY-MM-DD format')}) }}
-            <div class="invalid-feedback">{{ trans('bill_due_date_required') | default('Valid due date is required') }}</div>
-          </div>
-          <div class="mb-3">
-            <label for="frequency" class="form-label">{{ trans('bill_frequency') | default('Frequency') }}</label>
-            {{ form.frequency(class="form-control", **{'data-bs-toggle': 'tooltip', 'title': trans('bill_frequency_tooltip') | default('Select how often this bill or expense occurs')}) }}
-            <div class="invalid-feedback">{{ trans('bill_frequency_required') | default('Frequency is required') }}</div>
-          </div>
-          <div class="mb-3">
-            <label for="category" class="form-label">{{ trans('bill_category') | default('Category') }}</label>
-            {{ form.category(class="form-control", **{'data-bs-toggle': 'tooltip', 'title': trans('bill_category_tooltip') | default('Select a category, e.g., Data/Internet, Ajo/Esusu/Adashe')}) }}
-            <div class="invalid-feedback">{{ trans('bill_category_required') | default('Category is required') }}</div>
-          </div>
-          <div class="mb-3 form-check">
-            {{ form.send_email(class="form-check-input", **{'data-bs-toggle': 'tooltip', 'title': trans('bill_send_email_tooltip') | default('Check this to receive email reminders for this bill')}) }}
-            <label class="form-check-label" for="send_email">{{ trans('bill_send_email') | default('Send Email Reminders') }}</label>
-          </div>
-          <div class="mb-3">
-            <label for="reminder_days" class="form-label">{{ trans('bill_reminder_days') | default('Reminder Days') }}</label>
-            {{ form.reminder_days(class="form-control", placeholder=trans('bill_reminder_days_placeholder') | default('e.g., 7'), **{'data-bs-toggle': 'tooltip', 'title': trans('bill_reminder_days_tooltip') | default('Number of days before due date to receive reminders (1-30)')}) }}
-            <div class="invalid-feedback">{{ trans('bill_reminder_days_required') | default('Valid number of days (1-30) is required') }}</div>
-          </div>
-          <div class="mb-3">
-            <label for="status" class="form-label">{{ trans('bill_status') | default('Status') }}</label>
-            {{ form.status(class="form-control", **{'data-bs-toggle': 'tooltip', 'title': trans('bill_status_tooltip') | default('Select the current status of the bill')}) }}
-            <div class="invalid-feedback">{{ trans('bill_status_required') | default('Status is required') }}</div>
-          </div>
-          <button type="submit" class="btn btn-primary">{{ trans('bill_save_bill') | default('Save Bill') }}</button>
-        </form>
-      </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('bill.form_step1') }}" id="billFormStep1">
+                {{ form.csrf_token }}
+                <div class="mb-3">
+                    <label for="first_name" class="form-label">{{ trans('core_first_name', lang=lang) | default('First Name') }}</label>
+                    {{ form.first_name(class="form-control", autofocus=True, placeholder=trans('core_first_name_placeholder', lang=lang) | default('e.g., Chukwuma'), **{'data-bs-toggle': 'tooltip', 'title': trans('core_first_name_tooltip', lang=lang) | default('Enter your first name'), 'aria-describedby': 'firstNameTooltip'}) }}
+                    <div class="invalid-feedback">{{ trans('core_first_name_required', lang=lang) | default('First name is required') }}</div>
+                </div>
+                <div class="mb-3">
+                    <label for="email" class="form-label">{{ trans('core_email', lang=lang) | default('Email') }}</label>
+                    {{ form.email(class="form-control", placeholder=trans('core_email_placeholder', lang=lang) | default('e.g., user@example.com'), **{'data-bs-toggle': 'tooltip', 'title': trans('core_email_tooltip', lang=lang) | default('Enter your email address'), 'aria-describedby': 'emailTooltip'}) }}
+                    <div class="invalid-feedback">{{ trans('core_email_required', lang=lang) | default('Valid email is required') }}</div>
+                </div>
+                <div class="mb-3">
+                    <label for="bill_name" class="form-label">{{ trans('bill_bill_name', lang=lang) | default('Bill Name') }}</label>
+                    {{ form.bill_name(class="form-control", placeholder=trans('bill_bill_name_placeholder', lang=lang) | default('e.g., NEPA, MTN Data, Ajo Contribution'), **{'data-bs-toggle': 'tooltip', 'title': trans('bill_bill_name_tooltip', lang=lang) | default('Enter the name of the bill'), 'aria-describedby': 'billNameTooltip'}) }}
+                    <div class="invalid-feedback">{{ trans('bill_bill_name_required', lang=lang) | default('Bill name is required') }}</div>
+                </div>
+                <div class="mb-3">
+                    <label for="amount" class="form-label">{{ trans('bill_amount', lang=lang) | default('Amount') }}</label>
+                    {{ form.amount(class="form-control", id="amountInput", placeholder=trans('bill_amount_placeholder', lang=lang) | default('e.g., ₦5000'), **{'data-bs-toggle': 'tooltip', 'title': trans('bill_amount_tooltip', lang=lang) | default('Enter the amount in Naira, e.g., ₦5,000 for MTN Data'), 'aria-describedby': 'amountTooltip'}) }}
+                    <div class="invalid-feedback">{{ trans('bill_amount_required', lang=lang) | default('Valid amount is required') }}</div>
+                </div>
+                <div class="mb-3">
+                    <label for="due_date" class="form-label">{{ trans('bill_due_date', lang=lang) | default='Due Date' %}
+                    </label>
+                    {{ form.due_date(class="form-control", id="due_date" type="date", placeholder=trans('bill_due_date', lang=lang) | default('YYYY-MM-DD'), **{'data-bs-toggle': 'tooltip', 'title': trans('bill_due_date_tooltip', lang=lang) | default('Enter the due date in YYYY-MM-DD format'), 'aria-describedby': 'dueDateTooltip'}) }}
+                    <div class="invalid-feedback">{{ trans('bill_due_date_required', lang=lang) | default('Valid due date is required') }}</div>
+                </div>
+                <button type="submit" class="btn btn-primary" id="nextButton">{{ trans('bill_next', lang=lang) | default('Next') }}</button>
+                <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">{{ trans('bill_back_to_index', lang=lang) | default('Back to Index') }}</a>
+            </form>
+        </div>
     </div>
-    <div class="mt-3 d-flex justify-content-between">
-      <a href="{{ url_for('index') }}" class="btn btn-secondary">{{ trans('bill_back_to_index') | default('Back to Index') }}</a>
-      <a href="{{ url_for('bill.dashboard') }}" class="btn btn-primary">{{ trans('bill_go_to_dashboard') | default('Go to Dashboard') }}</a>
-      <a href="{{ url_for('bill.view_edit') }}" class="btn btn-primary">{{ trans('bill_view_edit_bills') | default('View/Edit Bills') }}</a>
-    </div>
-  </div>
+</div>
 {% endblock %}
 {% block extra_scripts %}
 <script>
-// Format amount with commas as you type
-function formatNumberInput(input) {
-    const format = (val) => {
-        let clean = val.replace(/[^0-9.]/g, '');
-        if (!clean) return '';
-        let parts = clean.split('.');
-        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-        return parts.join('.');
-    };
-
-    input.addEventListener('input', function(e) {
-        let cursor = input.selectionStart;
-        let oldLength = input.value.length;
-        input.value = format(input.value);
-        let newLength = input.value.length;
-        input.setSelectionRange(cursor + (newLength - oldLength), cursor + (newLength - oldLength));
+    // Format amount with commas
+    function formatNumberInput(input) {
+        const format = (val) => {
+            let clean = val.replace(/[^0-9.]/g, '');
+            if (!clean) return '';
+            let parts = clean.split('.');
+            parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            return parts.join('.');
+        };
+        input.addEventListener('input', function(e) {
+            let cursor = input.selectionStart;
+            let oldLength = input.value.length;
+            input.value = format(input.value);
+            let newLength = input.value.length;
+            input.setSelectionRange(cursor + (newLength - oldLength), cursor + (newLength - oldLength));
+        });
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+        var amt = document.getElementById('amountInput');
+        if (amt) formatNumberInput(amt);
+        var form = document.getElementById('billFormStep1');
+        form.addEventListener('submit', function() {
+            const nextButton = document.getElementById('nextButton');
+            nextButton.disabled = true;
+            nextButton.textContent = '{{ trans('bill_saving', lang=lang) | default('Saving...') }}';
+            const amt = document.getElementById('amountInput');
+            if (amt) amt.value = amt.value.replace(/,/g, '');
+        });
     });
-}
-
-// Strip commas before submitting the form
-document.querySelector('form').addEventListener('submit', function() {
-    const amt = document.getElementById('amountInput');
-    if (amt) amt.value = amt.value.replace(/,/g, '');
-});
-
-document.addEventListener('DOMContentLoaded', function() {
-    var amt = document.getElementById('amountInput');
-    if (amt) formatNumberInput(amt);
-});
 </script>
 {% endblock %}
