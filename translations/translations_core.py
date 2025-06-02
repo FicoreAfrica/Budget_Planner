@@ -394,7 +394,7 @@ CORE_TRANSLATIONS = {
         'core_tools': 'Kayan Aiki',
         'core_general_dashboard': 'Dashboard na Gabaɗaya',
         'core_feedback': 'Ra\'ayi',
-        'core_all_in_one_toolkit': 'Dukkan Kayan Aiki Da Kuke Bukata Don Kiyaye Kudinku Da Arzikinku a Duk Afrika',
+        'core_all_in_one_toolkit': 'Dukkan Kayan Aiki Da Kuke Bukata Don Inganta Kudinku a Afrika',
         'core_track_finances': 'Bi diddigin kuɗin ku cikin sauƙi',
         'core_explore_tools': 'Bincika Sauran Kayan Aiki',
         'core_choose_tool': 'Zaɓi Kayan Aiki',
