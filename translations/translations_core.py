@@ -5,6 +5,10 @@ CORE_TRANSLATIONS = {
         'Here\'s a summary of your emergency fund plan.': 'Here\'s a summary of your emergency fund plan.',
         'Tell us how much you\'ve already saved.': 'Tell us how much you\'ve already saved.',
         'Let\'s calculate your ideal emergency fund amount.': 'Let\'s calculate your ideal emergency fund amount.',
+        'core_our_mission': 'Our Mission',
+        'core_mission_statement_content': 'To empower individuals and businesses across Africa with accessible and intuitive financial tools and knowledge, fostering financial literacy and driving economic growth.',
+        'core_why_ficore_africa': 'The Vision Behind Ficore Africa',
+        'core_team_why_content': 'Ficore Africa was born from a shared passion to bridge the financial literacy gap in Africa and provide practical, user-friendly solutions that address the unique financial challenges faced by individuals and businesses in the region. We believe that by equipping Africans with the right tools and understanding, we can unlock their economic potential and build a more prosperous future for the continent.',
          # Core UI elements
         'core_first_name': 'First Name',
         'core_first_name_placeholder': 'e.g., Muhammad, Bashir, Umar',
@@ -738,6 +742,10 @@ CORE_TRANSLATIONS = {
         'An ƙirƙiri kasafin kuɗin ku cikin nasara!': 'An ƙirƙiri kasafin kuɗin ku cikin nasara!',
         'Allon Kasafin Kuɗi': 'Allon Kasafin Kuɗi',
         'core_An ƙirƙiri kasafin kuɗin ku cikin nasara!': 'An ƙirƙiri kasafin kuɗin ku cikin nasara!',
+        'core_our_mission': 'Manufarmu',
+        'core_mission_statement_content': 'Don ƙarfafa arzikin mutane da kasuwanci a faɗin Afirka tare da kayan aiki dakuma bada ilimi na kuɗi masu sauƙin fahimta ko amfani, don haɓaka tattalin arzikin Afirka.',
+        'core_why_ficore_africa': 'Meyasa Ficore Africa?',
+        'core_team_why_content': 'An ƙirƙiri Ficore Africa ne daga sha\'awar da muke da ita don cike gibin ilimin kuɗi a Afirka da kuma samar da hanyoyin magance matsalolin kuɗi na musamman da mutane da kasuwanci ke fuskanta a yankin. Mun yi imanin cewa ta hanyar samar wa \'yan Afirka da kayan aiki da fahimta da suka dace, za mu iya buɗe ƙarfinsu na tattalin arziki da kuma gina makoma mai wadata ga nahiyar.',
 
 
         'Select how often you monitor your spending.': 'Zaɓi sau nawa kuke lura da kuɗin da kuke kashewa.',
