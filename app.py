@@ -322,14 +322,38 @@ def create_app():
         flash(translate('learning_hub_success_language_updated', default='Language updated successfully', lang=new_lang) if new_lang in valid_langs else translate('Invalid language', default='Invalid language', lang=new_lang), 'success' if new_lang in valid_langs else 'danger')
         return redirect(request.referrer or url_for('index'))
 
-    # New route to acknowledge consent
     @app.route('/acknowledge_consent', methods=['POST'])
     def acknowledge_consent():
-        # Set a session variable to indicate that the user has acknowledged the consent
-        session['consent_acknowledged'] = True
-        logger.info(f"Consent acknowledged for session ID: {session.get('sid')}")
-        # Return a 204 No Content status, as no content needs to be sent back
-        return '', 204
+    """
+    Handles consent acknowledgement from users.
+    Sets a server-side session flag and logs the event.
+    
+    Returns:
+        HTTP 204 No Content on success
+        HTTP 400 Bad Request if not a POST request
+        HTTP 403 Forbidden if CSRF token is invalid (handled by CSRFProtect)
+    """
+    if request.method != 'POST':
+        logger.warning(f"Invalid method {request.method} for consent acknowledgement")
+        return '', 400
+    
+    # Set consent flag with timestamp
+    session['consent_acknowledged'] = {
+        'status': True,
+        'timestamp': datetime.utcnow().isoformat(),
+        'ip': request.remote_addr,
+        'user_agent': request.headers.get('User-Agent')
+    }
+    
+    # Log the event with session context
+    logger.info(f"Consent acknowledged for session {session['sid']} from IP {request.remote_addr}")
+    
+    # Security headers for the response
+    response = make_response('', 204)
+    response.headers['Cache-Control'] = 'no-store'
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    
+    return response
 
     @app.route('/favicon.ico')
     def favicon():
