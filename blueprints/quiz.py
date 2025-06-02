@@ -56,17 +56,18 @@ class QuizStep2aForm(FlaskForm):
     def __init__(self, lang='en', *args, **kwargs):
         super().__init__(*args, **kwargs)
         questions = [
-            {'id': 'question_1', 'text_key': 'quiz_track_expenses_label', 'text': 'Do you track your expenses regularly?', 'tooltip_key': 'quiz_track_expenses_tooltip'},
-            {'id': 'question_2', 'text_key': 'quiz_save_regularly_label', 'text': 'Do you save a portion of your income regularly?', 'tooltip_key': 'quiz_save_regularly_tooltip'},
-            {'id': 'question_3', 'text_key': 'quiz_budget_monthly_label', 'text': 'Do you set a monthly budget?', 'tooltip_key': 'quiz_budget_monthly_tooltip'},
-            {'id': 'question_4', 'text_key': 'quiz_emergency_fund_label', 'text': 'Do you have an emergency fund?', 'tooltip_key': 'quiz_emergency_fund_tooltip'},
-            {'id': 'question_5', 'text_key': 'quiz_invest_regularly_label', 'text': 'Do you invest your money regularly?', 'tooltip_key': 'quiz_invest_regularly_tooltip'},
+            {'id': 'question_1', 'text_key': 'quiz_track_expenses_label', 'text': 'Do you track your expenses regularly?', 'tooltip_key': 'quiz_track_expenses_tooltip', 'icon': '💰'},
+            {'id': 'question_2', 'text_key': 'quiz_save_regularly_label', 'text': 'Do you save a portion of your income regularly?', 'tooltip_key': 'quiz_save_regularly_tooltip', 'icon': '💰'},
+            {'id': 'question_3', 'text_key': 'quiz_budget_monthly_label', 'text': 'Do you set a monthly budget?', 'tooltip_key': 'quiz_budget_monthly_tooltip', 'icon': '📝'},
+            {'id': 'question_4', 'text_key': 'quiz_emergency_fund_label', 'text': 'Do you have an emergency fund?', 'tooltip_key': 'quiz_emergency_fund_tooltip', 'icon': '🚨'},
+            {'id': 'question_5', 'text_key': 'quiz_invest_regularly_label', 'text': 'Do you invest your money regularly?', 'tooltip_key': 'quiz_invest_regularly_tooltip', 'icon': '📈'},
         ]
         for q in questions:
             field = getattr(self, q['id'])
             field.label.text = trans(q['text_key'], default=q['text'], lang=lang)
             field.description = trans(q['tooltip_key'], default='', lang=lang)
             field.choices = [(opt, trans(opt, default=opt, lang=lang)) for opt in ['Yes', 'No']]
+
         self.submit.label.text = trans('core_continue', default='Continue', lang=lang)
         self.back.label.text = trans('core_back', default='Back', lang=lang)
 
@@ -83,17 +84,18 @@ class QuizStep2bForm(FlaskForm):
     def __init__(self, lang='en', *args, **kwargs):
         super().__init__(*args, **kwargs)
         questions = [
-            {'id': 'question_6', 'text_key': 'quiz_spend_impulse_label', 'text': 'Do you often spend money on impulse?', 'tooltip_key': 'quiz_spend_impulse_tooltip'},
-            {'id': 'question_7', 'text_key': 'quiz_financial_goals_label', 'text': 'Do you set financial goals?', 'tooltip_key': 'quiz_financial_goals_tooltip'},
-            {'id': 'question_8', 'text_key': 'quiz_review_spending_label', 'text': 'Do you review your spending habits regularly?', 'tooltip_key': 'quiz_review_spending_tooltip'},
-            {'id': 'question_9', 'text_key': 'quiz_multiple_income_label', 'text': 'Do you have multiple sources of income?', 'tooltip_key': 'quiz_multiple_income_tooltip'},
-            {'id': 'question_10', 'text_key': 'quiz_retirement_plan_label', 'text': 'Do you have a retirement savings plan?', 'tooltip_key': 'quiz_retirement_plan_tooltip'},
+            {'id': 'question_6', 'text_key': 'quiz_spend_impulse_label', 'text': 'Do you often spend money on impulse?', 'tooltip_key': 'quiz_spend_impulse_tooltip', 'icon': '🛒'},
+            {'id': 'question_7', 'text_key': 'quiz_financial_goals_label', 'text': 'Do you set financial goals?', 'tooltip_key': 'quiz_financial_goals_tooltip', 'icon': '🎯'},
+            {'id': 'question_8', 'text_key': 'quiz_review_spending_label', 'text': 'Do you review your spending habits regularly?', 'tooltip_key': 'quiz_review_spending_tooltip', 'icon': '🔍'},
+            {'id': 'question_9', 'text_key': 'quiz_multiple_income_label', 'text': 'Do you have multiple sources of income?', 'tooltip_key': 'quiz_multiple_income_tooltip', 'icon': '💼'},
+            {'id': 'question_10', 'text_key': 'quiz_retirement_plan_label', 'text': 'Do you have a retirement savings plan?', 'tooltip_key': 'quiz_retirement_plan_tooltip', 'icon': '🏖️'},
         ]
         for q in questions:
             field = getattr(self, q['id'])
             field.label.text = trans(q['text_key'], default=q['text'], lang=lang)
             field.description = trans(q['tooltip_key'], default='', lang=lang)
             field.choices = [(opt, trans(opt, default=opt, lang=lang)) for opt in ['Yes', 'No']]
+
         self.submit.label.text = trans('quiz_see_results', default='See Results', lang=lang)
         self.back.label.text = trans('core_back', default='Back', lang=lang)
 
@@ -216,13 +218,13 @@ def step2a():
     course_id = request.args.get('course_id', 'financial_quiz')
     form = QuizStep2aForm(lang=lang, formdata=request.form if request.method == 'POST' else None)
     
-    # Preprocessed questions for template (hardcoded to match form fields)
+    # Preprocessed questions for template
     questions = [
-        {'id': 'question_1', 'text_key': 'quiz_track_expenses_label', 'text': 'Do you track your expenses regularly?', 'tooltip': 'quiz_track_expenses_tooltip'},
-        {'id': 'question_2', 'text_key': 'quiz_save_regularly_label', 'text': 'Do you save a portion of your income regularly?', 'tooltip': 'quiz_save_regularly_tooltip'},
-        {'id': 'question_3', 'text_key': 'quiz_budget_monthly_label', 'text': 'Do you set a monthly budget?', 'tooltip': 'quiz_budget_monthly_tooltip'},
-        {'id': 'question_4', 'text_key': 'quiz_emergency_fund_label', 'text': 'Do you have an emergency fund?', 'tooltip': 'quiz_emergency_fund_tooltip'},
-        {'id': 'question_5', 'text_key': 'quiz_invest_regularly_label', 'text': 'Do you invest your money regularly?', 'tooltip': 'quiz_invest_regularly_tooltip'},
+        {'id': 'question_1', 'text_key': 'quiz_track_expenses_label', 'text': 'Do you track your expenses regularly?', 'tooltip': 'quiz_track_expenses_tooltip', 'icon': '💰'},
+        {'id': 'question_2', 'text_key': 'quiz_save_regularly_label', 'text': 'Do you save a portion of your income regularly?', 'tooltip': 'quiz_save_regularly_tooltip', 'icon': '💰'},
+        {'id': 'question_3', 'text_key': 'quiz_budget_monthly_label', 'text': 'Do you set a monthly budget?', 'tooltip': 'quiz_budget_monthly_tooltip', 'icon': '📝'},
+        {'id': 'question_4', 'text_key': 'quiz_emergency_fund_label', 'text': 'Do you have an emergency fund?', 'tooltip': 'quiz_emergency_fund_tooltip', 'icon': '🚨'},
+        {'id': 'question_5', 'text_key': 'quiz_invest_regularly_label', 'text': 'Do you invest your money regularly?', 'tooltip': 'quiz_invest_regularly_tooltip', 'icon': '📈'},
     ]
     
     if request.method == 'POST':
@@ -268,13 +270,13 @@ def step2b():
     course_id = request.args.get('course_id', 'financial_quiz')
     form = QuizStep2bForm(lang=lang, formdata=request.form if request.method == 'POST' else None)
     
-    # Preprocessed questions for template (hardcoded to match form fields)
+    # Preprocessed questions for template
     questions = [
-        {'id': 'question_6', 'text_key': 'quiz_spend_impulse_label', 'text': 'Do you often spend money on impulse?', 'tooltip': 'quiz_spend_impulse_tooltip'},
-        {'id': 'question_7', 'text_key': 'quiz_financial_goals_label', 'text': 'Do you set financial goals?', 'tooltip': 'quiz_financial_goals_tooltip'},
-        {'id': 'question_8', 'text_key': 'quiz_review_spending_label', 'text': 'Do you review your spending habits regularly?', 'tooltip': 'quiz_review_spending_tooltip'},
-        {'id': 'question_9', 'text_key': 'quiz_multiple_income_label', 'text': 'Do you have multiple sources of income?', 'tooltip': 'quiz_multiple_income_tooltip'},
-        {'id': 'question_10', 'text_key': 'quiz_retirement_plan_label', 'text': 'Do you have a retirement savings plan?', 'tooltip': 'quiz_retirement_plan_tooltip'},
+        {'id': 'question_6', 'text_key': 'quiz_spend_impulse_label', 'text': 'Do you often spend money on impulse?', 'tooltip': 'quiz_spend_impulse_tooltip', 'icon': '🛒'},
+        {'id': 'question_7', 'text_key': 'quiz_financial_goals_label', 'text': 'Do you set financial goals?', 'tooltip': 'quiz_financial_goals_tooltip', 'icon': '🎯'},
+        {'id': 'question_8', 'text_key': 'quiz_review_spending_label', 'text': 'Do you review your spending habits regularly?', 'tooltip': 'quiz_review_spending_tooltip', 'icon': '🔍'},
+        {'id': 'question_9', 'text_key': 'quiz_multiple_income_label', 'text': 'Do you have multiple sources of income?', 'tooltip': 'quiz_multiple_income_tooltip', 'icon': '💼'},
+        {'id': 'question_10', 'text_key': 'quiz_retirement_plan_label', 'text': 'Do you have a retirement savings plan?', 'tooltip': 'quiz_retirement_plan_tooltip', 'icon': '🏖️'},
     ]
     
     if request.method == 'POST':
@@ -358,7 +360,7 @@ def results():
                 data={
                     "first_name": results['first_name'],
                     "score": results['score'],
-                    "max_score": MAX_SCORE,  # Pass max_score to email template
+                    "max_score": MAX_SCORE,
                     "personality": results['personality'],
                     "badges": results['badges'],
                     "insights": results.get('insights', []),
@@ -384,5 +386,5 @@ def results():
         tips=results.get('tips', []),
         course_id=course_id,
         lang=lang,
-        max_score=MAX_SCORE  # Pass max_score to the template
+        max_score=MAX_SCORE
     )
