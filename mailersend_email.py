@@ -95,20 +95,21 @@ def send_email(
         - Logs errors with session ID and provider details for debugging.
         - Includes retry logic for API/network failures and provider fallback.
     """
+    session_id = session.get('sid', 'no-session-id') if has_request_context() else 'no-session-id'
+    logger.info(f"send_email called with: to_email={to_email}, subject={subject}, template_key={template_key}, template_name={template_name}, data_type={type(data)}, data={data}, lang={lang}", extra={'session_id': session_id})
+
     # Default language from session
     if lang is None:
         lang = session.get('lang', 'en') if has_request_context() else 'en'
     if lang not in ['en', 'ha']:
-        logger.warning(f"Invalid language '{lang}', falling back to 'en'")
+        logger.warning(f"Invalid language '{lang}', falling back to 'en'", extra={'session_id': session_id})
         lang = 'en'
 
     # Ensure data is a dictionary
     data = data or {}
     if not isinstance(data, dict):
-        logger.error(f"Data must be a dictionary, got {type(data)}", extra={'session_id': session.get('sid', 'no-session-id')})
-        raise ValueError("Data must be a dictionary")
-
-    session_id = session.get('sid', 'no-session-id') if has_request_context() else 'no-session-id'
+        logger.error(f"Data must be a dictionary, got {type(data)}: {data}", extra={'session_id': session_id})
+        raise ValueError(f"Data must be a dictionary, got {type(data)}")
 
     # Prioritize template_key, fall back to template_name
     if template_key is None and template_name is None:
@@ -118,6 +119,11 @@ def send_email(
     if template_key is None and template_name is not None:
         logger.warning(f"Deprecated argument 'template_name' used: {template_name}. Use 'template_key' instead.", extra={'session_id': session_id})
         template_key = template_name
+
+    # Validate template_key type
+    if not isinstance(template_key, str):
+        logger.error(f"template_key must be a string, got {type(template_key)}: {template_key}", extra={'session_id': session_id})
+        raise ValueError(f"template_key must be a string, got {type(template_key)}")
 
     config = EMAIL_CONFIG.get(template_key)
     if not config:
@@ -135,6 +141,7 @@ def send_email(
             if not template_name.endswith('.html'):
                 template_name += '.html'
             template_path = os.path.join(app.template_folder, template_name)
+            logger.info(f"Using template: {template_name} at {template_path} for provider {provider}", extra={'session_id': session_id})
             if not os.path.exists(template_path):
                 raise ValueError(f"Template {template_name} for provider {provider} not found at {template_path}")
 
@@ -142,11 +149,13 @@ def send_email(
             with app.app_context():
                 try:
                     html_content = render_template(template_name, **data, lang=lang)
+                    logger.info(f"Template {template_name} rendered successfully, content length: {len(html_content)}", extra={'session_id': session_id})
                 except KeyError as e:
                     logger.warning(f"Missing key {e} in data for template {template_name}, using empty string", extra={'session_id': session_id})
                     data[str(e)] = ""
                     html_content = render_template(template_name, **data, lang=lang)
                 except Exception as e:
+                    logger.error(f"Cannot render email template {template_name}: {str(e)}", extra={'session_id': session_id})
                     raise RuntimeError(f"Cannot render email template {template_name}: {str(e)}")
 
             if provider == 'mailersend':
