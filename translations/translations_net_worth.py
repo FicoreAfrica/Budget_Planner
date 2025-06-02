@@ -480,7 +480,7 @@ NET_WORTH_TRANSLATIONS = {
         'net_worth_call_to_actions': 'Ayyuka masu zuwa',
         'net_worth_tips_for_improving_net_worth': 'Shawarwari don Inganta Dukiyar Kuɗi',
         'net_worth_personalized_net_worth_summary': 'Taƙaitaccen dukiyar kuɗin ka na keɓaɓɓu',
-        'net_worth_calculate_net_worth': 'Duba Darajar Arzikin',
+        'net_worth_calculate_net_worth': 'Duba',
         'net_worth_net_worth_metrics': 'Ma’aunin Dukiyar Kuɗi',
         'net_worth_recalculate_net_worth': 'Sake Ƙididdige Dukiyar Kuɗi',
         'net_worth_net_worth_completed_success': 'An kammala ƙididdigar dukiyar kuɗi cikin nasara.',
