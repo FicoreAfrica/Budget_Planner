@@ -16,6 +16,7 @@ QUIZ_TRANSLATIONS = {
         'quiz_personality_quiz': 'Financial Personality Quiz',
         'quiz_assess_literacy': 'Assess your financial literacy and personality.',
         'quiz_start_personality_quiz': 'Start Personality Quiz',
+        'badge_first_quiz_completed_desc': 'You\'ve completed your first quiz! Keep learning and growing!',
         'quiz_financial_personality_quiz': 'Financial Personality Quiz',
         'quiz_your_financial_personality_results': 'Your Financial Personality Results',
         'quiz_your_financial_personality_results_subtitle': 'Discover your financial personality and insights',
@@ -155,6 +156,7 @@ QUIZ_TRANSLATIONS = {
         'quiz_tip_spender_1': 'Kiyaye kashe kuɗinka don guje wa kashewa fiye da kima.',
         'quiz_tip_avoider_1': 'Fara da sauƙin kasafin kuɗi na wata-wata.',
         'badge_first_quiz_completed': 'An Kammala Gwaji na Farko!',
+        'badge_first_quiz_completed_desc': 'Kun kammala gwaji na farko! Ku ci gaba da koyo da girma!',
         # Badges
         'badge_financial_guru': 'Guru na Kuɗi',
         'badge_financial_guru_desc': 'An ba da kyauta saboda kyakkyawan tsara kuɗi.',
