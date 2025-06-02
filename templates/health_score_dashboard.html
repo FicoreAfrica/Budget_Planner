@@ -4,7 +4,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
-    {% endblock %}
+{% endblock %}
 {% block content %}
 <div class="container">
     {% set tool_name = 'financial_health_dashboard' | default('Financial Health Dashboard') %}
@@ -37,11 +37,16 @@
                 </p>
                 <p class="metric">
                     <strong>{{ trans('financial_health_status') | default('Status') }}:</strong>
-                    <span class="status-badge bg-{{ 'success' if latest_record.status == 'Excellent' or latest_record.status == 'Good' else 'warning' if latest_record.status == 'Needs Improvement' else 'danger' }}"
+                    {% set status_class = {
+                        'excellent': 'success',
+                        'good': 'success',
+                        'needs_improvement': 'warning'
+                    }.get(latest_record.status_key, 'danger') %}
+                    <span class="status-badge bg-{{ status_class }}"
                           data-bs-toggle="tooltip" data-bs-placement="top"
                           title="{{ trans('financial_health_status_tooltip') | default('Your overall financial health status based on your score.') }}">
-                        <i class="fas fa-{{ 'check-circle' if latest_record.status == 'Excellent' or latest_record.status == 'Good' else 'exclamation-circle' if latest_record.status == 'Needs Improvement' else 'times-circle' }}"></i>
-                        {{ trans('financial_health_' + latest_record.status.lower().replace(' ', '_')) | default(latest_record.status | default('Unknown')) }}
+                        <i class="fas fa-{{ 'check-circle' if status_class == 'success' else 'exclamation-circle' if status_class == 'warning' else 'times-circle' }}"></i>
+                        {{ latest_record.status | default('Unknown') }}
                     </span>
                 </p>
                 <p class="metric">
@@ -109,11 +114,10 @@
                 </p>
                 <script>
                     document.addEventListener('DOMContentLoaded', function() {
-                        // Initialize tooltips
-                        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+                        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
                         var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-                            return new bootstrap.Tooltip(tooltipTriggerEl)
-                        })
+                            return new bootstrap.Tooltip(tooltipTriggerEl);
+                        });
 
                         const formatNumber = (num, decimals = 0) => {
                             return num.toLocaleString('en-NG', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
@@ -142,7 +146,7 @@
                                 cutout: '70%',
                                 plugins: {
                                     legend: { display: false },
-                                    tooltip: { enabled: false }, // Tooltip for gauge itself disabled as score is shown separately
+                                    tooltip: { enabled: false },
                                     datalabels: {
                                         display: true,
                                         formatter: () => formatNumber({{ latest_record.score | default(0) }}),
@@ -406,7 +410,7 @@
                                 <tr>
                                     <td>{{ record.created_at | default('N/A') }}</td>
                                     <td>{{ record.score | default(0) }}</td>
-                                    <td>{{ trans('financial_health_' + record.status.lower().replace(' ', '_')) | default(record.status | default('Unknown')) }}</td>
+                                    <td>{{ record.status | default('Unknown') }}</td>
                                 </tr>
                             {% endfor %}
                         </tbody>
