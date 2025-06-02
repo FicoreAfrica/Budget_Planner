@@ -15,7 +15,7 @@
         <div class="card-body">
             <p><strong>{{ trans('core_first_name', default='First Name', lang=lang) }}</strong>: {{ latest_record.first_name }}</p>
             <p><strong>{{ trans('quiz_your_personality', default='Your Personality', lang=lang) }}</strong>: {{ trans('quiz_' + latest_record.personality.lower() + '_description', default=latest_record.personality, lang=lang) }}</p>
-            <p><strong>{{ trans('quiz_score', default='Score', lang=lang) }}</strong>: {{ latest_record.score }} / 26</p>
+            <p><strong>{{ trans('quiz_score', default='Score', lang=lang) }}</strong>: {{ latest_record.score }} / {{ max_score }}</p>
             <p><strong>{{ trans('core_created_at', default='Created At', lang=lang) }}</strong>: {{ latest_record.created_at }}</p>
         </div>
     </div>
