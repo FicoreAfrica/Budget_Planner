@@ -340,6 +340,9 @@ def results():
     results = session['quiz_results']
     quiz_data = session['quiz_data']
     
+    # Define maximum possible score
+    MAX_SCORE = 30  # Based on current logic: 10 questions, max 3 points each
+    
     # Send email if user opted in
     if quiz_data.get('send_email') and quiz_data.get('email'):
         try:
@@ -355,6 +358,7 @@ def results():
                 data={
                     "first_name": results['first_name'],
                     "score": results['score'],
+                    "max_score": MAX_SCORE,  # Pass max_score to email template
                     "personality": results['personality'],
                     "badges": results['badges'],
                     "insights": results.get('insights', []),
@@ -379,5 +383,6 @@ def results():
         insights=results.get('insights', []),
         tips=results.get('tips', []),
         course_id=course_id,
-        lang=lang
+        lang=lang,
+        max_score=MAX_SCORE  # Pass max_score to the template
     )
