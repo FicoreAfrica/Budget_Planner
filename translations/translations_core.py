@@ -8,6 +8,10 @@ CORE_TRANSLATIONS = {
         'Bill Planner': 'Bill Planner',
         'An error occurred': 'An error occurred.',
         'Invalid CSRF token': 'Invalid security token',
+        'core_accept': 'Accept',
+        'core_invalid_request': 'Invalid Request',
+        'core_error_acknowledging_consent': 'Error acknowledging consent.',
+        'core_network_error': 'Network error. Please try again.',
         'core_our_mission': 'Our Mission',
         'Error loading bill form': 'An error occurred while loading the bill form.',
         'courses_budgeting_course_tooltip': 'Learn how to create a budget and manage your finances effectively.',
@@ -760,6 +764,10 @@ CORE_TRANSLATIONS = {
         'courses_start_budgeting_course_tooltip': 'Fara koyon yadda ake tsara kasafin kuɗi.',
         'An error occurred': 'An error occurred.',
         'email: Please enter a valid email': 'Don Allah a shigar da imel mai inganci.',
+        'core_accept': 'Karɓa',
+        'core_invalid_request': 'Buƙata Ba Daidai Ba',
+        'core_error_acknowledging_consent': 'Kuskure wajen karɓar yarda.',
+        'core_network_error': 'Kuskuren hanyar sadarwa. Don Allah a sake gwadawa.',
         'core_team_why_content': 'An ƙirƙiri Ficore Africa ne daga sha\'awar da muke da ita don cike gibin ilimin kuɗi a Afirka da kuma samar da hanyoyin magance matsalolin kuɗi na musamman da mutane da kasuwanci ke fuskanta a yankin. Mun yi imanin cewa ta hanyar samar wa \'yan Afirka da kayan aiki da fahimta da suka dace, za mu iya buɗe ƙarfinsu na tattalin arziki da kuma gina makoma mai wadata ga nahiyar.',
 
 
