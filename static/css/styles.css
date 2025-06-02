@@ -287,60 +287,91 @@ body {
     font-size: 1rem;
     padding: 0.5rem 1rem;
     border-radius: 20px;
-    display: inline-flex;
+    display: inline-block; /* Changed to inline-block for better wrapping */
     align-items: center;
     gap: 0.5rem;
+    white-space: normal; /* Allow text to wrap */
+    max-width: 100%; /* Prevent overflow */
+    box-sizing: border-box; /* Include padding in width */
 }
+
 .badge {
     font-size: 0.95rem;
     transition: transform 0.3s ease;
     margin-bottom: 0.5rem;
     margin-right: 0.5rem;
 }
+
 .badge:hover {
     transform: scale(1.1);
 }
+
 .badge-success {
     background-color: #2E7D32;
     color: white;
 }
+
 .badge-info {
     background-color: #17a2b8;
     color: white;
 }
+
 .badge-bronze {
     background-color: #cd7f32;
     color: white;
     border: 2px solid #8c5523;
 }
+
 .badge-silver {
     background-color: #c0c0c0;
     color: #333;
     border: 2px solid #a9a9a9;
 }
+
 .badge-gold {
     background-color: #ffd700;
     color: #333;
     border: 2px solid #daa520;
 }
+
 .badge-platinum {
     background-color: #e5e4e2;
     color: #333;
     border: 2px solid #b0b0b0;
 }
+
 .badge-blue {
     background-color: #0288D1;
     color: white;
     border: 2px solid #01579B;
 }
+
 .badge-gray {
     background-color: #e9ecef;
     color: #333;
     border: 2px solid #ced4da;
 }
+
 .net-worth-highlight {
     font-weight: bold;
     color: #2E7D32;
+}
+
+/* Mobile Optimizations for Badges */
+@media (max-width: 768px) {
+    .status-badge, .badge {
+        font-size: 0.85rem;
+        padding: 0.4rem 0.8rem;
+        margin-right: 0.3rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .status-badge, .badge {
+        font-size: 0.8rem;
+        padding: 0.3rem 0.6rem;
+        margin-right: 0.2rem;
+    }
 }
 
 /* Insights and Comparison Boxes */
