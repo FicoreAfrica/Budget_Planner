@@ -254,7 +254,7 @@ NET_WORTH_TRANSLATIONS = {
     'ha': {
         # From translations_translations_net_worth.py
         'net_worth_calculator': 'Ƙididdigar Dukiyar Kuɗi',
-        'net_worth_net_worth_calculator': 'Kalkuleta Darajar Kuɗi',
+        'net_worth_net_worth_calculator': 'Duba Kadarori',
         'net_worth_net_worth': 'Darajar Kuɗi',
         'net_worth_dashboard': 'Allon Dukiyar Kuɗi',
         'net_worth_dashboard_load_error': 'Ba a iya ɗora allon dukiyar kuɗi ba. Da fatan za a sake gwadawa.',
@@ -359,7 +359,6 @@ NET_WORTH_TRANSLATIONS = {
 
         # From additional NET_WORTH_TRANSLATIONS
         'net_worth_calculator': 'Ƙididdigar Dukiyar Kuɗi',
-        'net_worth_net_worth_calculator': 'Kalkuleta Darajar Kuɗi',
         'net_worth_net_worth': 'Darajar Kuɗi',
         'net_worth_total_assets': 'Jimillar Kadarori',
         'net_worth_go_net_worth': 'Je zuwa Darajar Kuɗi',
