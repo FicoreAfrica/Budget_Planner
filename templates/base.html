@@ -4,56 +4,49 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ trans('core_ficore_africa') | default('Ficore Africa') }} | {% block title %}{% endblock %}</title>
-    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <!-- Google Fonts: Poppins -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Font Awesome 6.5.1 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer">
-    <!-- Canvas Confetti 1.9.3 -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
-    <!-- Custom Styles -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-    <!-- Favicon and Apple Touch Icon -->
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/apple-touch-icon.png') }}">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='img/favicon-32x32.png') }}">
     <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='img/favicon-16x16.png') }}">
     {% block extra_head %}{% endblock %}
 </head>
 <body>
-    <!-- Consent Banner -->
+    {% if not session.get('consent_acknowledged') %}
     <div class="consent-banner alert alert-info alert-dismissible fade show" id="consentBanner" role="alert">
         <i class="fas fa-shield-alt me-1" aria-hidden="true"></i> {{ trans('core_consent_banner') | default('By using Ficore, you understand that we provide tools for planning only, not banking.') }}
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close') | default('Close') }}"></button>
     </div>
+    {% endif %}
 
     {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        <div class="container mt-3">
-            {% for category, message in messages %}
-              <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                {{ trans(message) | default(message) }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close') | default('Close') }}"></button>
-              </div>
-            {% endfor %}
-        </div>
-      {% endif %}
+        {% if messages %}
+            <div class="container mt-3">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ trans(message) | default(message) }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close') | default('Close') }}"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
     {% endwith %}
 
-    <!-- Header Message -->
     <div class="header-message">
         {{ trans('core_welcome_to_ficore') | default('Welcome to Ficore Africa Tools Suite: Use Ficore to Track your income, net worth, budgets, and bills, to grow your money with confidence.') }}
     </div>
 
-    <!-- Navigation Bar -->
     <nav class="navbar navbar-expand-lg">
         <div class="container-fluid">
             <a class="navbar-brand" href="{{ url_for('index') }}"><img src="{{ url_for('static', filename='img/ficore_logo.png') }}" alt="{{ trans('core_ficore_africa_logo') | default('Ficore Africa Logo') }}" class="logo-centered"></a>
             <a href="{{ url_for('set_language', lang='ha' if session.lang == 'en' else 'en') }}"
-               class="btn btn-primary navbar-btn btn-outline-light language-btn ms-2 me-2"
-               title="{{ trans('core_change_language') | default('Change Language') }}"
-               aria-label="{{ trans('core_change_language') | default('Change Language') }}"
-               role="button">
+                class="btn btn-primary navbar-btn btn-outline-light language-btn ms-2 me-2"
+                title="{{ trans('core_change_language') | default('Change Language') }}"
+                aria-label="{{ trans('core_change_language') | default('Change Language') }}"
+                role="button">
                 <i class="fas fa-globe me-1" aria-hidden="true"></i>
                 {{ 'Hausa' if session.lang == 'en' else 'English' }}
             </a>
@@ -82,12 +75,10 @@
         </div>
     </nav>
 
-    <!-- Main Content -->
     <div class="content">
         {% block content %}{% endblock %}
     </div>
 
-    <!-- Footer -->
     <footer class="footer mt-5" style="background: linear-gradient(90deg, #003087, #004D40); color: white;">
         <div class="container text-center py-4" role="contentinfo">
             <p>{{ trans('core_about_ficore_africa') | default('About Ficore Africa') }}: {{ trans('core_empowering_financial_growth') | default('Empowering financial growth across Africa since 2025') }}</p>
@@ -111,11 +102,8 @@
         </div>
     </footer>
 
-    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-    <!-- Font Awesome Script -->
     <script src="https://kit.fontawesome.com/your-kit-id.js" crossorigin="anonymous"></script>
-    <!-- Custom JS -->
     <script src="{{ url_for('static', filename='js/interactivity.js') }}"></script>
     {% block base_scripts %}
     <script>
@@ -149,6 +137,28 @@
             });
             const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
             [...tooltipTriggerList].forEach(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+
+            // JavaScript to handle closing the consent banner and setting the session
+            const consentBanner = document.getElementById('consentBanner');
+            const closeBtn = consentBanner ? consentBanner.querySelector('.btn-close') : null;
+
+            if (closeBtn) {
+                closeBtn.addEventListener('click', function() {
+                    fetch('/acknowledge_consent', { method: 'POST' })
+                    .then(response => {
+                        if (response.ok) {
+                            if (consentBanner) {
+                                consentBanner.style.display = 'none';
+                            }
+                        } else {
+                            console.error('Failed to acknowledge consent on the server.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error acknowledging consent:', error);
+                    });
+                });
+            }
         });
     </script>
     {% endblock %}
