@@ -5,6 +5,7 @@ CORE_TRANSLATIONS = {
         'Here\'s a summary of your emergency fund plan.': 'Here\'s a summary of your emergency fund plan.',
         'Tell us how much you\'ve already saved.': 'Tell us how much you\'ve already saved.',
         'Let\'s calculate your ideal emergency fund amount.': 'Let\'s calculate your ideal emergency fund amount.',
+        'Bill Planner': 'Bill Planner',
         'An error occurred': 'An error occurred.',
         'Invalid CSRF token': 'Invalid security token',
         'core_our_mission': 'Our Mission',
@@ -763,6 +764,7 @@ CORE_TRANSLATIONS = {
 
 
         'Select how often you monitor your spending.': 'Zaɓi sau nawa kuke lura da kuɗin da kuke kashewa.',
+        'Bill Planner': 'Takardun Biya',
         'Invalid CSRF token': 'Invalid security token',
         'Please correct the errors in the form.': 'Don Allah a gyara kurakuran da ke cikin fom ɗin.',
         'An error occurred': 'An error occurred',
