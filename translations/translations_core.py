@@ -738,6 +738,9 @@ CORE_TRANSLATIONS = {
         'core_An kammala tantance lafiyar kuɗi cikin nasara.': 'An kammala tantance lafiyar kuɗi cikin nasara.',
         'courses_budgeting_course_tooltip': 'Koyi yadda ake ƙirƙirar kasafin kuɗi da kuma sarrafa kuɗin ku yadda ya kamata.',
         'courses_start_budgeting_course_tooltip': 'Fara koyon yadda ake tsara kasafin kuɗi.',
+        'An kasa aika rahoton lafiyar kuɗi zuwa imel ɗin ka.': 'An kasa aika rahoton lafiyar kuɗi zuwa imel ɗin ka.',
+        'An kammala tantance lafiyar kuɗi cikin nasara.': 'An kammala tantance lafiyar kuɗi cikin nasara.',
+
 
         'Select how often you monitor your spending.': 'Zaɓi sau nawa kuke lura da kuɗin da kuke kashewa.',
         'Indicate your saving habits.': 'Nuna halayen ku na tanadi.',
