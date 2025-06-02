@@ -83,7 +83,7 @@
                     <div class="invalid-feedback">{{ trans('bill_amount_required', lang=lang) | default('Valid amount is required') }}</div>
                 </div>
                 <div class="mb-3">
-                    <label for="due_date" class="form-label">{{ trans('bill_due_date', lang=lang) | default='Due Date' %}
+                    <label for="due_date" class="form-label">{{ trans('bill_due_date', lang=lang) | default('Due Date') }}
                     </label>
                     {{ form.due_date(class="form-control", id="due_date" type="date", placeholder=trans('bill_due_date', lang=lang) | default('YYYY-MM-DD'), **{'data-bs-toggle': 'tooltip', 'title': trans('bill_due_date_tooltip', lang=lang) | default('Enter the due date in YYYY-MM-DD format'), 'aria-describedby': 'dueDateTooltip'}) }}
                     <div class="invalid-feedback">{{ trans('bill_due_date_required', lang=lang) | default('Valid due date is required') }}</div>
