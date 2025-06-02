@@ -18,7 +18,10 @@
     {% if not session.get('consent_acknowledged') %}
     <div class="consent-banner alert alert-info alert-dismissible fade show" id="consentBanner" role="alert">
         <i class="fas fa-shield-alt me-1" aria-hidden="true"></i> {{ trans('core_consent_banner') | default('By using Ficore, you understand that we provide tools for planning only, not banking.') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close') | default('Close') }}"></button>
+        <form id="consentForm" action="{{ url_for('acknowledge_consent') }}" method="POST">
+            {{ csrf_token() }}
+            <button type="submit" class="btn-close" aria-label="{{ trans('core_close') | default('Close') }}"></button>
+        </form>
     </div>
     {% endif %}
 
@@ -140,11 +143,21 @@
 
             // JavaScript to handle closing the consent banner and setting the session
             const consentBanner = document.getElementById('consentBanner');
-            const closeBtn = consentBanner ? consentBanner.querySelector('.btn-close') : null;
+            const consentForm = document.getElementById('consentForm');
+            const closeBtn = consentForm ? consentForm.querySelector('.btn-close') : null;
 
-            if (closeBtn) {
-                closeBtn.addEventListener('click', function() {
-                    fetch('/acknowledge_consent', { method: 'POST' })
+            if (closeBtn && consentForm) {
+                closeBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const csrfToken = consentForm.querySelector('input[name="csrf_token"]').value;
+                    fetch('/acknowledge_consent', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'X-CSRF-Token': csrfToken
+                        },
+                        body: 'csrf_token=' + encodeURIComponent(csrfToken)
+                    })
                     .then(response => {
                         if (response.ok) {
                             if (consentBanner) {
