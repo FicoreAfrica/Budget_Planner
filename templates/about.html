@@ -9,20 +9,25 @@
         </header>
 
         <section class="about-content">
-            <p class="about-disclaimer">{{ trans('core_disclaimer') | default('Ficore is not a bank and does not hold or move funds.') }}</p>
+            <div class="info-box">
+                ⚠ {{ trans('core_disclaimer') | default('Ficore is not a bank. We do not hold or move funds — we only provide financial planning tools.') }}
+            </div>
             <p class="about-learn-more">{{ trans('core_learn_more_content') | default('Ficore Africa provides tools to help you track your income, net worth, budgets, and bills, enabling you to grow your money with confidence.') }}</p>
         </section>
 
         <section class="mission-statement">
-            <h3>{{ trans('core_our_mission') | default('Our Mission') }}</h3>
+            <h3>🌍 {{ trans('core_our_mission') | default('Our Mission') }}</h3>
             <p>{{ trans('core_mission_statement_content') | default('To empower individuals and businesses across Africa with accessible and intuitive financial tools and knowledge, fostering financial literacy and driving economic growth.') }}</p>
         </section>
 
         <section class="team-why">
-            <h3>{{ trans('core_why_ficore_africa') | default('The Vision Behind Ficore Africa') }}</h3>
+            <h3>🤝 {{ trans('core_why_ficore_africa') | default('The Vision Behind Ficore Africa') }}</h3>
             <p>{{ trans('core_team_why_content') | default('Ficore Africa was born from a shared passion to bridge the financial literacy gap in Africa and provide practical, user-friendly solutions that address the unique financial challenges faced by individuals and businesses in the region. We believe that by equipping Africans with the right tools and understanding, we can unlock their economic potential and build a more prosperous future for the continent.') }}</p>
         </section>
 
-        </div>
+        <section class="cta-section text-center mt-5">
+            <a href="{{ url_for('index') }}" class="btn btn-primary">{{ trans('core_explore_tools') | default('Explore Our Tools') }}</a>
+        </section>
+    </div>
 </main>
 {% endblock %}
