@@ -243,7 +243,6 @@ def step3():
 
 @emergency_fund_bp.route('/step4', methods=['GET', 'POST'])
 def step4():
-    """Handle Step 4: Collect timeline and calculate emergency fund."""
     if 'sid' not in session or 'emergency_fund_step3' not in session:
         session['sid'] = str(uuid.uuid4())
         session.permanent = True
@@ -266,13 +265,11 @@ def step4():
                 base_target = step2_data['monthly_expenses'] * months
                 recommended_months = months
                 
-                # Adjust based on risk tolerance
                 if step3_data['risk_tolerance_level'] == 'high':
                     recommended_months = max(12, months)
                 elif step3_data['risk_tolerance_level'] == 'low':
                     recommended_months = min(6, months)
                 
-                # Adjust for dependents
                 if step3_data['dependents'] and step3_data['dependents'] >= 2:
                     recommended_months += 2
                 
@@ -284,7 +281,6 @@ def step4():
                 if step2_data['monthly_income'] and step2_data['monthly_income'] > 0:
                     percent_of_income = (monthly_savings / step2_data['monthly_income']) * 100
                 
-                # Generate badges
                 badges = []
                 if form.timeline.data in ['6', '12']:
                     badges.append('Planner')
@@ -319,11 +315,9 @@ def step4():
                     }
                 }
                 
-                # Save to storage
                 emergency_fund_storage = current_app.config['STORAGE_MANAGERS']['emergency_fund']
                 emergency_fund_storage.append(record, user_email=step1_data.get('email'), session_id=session['sid'])
                 
-                # Send email if opted in
                 if step1_data['email_opt_in'] and step1_data['email']:
                     try:
                         config = EMAIL_CONFIG["emergency_fund"]
@@ -360,7 +354,6 @@ def step4():
                         current_app.logger.error(f"Failed to send email: {str(e)}")
                         flash(trans("email_send_failed", lang=lang), "danger")
                 
-                # Store step 4 data in session
                 session['emergency_fund_step4'] = {
                     'timeline': months
                 }
@@ -368,11 +361,11 @@ def step4():
                 
                 flash(trans('emergency_fund_completed_successfully', lang=lang, default='Emergency fund calculation completed successfully!'), 'success')
                 
-                # Clear only steps 2 and 3, keep step1 for dashboard email fallback
                 for key in ['emergency_fund_step2', 'emergency_fund_step3']:
                     session.pop(key, None)
                 session.modified = True
                 
+                current_app.logger.info(f"Redirecting to dashboard for session {session['sid']}")
                 return redirect(url_for('emergency_fund.dashboard'))
             else:
                 current_app.logger.warning(f"Step4 form errors: {form.errors}")
@@ -386,7 +379,7 @@ def step4():
         current_app.logger.exception(f"Error in step4: {str(e)}")
         flash(trans('an_unexpected_error_occurred', lang=lang, default='An unexpected error occurred.'), 'danger')
         return render_template('emergency_fund_step4.html', form=form, step=4, trans=trans, lang=lang)
-
+        
 @emergency_fund_bp.route('/dashboard', methods=['GET'])
 def dashboard():
     """Display the emergency fund dashboard with user data and insights."""
