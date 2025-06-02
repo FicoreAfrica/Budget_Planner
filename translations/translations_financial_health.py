@@ -669,7 +669,6 @@ FINANCIAL_HEALTH_TRANSLATIONS = {
         'financial_health_your_financial_health_status_needs_improvement':'Ana bukatar inganta mataki',
         'financial_health_Your debt level is high.':'Bashi yayi yawa',
         'financial_health_financial_health_report': 'Rahoton Lafiyar Kuɗi',
-        'financial_health_matsayin_lafiyar_kuɗin_ka_yana_da_kyau.': 'Matsayin lafiyar kuɗin ka yana da kyau.',
         'financial_health_ka_sami_alamar_ƙwararren_ajiya._tooltip': 'Ka sami alamar Ƙwararren Ajiya. Wannan yana nuna cewa kana da ƙwarewa sosai wajen adana kuɗi.',
         'financial_health_ka_sami_alamar_ƙwararren_ajiya.': 'Ka sami alamar Ƙwararren Ajiya.',
         'financial_health_Kana da ajiya mai kyau. Ci gaba haka!': 'Kana da ajiya mai kyau. Ci gaba haka!',
