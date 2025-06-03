@@ -157,6 +157,15 @@ class MarkCompleteForm(FlaskForm):
         lang = session.get('lang', 'en')
         self.submit.label.text = trans('learning_hub_mark_complete', lang=lang)
 
+# Quiz Form Definition
+class QuizForm(FlaskForm):
+    submit = SubmitField('Submit Quiz')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        lang = session.get('lang', 'en')
+        self.submit.label.text = trans('learning_hub_submit_quiz', lang=lang)
+
 def init_storage(app):
     """Initialize storage with app context and logger."""
     with app.app_context():
@@ -212,6 +221,21 @@ def lesson_lookup(course, lesson_id):
                 return lesson, module
     return None, None
 
+@learning_hub_bp.errorhandler(404)
+def handle_not_found(e):
+    """Handle 404 errors with user-friendly message."""
+    lang = session.get('lang', 'en')
+    current_app.logger.error(f"404 error on {request.path}: {str(e)}, Session: {session.get('sid', 'no-session-id')}")
+    flash(trans("learning_hub_not_found", default="The requested page was not found. Please check the URL or return to courses.", lang=lang), "danger")
+    return redirect(url_for('learning_hub.courses'))
+
+@learning_hub_bp.errorhandler(CSRFError)
+def handle_csrf_error(e):
+    """Handle CSRF errors with user-friendly message."""
+    current_app.logger.error(f"CSRF error on {request.path}: {e.description}, Session: {session.get('sid', 'no-session-id')}, Form Data: {request.form}")
+    flash(trans("learning_hub_csrf_error", default="Form submission failed due to a missing security token. Please refresh and try again.", lang=session.get('lang', 'en')), "danger")
+    return render_template('400.html', message=trans("learning_hub_csrf_error", default="Form submission failed due to a missing security token. Please refresh and try again.", lang=session.get('lang', 'en'))), 400
+
 @learning_hub_bp.route('/courses')
 def courses():
     """Display available courses."""
@@ -222,9 +246,13 @@ def courses():
     lang = session.get('lang', 'en')
     progress = get_progress()
     try:
+        if not isinstance(courses_data, dict):
+            current_app.logger.error(f"Invalid courses_data type, Path: {request.path}, Type: {type(courses_data)}", extra={'session_id': session.get('sid', 'no-session-id')})
+            raise ValueError("courses_data is not a dictionary")
+        current_app.logger.info(f"Rendering courses page, Path: {request.path}", extra={'session_id': session.get('sid', 'no-session-id')})
         return render_template('learning_hub_courses.html', courses=courses_data, progress=progress, trans=trans, lang=lang)
     except Exception as e:
-        current_app.logger.error(f"Error rendering courses page: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
+        current_app.logger.error(f"Error rendering courses page, Path: {request.path}: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
         flash(trans("learning_hub_error_loading", default="Error loading courses", lang=lang), "danger")
         return render_template('learning_hub_courses.html', courses={}, progress={}, trans=trans, lang=lang), 500
 
@@ -238,13 +266,15 @@ def course_overview(course_id):
     lang = session.get('lang', 'en')
     course = course_lookup(course_id)
     if not course:
+        current_app.logger.error(f"Course not found, Path: {request.path}, Course ID: {course_id}", extra={'session_id': session.get('sid', 'no-session-id')})
         flash(trans("learning_hub_course_not_found", default="Course not found", lang=lang), "danger")
         return redirect(url_for('learning_hub.courses'))
     progress = get_progress().get(course_id, {})
     try:
+        current_app.logger.info(f"Rendering course overview, Path: {request.path}, Course ID: {course_id}", extra={'session_id': session.get('sid', 'no-session-id')})
         return render_template('learning_hub_course_overview.html', course=course, progress=progress, trans=trans, lang=lang)
     except Exception as e:
-        current_app.logger.error(f"Error rendering course overview for {course_id}: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
+        current_app.logger.error(f"Error rendering course overview, Path: {request.path}, Course ID: {course_id}: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
         flash(trans("learning_hub_error_loading", default="Error loading course", lang=lang), "danger")
         return redirect(url_for('learning_hub.courses'))
 
@@ -261,12 +291,13 @@ def profile():
         session['learning_hub_profile'] = {
             'first_name': form.first_name.data,
             'email': form.email.data,
-                    'send_email': form.send_email.data
+            'send_email': form.send_email.data
         }
         session.permanent = True
         session.modified = True
         flash(trans('learning_hub_profile_saved', default='Profile saved successfully', lang=lang), 'success')
         return redirect(url_for('learning_hub.courses'))
+    current_app.logger.info(f"Rendering profile page, Path: {request.path}", extra={'session_id': session.get('sid', 'no-session-id')})
     return render_template('learning_hub_profile.html', form=form, trans=trans, lang=lang)
 
 @learning_hub_bp.route('/courses/<course_id>/lesson/<lesson_id>', methods=['GET', 'POST'])
@@ -279,10 +310,12 @@ def lesson(course_id, lesson_id):
     lang = session.get('lang', 'en')
     course = course_lookup(course_id)
     if not course:
+        current_app.logger.error(f"Course not found, Path: {request.path}, Course ID: {course_id}", extra={'session_id': session.get('sid', 'no-session-id')})
         flash(trans("learning_hub_course_not_found", default="Course not found", lang=lang), "danger")
         return redirect(url_for('learning_hub.courses'))
     lesson, module = lesson_lookup(course, lesson_id)
     if not lesson:
+        current_app.logger.error(f"Lesson not found, Path: {request.path}, Lesson ID: {lesson_id}", extra={'session_id': session.get('sid', 'no-session-id')})
         flash(trans("learning_hub_lesson_not_found", default="Lesson not found", lang=lang), "danger")
         return redirect(url_for('learning_hub.course_overview', course_id=course_id))
 
@@ -339,18 +372,12 @@ def lesson(course_id, lesson_id):
                 return redirect(url_for('learning_hub.lesson', course_id=course_id, lesson_id=next_lesson_id))
             else:
                 return redirect(url_for('learning_hub.course_overview', course_id=course_id))
+    current_app.logger.info(f"Rendering lesson page, Path: {request.path}, Course ID: {course_id}, Lesson ID: {lesson_id}", extra={'session_id': session.get('sid', 'no-session-id')})
     return render_template('learning_hub_lesson.html', course=course, lesson=lesson, module=module, progress=course_progress, form=form, trans=trans, lang=lang)
-
-@learning_hub_bp.errorhandler(CSRFError)
-def handle_csrf_error(e):
-    """Handle CSRF errors with user-friendly message."""
-    current_app.logger.error(f"CSRF error on {request.path}: {e.description}, Session: {session.get('sid', 'no-session-id')}, Form Data: {request.form}")
-    flash(trans("learning_hub_csrf_error", default="Form submission failed due to a missing security token. Please refresh and try again.", lang=session.get('lang', 'en')), "danger")
-    return render_template('400.html', message=trans("learning_hub_csrf_error", default="Form submission failed due to a missing security token. Please refresh and try again.", lang=session.get('lang', 'en'))), 400
 
 @learning_hub_bp.route('/courses/<course_id>/quiz/<quiz_id>', methods=['GET', 'POST'])
 def quiz(course_id, quiz_id):
-    """Display or process a quiz."""
+    """Display or process a quiz with CSRF protection."""
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
         session.permanent = True
@@ -358,17 +385,20 @@ def quiz(course_id, quiz_id):
     lang = session.get('lang', 'en')
     course = course_lookup(course_id)
     if not course:
+        current_app.logger.error(f"Course not found, Path: {request.path}, Course ID: {course_id}", extra={'session_id': session.get('sid', 'no-session-id')})
         flash(trans("learning_hub_course_not_found", default="Course not found", lang=lang), "danger")
         return redirect(url_for('learning_hub.courses'))
     quiz = quizzes_data.get(quiz_id)
     if not quiz:
+        current_app.logger.error(f"Quiz not found, Path: {request.path}, Quiz ID: {quiz_id}", extra={'session_id': session.get('sid', 'no-session-id')})
         flash(trans("learning_hub_quiz_not_found", default="Quiz not found", lang=lang), "danger")
         return redirect(url_for('learning_hub.course_overview', course_id=course_id))
     progress = get_progress()
     course_progress = progress.setdefault(course_id, {'lessons_completed': [], 'quiz_scores': {}, 'current_lesson': None})
+    form = QuizForm()
 
     try:
-        if request.method == 'POST':
+        if request.method == 'POST' and form.validate_on_submit():
             answers = request.form.to_dict()
             score = 0
             for i, q in enumerate(quiz['questions']):
@@ -379,10 +409,11 @@ def quiz(course_id, quiz_id):
             save_progress()
             flash(f"{trans('learning_hub_quiz_completed', default='Quiz completed! Score:', lang=lang)} {score}/{len(quiz['questions'])}", "success")
             return redirect(url_for('learning_hub.course_overview', course_id=course_id))
-        return render_template('learning_hub_quiz.html', course=course, quiz=quiz, progress=course_progress, trans=trans, lang=lang)
+        current_app.logger.info(f"Rendering quiz page, Path: {request.path}, Course ID: {course_id}, Quiz ID: {quiz_id}", extra={'session_id': session.get('sid', 'no-session-id')})
+        return render_template('learning_hub_quiz.html', course=course, quiz=quiz, progress=course_progress, form=form, trans=trans, lang=lang)
     except Exception as e:
-        current_app.logger.error(f"Error processing quiz {quiz_id} for course {course_id}: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
-        flash(trans("learning_hub_error_loading", default="Error loading quiz", lang=lang), "danger")
+        current_app.logger.error(f"Error processing quiz {quiz_id} for course {course_id}, Path: {request.path}: {str(e)}", extra={'session_id': session.get('sid', 'no-session')})
+        flash(trans("learning_hub_error_loading", "Error loading quiz", lang=lang), "danger")
         return redirect(url_for('learning_hub.course_overview', course_id=course_id))
 
 @learning_hub_bp.route('/dashboard')
@@ -402,12 +433,13 @@ def dashboard():
             completed = len(cp.get('lessons_completed', []))
             percent = int((completed / lessons_total) * 100) if lessons_total > 0 else 0
             progress_summary.append({'course': course, 'completed': completed, 'total': lessons_total, 'percent': percent})
+        current_app.logger.info(f"Rendering dashboard page, Path: {request.path}", extra={'session_id': session.get('sid', 'no-session-id')})
         return render_template('learning_hub_dashboard.html', progress_summary=progress_summary, trans=trans, lang=lang)
     except Exception as e:
-        current_app.logger.error(f"Error rendering dashboard: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
+        current_app.logger.error(f"Error rendering dashboard, Path: {request.path}: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
         flash(trans("learning_hub_error_loading", default="Error loading dashboard", lang=lang), "danger")
         return render_template('learning_hub_dashboard.html', progress_summary=[], trans=trans, lang=lang), 500
-
+        
 @learning_hub_bp.route('/unsubscribe/<email>')
 def unsubscribe(email):
     """Unsubscribe user from learning hub emails."""
@@ -422,9 +454,16 @@ def unsubscribe(email):
             flash(trans("learning_hub_unsubscribed_success", lang=lang), "success")
         else:
             flash(trans("learning_hub_unsubscribe_failed", lang=lang), "danger")
-            current_app.logger.error(f"Failed to unsubscribe email {email}: No matching profile or already unsubscribed")
+            current_app.logger.error(f"Failed to unsubscribe email {email}, Path: {request.path}: No matching profile or already unsubscribed")
         return redirect(url_for('index'))
     except Exception as e:
-        current_app.logger.exception(f"Error in learning_hub.unsubscribe: {str(e)}")
+        current_app.logger.error(f"Error in unsubscribe, Path: {request.path}: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
         flash(trans("learning_hub_unsubscribe_error", lang=lang), "danger")
         return redirect(url_for('index'))
+
+@learning_hub_bp.route('/static/<path:filename>')
+def static_files(filename):
+    """Serve static files with cache control."""
+    response = send_from_directory('static', filename)
+    response.headers['Cache-Control'] = 'public, max-age=31536000'
+    return response
