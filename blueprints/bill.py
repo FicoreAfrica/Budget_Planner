@@ -6,7 +6,7 @@ from flask_login import current_user
 from mailersend_email import send_email, EMAIL_CONFIG
 from datetime import datetime, date, timedelta
 import uuid
-from mailersend_email import trans
+from translations import trans
 from extensions import db
 from models import Bill
 
