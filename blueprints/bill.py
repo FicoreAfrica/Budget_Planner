@@ -172,6 +172,14 @@ def form_step2():
                     flash(trans('bill_due_date_format_invalid', lang) or 'Invalid due date format', 'danger')
                     return redirect(url_for('bill.form_step1'))
 
+                # Ensure all required fields are present
+                required_fields = ['first_name', 'email', 'bill_name', 'amount', 'due_date']
+                missing_fields = [field for field in required_fields if field not in bill_data or bill_data[field] is None]
+                if missing_fields:
+                    current_app.logger.error(f"Missing required fields in bill_step1: {missing_fields}")
+                    flash(trans('bill_missing_fields', lang) or f"Missing required fields: {', '.join(missing_fields)}", 'danger')
+                    return redirect(url_for('bill.form_step1'))
+
                 status = form.status.data
                 if status not in ['paid', 'pending'] and due_date < date.today():
                     status = 'overdue'
@@ -259,7 +267,7 @@ def dashboard():
         session['sid'] = str(uuid.uuid4())
         session.permanent = True
     lang = session.get('lang', 'en')
-    form = FlaskForm()  # Added for CSRF token in template forms
+    form = FlaskForm()  # For CSRF token in template forms
     
     tips = [
         trans('bill_tip_pay_early', lang),
@@ -272,7 +280,13 @@ def dashboard():
     try:
         bill_storage = current_app.config['STORAGE_MANAGERS']['bills']
         user_data = bill_storage.filter_by_session(session['sid'])
-        bills = [(record['id'], record['data']) for record in user_data if isinstance(record.get('data'), dict)]
+        required_keys = ['first_name', 'bill_name', 'amount', 'due_date', 'frequency', 'category', 'status']
+        # Filter bills to include only those with all required keys
+        bills = [
+            (record['id'], record['data']) 
+            for record in user_data 
+            if isinstance(record.get('data'), dict) and all(key in record['data'] for key in required_keys)
+        ]
         
         paid_count = 0
         unpaid_count = 0
@@ -288,13 +302,8 @@ def dashboard():
         due_month = []
         upcoming_bills = []
 
-        required_keys = ['first_name', 'bill_name', 'amount', 'due_date', 'frequency', 'category', 'status']
         today = date.today()
         for b_id, bill in bills:
-            if not all(key in bill for key in required_keys):
-                current_app.logger.warning(f"Skipping invalid bill record {b_id}: missing keys {set(required_keys) - set(bill.keys())}")
-                continue
-
             try:
                 bill_amount = float(bill['amount'])
             except (ValueError, TypeError):
@@ -331,6 +340,11 @@ def dashboard():
                 current_app.logger.warning(f"Skipping invalid bill record {b_id}: invalid due_date {bill.get('due_date')}")
                 continue
 
+        if len(bills) < len(user_data):
+            missing = len(user_data) - len(bills)
+            flash(trans('bill_invalid_records_skipped', lang) or f"Skipped {missing} invalid bill(s) due to missing or incorrect data", 'warning')
+            current_app.logger.warning(f"Skipped {missing} bill records due to missing required keys")
+
         return render_template(
             'bill_dashboard.html',
             form=form,
@@ -353,7 +367,7 @@ def dashboard():
             lang=lang
         )
     except Exception as e:
-        current_app.logger.exception(f"Error in bill.dashboard: {e}")
+        current_app.logger.exception(f"Error in bill.dashboard: {str(e)}")
         flash(trans('bill_dashboard_load_error', lang) or 'Error loading bill dashboard', 'danger')
         return render_template(
             'bill_dashboard.html',
@@ -385,7 +399,12 @@ def view_edit():
     lang = session.get('lang', 'en')
     bill_storage = current_app.config['STORAGE_MANAGERS']['bills']
     user_data = bill_storage.filter_by_session(session['sid'])
-    bills = [(record['id'], record['data']) for record in user_data if isinstance(record.get('data'), dict)]
+    required_keys = ['first_name', 'bill_name', 'amount', 'due_date', 'frequency', 'category', 'status']
+    bills = [
+        (record['id'], record['data']) 
+        for record in user_data 
+        if isinstance(record.get('data'), dict) and all(key in record['data'] for key in required_keys)
+    ]
 
     try:
         if request.method == 'POST':
@@ -394,11 +413,11 @@ def view_edit():
 
             if action == 'edit':
                 record = bill_storage.get_by_id(bill_id)
-                if record and isinstance(record.get('data'), dict):
+                if record and isinstance(record.get('data'), dict) and all(key in record['data'] for key in required_keys):
                     session['bill_data'] = record['data']
                     session['bill_id'] = bill_id
                     return redirect(url_for('bill.form_step1'))
-                flash(trans('bill_bill_not_found', lang) or 'Bill not found', 'danger')
+                flash(trans('bill_bill_not_found', lang) or 'Bill not found or invalid data', 'danger')
                 return redirect(url_for('bill.view_edit'))
 
             elif action == 'delete':
@@ -417,7 +436,7 @@ def view_edit():
             elif action == 'toggle_status':
                 try:
                     record = bill_storage.get_by_id(bill_id)
-                    if record and isinstance(record.get('data'), dict):
+                    if record and isinstance(record.get('data'), dict) and all(key in record['data'] for key in required_keys):
                         current_status = record['data'].get('status', 'unpaid')
                         new_status = 'paid' if current_status == 'unpaid' else 'unpaid'
                         record['data']['status'] = new_status
@@ -457,8 +476,8 @@ def view_edit():
                             flash(trans('bill_bill_status_toggle_failed', lang) or 'Failed to update bill status', 'danger')
                             current_app.logger.error(f"Failed to toggle status for bill ID {bill_id}")
                     else:
-                        flash(trans('bill_bill_not_found', lang) or 'Bill not found', 'danger')
-                        current_app.logger.error(f"Bill ID {bill_id} not found")
+                        flash(trans('bill_bill_not_found', lang) or 'Bill not found or invalid data', 'danger')
+                        current_app.logger.error(f"Bill ID {bill_id} not found or missing required keys")
                     return redirect(url_for('bill.dashboard'))
                 except Exception as e:
                     current_app.logger.exception(f"Error in bill.view_edit (toggle_status): {str(e)}")
