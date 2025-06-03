@@ -2,9 +2,10 @@ import os
 import sys
 import logging
 import uuid
-from flask_wtf.csrf import CSRFError  # Added import for CSRFError
 from datetime import datetime, timedelta
 from flask import Flask, jsonify, render_template, request, session, redirect, url_for, flash, send_from_directory, has_request_context, g, current_app, make_response
+from flask_wtf.csrf import CSRFError, generate_csrf
+from flask_login import current_user
 from dotenv import load_dotenv
 from extensions import db, login_manager, session as flask_session, csrf
 from translations import trans
@@ -54,7 +55,7 @@ def setup_logging(app):
         logger.warning(f"Failed to set up file logging: {str(e)}")
 
 def setup_session(app):
-    session_dir = os.environ.get('SESSION_DIR', os.path.join(os.path.dirname(__file__), 'data', 'sessions'))
+    session_dir = os.path.join(os.path.dirname(__file__), 'data', 'sessions')
     try:
         os.makedirs(session_dir, exist_ok=True)
         logger.info(f"Session directory ensured at {session_dir}")
@@ -184,7 +185,7 @@ def create_app():
 
     def translate(key, lang='en', logger=logger, **kwargs):
         translation = trans(key, lang=lang, **kwargs)
-        if translation == key:
+        if translation == key and app.debug:
             logger.warning(f"Missing translation for key='{key}' in lang='{lang}'")
         return translation
 
@@ -237,7 +238,7 @@ def create_app():
             'WAITLIST_FORM_URL': os.environ.get('WAITLIST_FORM_URL', '#'),
             'CONSULTANCY_FORM_URL': os.environ.get('CONSULTANCY_FORM_URL', '#'),
             'current_lang': lang,
-            'current_user': current_user,
+            'current_user': current_user if has_request_context() else None,  # Safely handle current_user
             'csrf_token': generate_csrf
         }
 
