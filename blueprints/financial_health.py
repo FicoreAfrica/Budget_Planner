@@ -2,11 +2,12 @@ from flask import Blueprint, request, session, redirect, url_for, render_templat
 from flask_wtf import FlaskForm
 from wtforms import StringField, FloatField, SelectField, BooleanField, SubmitField
 from wtforms.validators import DataRequired, NumberRange, Optional, Email, ValidationError
+from flask_login import current_user
 from datetime import datetime
 import uuid
 import json
 from app import db, trans
-from models import FinancialHealth, Progress  # Assuming Progress model is defined for course progress
+from models import FinancialHealth
 from mailersend_email import send_email, EMAIL_CONFIG
 
 financial_health_bp = Blueprint('financial_health', __name__, url_prefix='/financial_health')
@@ -114,8 +115,13 @@ def step1():
     """Handle financial health step 1 form (personal info)."""
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
+        session.permanent = True
     lang = session.get('lang', 'en')
-    form = Step1Form()
+    form_data = session.get('health_step1', {})
+    if current_user.is_authenticated:
+        form_data['email'] = form_data.get('email', current_user.email)
+        form_data['first_name'] = form_data.get('first_name', current_user.username)
+    form = Step1Form(data=form_data)
     current_app.logger.info(f"Starting step1 for session {session['sid']}")
     try:
         if request.method == 'POST':
@@ -133,6 +139,7 @@ def step1():
             # Save to database
             financial_health = FinancialHealth(
                 id=str(uuid.uuid4()),
+                user_id=current_user.id if current_user.is_authenticated else None,
                 session_id=session['sid'],
                 step=1,
                 first_name=form_data['first_name'],
@@ -145,6 +152,7 @@ def step1():
             current_app.logger.info(f"Step1 data saved to database with ID {financial_health.id} for session {session['sid']}")
 
             session['health_step1'] = form_data
+            session.modified = True
             return redirect(url_for('financial_health.step2'))
         return render_template('health_score_step1.html', form=form, trans=trans, lang=lang)
     except Exception as e:
@@ -157,7 +165,11 @@ def step2():
     """Handle financial health step 2 form (income and expenses)."""
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
+        session.permanent = True
     lang = session.get('lang', 'en')
+    if 'health_step1' not in session:
+        flash(trans('financial_health_missing_step1', lang=lang, default='Please complete step 1 first.'), 'danger')
+        return redirect(url_for('financial_health.step1'))
     form = Step2Form()
     current_app.logger.info(f"Starting step2 for session {session['sid']}")
     try:
@@ -170,6 +182,7 @@ def step2():
             # Save to database
             financial_health = FinancialHealth(
                 id=str(uuid.uuid4()),
+                user_id=current_user.id if current_user.is_authenticated else None,
                 session_id=session['sid'],
                 step=2,
                 income=float(form.income.data),
@@ -183,6 +196,7 @@ def step2():
                 'income': float(form.income.data),
                 'expenses': float(form.expenses.data),
             }
+            session.modified = True
             return redirect(url_for('financial_health.step3'))
         return render_template('health_score_step2.html', form=form, trans=trans, lang=lang)
     except Exception as e:
@@ -195,7 +209,11 @@ def step3():
     """Handle financial health step 3 form (debt and interest) and calculate score."""
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
+        session.permanent = True
     lang = session.get('lang', 'en')
+    if 'health_step2' not in session:
+        flash(trans('financial_health_missing_step2', lang=lang, default='Please complete step 2 first.'), 'danger')
+        return redirect(url_for('financial_health.step1'))
     form = Step3Form()
     current_app.logger.info(f"Starting step3 for session {session['sid']}")
     try:
@@ -254,6 +272,7 @@ def step3():
             # Save complete record to database
             financial_health = FinancialHealth(
                 id=str(uuid.uuid4()),
+                user_id=current_user.id if current_user.is_authenticated else None,
                 session_id=session['sid'],
                 step=3,
                 first_name=step1_data.get('first_name', ''),
@@ -311,6 +330,7 @@ def step3():
 
             session.pop('health_step1', None)
             session.pop('health_step2', None)
+            session.modified = True
             flash(trans("financial_health_health_completed_success", lang=lang), "success")
             return redirect(url_for('financial_health.dashboard'))
         return render_template('health_score_step3.html', form=form, trans=trans, lang=lang)
@@ -324,53 +344,23 @@ def dashboard():
     """Display financial health dashboard with comparison to others."""
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
+        session.permanent = True
     lang = session.get('lang', 'en')
     current_app.logger.info(f"Starting dashboard for session {session['sid']}")
     try:
-        # Query records from database for current session with step=3
-        stored_records = FinancialHealth.query.filter_by(session_id=session['sid'], step=3).order_by(FinancialHealth.created_at.desc()).all()
+        # Query records from database for current user or session
+        filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
+        stored_records = FinancialHealth.query.filter_by(step=3, **filter_kwargs).order_by(FinancialHealth.created_at.desc()).all()
         if not stored_records:
             latest_record = {}
             records = []
         else:
-            latest_record = {
-                'first_name': stored_records[0].first_name,
-                'email': stored_records[0].email,
-                'user_type': stored_records[0].user_type,
-                'income': stored_records[0].income,
-                'expenses': stored_records[0].expenses,
-                'debt': stored_records[0].debt,
-                'interest_rate': stored_records[0].interest_rate,
-                'debt_to_income': stored_records[0].debt_to_income,
-                'savings_rate': stored_records[0].savings_rate,
-                'interest_burden': stored_records[0].interest_burden,
-                'score': stored_records[0].score,
-                'status': stored_records[0].status,
-                'status_key': stored_records[0].status_key,
-                'badges': json.loads(stored_records[0].badges) if stored_records[0].badges else [],
-                'created_at': stored_records[0].created_at.strftime('%Y-%m-%d %H:%M:%S')
-            }
-            records = [(record.id, {
-                'first_name': record.first_name,
-                'email': record.email,
-                'user_type': record.user_type,
-                'income': record.income,
-                'expenses': record.expenses,
-                'debt': record.debt,
-                'interest_rate': record.interest_rate,
-                'debt_to_income': record.debt_to_income,
-                'savings_rate': record.savings_rate,
-                'interest_burden': record.interest_burden,
-                'score': record.score,
-                'status': record.status,
-                'status_key': record.status_key,
-                'badges': json.loads(record.badges) if record.badges else [],
-                'created_at': record.created_at.strftime('%Y-%m-%d %H:%M:%S')
-            }) for record in stored_records]
+            latest_record = stored_records[0].to_dict()
+            records = [(record.id, record.to_dict()) for record in stored_records]
 
         # Query all records with step=3 for comparison
         all_records = FinancialHealth.query.filter_by(step=3).all()
-        all_scores_for_comparison = [record.scoreliahealth.score for record in all_records if record.score is not None]
+        all_scores_for_comparison = [record.score for record in all_records if record.score is not None]
 
         total_users = len(all_scores_for_comparison)
         rank = 0
@@ -409,12 +399,6 @@ def dashboard():
         else:
             insights.append(trans("financial_health_insight_no_data", lang=lang))
 
-        # Query progress records if Progress model is defined
-        try:
-            progress_records = Progress.query.filter_by(session_id=session['sid']).all()
-        except NameError:
-            progress_records = []
-
         return render_template(
             'health_score_dashboard.html',
             records=records,
@@ -425,8 +409,7 @@ def dashboard():
             total_users=total_users,
             average_score=average_score,
             trans=trans,
-            lang=lang,
-            progress_records=progress_records
+            lang=lang
         )
     except Exception as e:
         current_app.logger.exception(f"Critical error in dashboard: {str(e)}")
@@ -446,6 +429,5 @@ def dashboard():
             total_users=0,
             average_score=0,
             trans=trans,
-            lang=lang,
-            progress_records=[]
+            lang=lang
         ), 500
