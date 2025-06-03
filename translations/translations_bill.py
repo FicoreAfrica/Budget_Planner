@@ -9,6 +9,14 @@ BILL_TRANSLATIONS = {
         'category: Category is required': 'Category is required',
         'bill_frequency_select': 'Select Frequency',
         'bill_status_select': 'Select Status',
+
+        'Frequency is required': 'Frequency is required.',
+        'Category is required': 'Category is required.',
+        'Status is required': 'Status is required.',
+        'Frequency: Frequency is required': 'Frequency: Frequency is required.',
+        'Category: Category is required': 'Category: Category is required.',
+        'Status: Status is required': 'Status: Status is required.',
+
         'bill_select_category': 'Choose Bill Category',
         'bill_category_select': 'Select a category for your bill.',
         'bill_step1': 'Step 1: Basic Info',
@@ -386,6 +394,14 @@ BILL_TRANSLATIONS = {
         'bill_tip_energy_efficient': 'Canza zuwa kayan aikin da ke ceton makamashi don adana kuɗi',
         'bill_tip_plan_monthly': 'Shirya lissafin kowane wata don sarrafa kasafin kuɗin ka mafi kyau',
         'bill_tip_k_a_ajoinders': 'Saita tunatarwa don Ajo/Esusu/Adashe don kada ka manta da gudummawa',
+        
+        'Frequency is required': 'Ana buƙatar mitar.',
+        'Category is required': 'Ana buƙatar rukuni.',
+        'Status is required': 'Ana buƙatar matsayi.',
+        'Frequency: Frequency is required': 'Mitar: Ana buƙatar mitar.',
+        'Category: Category is required': 'Rukuni: Ana buƙatar rukuni.',
+        'Status: Status is required': 'Matsayi: Ana buƙatar matsayi.',
+        
         'bill_tip_data_topup': 'Sayi data da yawa lokaci ɗaya don adana kuɗi',
         'bill_plan_monthly_bills_to_manage': 'Shirya lissafin kowane wata don sarrafa kasafin kuɗin ka',
         'bill_set_up_ajo_esusu_adashe_reminders_to_never_miss': 'Saita tunatarwa don Ajo/Esusu/Adashe don kada ka manta da gudummawa',
