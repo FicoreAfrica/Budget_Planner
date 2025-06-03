@@ -6,6 +6,7 @@ CORE_TRANSLATIONS = {
         'auth_password_placeholder': 'Enter your password',
         'auth_password_tooltip': 'Your password for your account.',
         'core_switch_to': 'Switch to',
+        'remaining': 'Remaining',
         'core_login': 'Login',
         'core_signup': 'Sign Up',
         'auth_confirm_password_placeholder': 'Confirm your password',
@@ -803,6 +804,7 @@ CORE_TRANSLATIONS = {
         'core_switch_to': 'Canja zuwa',
         'core_login': 'Shiga',
         'core_signup': 'Yi Rajista',
+        'remaining': 'Ragowar',
         
         'Bill Planner': 'Takardun Biya',
         'auth_username_placeholder': 'Shigar da sunan mai amfani',
