@@ -2,44 +2,30 @@ from flask import Blueprint, request, session, redirect, url_for, render_templat
 from flask_wtf import FlaskForm
 from wtforms import StringField, FloatField, SelectField, BooleanField, IntegerField, HiddenField
 from wtforms.validators import DataRequired, NumberRange, Email, Optional
-from json_store import JsonStorage
 from mailersend_email import send_email, EMAIL_CONFIG
 from datetime import datetime, date, timedelta
 import uuid
-import os
-
-try:
-    from app import trans
-except ImportError:
-    def trans(key, lang=None):
-        return key
+from app import db, trans
+from models import Bill  # Assuming models.py contains the Bill model
 
 bill_bp = Blueprint('bill', __name__, url_prefix='/bill')
-
-def init_bill_storage(app):
-    """Initialize bill_storage within app context."""
-    with app.app_context():
-        app.logger.info("Initializing bill storage")
-        data_dir = os.path.join(app.root_path, 'data')
-        os.makedirs(data_dir, exist_ok=True)  # Ensure data directory exists
-        bills_path = os.path.join(data_dir, 'bills.json')
-        storage = JsonStorage(bills_path, logger_instance=app.logger)
-        # Initialize empty list if file is empty or invalid
-        try:
-            data = storage.get_all()
-            if not isinstance(data, list):
-                app.logger.warning(f"Invalid data in {bills_path}, initializing empty list")
-                storage._write_data([])
-        except Exception as e:
-            app.logger.error(f"Failed to read {bills_path}: {str(e)}, initializing empty list")
-            storage._write_data([])
-        return storage
 
 def strip_commas(value):
     """Remove commas from string values for numerical fields."""
     if isinstance(value, str):
         return value.replace(',', '')
     return value
+
+def calculate_next_due_date(due_date, frequency):
+    """Calculate the next due date based on frequency."""
+    if frequency == 'weekly':
+        return due_date + timedelta(days=7)
+    elif frequency == 'monthly':
+        return due_date + timedelta(days=30)
+    elif frequency == 'quarterly':
+        return due_date + timedelta(days=90)
+    else:
+        return due_date
 
 # Form classes
 class BillFormStep1(FlaskForm):
@@ -121,7 +107,8 @@ def form_step1():
         session['sid'] = str(uuid.uuid4())
         session.permanent = True
     lang = session.get('lang', 'en')
-    form = BillFormStep1()
+    bill_data = session.get('bill_step1', {})  # Prefill form with session data if editing
+    form = BillFormStep1(data=bill_data)
     try:
         if request.method == 'POST' and form.validate_on_submit():
             try:
@@ -155,7 +142,8 @@ def form_step2():
         session['sid'] = str(uuid.uuid4())
         session.permanent = True
     lang = session.get('lang', 'en')
-    form = BillFormStep2()
+    bill_step2_data = session.get('bill_step2', {})  # Prefill step 2 form if editing
+    form = BillFormStep2(data=bill_step2_data)
     try:
         if request.method == 'POST':
             form_data = request.form.to_dict()
@@ -186,7 +174,6 @@ def form_step2():
                     flash(trans('bill_due_date_format_invalid', lang) or 'Invalid due date format', 'danger')
                     return redirect(url_for('bill.form_step1'))
 
-                # Ensure all required fields are present
                 required_fields = ['first_name', 'email', 'bill_name', 'amount', 'due_date']
                 missing_fields = [field for field in required_fields if field not in bill_data or bill_data[field] is None]
                 if missing_fields:
@@ -198,30 +185,59 @@ def form_step2():
                 if status not in ['paid', 'pending'] and due_date < date.today():
                     status = 'overdue'
 
-                record = {
-                    'id': str(uuid.uuid4()),
-                    'user_email': bill_data['email'],
-                    'session_id': session['sid'],
-                    'data': {
-                        'first_name': bill_data['first_name'],
-                        'bill_name': bill_data['bill_name'],
-                        'amount': float(bill_data['amount']),
-                        'due_date': bill_data['due_date'],
-                        'frequency': form.frequency.data,
-                        'category': form.category.data,
-                        'status': status,
-                        'send_email': form.send_email.data,
-                        'reminder_days': form.reminder_days.data if form.send_email.data else None
-                    }
-                }
-                bill_storage = current_app.config['STORAGE_MANAGERS']['bills']
-                try:
-                    bill_storage.append(record, user_email=bill_data['email'], session_id=session['sid'], lang=lang)
-                    current_app.logger.info(f"Bill saved successfully for {bill_data['email']}: {record['data']['bill_name']}")
-                except Exception as e:
-                    current_app.logger.error(f"Failed to save bill: {str(e)}")
-                    flash(trans('bill_save_failed', lang) or 'Failed to save bill', 'danger')
-                    return render_template('bill_form_step2.html', form=form, trans=trans, lang=lang)
+                bill_id = session.get('bill_id')
+                if bill_id:
+                    # Update existing bill
+                    bill = Bill.query.get(bill_id)
+                    if bill:
+                        bill.first_name = bill_data['first_name']
+                        bill.user_email = bill_data['email']
+                        bill.bill_name = bill_data['bill_name']
+                        bill.amount = float(bill_data['amount'])
+                        bill.due_date = due_date
+                        bill.frequency = form.frequency.data
+                        bill.category = form.category.data
+                        bill.status = status
+                        bill.send_email = form.send_email.data
+                        bill.reminder_days = form.reminder_days.data if form.send_email.data else None
+                        try:
+                            db.session.commit()
+                            current_app.logger.info(f"Bill updated successfully: {bill_id}")
+                            flash(trans('bill_updated_success', lang) or 'Bill updated successfully', 'success')
+                        except Exception as e:
+                            db.session.rollback()
+                            current_app.logger.error(f"Failed to update bill: {str(e)}")
+                            flash(trans('bill_update_failed', lang) or 'Failed to update bill', 'danger')
+                            return render_template('bill_form_step2.html', form=form, trans=trans, lang=lang)
+                    else:
+                        flash(trans('bill_not_found', lang) or 'Bill not found', 'danger')
+                        return redirect(url_for('bill.dashboard'))
+                else:
+                    # Create new bill
+                    bill = Bill(
+                        id=str(uuid.uuid4()),
+                        session_id=session['sid'],
+                        user_email=bill_data['email'],
+                        first_name=bill_data['first_name'],
+                        bill_name=bill_data['bill_name'],
+                        amount=float(bill_data['amount']),
+                        due_date=due_date,
+                        frequency=form.frequency.data,
+                        category=form.category.data,
+                        status=status,
+                        send_email=form.send_email.data,
+                        reminder_days=form.reminder_days.data if form.send_email.data else None
+                    )
+                    try:
+                        db.session.add(bill)
+                        db.session.commit()
+                        current_app.logger.info(f"Bill saved successfully for {bill_data['email']}: {bill.bill_name}")
+                        flash(trans('bill_added_success', lang) or 'Bill added successfully', 'success')
+                    except Exception as e:
+                        db.session.rollback()
+                        current_app.logger.error(f"Failed to save bill: {str(e)}")
+                        flash(trans('bill_save_failed', lang) or 'Failed to save bill', 'danger')
+                        return render_template('bill_form_step2.html', form=form, trans=trans, lang=lang)
 
                 if form.send_email.data and bill_data['email']:
                     try:
@@ -253,12 +269,11 @@ def form_step2():
                         current_app.logger.error(f"Failed to send email: {str(e)}")
                         flash(trans('email_send_failed', lang) or 'Failed to send email reminder', 'warning')
 
-                flash(trans('bill_bill_added_dynamic_dashboard', lang=lang).format(
-                    bill_name=bill_data['bill_name'],
-                    dashboard_url=url_for('bill.dashboard')
-                ), 'success')
                 session.pop('bill_step1', None)
-                action = form_data.get('submit')  # Changed from 'action' to 'submit' to match form
+                session.pop('bill_id', None)
+                session.pop('bill_step2', None)
+
+                action = form_data.get('submit')
                 if action == 'save_and_continue':
                     current_app.logger.info("Redirecting to bill.form_step1")
                     return redirect(url_for('bill.form_step1'))
@@ -266,7 +281,6 @@ def form_step2():
                 return redirect(url_for('bill.dashboard'))
             else:
                 current_app.logger.error(f"Form validation failed: {form.errors}")
-                current_app.logger.info(f"Submitted form values - frequency: {form.frequency.data or 'None'}, category: {form.category.data or 'None'}, status: {form.status.data or 'None'}, send_email: {form.send_email.data}, reminder_days: {form.reminder_days.data or 'None'}")
                 for field, errors in form.errors.items():
                     for error in errors:
                         flash(f"{trans(f'bill_{field}', lang=lang)}: {trans(error, lang=lang) or error}", 'danger')
@@ -294,14 +308,8 @@ def dashboard():
     ]
 
     try:
-        bill_storage = current_app.config['STORAGE_MANAGERS']['bills']
-        user_data = bill_storage.filter_by_session(session['sid'])
-        required_keys = ['first_name', 'bill_name', 'amount', 'due_date', 'frequency', 'category', 'status']
-        bills = [
-            (record['id'], record['data']) 
-            for record in user_data 
-            if isinstance(record.get('data'), dict) and all(key in record['data'] for key in required_keys)
-        ]
+        bills = Bill.query.filter_by(session_id=session['sid']).all()
+        bills_data = [(bill.id, bill.to_dict()) for bill in bills]
         
         paid_count = 0
         unpaid_count = 0
@@ -318,7 +326,7 @@ def dashboard():
         upcoming_bills = []
 
         today = date.today()
-        for b_id, bill in bills:
+        for b_id, bill in bills_data:
             try:
                 bill_amount = float(bill['amount'])
             except (ValueError, TypeError):
@@ -355,15 +363,10 @@ def dashboard():
                 current_app.logger.warning(f"Skipping invalid bill record {b_id}: invalid due_date {bill.get('due_date')}")
                 continue
 
-        if len(bills) < len(user_data):
-            missing = len(user_data) - len(bills)
-            flash(trans('bill_invalid_records_skipped', lang) or f"Skipped {missing} invalid bill(s) due to missing or incorrect data", 'warning')
-            current_app.logger.warning(f"Skipped {missing} bill records due to missing required keys or invalid data")
-
         return render_template(
             'bill_dashboard.html',
             form=form,
-            bills=bills,
+            bills=bills_data,
             paid_count=paid_count,
             unpaid_count=unpaid_count,
             overdue_count=overdue_count,
@@ -412,14 +415,8 @@ def view_edit():
         session['sid'] = str(uuid.uuid4())
         session.permanent = True
     lang = session.get('lang', 'en')
-    bill_storage = current_app.config['STORAGE_MANAGERS']['bills']
-    user_data = bill_storage.filter_by_session(session['sid'])
-    required_keys = ['first_name', 'bill_name', 'amount', 'due_date', 'frequency', 'category', 'status']
-    bills = [
-        (record['id'], record['data']) 
-        for record in user_data 
-        if isinstance(record.get('data'), dict) and all(key in record['data'] for key in required_keys)
-    ]
+    bills = Bill.query.filter_by(session_id=session['sid']).all()
+    bills_data = [(bill.id, bill.to_dict()) for bill in bills]
 
     try:
         if request.method == 'POST':
@@ -427,82 +424,79 @@ def view_edit():
             bill_id = request.form.get('bill_id')
 
             if action == 'edit':
-                record = bill_storage.get_by_id(bill_id)
-                if record and isinstance(record.get('data'), dict) and all(key in record['data'] for key in required_keys):
-                    session['bill_data'] = record['data']
+                bill = Bill.query.get(bill_id)
+                if bill:
+                    session['bill_step1'] = {
+                        'first_name': bill.first_name,
+                        'email': bill.user_email,
+                        'bill_name': bill.bill_name,
+                        'amount': bill.amount,
+                        'due_date': bill.due_date.strftime('%Y-%m-%d')
+                    }
+                    session['bill_step2'] = {
+                        'frequency': bill.frequency,
+                        'category': bill.category,
+                        'status': bill.status,
+                        'send_email': bill.send_email,
+                        'reminder_days': bill.reminder_days
+                    }
                     session['bill_id'] = bill_id
                     return redirect(url_for('bill.form_step1'))
-                flash(trans('bill_bill_not_found', lang) or 'Bill not found or invalid data', 'danger')
+                flash(trans('bill_bill_not_found', lang) or 'Bill not found', 'danger')
                 return redirect(url_for('bill.view_edit'))
 
             elif action == 'delete':
-                try:
-                    if bill_storage.delete_by_id(bill_id):
+                bill = Bill.query.get(bill_id)
+                if bill:
+                    try:
+                        db.session.delete(bill)
+                        db.session.commit()
                         flash(trans('bill_bill_deleted_success', lang) or 'Bill deleted successfully', 'success')
-                    else:
+                    except Exception as e:
+                        db.session.rollback()
+                        current_app.logger.error(f"Failed to delete bill ID {bill_id}: {str(e)}")
                         flash(trans('bill_bill_delete_failed', lang) or 'Failed to delete bill', 'danger')
-                        current_app.logger.error(f"Failed to delete bill ID {bill_id}")
-                    return redirect(url_for('bill.dashboard'))
-                except Exception as e:
-                    current_app.logger.exception(f"Error in bill.view_edit (delete): {str(e)}")
-                    flash(trans('bill_bill_delete_error', lang) or 'Error deleting bill', 'danger')
-                    return redirect(url_for('bill.dashboard'))
+                else:
+                    flash(trans('bill_bill_not_found', lang) or 'Bill not found', 'danger')
+                return redirect(url_for('bill.dashboard'))
 
             elif action == 'toggle_status':
-                try:
-                    record = bill_storage.get_by_id(bill_id)
-                    if record and isinstance(record.get('data'), dict) and all(key in record['data'] for key in required_keys):
-                        current_status = record['data'].get('status', 'unpaid')
+                bill = Bill.query.get(bill_id)
+                if bill:
+                    try:
+                        current_status = bill.status
                         new_status = 'paid' if current_status == 'unpaid' else 'unpaid'
-                        record['data']['status'] = new_status
-                        if bill_storage.update_by_id(bill_id, record):
-                            flash(trans('bill_bill_status_toggled_success', lang) or 'Bill status updated', 'success')
-                            if new_status == 'paid' and record['data'].get('frequency') != 'one-time':
-                                try:
-                                    old_due_date = datetime.strptime(record['data']['due_date'], '%Y-%m-%d').date()
-                                    frequency = record['data'].get('frequency', 'monthly')
-                                    if frequency == 'weekly':
-                                        new_due_date = old_due_date + timedelta(days=7)
-                                    elif frequency == 'monthly':
-                                        new_due_date = old_due_date + timedelta(days=30)
-                                    elif frequency == 'quarterly':
-                                        new_due_date = old_due_date + timedelta(days=90)
-                                    else:
-                                        new_due_date = old_due_date
-                                    new_record = {
-                                        'id': str(uuid.uuid4()),
-                                        'user_email': record.get('user_email', ''),
-                                        'session_id': session['sid'],
-                                        'data': {
-                                            'first_name': record['data'].get('first_name', ''),
-                                            'bill_name': record['data'].get('bill_name', ''),
-                                            'amount': record['data'].get('amount', 0.0),
-                                            'due_date': new_due_date.strftime('%Y-%m-%d'),
-                                            'frequency': frequency,
-                                            'category': record['data'].get('category', 'other'),
-                                            'status': 'unpaid',
-                                            'send_email': record['data'].get('send_email', False),
-                                            'reminder_days': record['data'].get('reminder_days', None)
-                                        }
-                                    }
-                                    bill_storage.append(new_record, user_email=record.get('user_email', ''), session_id=session['sid'], lang=lang)
-                                    flash(trans('bill_new_recurring_bill_success', lang).format(bill_name=record['data'].get('bill_name', '')), 'success')
-                                except Exception as e:
-                                    current_app.logger.exception(f"Error creating recurring bill: {str(e)}")
-                                    flash(trans('bill_recurring_bill_error', lang) or 'Error creating recurring bill', 'warning')
-                        else:
-                            flash(trans('bill_bill_status_toggle_failed', lang) or 'Failed to update bill status', 'danger')
-                            current_app.logger.error(f"Failed to toggle status for bill ID {bill_id}")
-                    else:
-                        flash(trans('bill_bill_not_found', lang) or 'Bill not found or invalid data', 'danger')
-                        current_app.logger.error(f"Bill ID {bill_id} not found or missing required keys")
-                    return redirect(url_for('bill.dashboard'))
-                except Exception as e:
-                    current_app.logger.exception(f"Error in bill.view_edit (toggle_status): {str(e)}")
-                    flash(trans('bill_error_toggling_status', lang) or 'Error toggling bill status', 'danger')
-                    return redirect(url_for('bill.dashboard'))
+                        bill.status = new_status
+                        db.session.commit()
+                        flash(trans('bill_bill_status_toggled_success', lang) or 'Bill status updated', 'success')
+                        if new_status == 'paid' and bill.frequency != 'one-time':
+                            new_due_date = calculate_next_due_date(bill.due_date, bill.frequency)
+                            new_bill = Bill(
+                                id=str(uuid.uuid4()),
+                                session_id=bill.session_id,
+                                user_email=bill.user_email,
+                                first_name=bill.first_name,
+                                bill_name=bill.bill_name,
+                                amount=bill.amount,
+                                due_date=new_due_date,
+                                frequency=bill.frequency,
+                                category=bill.category,
+                                status='unpaid',
+                                send_email=bill.send_email,
+                                reminder_days=bill.reminder_days
+                            )
+                            db.session.add(new_bill)
+                            db.session.commit()
+                            flash(trans('bill_new_recurring_bill_success', lang).format(bill_name=bill.bill_name), 'success')
+                    except Exception as e:
+                        db.session.rollback()
+                        current_app.logger.error(f"Failed to toggle status for bill ID {bill_id}: {str(e)}")
+                        flash(trans('bill_bill_status_toggle_failed', lang) or 'Failed to update bill status', 'danger')
+                else:
+                    flash(trans('bill_bill_not_found', lang) or 'Bill not found', 'danger')
+                return redirect(url_for('bill.dashboard'))
 
-        return render_template('view_edit_bills.html', bills=bills, trans=trans, lang=lang)
+        return render_template('view_edit_bills.html', bills=bills_data, trans=trans, lang=lang)
     except Exception as e:
         current_app.logger.exception(f"Error in bill.view_edit: {str(e)}")
         flash(trans('bill_view_edit_template_error', lang) or 'Error loading bill edit page', 'danger')
@@ -512,21 +506,12 @@ def view_edit():
 def unsubscribe(email):
     try:
         lang = session.get('lang', 'en')
-        bill_storage = current_app.config['STORAGE_MANAGERS']['bills']
-        user_data = bill_storage.get_all()
-        updated = False
-        for record in user_data:
-            if record.get('user_email') == email and isinstance(record.get('data'), dict):
-                record['data']['send_email'] = False
-                if bill_storage.update_by_id(record['id'], record):
-                    updated = True
-        if updated:
-            flash(trans('bill_unsubscribe_success', lang) or 'Unsubscribed successfully', 'success')
-        else:
-            flash(trans('bill_unsubscribe_failed', lang) or 'Failed to unsubscribe', 'danger')
-            current_app.logger.error(f"Error unsubscribing email {email}")
-        return redirect(url_for('index'))
+        bills = Bill.query.filter_by(user_email=email).all()
+        for bill in bills:
+            bill.send_email = False
+        db.session.commit()
+        flash(trans('bill_unsubscribe_success', lang) or 'Unsubscribed successfully', 'success')
     except Exception as e:
-        current_app.logger.exception(f"Error in bill.unsubscribe: {str(e)}")
-        flash(trans('bill_unsubscribe_error', lang) or 'Error unsubscribing', 'danger')
-        return redirect(url_for('index'))
+        current_app.logger.error(f"Error unsubscribing email {email}: {str(e)}")
+        flash(trans('bill_unsubscribe_failed', lang) or 'Failed to unsubscribe', 'danger')
+    return redirect(url_for('index'))
