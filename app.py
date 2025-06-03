@@ -5,6 +5,7 @@ from flask import Flask, jsonify, render_template, request, session, redirect, u
 from flask_session import Session
 from flask_wtf.csrf import CSRFProtect, CSRFError
 from flask_sqlalchemy import SQLAlchemy
+from flask_login import LoginManager, current_user
 from translations import trans
 from blueprints.financial_health import financial_health_bp
 from blueprints.budget import budget_bp
@@ -13,13 +14,18 @@ from blueprints.bill import bill_bp
 from blueprints.net_worth import net_worth_bp
 from blueprints.emergency_fund import emergency_fund_bp
 from blueprints.learning_hub import learning_hub_bp
+from blueprints.auth import auth_bp  # Import auth blueprint
 from scheduler_setup import init_scheduler
 import json
 import uuid
 from datetime import datetime, timedelta
+from models import Course, FinancialHealth, Budget, Bill, NetWorth, EmergencyFund, LearningProgress, QuizResult  # Import models
 
 # Initialize SQLAlchemy
 db = SQLAlchemy()
+
+# Initialize Flask-Login
+login_manager = LoginManager()
 
 # Constants
 SAMPLE_COURSES = [
@@ -116,131 +122,6 @@ def setup_session(app):
     app.config['SESSION_USE_SIGNER'] = True
     logger.info(f"Session configured: type={app.config['SESSION_TYPE']}, dir={session_dir}, lifetime={app.config['PERMANENT_SESSION_LIFETIME']}")
 
-# Define SQLAlchemy Models
-class Course(db.Model):
-    __tablename__ = 'courses'
-    id = db.Column(db.String(50), primary_key=True)
-    title_key = db.Column(db.String(100), nullable=False)
-    title_en = db.Column(db.String(100), nullable=False)
-    title_ha = db.Column(db.String(100), nullable=False)
-    description_en = db.Column(db.Text, nullable=False)
-    description_ha = db.Column(db.Text, nullable=False)
-    is_premium = db.Column(db.Boolean, default=False, nullable=False)
-
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'title_key': self.title_key,
-            'title_en': self.title_en,
-            'title_ha': self.title_ha,
-            'description_en': self.description_en,
-            'description_ha': self.description_ha,
-            'is_premium': self.is_premium
-        }
-
-class FinancialHealth(db.Model):
-    __tablename__ = 'financial_health'
-    id = db.Column(db.String(36), primary_key=True)
-    session_id = db.Column(db.String(36), nullable=False)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    score = db.Column(db.Float, nullable=True)
-
-class Budget(db.Model):
-    __tablename__ = 'budget'
-    id = db.Column(db.String(36), primary_key=True)
-    session_id = db.Column(db.String(36), nullable=False)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    surplus_deficit = db.Column(db.Float, nullable=True)
-
-class Bill(db.Model):
-    __tablename__ = 'bills'
-    id = db.Column(db.String(36), primary_key=True)
-    session_id = db.Column(db.String(36), nullable=False)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    amount = db.Column(db.Float, nullable=True)
-    description = db.Column(db.String(255), nullable=True)
-
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'session_id': self.session_id,
-            'timestamp': self.timestamp.isoformat() + "Z",
-            'amount': self.amount,
-            'description': self.description
-        }
-
-class NetWorth(db.Model):
-    __tablename__ = 'net_worth'
-    id = db.Column(db.String(36), primary_key=True)
-    session_id = db.Column(db.String(36), nullable=False)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    first_name = db.Column(db.String(100))
-    email = db.Column(db.String(100))
-    send_email = db.Column(db.Boolean, default=False)
-    cash_savings = db.Column(db.Float)
-    investments = db.Column(db.Float)
-    property = db.Column(db.Float)
-    loans = db.Column(db.Float)
-    total_assets = db.Column(db.Float)
-    total_liabilities = db.Column(db.Float)
-    net_worth = db.Column(db.Float)
-    badges = db.Column(db.Text)  # Stores JSON string of badge list
-
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'session_id': self.session_id,
-            'timestamp': self.timestamp.isoformat() + "Z",
-            'first_name': self.first_name,
-            'email': self.email,
-            'send_email': self.send_email,
-            'cash_savings': self.cash_savings,
-            'investments': self.investments,
-            'property': self.property,
-            'loans': self.loans,
-            'total_assets': self.total_assets,
-            'total_liabilities': self.total_liabilities,
-            'net_worth': self.net_worth,
-            'badges': json.loads(self.badges) if self.badges else []
-        }
-
-class EmergencyFund(db.Model):
-    __tablename__ = 'emergency_fund'
-    id = db.Column(db.String(36), primary_key=True)
-    session_id = db.Column(db.String(36), nullable=False)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    savings_gap = db.Column(db.Float, nullable=True)
-
-class LearningProgress(db.Model):
-    __tablename__ = 'learning_progress'
-    id = db.Column(db.Integer, primary_key=True)
-    session_id = db.Column(db.String(36), nullable=False)
-    course_id = db.Column(db.String(50), nullable=False)
-    lessons_completed = db.Column(db.Text, default='[]', nullable=False)  # JSON string
-    quiz_scores = db.Column(db.Text, default='{}', nullable=False)      # JSON string
-    current_lesson = db.Column(db.String(50), nullable=True)
-
-    __table_args__ = (db.UniqueConstraint('session_id', 'course_id', name='uix_session_course'),)
-
-    def to_dict(self):
-        return {
-            'lessons_completed': json.loads(self.lessons_completed),
-            'quiz_scores': json.loads(self.quiz_scores),
-            'current_lesson': self.current_lesson
-        }
-
-class QuizResult(db.Model):
-    __tablename__ = 'quiz_results'
-    id = db.Column(db.String(36), primary_key=True)
-    session_id = db.Column(db.String(36), nullable=False)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    first_name = db.Column(db.String(50), nullable=True)
-    personality = db.Column(db.String(50), nullable=True)
-    score = db.Column(db.Integer, nullable=True)
-    badges = db.Column(db.Text, nullable=True)  # JSON string
-    insights = db.Column(db.Text, nullable=True)  # JSON string
-    tips = db.Column(db.Text, nullable=True)  # JSON string
-
 def initialize_courses_data(app):
     with app.app_context():
         if Course.query.count() == 0:
@@ -274,6 +155,18 @@ def create_app():
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     db.init_app(app)
 
+    # Initialize Flask-Login
+    login_manager.init_app(app)
+    login_manager.login_view = 'auth.signin'
+
+    @login_manager.user_loader
+    def load_user(user_id):
+        from models import User
+        return User.query.get(int(user_id))
+
+    # Initialize scheduler
+    init_scheduler(app)
+
     def format_currency(value):
         try:
             return "₦{:,.2f}".format(float(value))
@@ -293,6 +186,7 @@ def create_app():
     app.register_blueprint(net_worth_bp)
     app.register_blueprint(emergency_fund_bp)
     app.register_blueprint(learning_hub_bp)
+    app.register_blueprint(auth_bp)  # Register auth blueprint
 
     def translate(key, lang='en', logger=logger, **kwargs):
         translation = trans(key, lang=lang, **kwargs)
@@ -348,7 +242,8 @@ def create_app():
             'FEEDBACK_FORM_URL': os.environ.get('FEEDBACK_FORM_URL', '#'),
             'WAITLIST_FORM_URL': os.environ.get('WAITLIST_FORM_URL', '#'),
             'CONSULTANCY_FORM_URL': os.environ.get('CONSULTANCY_FORM_URL', '#'),
-            'current_lang': lang
+            'current_lang': lang,
+            'current_user': current_user  # Inject current_user for templates
         }
 
     @app.route('/')
@@ -358,7 +253,7 @@ def create_app():
         try:
             courses = current_app.config['COURSES'] or SAMPLE_COURSES
             logger.info(f"Retrieved {len(courses)} courses")
-            processed_courses = courses  # Already in dict format from to_dict()
+            processed_courses = courses
         except Exception as e:
             logger.error(f"Error retrieving courses: {str(e)}", exc_info=True)
             processed_courses = SAMPLE_COURSES
@@ -408,32 +303,35 @@ def create_app():
         logger.info("Serving general dashboard")
         data = {}
         try:
+            # Filter by user_id if authenticated, else session_id
+            filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
+
             # Financial Health
-            fh_records = FinancialHealth.query.filter_by(session_id=session['sid']).order_by(FinancialHealth.timestamp.desc()).all()
+            fh_records = FinancialHealth.query.filter_by(**filter_kwargs).order_by(FinancialHealth.created_at.desc()).all()
             data['financial_health'] = {'score': fh_records[0].score} if fh_records else {'score': None}
 
             # Budget
-            budget_records = Budget.query.filter_by(session_id=session['sid']).order_by(Budget.timestamp.desc()).all()
+            budget_records = Budget.query.filter_by(**filter_kwargs).order_by(Budget.created_at.desc()).all()
             data['budget'] = {'surplus_deficit': budget_records[0].surplus_deficit} if budget_records else {'surplus_deficit': None}
 
             # Bills
-            bills = Bill.query.filter_by(session_id=session['sid']).all()
+            bills = Bill.query.filter_by(**filter_kwargs).all()
             data['bills'] = [bill.to_dict() for bill in bills]
 
             # Net Worth
-            nw_records = NetWorth.query.filter_by(session_id=session['sid']).order_by(NetWorth.timestamp.desc()).all()
+            nw_records = NetWorth.query.filter_by(**filter_kwargs).order_by(NetWorth.created_at.desc()).all()
             data['net_worth'] = nw_records[0].to_dict() if nw_records else {'net_worth': None}
 
             # Emergency Fund
-            ef_records = EmergencyFund.query.filter_by(session_id=session['sid']).order_by(EmergencyFund.timestamp.desc()).all()
+            ef_records = EmergencyFund.query.filter_by(**filter_kwargs).order_by(EmergencyFund.created_at.desc()).all()
             data['emergency_fund'] = {'savings_gap': ef_records[0].savings_gap} if ef_records else {'savings_gap': None}
 
             # Learning Progress
-            lp_records = LearningProgress.query.filter_by(session_id=session['sid']).all()
+            lp_records = LearningProgress.query.filter_by(**filter_kwargs).all()
             data['learning_progress'] = {lp.course_id: lp.to_dict() for lp in lp_records}
 
             # Quiz Results
-            quiz_records = QuizResult.query.filter_by(session_id=session['sid']).order_by(QuizResult.timestamp.desc()).all()
+            quiz_records = QuizResult.query.filter_by(**filter_kwargs).order_by(QuizResult.created_at.desc()).all()
             data['quiz'] = {'personality': quiz_records[0].personality} if quiz_records else {'personality': None}
 
             logger.info(f"Retrieved data for session {session['sid']}")
