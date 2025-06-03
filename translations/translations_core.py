@@ -15,6 +15,9 @@ CORE_TRANSLATIONS = {
         'Frequency: Frequency is required': 'Frequency: Frequency is required.',
         'Category: Category is required': 'Category: Category is required.',
         'Status: Status is required': 'Status: Status is required.',
+        'Successfully added BILL11. Check your list of bills on the <a href="/bill/dashboard">dashboard</a>.': 'Successfully added BILL11. Check your list of bills on the <a href="/bill/dashboard">dashboard</a>.',
+        'Bill Dashboard': 'Bill Dashboard',
+
         'core_accept': 'Accept',
         'core_invalid_request': 'Invalid Request',
         'core_error_acknowledging_consent': 'Error acknowledging consent.',
@@ -781,6 +784,8 @@ CORE_TRANSLATIONS = {
         'Frequency: Frequency is required': 'Mitar: Ana buƙatar mitar.',
         'Category: Category is required': 'Rukuni: Ana buƙatar rukuni.',
         'Status: Status is required': 'Matsayi: Ana buƙatar matsayi.',
+        'Successfully added BILL11. Check your list of bills on the <a href="/bill/dashboard">dashboard</a>.': 'An ƙara BILL11 cikin nasara. Duba jerin kuɗin biyan ku a kan <a href="/bill/dashboard">dashboard</a>.',
+        'Bill Dashboard': 'Allon Kuɗin Biya',
         'Quiz completed! 1/1': 'An kammala gwaji! 1/1',
         'core_team_why_content': 'An ƙirƙiri Ficore Africa ne daga sha\'awar da muke da ita don cike gibin ilimin kuɗi a Afirka da kuma samar da hanyoyin magance matsalolin kuɗi na musamman da mutane da kasuwanci ke fuskanta a yankin. Mun yi imanin cewa ta hanyar samar wa \'yan Afirka da kayan aiki da fahimta da suka dace, za mu iya buɗe ƙarfinsu na tattalin arziki da kuma gina makoma mai wadata ga nahiyar.',
 
