@@ -2,12 +2,13 @@ from flask import Blueprint, request, session, redirect, url_for, render_templat
 from flask_wtf import FlaskForm
 from wtforms import StringField, FloatField, IntegerField, SelectField, BooleanField, SubmitField
 from wtforms.validators import DataRequired, Optional, Email, NumberRange
+from flask_login import current_user
 from mailersend_email import send_email, EMAIL_CONFIG
 from datetime import datetime
 import uuid
 import json
-from app import db, trans  # Assuming db is the Flask-SQLAlchemy instance from app.py
-from models import EmergencyFund, Budget  # Assuming models are defined in models.py
+from app import db, trans
+from models import EmergencyFund, Budget
 
 emergency_fund_bp = Blueprint('emergency_fund', __name__, url_prefix='/emergency_fund')
 
@@ -109,7 +110,11 @@ def step1():
         session.permanent = True
         session.modified = True
     lang = session.get('lang', 'en')
-    form = Step1Form()
+    form_data = session.get('emergency_fund_step1', {})
+    if current_user.is_authenticated:
+        form_data['email'] = form_data.get('email', current_user.email)
+        form_data['first_name'] = form_data.get('first_name', current_user.username)
+    form = Step1Form(data=form_data)
     try:
         if request.method == 'POST':
             current_app.logger.info(f"Step1 POST data: {request.form.to_dict()}")
@@ -135,12 +140,14 @@ def step1():
 
 @emergency_fund_bp.route('/step2', methods=['GET', 'POST'])
 def step2():
-    if 'sid' not in session or 'emergency_fund_step1' not in session:
+    if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
         session.permanent = True
-        flash(trans('emergency_fund_missing_step1', lang=session.get('lang', 'en'), default='Please complete step 1 first.'), 'danger')
-        return redirect(url_for('emergency_fund.step1'))
+        session.modified = True
     lang = session.get('lang', 'en')
+    if 'emergency_fund_step1' not in session:
+        flash(trans('emergency_fund_missing_step1', lang=lang, default='Please complete step 1 first.'), 'danger')
+        return redirect(url_for('emergency_fund.step1'))
     form = Step2Form()
     try:
         if request.method == 'POST':
@@ -166,12 +173,14 @@ def step2():
 
 @emergency_fund_bp.route('/step3', methods=['GET', 'POST'])
 def step3():
-    if 'sid' not in session or 'emergency_fund_step2' not in session:
+    if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
         session.permanent = True
-        flash(trans('emergency_fund_missing_step2', lang=session.get('lang', 'en'), default='Please complete previous steps first.'), 'danger')
-        return redirect(url_for('emergency_fund.step1'))
+        session.modified = True
     lang = session.get('lang', 'en')
+    if 'emergency_fund_step2' not in session:
+        flash(trans('emergency_fund_missing_step2', lang=lang, default='Please complete previous steps first.'), 'danger')
+        return redirect(url_for('emergency_fund.step1'))
     form = Step3Form()
     try:
         if request.method == 'POST':
@@ -198,12 +207,14 @@ def step3():
 
 @emergency_fund_bp.route('/step4', methods=['GET', 'POST'])
 def step4():
-    if 'sid' not in session or 'emergency_fund_step3' not in session:
+    if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
         session.permanent = True
-        flash(trans('emergency_fund_missing_step3', lang=session.get('lang', 'en'), default='Please complete previous steps first.'), 'danger')
-        return redirect(url_for('emergency_fund.step1'))
+        session.modified = True
     lang = session.get('lang', 'en')
+    if 'emergency_fund_step3' not in session:
+        flash(trans('emergency_fund_missing_step3', lang=lang, default='Please complete previous steps first.'), 'danger')
+        return redirect(url_for('emergency_fund.step1'))
     form = Step4Form()
     try:
         if request.method == 'POST':
@@ -240,6 +251,7 @@ def step4():
                 # Create and save EmergencyFund record to database
                 emergency_fund = EmergencyFund(
                     id=str(uuid.uuid4()),
+                    user_id=current_user.id if current_user.is_authenticated else None,
                     session_id=session['sid'],
                     first_name=step1_data.get('first_name'),
                     email=step1_data.get('email'),
@@ -256,8 +268,7 @@ def step4():
                     savings_gap=gap,
                     monthly_savings=monthly_savings,
                     percent_of_income=percent_of_income,
-                    badges=json.dumps(badges),
-                    created_at=datetime.now()
+                    badges=json.dumps(badges)
                 )
                 db.session.add(emergency_fund)
                 db.session.commit()
@@ -305,7 +316,7 @@ def step4():
                 session.modified = True
 
                 flash(trans('emergency_fund_completed_successfully', lang=lang, default='Emergency fund calculation completed successfully!'), 'success')
-                return redirect(url_for('emergency_fund.dashboard'))
+                return redirect(url_for('emergency_fund.success'))
             else:
                 current_app.logger.warning(f"Step4 form errors: {form.errors}")
                 for field, errors in form.errors.items():
@@ -325,37 +336,17 @@ def dashboard():
         session.modified = True
     lang = session.get('lang', 'en')
     try:
-        # Retrieve records from database by session_id
-        user_data = EmergencyFund.query.filter_by(session_id=session['sid']).order_by(EmergencyFund.created_at.desc()).all()
+        # Filter by user_id if authenticated, else session_id
+        filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
+        user_data = EmergencyFund.query.filter_by(**filter_kwargs).order_by(EmergencyFund.created_at.desc()).all()
         current_app.logger.info(f"Retrieved {len(user_data)} records from database for session {session['sid']}")
 
-        # If no records found, check if email is available in session
-        if not user_data and 'emergency_fund_step1' in session and session['emergency_fund_step1'].get('email'):
-            email = session['emergency_fund_step1']['email']
-            user_data = EmergencyFund.query.filter_by(email=email).order_by(EmergencyFund.created_at.desc()).all()
-            current_app.logger.info(f"Retrieved {len(user_data)} records for email {email}")
+        # If no records and authenticated, check by email
+        if not user_data and current_user.is_authenticated and current_user.email:
+            user_data = EmergencyFund.query.filter_by(email=current_user.email).order_by(EmergencyFund.created_at.desc()).all()
+            current_app.logger.info(f"Retrieved {len(user_data)} records for email {current_user.email}")
 
-        # Convert model instances to dictionaries for template
-        records = [(record.id, {
-            'first_name': record.first_name,
-            'email': record.email,
-            'email_opt_in': record.email_opt_in,
-            'lang': record.lang,
-            'monthly_expenses': record.monthly_expenses,
-            'monthly_income': record.monthly_income,
-            'current_savings': record.current_savings,
-            'risk_tolerance_level': record.risk_tolerance_level,
-            'dependents': record.dependents,
-            'timeline': record.timeline,
-            'recommended_months': record.recommended_months,
-            'target_amount': record.target_amount,
-            'savings_gap': record.savings_gap,
-            'monthly_savings': record.monthly_savings,
-            'percent_of_income': record.percent_of_income,
-            'badges': json.loads(record.badges) if record.badges else [],
-            'created_at': record.created_at.strftime('%Y-%m-%d %H:%M:%S')
-        }) for record in user_data]
-
+        records = [(record.id, record.to_dict()) for record in user_data]
         latest_record = records[-1][1] if records else {}
 
         insights = []
@@ -370,14 +361,14 @@ def dashboard():
                     insights.append(trans('emergency_fund_insight_high_income_percentage', lang=lang))
                 if latest_record.get('dependents', 0) > 2:
                     insights.append(trans('emergency_fund_insight_large_family', lang=lang,
-                                        recommended_months=latest_record.get('recommended_months', 0)))
+                        recommended_months=latest_record.get('recommended_months', 0)))
 
         cross_tool_insights = []
-        budget_data = Budget.query.filter_by(session_id=session['sid']).order_by(Budget.created_at.desc()).all()
+        budget_data = Budget.query.filter_by(**filter_kwargs).order_by(Budget.created_at.desc()).all()
         if budget_data and latest_record and latest_record.get('savings_gap', 0) > 0:
             latest_budget = budget_data[0]
-            if latest_budget.income and latest_budget.expenses:
-                savings_possible = latest_budget.income - latest_budget.expenses
+            if latest_budget.income and latest_budget.fixed_expenses:
+                savings_possible = latest_budget.income - latest_budget.fixed_expenses
                 if savings_possible > 0:
                     cross_tool_insights.append(trans('emergency_fund_cross_tool_savings_possible', lang=lang,
                                                    amount=savings_possible))
@@ -420,7 +411,8 @@ def dashboard():
 def unsubscribe(email):
     try:
         lang = session.get('lang', 'en')
-        records = EmergencyFund.query.filter_by(email=email).all()
+        filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
+        records = EmergencyFund.query.filter_by(email=email, **filter_kwargs).all()
         for record in records:
             record.email_opt_in = False
         db.session.commit()
@@ -433,28 +425,9 @@ def unsubscribe(email):
 @emergency_fund_bp.route('/debug/storage', methods=['GET'])
 def debug_storage():
     try:
-        records = EmergencyFund.query.filter_by(session_id=session['sid']).all()
-        record_dicts = [{
-            'id': record.id,
-            'session_id': record.session_id,
-            'first_name': record.first_name,
-            'email': record.email,
-            'email_opt_in': record.email_opt_in,
-            'lang': record.lang,
-            'monthly_expenses': record.monthly_expenses,
-            'monthly_income': record.monthly_income,
-            'current_savings': record.current_savings,
-            'risk_tolerance_level': record.risk_tolerance_level,
-            'dependents': record.dependents,
-            'timeline': record.timeline,
-            'recommended_months': record.recommended_months,
-            'target_amount': record.target_amount,
-            'savings_gap': record.savings_gap,
-            'monthly_savings': record.monthly_savings,
-            'percent_of_income': record.percent_of_income,
-            'badges': json.loads(record.badges) if record.badges else [],
-            'created_at': record.created_at.strftime('%Y-%m-%d %H:%M:%S')
-        } for record in records]
+        filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
+        records = EmergencyFund.query.filter_by(**filter_kwargs).all()
+        record_dicts = [record.to_dict() for record in records]
         response = {
             "records": record_dicts,
             "count": len(records),
