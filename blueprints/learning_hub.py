@@ -1,14 +1,15 @@
-from flask import Blueprint, render_template, session, request, redirect, url_for, flash, current_app
+from flask import Blueprint, render_template, session, request, redirect, url_for, flash, current_app, send_from_directory
 from flask_wtf import FlaskForm
 from wtforms import StringField, BooleanField, SubmitField, HiddenField
 from wtforms.validators import DataRequired, Email, Optional
 from flask_wtf.csrf import CSRFProtect, CSRFError
+from flask_login import current_user
 from datetime import datetime
 from mailersend_email import send_email, EMAIL_CONFIG
 import uuid
 import json
-from app import db, trans  # Assuming db is the Flask-SQLAlchemy instance from app.py
-from models import LearningProgress  # Assuming LearningProgress is defined in models.py
+from app import db, trans
+from models import LearningProgress, Course
 
 learning_hub_bp = Blueprint('learning_hub', __name__)
 
@@ -125,7 +126,6 @@ quizzes_data = {
     }
 }
 
-# Profile Form Definition
 class LearningHubProfileForm(FlaskForm):
     first_name = StringField(validators=[DataRequired()])
     email = StringField(validators=[Optional(), Email()])
@@ -143,7 +143,6 @@ class LearningHubProfileForm(FlaskForm):
         if self.email.validators:
             self.email.validators[1].message = trans('core_email_invalid', lang=lang)
 
-# Lesson Form Definition
 class MarkCompleteForm(FlaskForm):
     lesson_id = HiddenField('Lesson ID')
     submit = SubmitField('Mark as Complete')
@@ -153,7 +152,6 @@ class MarkCompleteForm(FlaskForm):
         lang = session.get('lang', 'en')
         self.submit.label.text = trans('learning_hub_mark_complete', lang=lang)
 
-# Quiz Form Definition
 class QuizForm(FlaskForm):
     submit = SubmitField('Submit Quiz')
 
@@ -165,15 +163,11 @@ class QuizForm(FlaskForm):
 def get_progress():
     """Retrieve learning progress from database."""
     try:
-        session_id = session['sid']
-        progress_records = LearningProgress.query.filter_by(session_id=session_id).all()
+        filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
+        progress_records = LearningProgress.query.filter_by(**filter_kwargs).all()
         progress = {}
         for record in progress_records:
-            progress[record.course_id] = {
-                'lessons_completed': json.loads(record.lessons_completed),
-                'quiz_scores': json.loads(record.quiz_scores),
-                'current_lesson': record.current_lesson
-            }
+            progress[record.course_id] = record.to_dict()
         return progress
     except Exception as e:
         current_app.logger.error(f"Error retrieving progress from database: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
@@ -182,10 +176,15 @@ def get_progress():
 def save_course_progress(course_id, course_progress):
     """Save course progress to database."""
     try:
-        session_id = session['sid']
-        progress = LearningProgress.query.filter_by(session_id=session_id, course_id=course_id).first()
+        filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
+        filter_kwargs['course_id'] = course_id
+        progress = LearningProgress.query.filter_by(**filter_kwargs).first()
         if not progress:
-            progress = LearningProgress(session_id=session_id, course_id=course_id)
+            progress = LearningProgress(
+                user_id=current_user.id if current_user.is_authenticated else None,
+                session_id=session['sid'],
+                course_id=course_id
+            )
         progress.lessons_completed = json.dumps(course_progress.get('lessons_completed', []))
         progress.quiz_scores = json.dumps(course_progress.get('quiz_scores', {}))
         progress.current_lesson = course_progress.get('current_lesson')
@@ -200,24 +199,25 @@ def init_storage(app):
     with app.app_context():
         current_app.logger.info("Initializing courses storage.", extra={'session_id': 'no-request-context'})
         try:
-            courses_storage = app.config['STORAGE_MANAGERS']['courses']
-            courses = courses_storage.read_all()
+            courses = Course.query.all()
             if not courses:
-                current_app.logger.info("Courses storage is empty. Initializing with default courses.", extra={'session_id': 'no-request-context'})
+                current_app.logger.info("Courses table is empty. Initializing with default courses.", extra={'session_id': 'no-request-context'})
                 default_courses = [
-                    {
-                        'id': course['id'],
-                        'title_en': course['title_en'],
-                        'title_ha': course['title_ha'],
-                        'description_en': course['description_en'],
-                        'description_ha': course['description_ha']
-                    } for course in courses_data.values()
+                    Course(
+                        id=course['id'],
+                        title_key=course['title_key'],
+                        title_en=course['title_en'],
+                        title_ha=course['title_ha'],
+                        description_en=course['description_en'],
+                        description_ha=course['description_ha'],
+                        is_premium=False
+                    ) for course in courses_data.values()
                 ]
-                if not courses_storage.create(default_courses):
-                    current_app.logger.error("Failed to initialize courses.json with default courses", extra={'session_id': 'no-request-context'})
-                    raise RuntimeError("Course initialization failed")
-                current_app.logger.info(f"Initialized courses.json with {len(default_courses)} default courses", extra={'session_id': 'no-request-context'})
+                db.session.bulk_save_objects(default_courses)
+                db.session.commit()
+                current_app.logger.info(f"Initialized courses table with {len(default_courses)} default courses", extra={'session_id': 'no-request-context'})
         except Exception as e:
+            db.session.rollback()
             current_app.logger.error(f"Error initializing courses: {str(e)}", extra={'session_id': 'no-request-context'})
             raise
 
@@ -301,7 +301,11 @@ def profile():
         session.permanent = True
         session.modified = True
     lang = session.get('lang', 'en')
-    form = LearningHubProfileForm()
+    form_data = session.get('learning_hub_profile', {})
+    if current_user.is_authenticated:
+        form_data['email'] = form_data.get('email', current_user.email)
+        form_data['first_name'] = form_data.get('first_name', current_user.username)
+    form = LearningHubProfileForm(data=form_data)
     if request.method == 'POST' and form.validate_on_submit():
         session['learning_hub_profile'] = {
             'first_name': form.first_name.data,
