@@ -93,7 +93,7 @@ class Budget(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     user_email = db.Column(db.String(120), nullable=True)
     income = db.Column(db.Float, nullable=False, default=0.0)
-    fixed_expense = db.Column(db.Float, nullable=False, default=0.0)
+    fixed_expenses = db.Column(db.Float, nullable=False, default=0.0)
     variable_expenses = db.Column(db.Float, nullable=False, default=0.0)
     savings_goal = db.Column(db.Float, nullable=False, default=0.0)
     surplus_deficit = db.Column(db.Float, nullable=True)
