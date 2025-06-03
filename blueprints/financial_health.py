@@ -6,9 +6,9 @@ from flask_login import current_user
 from datetime import datetime
 import uuid
 import json
-from app import db, trans
+from extensions import db
+from mailersend_email import trans, send_email, EMAIL_CONFIG
 from models import FinancialHealth
-from mailersend_email import send_email, EMAIL_CONFIG
 
 financial_health_bp = Blueprint('financial_health', __name__, url_prefix='/financial_health')
 
