@@ -1,8 +1,6 @@
-from flask_sqlalchemy import SQLAlchemy
+from extensions import db
 import json
 from datetime import datetime, date
-
-db = SQLAlchemy()
 
 class User(db.Model):
     __tablename__ = 'users'
@@ -11,6 +9,7 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(128), nullable=False)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    lang = db.Column(db.String(10), default='en')  # Added for language preference
 
 class Course(db.Model):
     __tablename__ = 'courses'
@@ -55,6 +54,7 @@ class FinancialHealth(db.Model):
     status_key = db.Column(db.String(50), nullable=True)
     badges = db.Column(db.Text, nullable=True)  # JSON string
     step = db.Column(db.Integer, nullable=True)
+    user = db.relationship('User', backref='financial_health_records')
 
     __table_args__ = (
         db.Index('ix_financial_health_session_id', 'session_id'),
@@ -103,6 +103,7 @@ class Budget(db.Model):
     dependents = db.Column(db.Float, nullable=False, default=0.0)
     miscellaneous = db.Column(db.Float, nullable=False, default=0.0)
     others = db.Column(db.Float, nullable=False, default=0.0)
+    user = db.relationship('User', backref='budgets')
 
     __table_args__ = (
         db.Index('ix_budget_session_id', 'session_id'),
@@ -145,6 +146,7 @@ class Bill(db.Model):
     status = db.Column(db.String(20), nullable=False)
     send_email = db.Column(db.Boolean, nullable=False, default=False)
     reminder_days = db.Column(db.Integer, nullable=True)
+    user = db.relationship('User', backref='bills')
 
     __table_args__ = (
         db.Index('ix_bills_session_id', 'session_id'),
@@ -186,6 +188,7 @@ class NetWorth(db.Model):
     total_liabilities = db.Column(db.Float, nullable=True)
     net_worth = db.Column(db.Float, nullable=True)
     badges = db.Column(db.Text, nullable=True)  # JSON string
+    user = db.relationship('User', backref='net_worth_records')
 
     __table_args__ = (
         db.Index('ix_net_worth_session_id', 'session_id'),
@@ -233,6 +236,7 @@ class EmergencyFund(db.Model):
     monthly_savings = db.Column(db.Float, nullable=True)
     percent_of_income = db.Column(db.Float, nullable=True)
     badges = db.Column(db.Text, nullable=True)  # JSON string
+    user = db.relationship('User', backref='emergency_funds')
 
     __table_args__ = (
         db.Index('ix_emergency_fund_session_id', 'session_id'),
@@ -272,6 +276,7 @@ class LearningProgress(db.Model):
     lessons_completed = db.Column(db.Text, default='[]', nullable=False)  # JSON string
     quiz_scores = db.Column(db.Text, default='{}', nullable=False)  # JSON string
     current_lesson = db.Column(db.String(50), nullable=True)
+    user = db.relationship('User', backref='learning_progress_records')
 
     __table_args__ = (
         db.UniqueConstraint('user_id', 'course_id', name='uix_user_course_id'),
@@ -305,6 +310,7 @@ class QuizResult(db.Model):
     badges = db.Column(db.Text, nullable=True)  # JSON string
     insights = db.Column(db.Text, nullable=True)  # JSON string
     tips = db.Column(db.Text, nullable=True)  # JSON string
+    user = db.relationship('User', backref='quiz_results')
 
     __table_args__ = (
         db.Index('ix_quiz_results_session_id', 'session_id'),
