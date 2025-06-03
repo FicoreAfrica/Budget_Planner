@@ -3,7 +3,7 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, FloatField, SelectField, BooleanField, SubmitField
 from wtforms.validators import DataRequired, NumberRange, Optional, Email, ValidationError
 from json_store import JsonStorage
-from mailersend_email import send_email, EMAIL_CONFIG  # Modified to include EMAIL_CONFIG
+from mailersend_email import send_email, EMAIL_CONFIG
 from datetime import datetime
 import uuid
 
@@ -288,9 +288,16 @@ def step3():
             score = max(0, min(100, round(score)))
             current_app.logger.debug(f"Calculated score: {score}")
 
-            status = (trans("financial_health_status_excellent", lang=lang) if score >= 80 else
-                      trans("financial_health_status_good", lang=lang) if score >= 60 else
-                      trans("financial_health_status_needs_improvement", lang=lang))
+            if score >= 80:
+                status_key = "financial_health_status_excellent"
+                status = trans(status_key, lang=lang)
+            elif score >= 60:
+                status_key = "financial_health_status_good"
+                status = trans(status_key, lang=lang)
+            else:
+                status_key = "financial_health_status_needs_improvement"
+                status = trans(status_key, lang=lang)
+
             badges = []
             if score >= 80:
                 badges.append(trans("financial_health_badge_financial_star", lang=lang))
@@ -300,7 +307,7 @@ def step3():
                 badges.append(trans("financial_health_badge_savings_pro", lang=lang))
             if interest_burden == 0 and debt > 0:
                 badges.append(trans("financial_health_badge_interest_free", lang=lang))
-            current_app.logger.debug(f"Status: {status}, Badges: {badges}")
+            current_app.logger.debug(f"Status: {status}, Status Key: {status_key}, Badges: {badges}")
 
             record = {
                 "first_name": step1_data.get('first_name', ''),
