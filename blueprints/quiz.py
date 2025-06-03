@@ -2,13 +2,15 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 from flask_wtf import FlaskForm
 from wtforms import StringField, SelectField, BooleanField, SubmitField, RadioField
 from wtforms.validators import DataRequired, Email, Optional
+from flask_login import current_user
 import uuid
 from datetime import datetime
 import json
 import logging
 from translations import trans
 from mailersend_email import send_email, EMAIL_CONFIG
-from app import db, QuizResult  # Import SQLAlchemy db and QuizResult model
+from app import db
+from models import QuizResult  # Import SQLAlchemy db and QuizResult model
 
 # Configure logging
 logger = logging.getLogger('ficore_app')
@@ -182,10 +184,15 @@ def step1():
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
         session.permanent = True
+        session.modified = True
         logger.debug(f"New session created with sid: {session['sid']}", extra={'session_id': session['sid']})
     lang = session.get('lang', 'en')
     course_id = request.args.get('course_id', 'financial_quiz')
-    form = QuizStep1Form(lang=lang, formdata=request.form if request.method == 'POST' else None)
+    form_data = session.get('quiz_data', {})
+    if current_user.is_authenticated:
+        form_data['email'] = form_data.get('email', current_user.email)
+        form_data['first_name'] = form_data.get('first_name', current_user.username)
+    form = QuizStep1Form(lang=lang, data=form_data)
     
     try:
         if request.method == 'POST' and form.validate_on_submit():
@@ -319,9 +326,12 @@ def step2b():
                 # Create and persist QuizResult record to SQLite
                 quiz_result = QuizResult(
                     id=str(uuid.uuid4()),
+                    user_id=current_user.id if current_user.is_authenticated else None,
                     session_id=session['sid'],
-                    timestamp=datetime.utcnow(),
+                    created_at=datetime.utcnow(),
                     first_name=session['quiz_data'].get('first_name', ''),
+                    email=session['quiz_data'].get('email', ''),
+                    send_email=session['quiz_data'].get('send_email', False),
                     personality=personality['name'],
                     score=score,
                     badges=json.dumps(badges),
@@ -335,15 +345,7 @@ def step2b():
                 logger.info(f"Successfully saved quiz result {quiz_result.id} for session {session['sid']}", extra={'session_id': session['sid']})
                 
                 # Prepare results for display
-                results = {
-                    'first_name': quiz_result.first_name,
-                    'personality': quiz_result.personality,
-                    'score': quiz_result.score,
-                    'badges': json.loads(quiz_result.badges),
-                    'created_at': quiz_result.timestamp.strftime('%Y-%m-%d %H:%M:%S UTC'),
-                    'insights': json.loads(quiz_result.insights),
-                    'tips': json.loads(quiz_result.tips)
-                }
+                results = quiz_result.to_dict()
                 
                 # Send email if user opted in
                 if session['quiz_data'].get('send_email') and session['quiz_data'].get('email'):
@@ -418,32 +420,22 @@ def results():
         results = session.get('quiz_results')
         
         if not results:
-            # Fetch from database using quiz_result_id or session_id
+            # Fetch from database using quiz_result_id, user_id, or session_id
+            filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
             if 'quiz_result_id' in session:
                 quiz_result = QuizResult.query.get(session['quiz_result_id'])
                 if quiz_result:
-                    results = {
-                        'first_name': quiz_result.first_name,
-                        'personality': quiz_result.personality,
-                        'score': quiz_result.score,
-                        'badges': json.loads(quiz_result.badges) if quiz_result.badges else [],
-                        'created_at': quiz_result.timestamp.strftime('%Y-%m-%d %H:%M:%S UTC'),
-                        'insights': json.loads(quiz_result.insights) if quiz_result.insights else [],
-                        'tips': json.loads(quiz_result.tips) if quiz_result.tips else []
-                    }
+                    results = quiz_result.to_dict()
             if not results:
-                # Fallback to latest result by session_id
-                quiz_result = QuizResult.query.filter_by(session_id=session['sid']).order_by(QuizResult.timestamp.desc()).first()
+                # Fallback to latest result by user_id or session_id
+                quiz_result = QuizResult.query.filter_by(**filter_kwargs).order_by(QuizResult.created_at.desc()).first()
                 if quiz_result:
-                    results = {
-                        'first_name': quiz_result.first_name,
-                        'personality': quiz_result.personality,
-                        'score': quiz_result.score,
-                        'badges': json.loads(quiz_result.badges) if quiz_result.badges else [],
-                        'created_at': quiz_result.timestamp.strftime('%Y-%m-%d %H:%M:%S UTC'),
-                        'insights': json.loads(quiz_result.insights) if quiz_result.insights else [],
-                        'tips': json.loads(quiz_result.tips) if quiz_result.tips else []
-                    }
+                    results = quiz_result.to_dict()
+            # Fallback to email if authenticated and no results found
+            if not results and current_user.is_authenticated and current_user.email:
+                quiz_result = QuizResult.query.filter_by(email=current_user.email).order_by(QuizResult.created_at.desc()).first()
+                if quiz_result:
+                    results = quiz_result.to_dict()
         
         if not results:
             logger.warning(f"No quiz results found for session {session['sid']}", extra={'session_id': session['sid']})
