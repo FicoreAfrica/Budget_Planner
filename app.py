@@ -4,6 +4,7 @@ import sys
 from flask import Flask, jsonify, render_template, request, session, redirect, url_for, flash, send_from_directory, has_request_context, g, current_app, make_response
 from flask_session import Session
 from flask_wtf.csrf import CSRFProtect, CSRFError
+from flask_sqlalchemy import SQLAlchemy
 from translations import trans
 from blueprints.financial_health import financial_health_bp
 from blueprints.budget import budget_bp
@@ -12,12 +13,14 @@ from blueprints.bill import bill_bp
 from blueprints.net_worth import net_worth_bp
 from blueprints.emergency_fund import emergency_fund_bp
 from blueprints.learning_hub import learning_hub_bp
-from json_store import JsonStorage
 from scheduler_setup import init_scheduler
 from jinja2 import environment
 import json
 import uuid
 from datetime import datetime, timedelta
+
+# Initialize SQLAlchemy
+db = SQLAlchemy()
 
 # Constants
 SAMPLE_COURSES = [
@@ -114,67 +117,112 @@ def setup_session(app):
     app.config['SESSION_USE_SIGNER'] = True
     logger.info(f"Session configured: type={app.config['SESSION_TYPE']}, dir={session_dir}, lifetime={app.config['PERMANENT_SESSION_LIFETIME']}")
 
-def init_storage_managers(app):
-    storage_managers = {}
-    for name, path, init_func in [
-        ('financial_health', '/tmp/data/financial_health.json' if os.environ.get('RENDER') else 'data/financial_health.json', lambda app: JsonStorage(path, logger_instance=app.logger)),
-        ('user_progress', '/tmp/data/user_progress.json' if os.environ.get('RENDER') else 'data/user_progress.json', lambda app: JsonStorage(path, logger_instance=app.logger)),
-        ('net_worth', '/tmp/data/networth.json' if os.environ.get('RENDER') else 'data/networth.json', lambda app: JsonStorage(path, logger_instance=app.logger)),
-        ('emergency_fund', '/tmp/data/emergency_fund.json' if os.environ.get('RENDER') else 'data/emergency_fund.json', lambda app: JsonStorage(path, logger_instance=app.logger)),
-        ('courses', '/tmp/data/courses.json' if os.environ.get('RENDER') else 'data/courses.json', lambda app: JsonStorage(path, logger_instance=app.logger)),
-        ('budget', None, lambda app: JsonStorage('/tmp/data/budget.json' if os.environ.get('RENDER') else 'data/budget.json', logger_instance=app.logger)),
-        ('bills', None, lambda app: JsonStorage('/tmp/data/bills.json' if os.environ.get('RENDER') else 'data/bills.json', logger_instance=app.logger)),
-        ('quiz', None, lambda app: JsonStorage('/tmp/data/quiz.json' if os.environ.get('RENDER') else 'data/quiz.json', logger_instance=app.logger)),
-    ]:
-        try:
-            with app.app_context():
-                logger.info(f"Initializing {name} storage")
-                storage_managers[name] = init_func(app)
-        except Exception as e:
-            logger.error(f"Failed to initialize {name} storage: {str(e)}", exc_info=True)
-            raise RuntimeError(f"Cannot initialize {name} storage: {str(e)}")
-    app.config['STORAGE_MANAGERS'] = storage_managers
-    logger.info(f"STORAGE_MANAGERS initialized with keys: {list(storage_managers.keys())}")
+# Define SQLAlchemy Models
+class Course(db.Model):
+    __tablename__ = 'courses'
+    id = db.Column(db.String(50), primary_key=True)
+    title_key = db.Column(db.String(100), nullable=False)
+    title_en = db.Column(db.String(100), nullable=False)
+    title_ha = db.Column(db.String(100), nullable=False)
+    description_en = db.Column(db.Text, nullable=False)
+    description_ha = db.Column(db.Text, nullable=False)
+    is_premium = db.Column(db.Boolean, default=False, nullable=False)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'title_key': self.title_key,
+            'title_en': self.title_en,
+            'title_ha': self.title_ha,
+            'description_en': self.description_en,
+            'description_ha': self.description_ha,
+            'is_premium': self.is_premium
+        }
+
+class FinancialHealth(db.Model):
+    __tablename__ = 'financial_health'
+    id = db.Column(db.String(36), primary_key=True)
+    session_id = db.Column(db.String(36), nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    score = db.Column(db.Float, nullable=True)
+
+class Budget(db.Model):
+    __tablename__ = 'budget'
+    id = db.Column(db.String(36), primary_key=True)
+    session_id = db.Column(db.String(36), nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    surplus_deficit = db.Column(db.Float, nullable=True)
+
+class Bill(db.Model):
+    __tablename__ = 'bills'
+    id = db.Column(db.String(36), primary_key=True)
+    session_id = db.Column(db.String(36), nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    amount = db.Column(db.Float, nullable=True)
+    description = db.Column(db.String(255), nullable=True)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'session_id': self.session_id,
+            'timestamp': self.timestamp.isoformat() + "Z",
+            'amount': self.amount,
+            'description': self.description
+        }
+
+class NetWorth(db.Model):
+    __tablename__ = 'net_worth'
+    id = db.Column(db.String(36), primary_key=True)
+    session_id = db.Column(db.String(36), nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    net_worth = db.Column(db.Float, nullable=True)
+
+class EmergencyFund(db.Model):
+    __tablename__ = 'emergency_fund'
+    id = db.Column(db.String(36), primary_key=True)
+    session_id = db.Column(db.String(36), nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    savings_gap = db.Column(db.Float, nullable=True)
+
+class LearningProgress(db.Model):
+    __tablename__ = 'learning_progress'
+    id = db.Column(db.Integer, primary_key=True)
+    session_id = db.Column(db.String(36), nullable=False)
+    course_id = db.Column(db.String(50), nullable=False)
+    lessons_completed = db.Column(db.Text, default='[]', nullable=False)  # JSON string
+    quiz_scores = db.Column(db.Text, default='{}', nullable=False)      # JSON string
+    current_lesson = db.Column(db.String(50), nullable=True)
+
+    __table_args__ = (db.UniqueConstraint('session_id', 'course_id', name='uix_session_course'),)
+
+    def to_dict(self):
+        return {
+            'lessons_completed': json.loads(self.lessons_completed),
+            'quiz_scores': json.loads(self.quiz_scores),
+            'current_lesson': self.current_lesson
+        }
+
+class QuizResult(db.Model):
+    __tablename__ = 'quiz_results'
+    id = db.Column(db.String(36), primary_key=True)
+    session_id = db.Column(db.String(36), nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    first_name = db.Column(db.String(50), nullable=True)
+    personality = db.Column(db.String(50), nullable=True)
+    score = db.Column(db.Integer, nullable=True)
+    badges = db.Column(db.Text, nullable=True)  # JSON string
+    insights = db.Column(db.Text, nullable=True)  # JSON string
+    tips = db.Column(db.Text, nullable=True)  # JSON string
 
 def initialize_courses_data(app):
     with app.app_context():
-        try:
-            courses_storage = app.config['STORAGE_MANAGERS']['courses']
-            courses = courses_storage.read_all()
-            if not courses:
-                logger.info("Courses storage is empty. Initializing with default courses.")
-                courses_storage.write([{
-                    'id': str(uuid.uuid4()),
-                    'session_id': 'initial-load',
-                    'timestamp': datetime.utcnow().isoformat() + "Z",
-                    'data': course
-                } for course in SAMPLE_COURSES])
-                courses = courses_storage.read_all()
-            converted_courses = []
-            for course in courses:
-                if isinstance(course, dict) and 'data' in course and isinstance(course['data'], dict):
-                    converted_courses.append(course)
-                elif isinstance(course, dict) and 'id' in course and 'title_key' in course:
-                    converted_courses.append({
-                        'id': str(uuid.uuid4()),
-                        'session_id': 'converted',
-                        'timestamp': datetime.utcnow().isoformat() + "Z",
-                        'data': course
-                    })
-                else:
-                    logger.warning(f"Skipping invalid course: {course}")
-            if converted_courses != courses:
-                courses_storage.write(converted_courses)
-                logger.info("Converted and rewrote courses to expected format")
-            app.config['COURSES'] = converted_courses
-        except Exception as e:
-            logger.error(f"Error initializing courses: {str(e)}", exc_info=True)
-            app.config['COURSES'] = [{
-                'id': str(uuid.uuid4()),
-                'session_id': 'fallback',
-                'timestamp': datetime.utcnow().isoformat() + "Z",
-                'data': course
-            } for course in SAMPLE_COURSES]
+        if Course.query.count() == 0:
+            for course in SAMPLE_COURSES:
+                db_course = Course(**course)
+                db.session.add(db_course)
+            db.session.commit()
+            logger.info("Initialized courses in database")
+        app.config['COURSES'] = [course.to_dict() for course in Course.query.all()]
 
 def create_app():
     app = Flask(__name__)
@@ -190,6 +238,15 @@ def create_app():
     Session(app)
     CSRFProtect(app)
 
+    # Configure SQLite database
+    if os.environ.get('RENDER'):
+        db_path = '/app/data/ficore.db'
+    else:
+        db_path = os.path.join(app.instance_path, 'ficore.db')
+    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    db.init_app(app)
+
     def format_currency(value):
         try:
             return "₦{:,.2f}".format(float(value))
@@ -198,13 +255,9 @@ def create_app():
     app.jinja_env.filters['format_currency'] = format_currency
 
     with app.app_context():
-        logger.info("Starting storage initialization")
-        init_storage_managers(app)
-        logger.info("Starting scheduler initialization")
-        init_scheduler(app)
-        logger.info("Starting data initialization")
+        db.create_all()
         initialize_courses_data(app)
-        logger.info("Completed data initialization")
+        logger.info("Database tables created and courses initialized")
 
     app.register_blueprint(financial_health_bp)
     app.register_blueprint(budget_bp)
@@ -276,34 +329,17 @@ def create_app():
         lang = session.get('lang', 'en')
         logger.info("Serving index page")
         try:
-            courses = current_app.config['COURSES'] or [{
-                'id': str(uuid.uuid4()),
-                'session_id': 'fallback',
-                'timestamp': datetime.utcnow().isoformat() + "Z",
-                'data': course
-            } for course in SAMPLE_COURSES]
+            courses = current_app.config['COURSES'] or SAMPLE_COURSES
             logger.info(f"Retrieved {len(courses)} courses")
-            title_key_map = {c['id']: c['title_key'] for c in SAMPLE_COURSES}
-            processed_courses = []
-            for course in courses:
-                if isinstance(course, dict) and 'data' in course and isinstance(course['data'], dict):
-                    course_data = course['data']
-                    processed_courses.append({
-                        **course_data,
-                        'title_key': title_key_map.get(course_data['id'], f"learning_hub_course_{course_data['id']}_title")
-                    })
-                else:
-                    logger.warning(f"Invalid course format in index: {course}")
-                    processed_courses.append(course)
-            courses = processed_courses
+            processed_courses = courses  # Already in dict format from to_dict()
         except Exception as e:
             logger.error(f"Error retrieving courses: {str(e)}", exc_info=True)
-            courses = SAMPLE_COURSES
+            processed_courses = SAMPLE_COURSES
             flash(translate('learning_hub_error_message', default='An error occurred', lang=lang), 'danger')
         return render_template(
             'index.html',
             t=translate,
-            courses=courses,
+            courses=processed_courses,
             lang=lang,
             sample_courses=SAMPLE_COURSES
         )
@@ -344,32 +380,36 @@ def create_app():
         lang = session.get('lang', 'en')
         logger.info("Serving general dashboard")
         data = {}
-        expected_keys = {
-            'score': None,
-            'surplus_deficit': None,
-            'personality': None,
-            'bills': [],
-            'net_worth': None,
-            'savings_gap': None
-        }
         try:
-            for tool, storage in current_app.config['STORAGE_MANAGERS'].items():
-                try:
-                    records = storage.read_all()
-                    session_records = [r['data'] for r in records if r.get('data', {}).get('session_id') == session['sid']]
-                    if tool == 'courses':
-                        data[tool] = session_records
-                    else:
-                        data[tool] = expected_keys.copy()
-                        if session_records:
-                            latest_record = session_records[-1]
-                            data[tool].update({k: latest_record.get(k, v) for k, v in expected_keys.items()})
-                    logger.info(f"Retrieved {len(session_records)} records for {tool}")
-                except Exception as e:
-                    logger.error(f"Error fetching data for {tool}: {str(e)}", exc_info=True)
-                    data[tool] = [] if tool == 'courses' else expected_keys.copy()
-            learning_progress = session.get('learning_progress', {})
-            data['learning_progress'] = learning_progress if isinstance(learning_progress, dict) else {}
+            # Financial Health
+            fh_records = FinancialHealth.query.filter_by(session_id=session['sid']).order_by(FinancialHealth.timestamp.desc()).all()
+            data['financial_health'] = {'score': fh_records[0].score} if fh_records else {'score': None}
+
+            # Budget
+            budget_records = Budget.query.filter_by(session_id=session['sid']).order_by(Budget.timestamp.desc()).all()
+            data['budget'] = {'surplus_deficit': budget_records[0].surplus_deficit} if budget_records else {'surplus_deficit': None}
+
+            # Bills
+            bills = Bill.query.filter_by(session_id=session['sid']).all()
+            data['bills'] = [bill.to_dict() for bill in bills]
+
+            # Net Worth
+            nw_records = NetWorth.query.filter_by(session_id=session['sid']).order_by(NetWorth.timestamp.desc()).all()
+            data['net_worth'] = {'net_worth': nw_records[0].net_worth} if nw_records else {'net_worth': None}
+
+            # Emergency Fund
+            ef_records = EmergencyFund.query.filter_by(session_id=session['sid']).order_by(EmergencyFund.timestamp.desc()).all()
+            data['emergency_fund'] = {'savings_gap': ef_records[0].savings_gap} if ef_records else {'savings_gap': None}
+
+            # Learning Progress
+            lp_records = LearningProgress.query.filter_by(session_id=session['sid']).all()
+            data['learning_progress'] = {lp.course_id: lp.to_dict() for lp in lp_records}
+
+            # Quiz Results
+            quiz_records = QuizResult.query.filter_by(session_id=session['sid']).order_by(QuizResult.timestamp.desc()).all()
+            data['quiz'] = {'personality': quiz_records[0].personality} if quiz_records else {'personality': None}
+
+            logger.info(f"Retrieved data for session {session['sid']}")
             return render_template('general_dashboard.html', data=data, t=translate, lang=lang)
         except Exception as e:
             logger.error(f"Error in general_dashboard: {str(e)}", exc_info=True)
@@ -402,11 +442,8 @@ def create_app():
         logger.info("Health check requested")
         status = {"status": "healthy"}
         try:
-            for tool, storage in current_app.config['STORAGE_MANAGERS'].items():
-                if not isinstance(storage, JsonStorage):
-                    status["status"] = "unhealthy"
-                    status["details"] = f"Storage for {tool} is not initialized correctly"
-                    return jsonify(status), 500
+            with app.app_context():
+                db.session.execute(db.text("SELECT 1"))  # Test database connection
             if not os.path.exists('data/storage.log'):
                 status["status"] = "warning"
                 status["details"] = "Log file data/storage.log not found"
