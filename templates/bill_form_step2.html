@@ -25,11 +25,11 @@
                 {{ form.csrf_token }}
                 <div class="mb-3">
                     <label for="frequency" class="form-label">{{ trans('bill_frequency', lang=lang) | default('Frequency') }}</label>
-                    {{ form.frequency(class="form-control", **{'data-bs-toggle': 'tooltip', 'title': trans('bill_frequency_tooltip', lang=lang) | default('Select how often this bill or expense occurs'), 'aria-describedby': 'frequencyTooltip'}) }}
+                    {{ form.frequency(class="form-control", **{'data-bs-toggle': 'tooltip', 'title': trans('bill_frequency_tooltip', lang=lang) | default('Select how often this bill or expense occurs'), 'aria-describedby': 'frequencyTooltip', 'required': 'required'}) }}
                     {% if form.frequency.errors %}
                         <div class="invalid-feedback d-block">
                             {% for error in form.frequency.errors %}
-                                {{ error }}<br>
+                                {{ trans(error, lang=lang) | default(error) }}<br>
                             {% endfor %}
                         </div>
                     {% else %}
@@ -38,11 +38,11 @@
                 </div>
                 <div class="mb-3">
                     <label for="category" class="form-label">{{ trans('bill_category', lang=lang) | default('Category') }}</label>
-                    {{ form.category(class="form-control", **{'data-bs-toggle': 'tooltip', 'title': trans('bill_category_tooltip', lang=lang) | default('Select a category, e.g., Data/Internet, Ajo/Esusu/Adashe'), 'aria-describedby': 'categoryTooltip'}) }}
+                    {{ form.category(class="form-control", **{'data-bs-toggle': 'tooltip', 'title': trans('bill_category_tooltip', lang=lang) | default('Select a category, e.g., Data/Internet, Ajo/Esusu/Adashe'), 'aria-describedby': 'categoryTooltip', 'required': 'required'}) }}
                     {% if form.category.errors %}
                         <div class="invalid-feedback d-block">
                             {% for error in form.category.errors %}
-                                {{ error }}<br>
+                                {{ trans(error, lang=lang) | default(error) }}<br>
                             {% endfor %}
                         </div>
                     {% else %}
@@ -51,11 +51,11 @@
                 </div>
                 <div class="mb-3">
                     <label for="status" class="form-label">{{ trans('bill_status', lang=lang) | default('Status') }}</label>
-                    {{ form.status(class="form-control", value="unpaid", **{'data-bs-toggle': 'tooltip', 'title': trans('bill_status_tooltip', lang=lang) | default('Select the current status of the bill'), 'aria-describedby': 'statusTooltip'}) }}
+                    {{ form.status(class="form-control", **{'data-bs-toggle': 'tooltip', 'title': trans('bill_status_tooltip', lang=lang) | default('Select the current status of the bill'), 'aria-describedby': 'statusTooltip', 'required': 'required'}) }}
                     {% if form.status.errors %}
                         <div class="invalid-feedback d-block">
                             {% for error in form.status.errors %}
-                                {{ error }}<br>
+                                {{ trans(error, lang=lang) | default(error) }}<br>
                             {% endfor %}
                         </div>
                     {% else %}
@@ -74,7 +74,7 @@
                         {% if form.reminder_days.errors %}
                             <div class="invalid-feedback d-block">
                                 {% for error in form.reminder_days.errors %}
-                                    {{ error }}<br>
+                                    {{ trans(error, lang=lang) | default(error) }}<br>
                                 {% endfor %}
                             </div>
                         {% else %}
@@ -93,34 +93,82 @@
 {% endblock %}
 {% block extra_scripts %}
 <script>
-    document.getElementById('send_email').addEventListener('change', function() {
-        document.getElementById('reminder_days_container').style.display = this.checked ? 'block' : 'none';
-        if (!this.checked) {
-            document.getElementById('reminder_days').value = ''; // Clear reminder_days when unchecked
-        }
-    });
-    document.getElementById('billFormStep2').addEventListener('submit', function(e) {
-        const saveButton = document.getElementById('saveButton');
-        const saveAndContinueButton = document.getElementById('saveAndContinueButton');
+    document.addEventListener('DOMContentLoaded', function() {
         const sendEmail = document.getElementById('send_email');
+        const reminderDaysContainer = document.getElementById('reminder_days_container');
         const reminderDays = document.getElementById('reminder_days');
-        
-        // Client-side validation for reminder_days
-        if (sendEmail.checked && (!reminderDays.value || reminderDays.value < 1 || reminderDays.value > 30)) {
-            e.preventDefault();
-            reminderDays.classList.add('is-invalid');
-            return;
-        }
+        const category = document.getElementById('category');
+        const frequency = document.getElementById('frequency');
+        const status = document.getElementById('status');
 
-        // Disable buttons to prevent double submission
-        if (saveButton) {
-            saveButton.disabled = true;
-            saveButton.textContent = '{{ trans('bill_saving', lang=lang) | default('Saving...') }}';
-        }
-        if (saveAndContinueButton) {
-            saveAndContinueButton.disabled = true;
-            saveAndContinueButton.textContent = '{{ trans('bill_saving', lang=lang) | default('Saving...') }}';
-        }
+        // Initialize reminder_days visibility
+        reminderDaysContainer.style.display = sendEmail.checked ? 'block' : 'none';
+
+        // Toggle reminder_days visibility
+        sendEmail.addEventListener('change', function() {
+            reminderDaysContainer.style.display = this.checked ? 'block' : 'none';
+            if (!this.checked) {
+                reminderDays.value = ''; // Clear reminder_days when unchecked
+            }
+        });
+
+        // Form submission validation
+        document.getElementById('billFormStep2').addEventListener('submit', function(e) {
+            const saveButton = document.getElementById('saveButton');
+            const saveAndContinueButton = document.getElementById('saveAndContinueButton');
+            let isValid = true;
+
+            // Validate frequency
+            if (!frequency.value) {
+                e.preventDefault();
+                frequency.classList.add('is-invalid');
+                isValid = false;
+            }
+
+            // Validate category
+            if (!category.value) {
+                e.preventDefault();
+                category.classList.add('is-invalid');
+                isValid = false;
+            }
+
+            // Validate status
+            if (!status.value) {
+                e.preventDefault();
+                status.classList.add('is-invalid');
+                isValid = false;
+            }
+
+            // Validate reminder_days
+            if (sendEmail.checked && (!reminderDays.value || reminderDays.value < 1 || reminderDays.value > 30)) {
+                e.preventDefault();
+                reminderDays.classList.add('is-invalid');
+                isValid = false;
+            }
+
+            if (!isValid) {
+                return;
+            }
+
+            // Disable buttons to prevent double submission
+            if (saveButton) {
+                saveButton.disabled = true;
+                saveButton.textContent = '{{ trans('bill_saving', lang=lang) | default('Saving...') }}';
+            }
+            if (saveAndContinueButton) {
+                saveAndContinueButton.disabled = true;
+                saveAndContinueButton.textContent = '{{ trans('bill_saving', lang=lang) | default('Saving...') }}';
+            }
+        });
+
+        // Remove is-invalid class on input change
+        [frequency, category, status, reminderDays].forEach(field => {
+            field.addEventListener('change', function() {
+                if (this.value) {
+                    this.classList.remove('is-invalid');
+                }
+            });
+        });
     });
 </script>
 {% endblock %}
