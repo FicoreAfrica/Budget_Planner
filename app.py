@@ -3,7 +3,7 @@ import os
 import sys
 from flask import Flask, jsonify, render_template, request, session, redirect, url_for, flash, send_from_directory, has_request_context, g, current_app, make_response
 from flask_session import Session
-from flask_wtf.csrf import CSRFProtect, CSRFError
+from flask_wtf.csrf import CSRFProtect, CSRFError, generate_csrf
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, current_user
 from translations import trans
@@ -20,6 +20,8 @@ import json
 import uuid
 from datetime import datetime, timedelta
 from models import Course, FinancialHealth, Budget, Bill, NetWorth, EmergencyFund, LearningProgress, QuizResult
+from dotenv import load_dotenv
+load_dotenv()
 
 # Initialize SQLAlchemy
 db = SQLAlchemy()
@@ -122,7 +124,7 @@ def initialize_courses_data(app):
         app.config['COURSES'] = [course.to_dict() for course in Course.query.all()]
 
 def create_app():
-    app = Flask(__name__)
+    app = Flask(__name__, template_folder='templates')
     app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key-please-change-me')
     if not os.environ.get('FLASK_SECRET_KEY'):
         logger.warning("FLASK_SECRET_KEY not set. Using fallback for development. Set it in production.")
@@ -174,14 +176,14 @@ def create_app():
         initialize_courses_data(app)
         logger.info("Database tables created and courses initialized")
 
-    app.register_blueprint(financial_health_bp)
-    app.register_blueprint(budget_bp)
-    app.register_blueprint(quiz_bp)
-    app.register_blueprint(bill_bp)
-    app.register_blueprint(net_worth_bp)
-    app.register_blueprint(emergency_fund_bp)
-    app.register_blueprint(learning_hub_bp)
-    app.register_blueprint(auth_bp)
+    app.register_blueprint(financial_health_bp, template_folder='templates/financial_health')
+    app.register_blueprint(budget_bp, template_folder='templates/budget')
+    app.register_blueprint(quiz_bp, template_folder='templates/quiz')
+    app.register_blueprint(bill_bp, template_folder='templates/bill')
+    app.register_blueprint(net_worth_bp, template_folder='templates/net_worth')
+    app.register_blueprint(emergency_fund_bp, template_folder='templates/emergency_fund')
+    app.register_blueprint(learning_hub_bp, template_folder='templates/learning_hub')
+    app.register_blueprint(auth_bp, template_folder='templates/auth')
 
     def translate(key, lang='en', logger=logger, **kwargs):
         translation = trans(key, lang=lang, **kwargs)
@@ -238,7 +240,8 @@ def create_app():
             'WAITLIST_FORM_URL': os.environ.get('WAITLIST_FORM_URL', '#'),
             'CONSULTANCY_FORM_URL': os.environ.get('CONSULTANCY_FORM_URL', '#'),
             'current_lang': lang,
-            'current_user': current_user
+            'current_user': current_user,
+            'csrf_token': generate_csrf
         }
 
     @app.route('/')
