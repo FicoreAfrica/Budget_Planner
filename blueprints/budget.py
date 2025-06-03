@@ -2,12 +2,13 @@ from flask import Blueprint, request, session, redirect, url_for, render_templat
 from flask_wtf import FlaskForm
 from wtforms import StringField, FloatField, BooleanField, SubmitField
 from wtforms.validators import DataRequired, NumberRange, Optional, Email, ValidationError
+from flask_login import current_user
 from mailersend_email import send_email, EMAIL_CONFIG
 from datetime import datetime
 import uuid
 import re
-from app import db, trans  # Assuming db is the Flask-SQLAlchemy instance from app.py
-from models import Budget  # Assuming Budget model is defined in models.py
+from app import db, trans
+from models import Budget
 
 budget_bp = Blueprint('budget', __name__, url_prefix='/budget')
 
@@ -138,14 +139,17 @@ def step1():
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
         current_app.logger.info(f"New session ID generated: {session['sid']}")
-        # Clear any stale budget data to start fresh
         session.pop('budget_step1', None)
         session.pop('budget_step2', None)
         session.pop('budget_step3', None)
         session.pop('budget_step4', None)
     session.permanent = True
     lang = session.get('lang', 'en')
-    form = Step1Form()
+    form_data = session.get('budget_step1', {})
+    if current_user.is_authenticated:
+        form_data['email'] = form_data.get('email', current_user.email)
+        form_data['first_name'] = form_data.get('first_name', current_user.username)
+    form = Step1Form(data=form_data)
     try:
         if request.method == 'POST':
             current_app.logger.info(f"POST request received for step1, session {session['sid']}: Raw form data: {dict(request.form)}")
@@ -263,9 +267,9 @@ def step4():
                 savings_goal = step4_data.get('savings_goal', 0)
                 surplus_deficit = income - expenses
 
-                # Save to SQLite database using Flask-SQLAlchemy
                 budget = Budget(
                     id=str(uuid.uuid4()),
+                    user_id=current_user.id if current_user.is_authenticated else None,
                     session_id=session['sid'],
                     user_email=step1_data.get('email'),
                     income=income,
@@ -278,8 +282,7 @@ def step4():
                     transport=step3_data.get('transport', 0),
                     dependents=step3_data.get('dependents', 0),
                     miscellaneous=step3_data.get('miscellaneous', 0),
-                    others=step3_data.get('others', 0),
-                    created_at=datetime.now()
+                    others=step3_data.get('others', 0)
                 )
                 try:
                     db.session.add(budget)
@@ -294,7 +297,7 @@ def step4():
                 email = step1_data.get('email')
                 send_email_flag = step1_data.get('send_email', False)
                 if send_email_flag and email:
-                    tryвих
+                    try:
                         config = EMAIL_CONFIG["budget"]
                         subject = trans(config["subject_key"], lang=lang)
                         template = config["template"]
@@ -325,7 +328,6 @@ def step4():
                         current_app.logger.error(f"Failed to send email: {str(e)}")
                         flash(trans("email_send_failed", lang=lang), "warning")
 
-                # Clear session data after saving to database
                 session.pop('budget_step1', None)
                 session.pop('budget_step2', None)
                 session.pop('budget_step3', None)
@@ -359,32 +361,18 @@ def dashboard():
     try:
         current_app.logger.info(f"Request started for path: /budget/dashboard [session: {session['sid']}]")
 
-        # Query budgets from SQLite database
-        budgets = Budget.query.filter_by(session_id=session['sid']).order_by(Budget.created_at.desc()).all()
+        filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
+        budgets = Budget.query.filter_by(**filter_kwargs).order_by(Budget.created_at.desc()).all()
         current_app.logger.info(f"Read {len(budgets)} records from budget storage [session: {session['sid']}]")
 
         budgets_dict = {}
         latest_budget = None
         for budget in budgets:
-            budget_data = {
-                'income': budget.income,
-                'fixed_expenses': budget.fixed_expenses,
-                'variable_expenses': budget.variable_expenses,
-                'savings_goal': budget.savings_goal,
-                'surplus_deficit': budget.surplus_deficit,
-                'housing': budget.housing,
-                'food': budget.food,
-                'transport': budget.transport,
-                'dependents': budget.dependents,
-                'miscellaneous': budget.miscellaneous,
-                'others': budget.others,
-                'created_at': budget.created_at.strftime('%Y-%m-%d %H:%M:%S')
-            }
+            budget_data = budget.to_dict()
             budgets_dict[budget.id] = budget_data
-            if not latest_budget or budget.created_at > datetime.strptime(latest_budget['created_at'], '%Y-%m-%d %H:%M:%S'):
+            if not latest_budget or budget.created_at > datetime.strptime(latest_budget['created_at'], '%Y-%m-%dT%H:%M:%S.%fZ'):
                 latest_budget = budget_data
 
-        # Default values if no budgets exist
         if not latest_budget:
             latest_budget = {
                 'income': 0.0,
@@ -405,8 +393,8 @@ def dashboard():
             budget_id = request.form.get('budget_id')
             if action == 'delete':
                 try:
-                    budget = Budget.query.get(budget_id)
-                    if budget and budget.session_id == session['sid']:
+                    budget = Budget.query.filter_by(id=budget_id, **filter_kwargs).first()
+                    if budget:
                         db.session.delete(budget)
                         db.session.commit()
                         flash(trans("budget_budget_deleted_success") or "Budget deleted successfully", "success")
@@ -435,7 +423,7 @@ def dashboard():
             trans("budget_tip_plan_dependents") or "Plan for dependents' expenses."
         ]
         insights = []
-        if latest_budget.get('income', 0) > 0:  # Only generate insights if there is valid budget data
+        if latest_budget.get('income', 0) > 0:
             if latest_budget.get('surplus_deficit', 0) < 0:
                 insights.append(trans("budget_insight_budget_deficit") or "Your budget shows a deficit.")
             elif latest_budget.get('surplus_deficit', 0) > 0:
