@@ -289,13 +289,13 @@ def step3():
             current_app.logger.debug(f"Calculated score: {score}")
 
             if score >= 80:
-                status_key = "financial_health_status_excellent"
+                status_key = "excellent"
                 status = trans(status_key, lang=lang)
             elif score >= 60:
-                status_key = "financial_health_status_good"
+                status_key = "good"
                 status = trans(status_key, lang=lang)
             else:
-                status_key = "financial_health_status_needs_improvement"
+                status_key = "needs_improvement"
                 status = trans(status_key, lang=lang)
 
             badges = []
