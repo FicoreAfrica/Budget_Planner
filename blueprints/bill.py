@@ -146,7 +146,7 @@ def form_step2():
     form = BillFormStep2()
     try:
         if request.method == 'POST':
-            current_app.logger.info(f"Form data received: {request.form}")
+            current_app.logger.info(f"Form data received: {request.form.to_dict()}")
             if form.validate_on_submit():
                 if form.send_email.data and not form.reminder_days.data:
                     form.reminder_days.errors.append(trans('bill_reminder_days_required', lang))
@@ -224,6 +224,7 @@ def form_step2():
                 return redirect(url_for('bill.dashboard'))
             else:
                 current_app.logger.error(f"Form validation failed: {form.errors}")
+                current_app.logger.info(f"Submitted form values - frequency: {form.frequency.data}, category: {form.category.data}, status: {form.status.data}, send_email: {form.send_email.data}, reminder_days: {form.reminder_days.data}")
                 for field, errors in form.errors.items():
                     for error in errors:
                         flash(f"{trans(f'bill_{field}', lang=lang)}: {trans(error, lang=lang) or error}", 'danger')
