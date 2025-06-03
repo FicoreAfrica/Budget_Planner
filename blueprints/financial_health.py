@@ -7,7 +7,8 @@ from datetime import datetime
 import uuid
 import json
 from extensions import db
-from mailersend_email import trans, send_email, EMAIL_CONFIG
+from mailersend_email import send_email, EMAIL_CONFIG
+from translations import trans
 from models import FinancialHealth
 
 financial_health_bp = Blueprint('financial_health', __name__, url_prefix='/financial_health')
