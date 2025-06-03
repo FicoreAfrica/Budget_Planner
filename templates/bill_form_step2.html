@@ -26,17 +26,41 @@
                 <div class="mb-3">
                     <label for="frequency" class="form-label">{{ trans('bill_frequency', lang=lang) | default('Frequency') }}</label>
                     {{ form.frequency(class="form-control", **{'data-bs-toggle': 'tooltip', 'title': trans('bill_frequency_tooltip', lang=lang) | default('Select how often this bill or expense occurs'), 'aria-describedby': 'frequencyTooltip'}) }}
-                    <div class="invalid-feedback">{{ trans('bill_frequency_required', lang=lang) | default('Frequency is required') }}</div>
+                    {% if form.frequency.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.frequency.errors %}
+                                {{ error }}<br>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="invalid-feedback">{{ trans('bill_frequency_required', lang=lang) | default('Frequency is required') }}</div>
+                    {% endif %}
                 </div>
                 <div class="mb-3">
                     <label for="category" class="form-label">{{ trans('bill_category', lang=lang) | default('Category') }}</label>
                     {{ form.category(class="form-control", **{'data-bs-toggle': 'tooltip', 'title': trans('bill_category_tooltip', lang=lang) | default('Select a category, e.g., Data/Internet, Ajo/Esusu/Adashe'), 'aria-describedby': 'categoryTooltip'}) }}
-                    <div class="invalid-feedback">{{ trans('bill_category_required', lang=lang) | default('Category is required') }}</div>
+                    {% if form.category.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.category.errors %}
+                                {{ error }}<br>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="invalid-feedback">{{ trans('bill_category_required', lang=lang) | default('Category is required') }}</div>
+                    {% endif %}
                 </div>
                 <div class="mb-3">
                     <label for="status" class="form-label">{{ trans('bill_status', lang=lang) | default('Status') }}</label>
                     {{ form.status(class="form-control", value="unpaid", **{'data-bs-toggle': 'tooltip', 'title': trans('bill_status_tooltip', lang=lang) | default('Select the current status of the bill'), 'aria-describedby': 'statusTooltip'}) }}
-                    <div class="invalid-feedback">{{ trans('bill_status_required', lang=lang) | default('Status is required') }}</div>
+                    {% if form.status.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.status.errors %}
+                                {{ error }}<br>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="invalid-feedback">{{ trans('bill_status_required', lang=lang) | default('Status is required') }}</div>
+                    {% endif %}
                 </div>
                 <fieldset class="mb-3">
                     <legend>{{ trans('bill_reminder_settings', lang=lang) | default('Reminder Settings') }}</legend>
@@ -47,7 +71,15 @@
                     <div class="mb-3" id="reminder_days_container" style="display: none;">
                         <label for="reminder_days" class="form-label">{{ trans('bill_reminder_days', lang=lang) | default('Reminder Days') }}</label>
                         {{ form.reminder_days(class="form-control", placeholder=trans('bill_reminder_days_placeholder', lang=lang) | default('e.g., 7'), **{'data-bs-toggle': 'tooltip', 'title': trans('bill_reminder_days_tooltip', lang=lang) | default('Number of days before due date to receive reminders (1-30)'), 'aria-describedby': 'reminderDaysTooltip'}) }}
-                        <div class="invalid-feedback">{{ trans('bill_reminder_days_required', lang=lang) | default('Valid number of days (1-30) is required') }}</div>
+                        {% if form.reminder_days.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.reminder_days.errors %}
+                                    {{ error }}<br>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="invalid-feedback">{{ trans('bill_reminder_days_required', lang=lang) | default('Valid number of days (1-30) is required') }}</div>
+                        {% endif %}
                     </div>
                 </fieldset>
                 <button type="submit" name="action" value="save" class="btn btn-success" id="saveButton">{{ trans('bill_save_bill', lang=lang) | default('Save Bill') }}</button>
@@ -63,10 +95,24 @@
 <script>
     document.getElementById('send_email').addEventListener('change', function() {
         document.getElementById('reminder_days_container').style.display = this.checked ? 'block' : 'none';
+        if (!this.checked) {
+            document.getElementById('reminder_days').value = ''; // Clear reminder_days when unchecked
+        }
     });
     document.getElementById('billFormStep2').addEventListener('submit', function(e) {
         const saveButton = document.getElementById('saveButton');
         const saveAndContinueButton = document.getElementById('saveAndContinueButton');
+        const sendEmail = document.getElementById('send_email');
+        const reminderDays = document.getElementById('reminder_days');
+        
+        // Client-side validation for reminder_days
+        if (sendEmail.checked && (!reminderDays.value || reminderDays.value < 1 || reminderDays.value > 30)) {
+            e.preventDefault();
+            reminderDays.classList.add('is-invalid');
+            return;
+        }
+
+        // Disable buttons to prevent double submission
         if (saveButton) {
             saveButton.disabled = true;
             saveButton.textContent = '{{ trans('bill_saving', lang=lang) | default('Saving...') }}';
