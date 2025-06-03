@@ -7,7 +7,8 @@ from mailersend_email import send_email, EMAIL_CONFIG
 from datetime import datetime
 import uuid
 import json
-from app import db, trans
+from translations import trans
+from extensions import db
 from models import EmergencyFund, Budget
 
 emergency_fund_bp = Blueprint('emergency_fund', __name__, url_prefix='/emergency_fund')
