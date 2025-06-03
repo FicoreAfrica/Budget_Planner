@@ -16,6 +16,9 @@ LEARNING_HUB_TRANSLATIONS = {
         'learning_hub_quiz_completed': 'Quiz completed!',
         'learning_hub_success_language_updated':'Language chnaged successfully!',
         'learning_hub_set_profile': 'Set up your profile.',
+        'learning_hub_profile': 'Your Learning Profile',
+        'learning_hub_profile_subtitle': 'Manage your personal details and learning preferences.',
+        'learning_hub_profile_saved': 'Profile saved successfully!',
         
         # Modules and Lessons
         'learning_hub_module_income_title': 'Understanding Income',
@@ -196,6 +199,9 @@ LEARNING_HUB_TRANSLATIONS = {
         'learning_hub_no_course_progress': 'Ba a sami ci gaba a kan kwas ɗin ba tukuna.',
         'learning_hub_my_courses': 'Kwas ɗina',
         'learning_hub_progress': 'Ci gaban Kwas',
+        'learning_hub_profile': 'Bayanan Martabarki na Koyo',
+        'learning_hub_profile_subtitle': 'Sarrafa bayanan sirrinki da abubuwan da kike so na koyo.',
+        'learning_hub_profile_saved': 'An adana bayanan martaba cikin nasara!',
         'learning_hub_success_language_updated':'An Canza Yare Cikin Nasara!'       
     }
 }
