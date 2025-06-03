@@ -393,6 +393,22 @@ def dashboard():
             if not latest_budget or budget_data.get('created_at', '') > latest_budget.get('created_at', ''):
                 latest_budget = budget_data
 
+        # Ensure latest_budget is a dictionary with default values if None
+        if not latest_budget:
+            latest_budget = {
+                'income': 0.0,
+                'fixed_expenses': 0.0,
+                'surplus_deficit': 0.0,
+                'savings_goal': 0.0,
+                'housing': 0.0,
+                'food': 0.0,
+                'transport': 0.0,
+                'dependents': 0.0,
+                'miscellaneous': 0.0,
+                'others': 0.0,
+                'created_at': ''
+            }
+
         if request.method == 'POST':
             action = request.form.get('action')
             budget_id = request.form.get('budget_id')
@@ -406,16 +422,14 @@ def dashboard():
                     flash(trans("budget_budget_delete_failed") or "Failed to delete budget", "danger")
                 return redirect(url_for('budget.dashboard'))
 
-        categories = {}
-        if latest_budget:
-            categories = {
-                'Housing/Rent': latest_budget.get('housing', 0),
-                'Food': latest_budget.get('food', 0),
-                'Transport': latest_budget.get('transport', 0),
-                'Dependents': latest_budget.get('dependents', 0),
-                'Miscellaneous': latest_budget.get('miscellaneous', 0),
-                'Others': latest_budget.get('others', 0)
-            }
+        categories = {
+            'Housing/Rent': latest_budget.get('housing', 0),
+            'Food': latest_budget.get('food', 0),
+            'Transport': latest_budget.get('transport', 0),
+            'Dependents': latest_budget.get('dependents', 0),
+            'Miscellaneous': latest_budget.get('miscellaneous', 0),
+            'Others': latest_budget.get('others', 0)
+        }
 
         tips = [
             trans("budget_tip_track_expenses") or "Track your expenses regularly.",
@@ -424,7 +438,7 @@ def dashboard():
             trans("budget_tip_plan_dependents") or "Plan for dependents' expenses."
         ]
         insights = []
-        if latest_budget:
+        if latest_budget.get('income', 0) > 0:  # Only generate insights if there is valid budget data
             if latest_budget.get('surplus_deficit', 0) < 0:
                 insights.append(trans("budget_insight_budget_deficit") or "Your budget shows a deficit.")
             elif latest_budget.get('surplus_deficit', 0) > 0:
@@ -449,7 +463,19 @@ def dashboard():
         return render_template(
             'budget_dashboard.html',
             budgets={},
-            latest_budget={},
+            latest_budget={
+                'income': 0.0,
+                'fixed_expenses': 0.0,
+                'surplus_deficit': 0.0,
+                'savings_goal': 0.0,
+                'housing': 0.0,
+                'food': 0.0,
+                'transport': 0.0,
+                'dependents': 0.0,
+                'miscellaneous': 0.0,
+                'others': 0.0,
+                'created_at': ''
+            },
             categories={},
             tips=[
                 trans("budget_tip_track_expenses") or "Track your expenses regularly.",
