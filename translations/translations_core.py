@@ -5,6 +5,9 @@ CORE_TRANSLATIONS = {
         'auth_username_tooltip': 'Your unique username for logging in.',
         'auth_password_placeholder': 'Enter your password',
         'auth_password_tooltip': 'Your password for your account.',
+        'core_switch_to': 'Switch to',
+        'core_login': 'Login',
+        'core_signup': 'Sign Up',
         'auth_confirm_password_placeholder': 'Confirm your password',
         'auth_confirm_password_tooltip': 'Re-enter your password to confirm.',
         'First Name': 'First Name',
@@ -797,6 +800,9 @@ CORE_TRANSLATIONS = {
 
 
         'Select how often you monitor your spending.': 'Zaɓi sau nawa kuke lura da kuɗin da kuke kashewa.',
+        'core_switch_to': 'Canja zuwa',
+        'core_login': 'Shiga',
+        'core_signup': 'Yi Rajista',
         
         'Bill Planner': 'Takardun Biya',
         'auth_username_placeholder': 'Shigar da sunan mai amfani',
