@@ -2,6 +2,7 @@ import os
 import sys
 import logging
 import uuid
+from flask_wtf.csrf import CSRFError  # Added import for CSRFError
 from datetime import datetime, timedelta
 from flask import Flask, jsonify, render_template, request, session, redirect, url_for, flash, send_from_directory, has_request_context, g, current_app, make_response
 from dotenv import load_dotenv
