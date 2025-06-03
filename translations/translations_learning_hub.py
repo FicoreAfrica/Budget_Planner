@@ -20,6 +20,7 @@ LEARNING_HUB_TRANSLATIONS = {
         'learning_hub_profile': 'Your Learning Profile',
         'learning_hub_profile_subtitle': 'Manage your personal details and learning preferences.',
         'learning_hub_profile_saved': 'Profile saved successfully!',
+        'learning_hub_submit_quiz': 'Submit Quiz',
         
         # Modules and Lessons
         'learning_hub_module_income_title': 'Understanding Income',
@@ -200,6 +201,7 @@ LEARNING_HUB_TRANSLATIONS = {
         'learning_hub_continue_course': 'Ci gaba da kwas ɗin ka.',
         'learning_hub_no_course_progress': 'Ba a sami ci gaba a kan kwas ɗin ba tukuna.',
         'learning_hub_my_courses': 'Kwas ɗina',
+        'learning_hub_submit_quiz': 'Gabatar da Gwaji',
         'learning_hub_progress': 'Ci gaban Kwas',
         'learning_hub_profile': 'Bayanan Martabarki na Koyo',
         'learning_hub_profile_subtitle': 'Sarrafa bayanan sirrinki da abubuwan da kike so na koyo.',
