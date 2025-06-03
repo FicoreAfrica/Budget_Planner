@@ -14,7 +14,6 @@ from blueprints.net_worth import net_worth_bp
 from blueprints.emergency_fund import emergency_fund_bp
 from blueprints.learning_hub import learning_hub_bp
 from scheduler_setup import init_scheduler
-from jinja2 import environment
 import json
 import uuid
 from datetime import datetime, timedelta
@@ -175,7 +174,35 @@ class NetWorth(db.Model):
     id = db.Column(db.String(36), primary_key=True)
     session_id = db.Column(db.String(36), nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    net_worth = db.Column(db.Float, nullable=True)
+    first_name = db.Column(db.String(100))
+    email = db.Column(db.String(100))
+    send_email = db.Column(db.Boolean, default=False)
+    cash_savings = db.Column(db.Float)
+    investments = db.Column(db.Float)
+    property = db.Column(db.Float)
+    loans = db.Column(db.Float)
+    total_assets = db.Column(db.Float)
+    total_liabilities = db.Column(db.Float)
+    net_worth = db.Column(db.Float)
+    badges = db.Column(db.Text)  # Stores JSON string of badge list
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'session_id': self.session_id,
+            'timestamp': self.timestamp.isoformat() + "Z",
+            'first_name': self.first_name,
+            'email': self.email,
+            'send_email': self.send_email,
+            'cash_savings': self.cash_savings,
+            'investments': self.investments,
+            'property': self.property,
+            'loans': self.loans,
+            'total_assets': self.total_assets,
+            'total_liabilities': self.total_liabilities,
+            'net_worth': self.net_worth,
+            'badges': json.loads(self.badges) if self.badges else []
+        }
 
 class EmergencyFund(db.Model):
     __tablename__ = 'emergency_fund'
@@ -395,7 +422,7 @@ def create_app():
 
             # Net Worth
             nw_records = NetWorth.query.filter_by(session_id=session['sid']).order_by(NetWorth.timestamp.desc()).all()
-            data['net_worth'] = {'net_worth': nw_records[0].net_worth} if nw_records else {'net_worth': None}
+            data['net_worth'] = nw_records[0].to_dict() if nw_records else {'net_worth': None}
 
             # Emergency Fund
             ef_records = EmergencyFund.query.filter_by(session_id=session['sid']).order_by(EmergencyFund.timestamp.desc()).all()
