@@ -45,9 +45,9 @@ class BillFormStep1(FlaskForm):
         self.due_date.validators = [DataRequired(message=trans('bill_due_date_required', lang))]
 
 class BillFormStep2(FlaskForm):
-    frequency = SelectField('Frequency')
-    category = SelectField('Category')
-    status = SelectField('Status')
+    frequency = SelectField('Frequency', coerce=str)
+    category = SelectField('Category', coerce=str)
+    status = SelectField('Status', coerce=str)
     send_email = BooleanField('Send Email Reminders')
     reminder_days = IntegerField('Reminder Days', default=7)
     csrf_token = HiddenField()
@@ -61,14 +61,16 @@ class BillFormStep2(FlaskForm):
         self.reminder_days.validators = [Optional(), NumberRange(min=1, max=30, message=trans('bill_reminder_days_required', lang))]
 
         self.frequency.choices = [
+            ('', trans('bill_frequency_select', lang) or 'Select Frequency'),
             ('one-time', trans('bill_frequency_one_time', lang)),
             ('weekly', trans('bill_frequency_weekly', lang)),
             ('monthly', trans('bill_frequency_monthly', lang)),
             ('quarterly', trans('bill_frequency_quarterly', lang))
         ]
-        self.frequency.default = 'one-time'
+        self.frequency.default = ''
 
         self.category.choices = [
+            ('', trans('bill_category_select', lang) or 'Select Category'),
             ('utilities', trans('bill_category_utilities', lang)),
             ('rent', trans('bill_category_rent', lang)),
             ('data_internet', trans('bill_category_data_internet', lang)),
@@ -84,14 +86,16 @@ class BillFormStep2(FlaskForm):
             ('savings_investments', trans('bill_category_savings_investments', lang)),
             ('other', trans('bill_category_other', lang))
         ]
+        self.category.default = ''
 
         self.status.choices = [
+            ('', trans('bill_status_select', lang) or 'Select Status'),
             ('unpaid', trans('bill_status_unpaid', lang)),
             ('paid', trans('bill_status_paid', lang)),
             ('pending', trans('bill_status_pending', lang)),
             ('overdue', trans('bill_status_overdue', lang))
         ]
-        self.status.default = 'unpaid'
+        self.status.default = ''
 
         self.send_email.label.text = trans('bill_send_email', lang)
         self.reminder_days.label.text = trans('bill_reminder_days', lang)
@@ -222,7 +226,7 @@ def form_step2():
                 current_app.logger.error(f"Form validation failed: {form.errors}")
                 for field, errors in form.errors.items():
                     for error in errors:
-                        flash(f"{field}: {error}", 'danger')
+                        flash(f"{trans(f'bill_{field}', lang=lang)}: {trans(error, lang=lang) or error}", 'danger')
                 return render_template('bill_form_step2.html', form=form, trans=trans, lang=lang)
         return render_template('bill_form_step2.html', form=form, trans=trans, lang=lang)
     except Exception as e:
