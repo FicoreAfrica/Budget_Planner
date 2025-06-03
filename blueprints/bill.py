@@ -22,6 +22,7 @@ def init_bill_storage(app):
         return JsonStorage('data/bills.json', logger_instance=app.logger)
 
 def strip_commas(value):
+    """Remove commas from string values for numerical fields."""
     if isinstance(value, str):
         return value.replace(',', '')
     return value
@@ -147,7 +148,6 @@ def form_step2():
             current_app.logger.info(f"Form data received: {form_data}")
             current_app.logger.info(f"Submitted form values - frequency: {form.frequency.data or 'None'}, category: {form.category.data or 'None'}, status: {form.status.data or 'None'}, send_email: {form.send_email.data}, reminder_days: {form.reminder_days.data or 'None'}")
             
-            # Check CSRF token
             if not form.csrf_token.validate(form):
                 current_app.logger.error(f"CSRF validation failed: {form.csrf_token.errors}")
                 flash(trans('bill_csrf_invalid', lang) or 'Invalid CSRF token', 'danger')
@@ -180,7 +180,7 @@ def form_step2():
                     'data': {
                         'first_name': bill_data['first_name'],
                         'bill_name': bill_data['bill_name'],
-                        'amount': bill_data['amount'],
+                        'amount': float(bill_data['amount']),
                         'due_date': bill_data['due_date'],
                         'frequency': form.frequency.data,
                         'category': form.category.data,
@@ -259,8 +259,8 @@ def dashboard():
         session['sid'] = str(uuid.uuid4())
         session.permanent = True
     lang = session.get('lang', 'en')
+    form = FlaskForm()  # Added for CSRF token in template forms
     
-    # Define tips outside try block
     tips = [
         trans('bill_tip_pay_early', lang),
         trans('bill_tip_energy_efficient', lang),
@@ -274,7 +274,6 @@ def dashboard():
         user_data = bill_storage.filter_by_session(session['sid'])
         bills = [(record['id'], record['data']) for record in user_data if isinstance(record.get('data'), dict)]
         
-        # Initialize counters
         paid_count = 0
         unpaid_count = 0
         overdue_count = 0
@@ -289,26 +288,32 @@ def dashboard():
         due_month = []
         upcoming_bills = []
 
+        required_keys = ['first_name', 'bill_name', 'amount', 'due_date', 'frequency', 'category', 'status']
         today = date.today()
         for b_id, bill in bills:
-            # Skip bills missing required keys
-            if not all(key in bill for key in ['status', 'amount', 'due_date', 'category']):
-                current_app.logger.warning(f"Skipping invalid bill record {b_id}: missing required keys")
+            if not all(key in bill for key in required_keys):
+                current_app.logger.warning(f"Skipping invalid bill record {b_id}: missing keys {set(required_keys) - set(bill.keys())}")
                 continue
 
-            total_bills += bill['amount']
+            try:
+                bill_amount = float(bill['amount'])
+            except (ValueError, TypeError):
+                current_app.logger.warning(f"Skipping invalid bill record {b_id}: invalid amount {bill.get('amount')}")
+                continue
+
+            total_bills += bill_amount
             cat = bill['category']
-            categories[cat] = categories.get(cat, 0) + bill['amount']
+            categories[cat] = categories.get(cat, 0) + bill_amount
 
             if bill['status'] == 'paid':
                 paid_count += 1
-                total_paid += bill['amount']
+                total_paid += bill_amount
             elif bill['status'] == 'unpaid':
                 unpaid_count += 1
-                total_unpaid += bill['amount']
+                total_unpaid += bill_amount
             elif bill['status'] == 'overdue':
                 overdue_count += 1
-                total_overdue += bill['amount']
+                total_overdue += bill_amount
             elif bill['status'] == 'pending':
                 pending_count += 1
 
@@ -323,11 +328,12 @@ def dashboard():
                 if today < bill_due_date:
                     upcoming_bills.append((b_id, bill))
             except ValueError:
-                current_app.logger.warning(f"Invalid due_date format in bill {b_id}: {bill.get('due_date')}")
+                current_app.logger.warning(f"Skipping invalid bill record {b_id}: invalid due_date {bill.get('due_date')}")
                 continue
 
         return render_template(
             'bill_dashboard.html',
+            form=form,
             bills=bills,
             paid_count=paid_count,
             unpaid_count=unpaid_count,
@@ -347,10 +353,11 @@ def dashboard():
             lang=lang
         )
     except Exception as e:
-        current_app.logger.exception(f"Error in bill.dashboard: {str(e)}")
+        current_app.logger.exception(f"Error in bill.dashboard: {e}")
         flash(trans('bill_dashboard_load_error', lang) or 'Error loading bill dashboard', 'danger')
         return render_template(
             'bill_dashboard.html',
+            form=form,
             bills=[],
             paid_count=0,
             unpaid_count=0,
@@ -400,7 +407,7 @@ def view_edit():
                         flash(trans('bill_bill_deleted_success', lang) or 'Bill deleted successfully', 'success')
                     else:
                         flash(trans('bill_bill_delete_failed', lang) or 'Failed to delete bill', 'danger')
-                        current_app.logger.error(f"Failed to delete bill ID {b_id}")
+                        current_app.logger.error(f"Failed to delete bill ID {bill_id}")
                     return redirect(url_for('bill.dashboard'))
                 except Exception as e:
                     current_app.logger.exception(f"Error in bill.view_edit (delete): {str(e)}")
@@ -442,16 +449,16 @@ def view_edit():
                                         }
                                     }
                                     bill_storage.append(new_record, user_email=record.get('user_email', ''), session_id=session['sid'], lang=lang)
-                                    flash(trans('bill_new_recurring_bill_success', lang).format(bill_name=record['data']['bill_name']), 'success')
+                                    flash(trans('bill_new_recurring_bill_success', lang).format(bill_name=record['data'].get('bill_name', '')), 'success')
                                 except Exception as e:
                                     current_app.logger.exception(f"Error creating recurring bill: {str(e)}")
                                     flash(trans('bill_recurring_bill_error', lang) or 'Error creating recurring bill', 'warning')
                         else:
                             flash(trans('bill_bill_status_toggle_failed', lang) or 'Failed to update bill status', 'danger')
-                            current_app.logger.error(f"Failed to toggle status for bill ID {b_id}")
+                            current_app.logger.error(f"Failed to toggle status for bill ID {bill_id}")
                     else:
                         flash(trans('bill_bill_not_found', lang) or 'Bill not found', 'danger')
-                        current_app.logger.error(f"Bill ID {b_id} not found")
+                        current_app.logger.error(f"Bill ID {bill_id} not found")
                     return redirect(url_for('bill.dashboard'))
                 except Exception as e:
                     current_app.logger.exception(f"Error in bill.view_edit (toggle_status): {str(e)}")
@@ -465,7 +472,7 @@ def view_edit():
         return redirect(url_for('bill.dashboard'))
 
 @bill_bp.route('/unsubscribe/<email>')
-def unsubscribe():
+def unsubscribe(email):
     try:
         lang = session.get('lang', 'en')
         bill_storage = current_app.config['STORAGE_MANAGERS']['bills']
@@ -480,7 +487,7 @@ def unsubscribe():
             flash(trans('bill_unsubscribe_success', lang) or 'Unsubscribed successfully', 'success')
         else:
             flash(trans('bill_unsubscribe_failed', lang) or 'Failed to unsubscribe', 'danger')
-            current_app.logger.error(f"Failed to unsubscribe email {email}")
+            current_app.logger.error(f"Error unsubscribing email {email}")
         return redirect(url_for('index'))
     except Exception as e:
         current_app.logger.exception(f"Error in bill.unsubscribe: {str(e)}")
