@@ -6,13 +6,9 @@ from flask_wtf.csrf import CSRFProtect, CSRFError
 from datetime import datetime
 from mailersend_email import send_email, EMAIL_CONFIG
 import uuid
-
-try:
-    from app import trans
-except ImportError:
-    def trans(key, lang=None, **kwargs):
-        """Fallback translation function."""
-        return key.format(**kwargs)
+import json
+from app import db, trans  # Assuming db is the Flask-SQLAlchemy instance from app.py
+from models import LearningProgress  # Assuming LearningProgress is defined in models.py
 
 learning_hub_bp = Blueprint('learning_hub', __name__)
 
@@ -166,6 +162,39 @@ class QuizForm(FlaskForm):
         lang = session.get('lang', 'en')
         self.submit.label.text = trans('learning_hub_submit_quiz', lang=lang)
 
+def get_progress():
+    """Retrieve learning progress from database."""
+    try:
+        session_id = session['sid']
+        progress_records = LearningProgress.query.filter_by(session_id=session_id).all()
+        progress = {}
+        for record in progress_records:
+            progress[record.course_id] = {
+                'lessons_completed': json.loads(record.lessons_completed),
+                'quiz_scores': json.loads(record.quiz_scores),
+                'current_lesson': record.current_lesson
+            }
+        return progress
+    except Exception as e:
+        current_app.logger.error(f"Error retrieving progress from database: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
+        return {}
+
+def save_course_progress(course_id, course_progress):
+    """Save course progress to database."""
+    try:
+        session_id = session['sid']
+        progress = LearningProgress.query.filter_by(session_id=session_id, course_id=course_id).first()
+        if not progress:
+            progress = LearningProgress(session_id=session_id, course_id=course_id)
+        progress.lessons_completed = json.dumps(course_progress.get('lessons_completed', []))
+        progress.quiz_scores = json.dumps(course_progress.get('quiz_scores', {}))
+        progress.current_lesson = course_progress.get('current_lesson')
+        db.session.add(progress)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error saving progress to database: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
+
 def init_storage(app):
     """Initialize storage with app context and logger."""
     with app.app_context():
@@ -191,21 +220,6 @@ def init_storage(app):
         except Exception as e:
             current_app.logger.error(f"Error initializing courses: {str(e)}", extra={'session_id': 'no-request-context'})
             raise
-
-def get_progress():
-    """Safely retrieve learning progress from session."""
-    try:
-        return session.setdefault('learning_progress', {})
-    except RuntimeError as e:
-        current_app.logger.error(f"Error accessing session['learning_progress']: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
-        return {}
-
-def save_progress():
-    """Safely mark session as modified to save progress."""
-    try:
-        session.modified = True
-    except RuntimeError as e:
-        current_app.logger.error(f"Error saving session: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
 
 def course_lookup(course_id):
     """Retrieve course by ID."""
@@ -269,10 +283,11 @@ def course_overview(course_id):
         current_app.logger.error(f"Course not found, Path: {request.path}, Course ID: {course_id}", extra={'session_id': session.get('sid', 'no-session-id')})
         flash(trans("learning_hub_course_not_found", default="Course not found", lang=lang), "danger")
         return redirect(url_for('learning_hub.courses'))
-    progress = get_progress().get(course_id, {})
+    progress = get_progress()
+    course_progress = progress.get(course_id, {})
     try:
         current_app.logger.info(f"Rendering course overview, Path: {request.path}, Course ID: {course_id}", extra={'session_id': session.get('sid', 'no-session-id')})
-        return render_template('learning_hub_course_overview.html', course=course, progress=progress, trans=trans, lang=lang)
+        return render_template('learning_hub_course_overview.html', course=course, progress=course_progress, trans=trans, lang=lang)
     except Exception as e:
         current_app.logger.error(f"Error rendering course overview, Path: {request.path}, Course ID: {course_id}: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
         flash(trans("learning_hub_error_loading", default="Error loading course", lang=lang), "danger")
@@ -321,13 +336,18 @@ def lesson(course_id, lesson_id):
 
     form = MarkCompleteForm()
     progress = get_progress()
-    course_progress = progress.setdefault(course_id, {'lessons_completed': [], 'quiz_scores': {}, 'current_lesson': lesson_id})
+    if course_id not in progress:
+        course_progress = {'lessons_completed': [], 'quiz_scores': {}, 'current_lesson': lesson_id}
+        progress[course_id] = course_progress
+        save_course_progress(course_id, course_progress)
+    else:
+        course_progress = progress[course_id]
 
     if request.method == 'POST' and form.validate_on_submit():
         if form.lesson_id.data == lesson_id and lesson_id not in course_progress['lessons_completed']:
             course_progress['lessons_completed'].append(lesson_id)
             course_progress['current_lesson'] = lesson_id
-            save_progress()
+            save_course_progress(course_id, course_progress)
             flash(trans("learning_hub_lesson_marked", default="Lesson marked as completed", lang=lang), "success")
 
             # Send email if user has provided details and opted in
@@ -394,7 +414,12 @@ def quiz(course_id, quiz_id):
         flash(trans("learning_hub_quiz_not_found", default="Quiz not found", lang=lang), "danger")
         return redirect(url_for('learning_hub.course_overview', course_id=course_id))
     progress = get_progress()
-    course_progress = progress.setdefault(course_id, {'lessons_completed': [], 'quiz_scores': {}, 'current_lesson': None})
+    if course_id not in progress:
+        course_progress = {'lessons_completed': [], 'quiz_scores': {}, 'current_lesson': None}
+        progress[course_id] = course_progress
+        save_course_progress(course_id, course_progress)
+    else:
+        course_progress = progress[course_id]
     form = QuizForm()
 
     try:
@@ -406,13 +431,13 @@ def quiz(course_id, quiz_id):
                 if user_answer and user_answer == trans(q['answer_key'], lang=lang):
                     score += 1
             course_progress['quiz_scores'][quiz_id] = score
-            save_progress()
+            save_course_progress(course_id, course_progress)
             flash(f"{trans('learning_hub_quiz_completed', default='Quiz completed! Score:', lang=lang)} {score}/{len(quiz['questions'])}", "success")
             return redirect(url_for('learning_hub.course_overview', course_id=course_id))
         current_app.logger.info(f"Rendering quiz page, Path: {request.path}, Course ID: {course_id}, Quiz ID: {quiz_id}", extra={'session_id': session.get('sid', 'no-session-id')})
         return render_template('learning_hub_quiz.html', course=course, quiz=quiz, progress=course_progress, form=form, trans=trans, lang=lang)
     except Exception as e:
-        current_app.logger.error(f"Error processing quiz {quiz_id} for course {course_id}, Path: {request.path}: {str(e)}", extra={'session_id': session.get('sid', 'no-session')})
+        current_app.logger.error(f"Error processing quiz {quiz_id} for course {course_id}, Path: {request.path}: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
         flash(trans("learning_hub_error_loading", "Error loading quiz", lang=lang), "danger")
         return redirect(url_for('learning_hub.course_overview', course_id=course_id))
 
@@ -439,7 +464,7 @@ def dashboard():
         current_app.logger.error(f"Error rendering dashboard, Path: {request.path}: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
         flash(trans("learning_hub_error_loading", default="Error loading dashboard", lang=lang), "danger")
         return render_template('learning_hub_dashboard.html', progress_summary=[], trans=trans, lang=lang), 500
-        
+
 @learning_hub_bp.route('/unsubscribe/<email>')
 def unsubscribe(email):
     """Unsubscribe user from learning hub emails."""
