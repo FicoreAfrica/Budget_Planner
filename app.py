@@ -20,7 +20,7 @@ root_logger.setLevel(logging.DEBUG)
 
 class SessionFormatter(logging.Formatter):
     def format(self, record):
-        record.session_id = getattr(record, 'session_id', 'no_session_id')
+        record.session_id = getattr(record, 'session_id', 'no-session-id')
         return super().format(record)
 
 formatter = SessionFormatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s [session: %(session_id)s]')
@@ -41,9 +41,10 @@ def setup_logging(app):
     handler.setLevel(logging.DEBUG)
     handler.setFormatter(formatter)
     root_logger.addHandler(handler)
-    os.makedirs('data', exist_ok=True)
+    log_dir = os.path.join(os.path.dirname(__file__), 'data')
+    os.makedirs(log_dir, exist_ok=True)
     try:
-        file_handler = logging.FileHandler('data/storage.log')
+        file_handler = logging.FileHandler(os.path.join(log_dir, 'storage.log'))
         file_handler.setLevel(logging.DEBUG)
         file_handler.setFormatter(formatter)
         root_logger.addHandler(file_handler)
@@ -52,7 +53,7 @@ def setup_logging(app):
         logger.warning(f"Failed to set up file logging: {str(e)}")
 
 def setup_session(app):
-    session_dir = os.environ.get('SESSION_DIR', '/tmp/sessions')
+    session_dir = os.environ.get('SESSION_DIR', os.path.join(os.path.dirname(__file__), 'data', 'sessions'))
     try:
         os.makedirs(session_dir, exist_ok=True)
         logger.info(f"Session directory ensured at {session_dir}")
@@ -122,13 +123,14 @@ def create_app():
     csrf.init_app(app)
 
     # Configure SQLite database
-    if os.environ.get('RENDER'):
-        db_dir = '/app/data'
+    db_dir = os.path.join(os.path.dirname(__file__), 'data')  # Use project directory for data
+    try:
         os.makedirs(db_dir, exist_ok=True)
-        db_path = os.path.join(db_dir, 'ficore.db')
-    else:
-        os.makedirs(app.instance_path, exist_ok=True)
-        db_path = os.path.join(app.instance_path, 'ficore.db')
+        logger.info(f"Database directory ensured at {db_dir}")
+    except (PermissionError, OSError) as e:
+        logger.critical(f"Failed to create database directory {db_dir}: {str(e)}")
+        raise
+    db_path = os.path.join(db_dir, 'ficore.db')
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     db.init_app(app)
@@ -170,7 +172,7 @@ def create_app():
     from blueprints.learning_hub import learning_hub_bp
     from blueprints.auth import auth_bp
 
-    app.register_blueprint(financial_health_bp, template_folder='templates/financial_health')
+    app.register_blueprint(financial_healthBp, template_folder='templates/financial_health')
     app.register_blueprint(budget_bp, template_folder='templates/budget')
     app.register_blueprint(quiz_bp, template_folder='templates/quiz')
     app.register_blueprint(bill_bp, template_folder='templates/bill')
@@ -213,7 +215,7 @@ def create_app():
                 logger.info(f"Set default language to {session['lang']}")
             g.logger = logger
             g.logger.info(f"Request started for path: {request.path}")
-            if not os.path.exists('data/storage.log'):
+            if not os.path.exists(os.path.join(os.path.dirname(__file__), 'data', 'storage.log')):
                 g.logger.warning("data/storage.log not found")
         except Exception as e:
             logger.error(f"Before request error: {str(e)}", exc_info=True)
@@ -353,7 +355,7 @@ def create_app():
         try:
             with app.app_context():
                 db.session.execute(db.text("SELECT 1"))
-            if not os.path.exists('data/storage.log'):
+            if not os.path.exists(os.path.join(os.path.dirname(__file__), 'data', 'storage.log')):
                 status["status"] = "warning"
                 status["details"] = "Log file data/storage.log not found"
                 return jsonify(status), 200
