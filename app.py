@@ -172,7 +172,7 @@ def create_app():
     from blueprints.learning_hub import learning_hub_bp
     from blueprints.auth import auth_bp
 
-    app.register_blueprint(financial_healthBp, template_folder='templates/financial_health')
+    app.register_blueprint(financial_health_bp, template_folder='templates/financial_health')
     app.register_blueprint(budget_bp, template_folder='templates/budget')
     app.register_blueprint(quiz_bp, template_folder='templates/quiz')
     app.register_blueprint(bill_bp, template_folder='templates/bill')
