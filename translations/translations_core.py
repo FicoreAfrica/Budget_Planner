@@ -1,6 +1,12 @@
 CORE_TRANSLATIONS = {
     'en': {
         'core_home': 'Home',
+        'auth_username_placeholder': 'Enter your username',
+        'auth_username_tooltip': 'Your unique username for logging in.',
+        'auth_password_placeholder': 'Enter your password',
+        'auth_password_tooltip': 'Your password for your account.',
+        'auth_confirm_password_placeholder': 'Confirm your password',
+        'auth_confirm_password_tooltip': 'Re-enter your password to confirm.',
         'First Name': 'First Name',
         'Here\'s a summary of your emergency fund plan.': 'Here\'s a summary of your emergency fund plan.',
         'Tell us how much you\'ve already saved.': 'Tell us how much you\'ve already saved.',
