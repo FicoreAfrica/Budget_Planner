@@ -8,7 +8,8 @@ from datetime import datetime
 from mailersend_email import send_email, EMAIL_CONFIG
 import uuid
 import json
-from app import db, trans
+from translations import trans
+from extensions import db
 from models import LearningProgress, Course
 
 learning_hub_bp = Blueprint('learning_hub', __name__)
