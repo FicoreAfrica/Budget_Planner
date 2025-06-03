@@ -93,7 +93,7 @@ class Budget(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     user_email = db.Column(db.String(120), nullable=True)
     income = db.Column(db.Float, nullable=False, default=0.0)
-    fixed_expenses = db.Column(db.Float, nullable=False, default=0.0)
+    fixed_expense = db.Column(db.Float, nullable=False, default=0.0)
     variable_expenses = db.Column(db.Float, nullable=False, default=0.0)
     savings_goal = db.Column(db.Float, nullable=False, default=0.0)
     surplus_deficit = db.Column(db.Float, nullable=True)
@@ -175,17 +175,17 @@ class NetWorth(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     session_id = db.Column(db.String(36), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    first_name = db.Column(db.String(100))
-    email = db.Column(db.String(100))
-    send_email = db.Column(db.Boolean, default=False)
-    cash_savings = db.Column(db.Float)
-    investments = db.Column(db.Float)
-    property = db.Column(db.Float)
-    loans = db.Column(db.Float)
-    total_assets = db.Column(db.Float)
-    total_liabilities = db.Column(db.Float)
-    net_worth = db.Column(db.Float)
-    badges = db.Column(db.Text)  # Stores JSON string of badge list
+    first_name = db.Column(db.String(50), nullable=True)
+    email = db.Column(db.String(120), nullable=True)
+    send_email = db.Column(db.Boolean, default=False, nullable=False)
+    cash_savings = db.Column(db.Float, nullable=True)
+    investments = db.Column(db.Float, nullable=True)
+    property = db.Column(db.Float, nullable=True)
+    loans = db.Column(db.Float, nullable=True)
+    total_assets = db.Column(db.Float, nullable=True)
+    total_liabilities = db.Column(db.Float, nullable=True)
+    net_worth = db.Column(db.Float, nullable=True)
+    badges = db.Column(db.Text, nullable=True)  # JSON string
 
     __table_args__ = (
         db.Index('ix_net_worth_session_id', 'session_id'),
@@ -229,7 +229,7 @@ class EmergencyFund(db.Model):
     timeline = db.Column(db.Integer, nullable=True)
     recommended_months = db.Column(db.Integer, nullable=True)
     target_amount = db.Column(db.Float, nullable=True)
-    savings_gap = db.FloatField(db.Float, nullable=True)
+    savings_gap = db.Column(db.Float, nullable=True)
     monthly_savings = db.Column(db.Float, nullable=True)
     percent_of_income = db.Column(db.Float, nullable=True)
     badges = db.Column(db.Text, nullable=True)  # JSON string
@@ -261,7 +261,7 @@ class EmergencyFund(db.Model):
             'monthly_savings': self.monthly_savings,
             'percent_of_income': self.percent_of_income,
             'badges': json.loads(self.badges) if self.badges else []
-        })
+        }
 
 class LearningProgress(db.Model):
     __tablename__ = 'learning_progress'
@@ -270,10 +270,11 @@ class LearningProgress(db.Model):
     session_id = db.Column(db.String(36), nullable=False)
     course_id = db.Column(db.String(50), nullable=False)
     lessons_completed = db.Column(db.Text, default='[]', nullable=False)  # JSON string
-    quiz_scores = db.session(db.Text, default='{}', nullable=False)  # JSON string
-    current_lesson = db.session(db.String(50), nullable=True)
+    quiz_scores = db.Column(db.Text, default='{}', nullable=False)  # JSON string
+    current_lesson = db.Column(db.String(50), nullable=True)
 
     __table_args__ = (
+        db.UniqueConstraint('user_id', 'course_id', name='uix_user_course_id'),
         db.UniqueConstraint('session_id', 'course_id', name='uix_session_course_id'),
         db.Index('ix_learning_progress_session_id', 'session_id'),
         db.Index('ix_learning_progress_user_id', 'user_id')
@@ -281,10 +282,14 @@ class LearningProgress(db.Model):
 
     def to_dict(self):
         return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'session_id': self.session_id,
+            'course_id': self.course_id,
             'lessons_completed': json.loads(self.lessons_completed),
             'quiz_scores': json.loads(self.quiz_scores),
-            'current_lesson': current_lesson
-        })
+            'current_lesson': self.current_lesson
+        }
 
 class QuizResult(db.Model):
     __tablename__ = 'quiz_results'
@@ -305,3 +310,19 @@ class QuizResult(db.Model):
         db.Index('ix_quiz_results_session_id', 'session_id'),
         db.Index('ix_quiz_results_user_id', 'user_id')
     )
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'session_id': self.session_id,
+            'created_at': self.created_at.isoformat() + "Z",
+            'first_name': self.first_name,
+            'email': self.email,
+            'send_email': self.send_email,
+            'personality': self.personality,
+            'score': self.score,
+            'badges': json.loads(self.badges) if self.badges else [],
+            'insights': json.loads(self.insights) if self.insights else [],
+            'tips': json.loads(self.tips) if self.tips else []
+        }
