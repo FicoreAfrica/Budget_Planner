@@ -271,7 +271,7 @@ def step3():
             try:
                 debt_to_income = (debt / income * 100)
                 savings_rate = ((income - expenses) / income * 100)
-                interest_burden = (interest_rate * debt / 100) if debt > 0 else 0
+                interest_burden = ((interest_rate * debt / 100) / 12) / income * 100 if debt > 0 and income > 0 else 0
             except ZeroDivisionError as zde:
                 current_app.logger.error(f"ZeroDivisionError during metric calculation: {str(zde)}")
                 flash(trans("financial_health_calculation_error", lang=lang), "danger")
@@ -290,13 +290,13 @@ def step3():
 
             if score >= 80:
                 status_key = "excellent"
-                status = trans(status_key, lang=lang)
+                status = trans("financial_health_status_excellent", lang=lang)
             elif score >= 60:
                 status_key = "good"
-                status = trans(status_key, lang=lang)
+                status = trans("financial_health_status_good", lang=lang)
             else:
                 status_key = "needs_improvement"
-                status = trans(status_key, lang=lang)
+                status = trans("financial_health_status_needs_improvement", lang=lang)
 
             badges = []
             if score >= 80:
@@ -398,7 +398,7 @@ def step3():
         current_app.logger.exception(f"Unexpected error in step3: {str(e)}")
         flash(trans("financial_health_unexpected_error", lang=lang), "danger")
         return render_template('health_score_step3.html', form=form, trans=trans, lang=lang), 500
-
+        
 @financial_health_bp.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
     """Display financial health dashboard with comparison to others."""
