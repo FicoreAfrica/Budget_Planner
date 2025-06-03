@@ -1,7 +1,8 @@
 from flask import Blueprint, render_template, session, request, redirect, url_for, flash, current_app
 from flask_wtf import FlaskForm
-from wtforms import StringField, BooleanField, SubmitField
+from wtforms import StringField, BooleanField, SubmitField, HiddenField
 from wtforms.validators import DataRequired, Email, Optional
+from flask_wtf.csrf import CSRFProtect, CSRFError
 from datetime import datetime
 from mailersend_email import send_email, EMAIL_CONFIG
 import uuid
@@ -14,6 +15,9 @@ except ImportError:
         return key.format(**kwargs)
 
 learning_hub_bp = Blueprint('learning_hub', __name__)
+
+# Initialize CSRF protection
+csrf = CSRFProtect()
 
 # Define courses and quizzes data
 courses_data = {
@@ -143,6 +147,16 @@ class LearningHubProfileForm(FlaskForm):
         if self.email.validators:
             self.email.validators[1].message = trans('core_email_invalid', lang=lang)
 
+# Lesson Form Definition
+class MarkCompleteForm(FlaskForm):
+    lesson_id = HiddenField('Lesson ID')
+    submit = SubmitField('Mark as Complete')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        lang = session.get('lang', 'en')
+        self.submit.label.text = trans('learning_hub_mark_complete', lang=lang)
+
 def init_storage(app):
     """Initialize storage with app context and logger."""
     with app.app_context():
@@ -247,7 +261,7 @@ def profile():
         session['learning_hub_profile'] = {
             'first_name': form.first_name.data,
             'email': form.email.data,
-            'send_email': form.send_email.data
+                    'send_email': form.send_email.data
         }
         session.permanent = True
         session.modified = True
@@ -257,7 +271,7 @@ def profile():
 
 @learning_hub_bp.route('/courses/<course_id>/lesson/<lesson_id>', methods=['GET', 'POST'])
 def lesson(course_id, lesson_id):
-    """Display or process a lesson with email notification."""
+    """Display or process a lesson with email notification and CSRF protection."""
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
         session.permanent = True
@@ -272,10 +286,12 @@ def lesson(course_id, lesson_id):
         flash(trans("learning_hub_lesson_not_found", default="Lesson not found", lang=lang), "danger")
         return redirect(url_for('learning_hub.course_overview', course_id=course_id))
 
+    form = MarkCompleteForm()
     progress = get_progress()
     course_progress = progress.setdefault(course_id, {'lessons_completed': [], 'quiz_scores': {}, 'current_lesson': lesson_id})
-    if request.method == 'POST':
-        if lesson_id not in course_progress['lessons_completed']:
+
+    if request.method == 'POST' and form.validate_on_submit():
+        if form.lesson_id.data == lesson_id and lesson_id not in course_progress['lessons_completed']:
             course_progress['lessons_completed'].append(lesson_id)
             course_progress['current_lesson'] = lesson_id
             save_progress()
@@ -323,7 +339,14 @@ def lesson(course_id, lesson_id):
                 return redirect(url_for('learning_hub.lesson', course_id=course_id, lesson_id=next_lesson_id))
             else:
                 return redirect(url_for('learning_hub.course_overview', course_id=course_id))
-    return render_template('learning_hub_lesson.html', course=course, lesson=lesson, module=module, progress=course_progress, trans=trans, lang=lang)
+    return render_template('learning_hub_lesson.html', course=course, lesson=lesson, module=module, progress=course_progress, form=form, trans=trans, lang=lang)
+
+@learning_hub_bp.errorhandler(CSRFError)
+def handle_csrf_error(e):
+    """Handle CSRF errors with user-friendly message."""
+    current_app.logger.error(f"CSRF error on {request.path}: {e.description}, Session: {session.get('sid', 'no-session-id')}, Form Data: {request.form}")
+    flash(trans("learning_hub_csrf_error", default="Form submission failed due to a missing security token. Please refresh and try again.", lang=session.get('lang', 'en')), "danger")
+    return render_template('400.html', message=trans("learning_hub_csrf_error", default="Form submission failed due to a missing security token. Please refresh and try again.", lang=session.get('lang', 'en'))), 400
 
 @learning_hub_bp.route('/courses/<course_id>/quiz/<quiz_id>', methods=['GET', 'POST'])
 def quiz(course_id, quiz_id):
