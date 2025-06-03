@@ -2,11 +2,12 @@ from flask import Blueprint, request, session, redirect, url_for, render_templat
 from flask_wtf import FlaskForm
 from wtforms import StringField, FloatField, SelectField, BooleanField, IntegerField, HiddenField
 from wtforms.validators import DataRequired, NumberRange, Email, Optional
+from flask_login import current_user
 from mailersend_email import send_email, EMAIL_CONFIG
 from datetime import datetime, date, timedelta
 import uuid
 from app import db, trans
-from models import Bill  # Assuming models.py contains the Bill model
+from models import Bill
 
 bill_bp = Blueprint('bill', __name__, url_prefix='/bill')
 
@@ -27,7 +28,6 @@ def calculate_next_due_date(due_date, frequency):
     else:
         return due_date
 
-# Form classes
 class BillFormStep1(FlaskForm):
     first_name = StringField('First Name')
     email = StringField('Email')
@@ -100,14 +100,17 @@ class BillFormStep2(FlaskForm):
 
         self.process()
 
-# Routes
 @bill_bp.route('/form/step1', methods=['GET', 'POST'])
 def form_step1():
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
         session.permanent = True
     lang = session.get('lang', 'en')
-    bill_data = session.get('bill_step1', {})  # Prefill form with session data if editing
+    bill_data = session.get('bill_step1', {})
+    # Prefill email and first_name for authenticated users
+    if current_user.is_authenticated:
+        bill_data['email'] = bill_data.get('email', current_user.email)
+        bill_data['first_name'] = bill_data.get('first_name', current_user.username)
     form = BillFormStep1(data=bill_data)
     try:
         if request.method == 'POST' and form.validate_on_submit():
@@ -142,14 +145,14 @@ def form_step2():
         session['sid'] = str(uuid.uuid4())
         session.permanent = True
     lang = session.get('lang', 'en')
-    bill_step2_data = session.get('bill_step2', {})  # Prefill step 2 form if editing
+    bill_step2_data = session.get('bill_step2', {})
     form = BillFormStep2(data=bill_step2_data)
     try:
         if request.method == 'POST':
             form_data = request.form.to_dict()
             current_app.logger.info(f"Form data received: {form_data}")
             current_app.logger.info(f"Submitted form values - frequency: {form.frequency.data or 'None'}, category: {form.category.data or 'None'}, status: {form.status.data or 'None'}, send_email: {form.send_email.data}, reminder_days: {form.reminder_days.data or 'None'}")
-            
+
             if not form.csrf_token.validate(form):
                 current_app.logger.error(f"CSRF validation failed: {form.csrf_token.errors}")
                 flash(trans('bill_csrf_invalid', lang) or 'Invalid CSRF token', 'danger')
@@ -160,7 +163,7 @@ def form_step2():
                     form.reminder_days.errors.append(trans('bill_reminder_days_required', lang))
                     current_app.logger.error("Validation failed: reminder_days required when send_email is checked")
                     return render_template('bill_form_step2.html', form=form, trans=trans, lang=lang)
-                
+
                 bill_data = session.get('bill_step1', {})
                 if not bill_data:
                     current_app.logger.error("Session data missing for bill_step1")
@@ -186,9 +189,10 @@ def form_step2():
                     status = 'overdue'
 
                 bill_id = session.get('bill_id')
+                filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
                 if bill_id:
                     # Update existing bill
-                    bill = Bill.query.get(bill_id)
+                    bill = Bill.query.filter_by(id=bill_id, **filter_kwargs).first()
                     if bill:
                         bill.first_name = bill_data['first_name']
                         bill.user_email = bill_data['email']
@@ -216,6 +220,7 @@ def form_step2():
                     # Create new bill
                     bill = Bill(
                         id=str(uuid.uuid4()),
+                        user_id=current_user.id if current_user.is_authenticated else None,
                         session_id=session['sid'],
                         user_email=bill_data['email'],
                         first_name=bill_data['first_name'],
@@ -297,8 +302,8 @@ def dashboard():
         session['sid'] = str(uuid.uuid4())
         session.permanent = True
     lang = session.get('lang', 'en')
-    form = FlaskForm()  # For CSRF token in template forms
-    
+    form = FlaskForm()
+
     tips = [
         trans('bill_tip_pay_early', lang),
         trans('bill_tip_energy_efficient', lang),
@@ -308,9 +313,10 @@ def dashboard():
     ]
 
     try:
-        bills = Bill.query.filter_by(session_id=session['sid']).all()
+        filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
+        bills = Bill.query.filter_by(**filter_kwargs).all()
         bills_data = [(bill.id, bill.to_dict()) for bill in bills]
-        
+
         paid_count = 0
         unpaid_count = 0
         overdue_count = 0
@@ -415,7 +421,8 @@ def view_edit():
         session['sid'] = str(uuid.uuid4())
         session.permanent = True
     lang = session.get('lang', 'en')
-    bills = Bill.query.filter_by(session_id=session['sid']).all()
+    filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
+    bills = Bill.query.filter_by(**filter_kwargs).all()
     bills_data = [(bill.id, bill.to_dict()) for bill in bills]
 
     try:
@@ -424,7 +431,7 @@ def view_edit():
             bill_id = request.form.get('bill_id')
 
             if action == 'edit':
-                bill = Bill.query.get(bill_id)
+                bill = Bill.query.filter_by(id=bill_id, **filter_kwargs).first()
                 if bill:
                     session['bill_step1'] = {
                         'first_name': bill.first_name,
@@ -446,7 +453,7 @@ def view_edit():
                 return redirect(url_for('bill.view_edit'))
 
             elif action == 'delete':
-                bill = Bill.query.get(bill_id)
+                bill = Bill.query.filter_by(id=bill_id, **filter_kwargs).first()
                 if bill:
                     try:
                         db.session.delete(bill)
@@ -461,7 +468,7 @@ def view_edit():
                 return redirect(url_for('bill.dashboard'))
 
             elif action == 'toggle_status':
-                bill = Bill.query.get(bill_id)
+                bill = Bill.query.filter_by(id=bill_id, **filter_kwargs).first()
                 if bill:
                     try:
                         current_status = bill.status
@@ -473,6 +480,7 @@ def view_edit():
                             new_due_date = calculate_next_due_date(bill.due_date, bill.frequency)
                             new_bill = Bill(
                                 id=str(uuid.uuid4()),
+                                user_id=bill.user_id,
                                 session_id=bill.session_id,
                                 user_email=bill.user_email,
                                 first_name=bill.first_name,
@@ -503,7 +511,7 @@ def view_edit():
         return redirect(url_for('bill.dashboard'))
 
 @bill_bp.route('/unsubscribe/<email>')
-def unsubscribe(email):
+def unsubscribe():
     try:
         lang = session.get('lang', 'en')
         bills = Bill.query.filter_by(user_email=email).all()
