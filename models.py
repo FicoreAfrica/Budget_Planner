@@ -2,6 +2,23 @@ from app import db
 from datetime import datetime, date
 import json
 
+# User model for authentication
+class User(db.Model):
+    __tablename__ = 'users'
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password_hash = db.Column(db.String(128), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'username': self.username,
+            'email': self.email,
+            'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S')
+        }
+
 # Course model for Learning Hub static content
 class Course(db.Model):
     __tablename__ = 'courses'
@@ -29,7 +46,8 @@ class FinancialHealth(db.Model):
     __tablename__ = 'financial_health'
     id = db.Column(db.String(36), primary_key=True)
     session_id = db.Column(db.String(36), nullable=False, index=True)
-    email = db.Column(db.String(120), nullable=True)  # Renamed from user_email
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True, index=True)
+    email = db.Column(db.String(120), nullable=True)
     first_name = db.Column(db.String(50), nullable=True)
     user_type = db.Column(db.String(20), nullable=True)
     income = db.Column(db.Float, nullable=True)
@@ -50,6 +68,7 @@ class FinancialHealth(db.Model):
         return {
             'id': self.id,
             'session_id': self.session_id,
+            'user_id': self.user_id,
             'email': self.email,
             'first_name': self.first_name,
             'user_type': self.user_type,
@@ -73,7 +92,8 @@ class Budget(db.Model):
     __tablename__ = 'budget'
     id = db.Column(db.String(36), primary_key=True)
     session_id = db.Column(db.String(36), nullable=False, index=True)
-    email = db.Column(db.String(120), nullable=True)  # Renamed from user_email
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True, index=True)
+    email = db.Column(db.String(120), nullable=True)
     income = db.Column(db.Float, nullable=False, default=0.0)
     fixed_expenses = db.Column(db.Float, nullable=False, default=0.0)
     variable_expenses = db.Column(db.Float, nullable=False, default=0.0)
@@ -91,6 +111,7 @@ class Budget(db.Model):
         return {
             'id': self.id,
             'session_id': self.session_id,
+            'user_id': self.user_id,
             'email': self.email,
             'income': self.income,
             'fixed_expenses': self.fixed_expenses,
@@ -111,7 +132,8 @@ class Bill(db.Model):
     __tablename__ = 'bills'
     id = db.Column(db.String(36), primary_key=True)
     session_id = db.Column(db.String(36), nullable=False, index=True)
-    email = db.Column(db.String(120), nullable=True)  # Renamed from user_email
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True, index=True)
+    email = db.Column(db.String(120), nullable=True)
     first_name = db.Column(db.String(50), nullable=True)
     bill_name = db.Column(db.String(100), nullable=False)
     amount = db.Column(db.Float, nullable=False)
@@ -127,6 +149,7 @@ class Bill(db.Model):
         return {
             'id': self.id,
             'session_id': self.session_id,
+            'user_id': self.user_id,
             'email': self.email,
             'first_name': self.first_name,
             'bill_name': self.bill_name,
@@ -145,7 +168,8 @@ class NetWorth(db.Model):
     __tablename__ = 'net_worth'
     id = db.Column(db.String(36), primary_key=True)
     session_id = db.Column(db.String(36), nullable=False, index=True)
-    email = db.Column(db.String(120), nullable=True)  # Renamed from user_email
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True, index=True)
+    email = db.Column(db.String(120), nullable=True)
     first_name = db.Column(db.String(50), nullable=True)
     cash_savings = db.Column(db.Float, nullable=False, default=0.0)
     investments = db.Column(db.Float, nullable=False, default=0.0)
@@ -156,12 +180,13 @@ class NetWorth(db.Model):
     net_worth = db.Column(db.Float, nullable=False, default=0.0)
     badges = db.Column(db.Text, nullable=True)  # Stored as JSON string
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    send_email = db.Column(db.Boolean, default=False, nullable=False)  # Added to match blueprint
+    send_email = db.Column(db.Boolean, default=False, nullable=False)
 
     def to_dict(self):
         return {
             'id': self.id,
             'session_id': self.session_id,
+            'user_id': self.user_id,
             'email': self.email,
             'first_name': self.first_name,
             'cash_savings': self.cash_savings,
@@ -181,6 +206,7 @@ class EmergencyFund(db.Model):
     __tablename__ = 'emergency_fund'
     id = db.Column(db.String(36), primary_key=True)
     session_id = db.Column(db.String(36), nullable=False, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True, index=True)
     first_name = db.Column(db.String(50), nullable=True)
     email = db.Column(db.String(120), nullable=True)
     email_opt_in = db.Column(db.Boolean, default=False, nullable=False)
@@ -203,6 +229,7 @@ class EmergencyFund(db.Model):
         return {
             'id': self.id,
             'session_id': self.session_id,
+            'user_id': self.user_id,
             'first_name': self.first_name,
             'email': self.email,
             'email_opt_in': self.email_opt_in,
@@ -227,6 +254,7 @@ class LearningProgress(db.Model):
     __tablename__ = 'learning_progress'
     id = db.Column(db.Integer, primary_key=True)
     session_id = db.Column(db.String(36), nullable=False, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True, index=True)
     course_id = db.Column(db.String(50), nullable=False)
     lessons_completed = db.Column(db.Text, default='[]', nullable=False)  # JSON string
     quiz_scores = db.Column(db.Text, default='{}', nullable=False)  # JSON string
@@ -238,6 +266,7 @@ class LearningProgress(db.Model):
         return {
             'id': self.id,
             'session_id': self.session_id,
+            'user_id': self.user_id,
             'course_id': self.course_id,
             'lessons_completed': json.loads(self.lessons_completed),
             'quiz_scores': json.loads(self.quiz_scores),
@@ -249,20 +278,22 @@ class QuizResult(db.Model):
     __tablename__ = 'quiz_results'
     id = db.Column(db.String(36), primary_key=True)
     session_id = db.Column(db.String(36), nullable=False, index=True)
-    email = db.Column(db.String(120), nullable=True)  # Added to match blueprint
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True, index=True)
+    email = db.Column(db.String(120), nullable=True)
     first_name = db.Column(db.String(50), nullable=True)
     personality = db.Column(db.String(50), nullable=True)
     score = db.Column(db.Integer, nullable=True)
     badges = db.Column(db.Text, nullable=True)  # Stored as JSON string
     insights = db.Column(db.Text, nullable=True)  # Stored as JSON string
     tips = db.Column(db.Text, nullable=True)  # Stored as JSON string
-    send_email = db.Column(db.Boolean, default=False, nullable=False)  # Added to match blueprint
+    send_email = db.Column(db.Boolean, default=False, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
     def to_dict(self):
         return {
             'id': self.id,
             'session_id': self.session_id,
+            'user_id': self.user_id,
             'email': self.email,
             'first_name': self.first_name,
             'personality': self.personality,
