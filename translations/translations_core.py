@@ -797,7 +797,14 @@ CORE_TRANSLATIONS = {
 
 
         'Select how often you monitor your spending.': 'Zaɓi sau nawa kuke lura da kuɗin da kuke kashewa.',
+        
         'Bill Planner': 'Takardun Biya',
+        'auth_username_placeholder': 'Shigar da sunan mai amfani',
+        'auth_username_tooltip': 'Sunan mai amfani na musamman don shiga.',
+        'auth_password_placeholder': 'Shigar da kalmar sirrinka',
+        'auth_password_tooltip': 'Kalmar sirrinka don asusunka.',
+        'auth_confirm_password_placeholder': 'Tabbatar da kalmar sirrinka',
+        'auth_confirm_password_tooltip': 'Sake shigar da kalmar sirrinka don tabbatarwa.',
         'Invalid CSRF token': 'Invalid security token',
         'Please correct the errors in the form.': 'Don Allah a gyara kurakuran da ke cikin fom ɗin.',
         'An error occurred': 'An error occurred',
