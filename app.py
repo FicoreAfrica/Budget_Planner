@@ -88,7 +88,7 @@ def setup_logging(app):
         logger.warning(f"Failed to set up file logging: {str(e)}")
 
 def setup_session(app):
-    session_dir = os.environ.get('SESSION_DIR', 'data/sessions')
+    session_dir = os.environ.get('SESSION_DIR', '/tmp/sessions')
     if os.environ.get('RENDER'):
         session_dir = '/tmp/sessions'
     try:
@@ -112,18 +112,19 @@ def setup_session(app):
     app.config['SESSION_PERMANENT'] = True
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
     app.config['SESSION_USE_SIGNER'] = True
+    logger.info(f"Session configured: type={app.config['SESSION_TYPE']}, dir={session_dir}, lifetime={app.config['PERMANENT_SESSION_LIFETIME']}")
 
 def init_storage_managers(app):
     storage_managers = {}
     for name, path, init_func in [
-        ('financial_health', '/tmp/financial_health.json' if os.environ.get('RENDER') else 'data/financial_health.json', lambda app: JsonStorage(path, logger_instance=app.logger)),
-        ('user_progress', '/tmp/user_progress.json' if os.environ.get('RENDER') else 'data/user_progress.json', lambda app: JsonStorage(path, logger_instance=app.logger)),
-        ('net_worth', '/tmp/networth.json' if os.environ.get('RENDER') else 'data/networth.json', lambda app: JsonStorage(path, logger_instance=app.logger)),
-        ('emergency_fund', '/tmp/emergency_fund.json' if os.environ.get('RENDER') else 'data/emergency_fund.json', lambda app: JsonStorage(path, logger_instance=app.logger)),
-        ('courses', '/tmp/courses.json' if os.environ.get('RENDER') else 'data/courses.json', lambda app: JsonStorage(path, logger_instance=app.logger)),
-        ('budget', None, lambda app: JsonStorage('/tmp/budget.json' if os.environ.get('RENDER') else 'data/budget.json', logger_instance=app.logger)),
-        ('bills', None, lambda app: JsonStorage('/tmp/bills.json' if os.environ.get('RENDER') else 'data/bills.json', logger_instance=app.logger)),
-        ('quiz', None, lambda app: JsonStorage('/tmp/quiz.json' if os.environ.get('RENDER') else 'data/quiz.json', logger_instance=app.logger)),
+        ('financial_health', '/tmp/data/financial_health.json' if os.environ.get('RENDER') else 'data/financial_health.json', lambda app: JsonStorage(path, logger_instance=app.logger)),
+        ('user_progress', '/tmp/data/user_progress.json' if os.environ.get('RENDER') else 'data/user_progress.json', lambda app: JsonStorage(path, logger_instance=app.logger)),
+        ('net_worth', '/tmp/data/networth.json' if os.environ.get('RENDER') else 'data/networth.json', lambda app: JsonStorage(path, logger_instance=app.logger)),
+        ('emergency_fund', '/tmp/data/emergency_fund.json' if os.environ.get('RENDER') else 'data/emergency_fund.json', lambda app: JsonStorage(path, logger_instance=app.logger)),
+        ('courses', '/tmp/data/courses.json' if os.environ.get('RENDER') else 'data/courses.json', lambda app: JsonStorage(path, logger_instance=app.logger)),
+        ('budget', None, lambda app: JsonStorage('/tmp/data/budget.json' if os.environ.get('RENDER') else 'data/budget.json', logger_instance=app.logger)),
+        ('bills', None, lambda app: JsonStorage('/tmp/data/bills.json' if os.environ.get('RENDER') else 'data/bills.json', logger_instance=app.logger)),
+        ('quiz', None, lambda app: JsonStorage('/tmp/data/quiz.json' if os.environ.get('RENDER') else 'data/quiz.json', logger_instance=app.logger)),
     ]:
         try:
             with app.app_context():
@@ -149,7 +150,6 @@ def initialize_courses_data(app):
                     'data': course
                 } for course in SAMPLE_COURSES])
                 courses = courses_storage.read_all()
-            # Convert flat courses to expected format if needed
             converted_courses = []
             for course in courses:
                 if isinstance(course, dict) and 'data' in course and isinstance(course['data'], dict):
@@ -190,15 +190,13 @@ def create_app():
     Session(app)
     CSRFProtect(app)
 
-    # Add format_currency filter
     def format_currency(value):
         try:
             return "₦{:,.2f}".format(float(value))
         except (ValueError, TypeError):
-            return str(value)  # Fallback to string if formatting fails
+            return str(value)
     app.jinja_env.filters['format_currency'] = format_currency
 
-    # Initialize storage managers
     with app.app_context():
         logger.info("Starting storage initialization")
         init_storage_managers(app)
@@ -208,7 +206,6 @@ def create_app():
         initialize_courses_data(app)
         logger.info("Completed data initialization")
 
-    # Register blueprints
     app.register_blueprint(financial_health_bp)
     app.register_blueprint(budget_bp)
     app.register_blueprint(quiz_bp)
@@ -260,7 +257,6 @@ def create_app():
     def inject_translations():
         lang = session.get('lang', 'en')
         def context_trans(key, **kwargs):
-            # Use template-provided lang if available, else fall back to session lang
             used_lang = kwargs.pop('lang', lang)
             return translate(key, lang=used_lang, logger=g.get('logger', logger), **kwargs)
         return {
@@ -323,35 +319,19 @@ def create_app():
 
     @app.route('/acknowledge_consent', methods=['POST'])
     def acknowledge_consent():
-        """
-        Handles consent acknowledgement from users.
-        Sets a server-side session flag and logs the event.
-        
-        Returns:
-            HTTP 204 No Content on success
-            HTTP 400 Bad Request if not a POST request
-            HTTP 403 Forbidden if CSRF token is invalid (handled by CSRFProtect)
-        """
         if request.method != 'POST':
             logger.warning(f"Invalid method {request.method} for consent acknowledgement")
             return '', 400
-        
-        # Set consent flag with timestamp
         session['consent_acknowledged'] = {
             'status': True,
             'timestamp': datetime.utcnow().isoformat(),
             'ip': request.remote_addr,
             'user_agent': request.headers.get('User-Agent')
         }
-        
-        # Log the event with session context
         logger.info(f"Consent acknowledged for session {session['sid']} from IP {request.remote_addr}")
-        
-        # Security headers for the response
         response = make_response('', 204)
         response.headers['Cache-Control'] = 'no-store'
         response.headers['X-Content-Type-Options'] = 'nosniff'
-        
         return response
 
     @app.route('/favicon.ico')
