@@ -8,6 +8,7 @@ CORE_TRANSLATIONS = {
         'Bill Planner': 'Bill Planner',
         'An error occurred': 'An error occurred.',
         'Invalid CSRF token': 'Invalid security token',
+        'Quiz completed! 1/1': 'Quiz completed! 1/1',
         'core_accept': 'Accept',
         'core_invalid_request': 'Invalid Request',
         'core_error_acknowledging_consent': 'Error acknowledging consent.',
@@ -768,6 +769,7 @@ CORE_TRANSLATIONS = {
         'core_invalid_request': 'Buƙata Ba Daidai Ba',
         'core_error_acknowledging_consent': 'Kuskure wajen karɓar yarda.',
         'core_network_error': 'Kuskuren hanyar sadarwa. Don Allah a sake gwadawa.',
+        'Quiz completed! 1/1': 'An kammala gwaji! 1/1',
         'core_team_why_content': 'An ƙirƙiri Ficore Africa ne daga sha\'awar da muke da ita don cike gibin ilimin kuɗi a Afirka da kuma samar da hanyoyin magance matsalolin kuɗi na musamman da mutane da kasuwanci ke fuskanta a yankin. Mun yi imanin cewa ta hanyar samar wa \'yan Afirka da kayan aiki da fahimta da suka dace, za mu iya buɗe ƙarfinsu na tattalin arziki da kuma gina makoma mai wadata ga nahiyar.',
 
 
