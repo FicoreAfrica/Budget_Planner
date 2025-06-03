@@ -16,3 +16,6 @@ Flask-Babel==4.0.0
 apscheduler==3.10.4
 Flask-SQLAlchemy
 mailersend==0.5.0 
+ flask-sqlalchemy==3.8.0 
+flask-migrate==4.2.0 
+flask-login==0.6.3
