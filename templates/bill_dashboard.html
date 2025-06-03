@@ -1,15 +1,20 @@
 {% extends 'base.html' %}
-{% block title %}{{ trans('bill_bill_dashboard', lang=lang) | default('Bill Dashboard') }}{% endblock %}
+
+{% block title %}
+{{ trans('bill_dashboard', lang=lang) | default('Bill Dashboard') }}
+{% endblock %}
+
 {% block content %}
 <div class="container">
     {% set tool_name = trans('bill_bill_dashboard', lang=lang) | default('Bill Dashboard') %}
     {% set tool_icon = 'fa-tachometer-alt' %}
     {% set subtitle = trans('bill_dashboard_subtitle', lang=lang) | default('Manage and track all your bills') %}
     {% include 'tool_header.html' %}
+
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
-                <div class="toast align-items-center text-white bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" data-bs-delay="3000">
+                <div class="toast align-items-center text-white bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true—" data-bs-autohide="true" data-bs-delay="5000">
                     <div class="d-flex">
                         <div class="toast-body">
                             {{ trans(message, lang=lang) | default(message) | safe }}
@@ -20,6 +25,7 @@
             {% endfor %}
         {% endif %}
     {% endwith %}
+
     {% if bills %}
         <div class="table-responsive">
             <table class="table table-striped">
@@ -37,12 +43,12 @@
                 <tbody>
                     {% for bill_id, bill in bills %}
                         <tr>
-                            <td>{{ bill.bill_name }}</td>
-                            <td>₦{{ bill.amount | format_currency }}</td>
-                            <td>{{ bill.due_date }}</td>
-                            <td>{{ trans('bill_category_' + bill.category, lang=lang) | default(bill.category) }}</td>
-                            <td>{{ trans('bill_frequency_' + bill.frequency, lang=lang) | default(bill.frequency) }}</td>
-                            <td>{{ trans('bill_status_' + bill.status, lang=lang) | default(bill.status) }}</td>
+                            <td>{{ bill['bill_name'] }}</td>
+                            <td>₦{{ bill['amount'] | format_currency }}</td>
+                            <td>{{ bill['due_date'] }}</td>
+                            <td>{{ trans('bill_category_' + bill['category'], lang=lang) | default(bill['category']) }}</td>
+                            <td>{{ trans('bill_frequency_' + bill['frequency'], lang=lang) | default(bill['frequency']) }}</td>
+                            <td>{{ trans('bill_status_' + bill['status'], lang=lang) | default(bill['status']) }}</td>
                             <td>
                                 <form action="{{ url_for('bill.view_edit') }}" method="POST" style="display:inline;">
                                     <input type="hidden" name="bill_id" value="{{ bill_id }}">
@@ -73,14 +79,15 @@
     {% endif %}
 </div>
 {% endblock %}
+
 {% block extra_scripts %}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        var toastElList = [].slice.call(document.querySelectorAll('.toast'));
-        toastElList.forEach(function(toastEl) {
-            var toast = new bootstrap.Toast(toastEl);
-            toast.show();
-        });
+document.addEventListener('DOMContentLoaded', function() {
+    var toastElList = [].slice.call(document.querySelectorAll('.toast'));
+    toastElList.forEach(function(toastEl) {
+        var toast = new bootstrap.Toast(toastEl);
+        toast.show();
     });
+});
 </script>
 {% endblock %}
