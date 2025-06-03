@@ -1,30 +1,26 @@
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from datetime import datetime, date, timedelta
-from flask import current_app, url_for
-from mailersend_email import send_email, EMAIL_CONFIG
-from models import Bill, db
-
-try:
-    from app import trans
-except ImportError:
-    def trans(key, lang=None):
-        return key
+from flask import current_app, url_for, session
+from extensions import db
+from models import Bill, User
+from mailersend_email import send_email, trans, EMAIL_CONFIG
+import atexit
 
 def update_overdue_status():
     """Update status to overdue for past-due bills."""
     with current_app.app_context():
         try:
             today = date.today()
-            bills = Bill.query.filter(Bill.status.notin_(['paid', 'pending'])).all()
+            bills = Bill.query.filter(Bill.status.in_(['pending', 'unpaid'])).all()
             for bill in bills:
-                due_date = datetime.strptime(bill.due_date, '%Y-%m-%d').date()
-                if due_date < today:
+                if bill.due_date < today:
                     bill.status = 'overdue'
             db.session.commit()
-            current_app.logger.info("Updated overdue statuses")
+            current_app.logger.info(f"Updated {len(bills)} overdue bill statuses")
         except Exception as e:
             current_app.logger.exception(f"Error in update_overdue_status: {str(e)}")
+            db.session.rollback()
 
 def send_bill_reminders():
     """Send reminders for upcoming and overdue bills."""
@@ -34,23 +30,22 @@ def send_bill_reminders():
             user_bills = {}
             bills = Bill.query.all()
             for bill in bills:
-                email = bill.user.email if bill.user else None
-                lang = bill.user.lang if bill.user else 'en'
-                due_date = datetime.strptime(bill.due_date, '%Y-%m-%d').date()
+                email = bill.user.email if bill.user_id and bill.user else bill.user_email
+                lang = bill.user.lang if bill.user_id and bill.user else session.get('lang', 'en')
                 if bill.send_email and email:
-                    reminder_window = today + timedelta(days=bill.reminder_days)
+                    reminder_window = today + timedelta(days=bill.reminder_days or 7)
                     if (bill.status in ['pending', 'overdue'] or 
-                        (today <= due_date <= reminder_window)):
+                        (today <= bill.due_date <= reminder_window)):
                         if email not in user_bills:
                             user_bills[email] = {
-                                'first_name': bill.user.first_name if bill.user else 'User',
+                                'first_name': bill.user.first_name if bill.user_id and bill.user else bill.first_name or 'User',
                                 'bills': [],
                                 'lang': lang
                             }
                         user_bills[email]['bills'].append({
                             'bill_name': bill.bill_name,
                             'amount': bill.amount,
-                            'due_date': bill.due_date,
+                            'due_date': bill.due_date.strftime('%Y-%m-%d'),
                             'category': trans(f"bill_category_{bill.category}", lang=lang),
                             'status': trans(f"bill_status_{bill.status}", lang=lang)
                         })
@@ -64,7 +59,7 @@ def send_bill_reminders():
                         logger=current_app.logger,
                         to_email=email,
                         subject=subject,
-                        template_key="bill_reminder",
+                        template_name=config["template"],
                         data={
                             'first_name': data['first_name'],
                             'bills': data['bills'],
@@ -81,29 +76,32 @@ def send_bill_reminders():
 
 def init_scheduler(app):
     """Initialize the background scheduler."""
-    jobstores = {
-        'default': SQLAlchemyJobStore(url=app.config['SQLALCHEMY_DATABASE_URI'])
-    }
-    scheduler = BackgroundScheduler(jobstores=jobstores)
-    scheduler.add_job(
-        func=send_bill_reminders,
-        trigger='interval',
-        days=1,
-        id='bill_reminders',
-        name='Send bill reminders daily',
-        replace_existing=True
-    )
-    scheduler.add_job(
-        func=update_overdue_status,
-        trigger='interval',
-        days=1,
-        id='overdue_status',
-        name='Update overdue bill statuses daily',
-        replace_existing=True
-    )
-    scheduler.start()
-    app.config['SCHEDULER'] = scheduler
-    app.logger.info("Bill reminder and overdue status scheduler started")
-    import atexit
-    atexit.register(lambda: scheduler.shutdown())
-    return scheduler
+    try:
+        jobstores = {
+            'default': SQLAlchemyJobStore(url=app.config['SQLALCHEMY_DATABASE_URI'])
+        }
+        scheduler = BackgroundScheduler(jobstores=jobstores)
+        scheduler.add_job(
+            func=send_bill_reminders,
+            trigger='interval',
+            days=1,
+            id='bill_reminders',
+            name='Send bill reminders daily',
+            replace_existing=True
+        )
+        scheduler.add_job(
+            func=update_overdue_status,
+            trigger='interval',
+            days=1,
+            id='overdue_status',
+            name='Update overdue bill statuses daily',
+            replace_existing=True
+        )
+        scheduler.start()
+        app.config['SCHEDULER'] = scheduler
+        app.logger.info("Bill reminder and overdue status scheduler started successfully")
+        atexit.register(lambda: scheduler.shutdown())
+        return scheduler
+    except Exception as e:
+        app.logger.error(f"Failed to initialize scheduler: {str(e)}")
+        raise
