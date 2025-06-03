@@ -12,6 +12,7 @@ LEARNING_HUB_TRANSLATIONS = {
         'learning_hub_lesson_marked': 'Lesson marked as completed!',
         'learning_hub_lesson_done': 'You have finished all lessons in this course.',
         'learning_hub_courses_subtitle': 'Explore our range of financial literacy courses.',
+        'learning_hub_error_loading': 'Error loading content. Please try again.',
         'learning_hub_quiz_not_found': 'Quiz not found.',
         'learning_hub_quiz_completed': 'Quiz completed!',
         'learning_hub_success_language_updated':'Language chnaged successfully!',
@@ -25,7 +26,7 @@ LEARNING_HUB_TRANSLATIONS = {
         'learning_hub_lesson_income_sources_title': 'Sources of Income',
         'learning_hub_lesson_income_sources_content': 'Learn about different sources where you can earn money; explore online platforms like freelancing sites, investment opportunities, and side hustles such as gig work or online businesses.',
         'learning_hub_lesson_net_income_title': 'What is Net Income?',
-        'learning_hub_lesson_net_income_content': 'Understand what net income means after expenses; et income involves subtracting all expenses, including taxes and operational costs, from total revenue to determine actual profit.',
+        'learning_hub_lesson_net_income_content': 'Understand what net income means after expenses; Net income involves subtracting all expenses, including taxes and operational costs, from total revenue to determine actual profit.',
         'learning_hub_module_quiz_title': 'Quiz Module',
         'learning_hub_lesson_quiz_intro_title': 'Quiz Introduction',
         'learning_hub_lesson_quiz_intro_content': 'Instructions for taking the financial quiz; For the financial quiz, read instructions, tooltips, placeholders, and examples carefully, manage time effectively, and review basic financial concepts beforehand.',
@@ -190,6 +191,7 @@ LEARNING_HUB_TRANSLATIONS = {
         'learning_hub_continue': 'Ci gaba',
         'learning_hub_browse_courses': 'Bincika Kwasuna',
         'learning_hub_set_profile': 'Shigar da Bayananku',
+        'learning_hub_error_loading': 'Kuskure yayin loda abun ciki. Don Allah a sake gwadawa.',
 
         # Additional Course-Related Keys
         'learning_hub_budgeting': 'Kwas ɗin kasafin kuɗi da ake samu don koyo.',
