@@ -2,21 +2,16 @@ from flask import Blueprint, request, session, redirect, url_for, render_templat
 from flask_wtf import FlaskForm
 from wtforms import StringField, FloatField, BooleanField, SubmitField
 from wtforms.validators import DataRequired, NumberRange, Optional, Email, ValidationError
-from app import db, NetWorth  # Import SQLAlchemy db and NetWorth model from app
+from flask_login import current_user
+from app import db, trans
+from models import NetWorth
 from mailersend_email import send_email, EMAIL_CONFIG
 from datetime import datetime
 import uuid
 import json
 
-try:
-    from app import trans
-except ImportError:
-    def trans(key, lang=None):
-        return key
-
 net_worth_bp = Blueprint('net_worth', __name__, url_prefix='/net_worth')
 
-# Form Definitions (Unchanged)
 class Step1Form(FlaskForm):
     first_name = StringField()
     email = StringField()
@@ -109,15 +104,19 @@ class Step3Form(FlaskForm):
                 current_app.logger.error(f"Invalid loans input: {field.data}", extra={'session_id': session.get('sid', 'unknown')})
                 raise ValidationError(trans('net_worth_loans_invalid', lang=session.get('lang', 'en')))
 
-# Route Handlers
 @net_worth_bp.route('/step1', methods=['GET', 'POST'])
 def step1():
     """Handle net worth step 1 form (personal info)."""
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
         session.permanent = True
+        session.modified = True
     lang = session.get('lang', 'en')
-    form = Step1Form()
+    form_data = session.get('networth_step1_data', {})
+    if current_user.is_authenticated:
+        form_data['email'] = form_data.get('email', current_user.email)
+        form_data['first_name'] = form_data.get('first_name', current_user.username)
+    form = Step1Form(data=form_data)
     try:
         if request.method == 'POST' and form.validate_on_submit():
             form_data = form.data.copy()
@@ -127,7 +126,7 @@ def step1():
             return redirect(url_for('net_worth.step2'))
         return render_template('net_worth_step1.html', form=form, trans=trans, lang=lang)
     except Exception as e:
-        current_app.logger.error(f"Error in net_worth.step1: {str(e)}", extra={'session_id': session.get('sid')})
+        current_app.logger.error(f"Error in net_worth.step1: {str(e)}", extra={'session_id': session.get('sid', 'unknown')})
         flash(trans("net_worth_error_personal_info", lang=lang), "danger")
         return render_template('net_worth_step1.html', form=form, trans=trans, lang=lang), 500
 
@@ -137,7 +136,11 @@ def step2():
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
         session.permanent = True
+        session.modified = True
     lang = session.get('lang', 'en')
+    if 'networth_step1_data' not in session:
+        flash(trans('net_worth_missing_step1', lang=lang, default='Please complete step 1 first.'), 'danger')
+        return redirect(url_for('net_worth.step1'))
     form = Step2Form()
     try:
         if request.method == 'POST' and form.validate_on_submit():
@@ -153,17 +156,21 @@ def step2():
             return redirect(url_for('net_worth.step3'))
         return render_template('net_worth_step2.html', form=form, trans=trans, lang=lang)
     except Exception as e:
-        current_app.logger.error(f"Error in net_worth.step2: {str(e)}", extra={'session_id': session.get('sid')})
+        current_app.logger.error(f"Error in net_worth.step2: {str(e)}", extra={'session_id': session.get('sid', 'unknown')})
         flash(trans("net_worth_error_assets", lang=lang), "danger")
         return render_template('net_worth_step2.html', form=form, trans=trans, lang=lang), 500
 
 @net_worth_bp.route('/step3', methods=['GET', 'POST'])
 def step3():
-    """Calculate net worth and persist to SQLite."""
+    """Calculate net worth and persist to database."""
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
         session.permanent = True
+        session.modified = True
     lang = session.get('lang', 'en')
+    if 'networth_step2_data' not in session:
+        flash(trans('net_worth_missing_step2', lang=lang, default='Please complete step 2 first.'), 'danger')
+        return redirect(url_for('net_worth.step1'))
     form = Step3Form()
     try:
         if request.method == 'POST' and form.validate_on_submit():
@@ -194,9 +201,10 @@ def step3():
             if property >= total_assets * 0.5:
                 badges.append('net_worth_badge_property_mogul')
 
-            # Create and persist NetWorth record to SQLite
+            # Create and persist NetWorth record
             net_worth_record = NetWorth(
                 id=str(uuid.uuid4()),
+                user_id=current_user.id if current_user.is_authenticated else None,
                 session_id=session['sid'],
                 first_name=step1_data.get('first_name', ''),
                 email=step1_data.get('email', ''),
@@ -209,7 +217,7 @@ def step3():
                 total_liabilities=total_liabilities,
                 net_worth=net_worth,
                 badges=json.dumps(badges),
-                timestamp=datetime.utcnow()
+                created_at=datetime.utcnow()
             )
             db.session.add(net_worth_record)
             db.session.commit()
@@ -240,7 +248,7 @@ def step3():
                             "total_liabilities": net_worth_record.total_liabilities,
                             "net_worth": net_worth_record.net_worth,
                             "badges": json.loads(net_worth_record.badges),
-                            "created_at": net_worth_record.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+                            "created_at": net_worth_record.created_at.strftime('%Y-%m-%d %H:%M:%S'),
                             "cta_url": url_for('net_worth.dashboard', _external=True),
                             "unsubscribe_url": url_for('net_worth.unsubscribe', email=email, _external=True)
                         },
@@ -254,89 +262,35 @@ def step3():
             return redirect(url_for('net_worth.dashboard'))
         return render_template('net_worth_step3.html', form=form, trans=trans, lang=lang)
     except Exception as e:
-        current_app.logger.error(f"Error in net_worth.step3: {str(e)}", extra={'session_id': session.get('sid')})
+        current_app.logger.error(f"Error in net_worth.step3: {str(e)}", extra={'session_id': session.get('sid', 'unknown')})
         flash(trans("net_worth_calculation_error", lang=lang), "danger")
         return render_template('net_worth_step3.html', form=form, trans=trans, lang=lang), 500
 
 @net_worth_bp.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
-    """Display net worth dashboard using SQLite data."""
+    """Display net worth dashboard using database data."""
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
         session.permanent = True
+        session.modified = True
     lang = session.get('lang', 'en')
 
     try:
-        # Fetch records by session ID
-        user_records = NetWorth.query.filter_by(session_id=session['sid']).order_by(NetWorth.timestamp.desc()).all()
-        user_data = [
-            {
-                "id": record.id,
-                "data": {
-                    "first_name": record.first_name,
-                    "email": record.email,
-                    "send_email": record.send_email,
-                    "cash_savings": record.cash_savings,
-                    "investments": record.investments,
-                    "property": record.property,
-                    "loans": record.loans,
-                    "total_assets": record.total_assets,
-                    "total_liabilities": record.total_liabilities,
-                    "net_worth": record.net_worth,
-                    "badges": json.loads(record.badges) if record.badges else [],
-                    "created_at": record.timestamp.strftime('%Y-%m-%d %H:%M:%S')
-                }
-            } for record in user_records
-        ]
+        # Fetch records by user_id or session_id
+        filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
+        user_records = NetWorth.query.filter_by(**filter_kwargs).order_by(NetWorth.created_at.desc()).all()
+        user_data = [(record.id, record.to_dict()) for record in user_records]
 
-        # Fallback to email if no records found for session
-        if not user_data and 'networth_step1_data' in session:
-            email = session['networth_step1_data'].get('email')
-            if email:
-                user_records = NetWorth.query.filter_by(email=email).order_by(NetWorth.timestamp.desc()).all()
-                user_data = [
-                    {
-                        "id": record.id,
-                        "data": {
-                            "first_name": record.first_name,
-                            "email": record.email,
-                            "send_email": record.send_email,
-                            "cash_savings": record.cash_savings,
-                            "investments": record.investments,
-                            "property": record.property,
-                            "loans": record.loans,
-                            "total_assets": record.total_assets,
-                            "total_liabilities": record.total_liabilities,
-                            "net_worth": record.net_worth,
-                            "badges": json.loads(record.badges) if record.badges else [],
-                            "created_at": record.timestamp.strftime('%Y-%m-%d %H:%M:%S')
-                        }
-                    } for record in user_records
-                ]
+        # Fallback to email if no records found for authenticated user
+        if not user_data and current_user.is_authenticated and current_user.email:
+            user_records = NetWorth.query.filter_by(email=current_user.email).order_by(NetWorth.created_at.desc()).all()
+            user_data = [(record.id, record.to_dict()) for record in user_records]
 
         # Fallback to record ID
         if not user_data and 'networth_record_id' in session:
             record = NetWorth.query.get(session['networth_record_id'])
             if record:
-                user_data = [
-                    {
-                        "id": record.id,
-                        "data": {
-                            "first_name": record.first_name,
-                            "email": record.email,
-                            "send_email": record.send_email,
-                            "cash_savings": record.cash_savings,
-                            "investments": record.investments,
-                            "property": record.property,
-                            "loans": record.loans,
-                            "total_assets": record.total_assets,
-                            "total_liabilities": record.total_liabilities,
-                            "net_worth": record.net_worth,
-                            "badges": json.loads(record.badges) if record.badges else [],
-                            "created_at": record.timestamp.strftime('%Y-%m-%d %H:%M:%S')
-                        }
-                    }
-                ]
+                user_data = [(record.id, record.to_dict())]
 
         # Reconstruct from session data if no records found
         if not user_data:
@@ -366,25 +320,28 @@ def dashboard():
                     badges.append('net_worth_badge_property_mogul')
 
                 latest_record = {
-                    "first_name": step1_data.get('first_name', ''),
-                    "email": step1_data.get('email', ''),
-                    "send_email": step1_data.get('send_email', False),
-                    "cash_savings": cash_savings,
-                    "investments": investments,
-                    "property": property,
-                    "loans": loans,
-                    "total_assets": total_assets,
-                    "total_liabilities": total_liabilities,
-                    "net_worth": net_worth,
-                    "badges": badges,
-                    "created_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    'id': session['sid'],
+                    'user_id': current_user.id if current_user.is_authenticated else None,
+                    'session_id': session['sid'],
+                    'created_at': datetime.utcnow().isoformat() + "Z",
+                    'first_name': step1_data.get('first_name', ''),
+                    'email': step1_data.get('email', ''),
+                    'send_email': step1_data.get('send_email', False),
+                    'cash_savings': cash_savings,
+                    'investments': investments,
+                    'property': property,
+                    'loans': loans,
+                    'total_assets': total_assets,
+                    'total_liabilities': total_liabilities,
+                    'net_worth': net_worth,
+                    'badges': badges
                 }
-                user_data = [{"id": session['sid'], "data": latest_record}]
+                user_data = [(session['sid'], latest_record)]
         else:
-            latest_record = user_data[-1]["data"] if user_data else {}
+            latest_record = user_data[-1][1] if user_data else {}
 
         # Process records for display
-        records = [(record["id"], record["data"]) for record in user_data]
+        records = user_data
         insights = []
         tips = [
             trans("net_worth_tip_track_ajo", lang=lang),
@@ -440,10 +397,11 @@ def dashboard():
 
 @net_worth_bp.route('/unsubscribe/<email>')
 def unsubscribe(email):
-    """Unsubscribe user from net worth emails using SQLite."""
+    """Unsubscribe user from net worth emails using database."""
     lang = session.get('lang', 'en')
     try:
-        records = NetWorth.query.filter_by(email=email).all()
+        filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
+        records = NetWorth.query.filter_by(email=email, **filter_kwargs).all()
         updated = False
         for record in records:
             if record.send_email:
