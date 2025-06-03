@@ -6,6 +6,7 @@ from json_store import JsonStorage
 from mailersend_email import send_email, EMAIL_CONFIG
 from datetime import datetime
 import uuid
+import os
 
 try:
     from app import trans
@@ -451,13 +452,26 @@ def debug_storage():
         session_records = session.get('networth_cache', []) if has_request_context() else []
         file_exists = os.path.exists(storage.filename)
         backup_exists = os.path.exists(f"{storage.filename}.backup")
+        file_size = os.path.getsize(storage.filename) if file_exists else 0
+        backup_size = os.path.getsize(f"{storage.filename}.backup") if backup_exists else 0
+        file_mtime = datetime.fromtimestamp(os.path.getmtime(storage.filename)).isoformat() if file_exists else None
+        backup_mtime = datetime.fromtimestamp(os.path.getmtime(f"{storage.filename}.backup")).isoformat() if backup_exists else None
+        session_config = {
+            "permanent_session_lifetime": str(current_app.permanent_session_lifetime),
+            "session_type": current_app.config.get('SESSION_TYPE', 'filesystem')
+        }
         response = {
             "file_records": file_records,
             "session_records": session_records,
             "file_exists": file_exists,
             "backup_exists": backup_exists,
+            "file_size_bytes": file_size,
+            "backup_size_bytes": backup_size,
+            "file_last_modified": file_mtime,
+            "backup_last_modified": backup_mtime,
             "file_path": storage.filename,
-            "backup_path": f"{storage.filename}.backup"
+            "backup_path": f"{storage.filename}.backup",
+            "session_config": session_config
         }
         current_app.logger.info(f"Debug storage: {response}")
         return jsonify(response)
