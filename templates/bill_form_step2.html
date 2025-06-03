@@ -28,8 +28,8 @@
                     <select name="frequency" id="frequency" class="form-control" required
                             data-bs-toggle="tooltip" title="{{ trans('bill_frequency_tooltip', lang=lang) | default('Select how often this bill or expense occurs') }}"
                             aria-describedby="frequencyTooltip">
-                        {% for value, label in form.frequency.choices %}
-                            <option value="{{ value }}" {% if form.frequency.data == value %}selected{% endif %}>{{ label }}</option>
+                        {% for value, label in form.frequency.choices if value != '' %}
+                            <option value="{{ value }}" {% if form.frequency.data == value or (not form.frequency.data and value == 'monthly') %}selected{% endif %}>{{ label }}</option>
                         {% endfor %}
                     </select>
                     {% if form.frequency.errors %}
@@ -47,8 +47,8 @@
                     <select name="category" id="category" class="form-control" required
                             data-bs-toggle="tooltip" title="{{ trans('bill_category_tooltip', lang=lang) | default('Select a category, e.g., Data/Internet, Ajo/Esusu/Adashe') }}"
                             aria-describedby="categoryTooltip">
-                        {% for value, label in form.category.choices %}
-                            <option value="{{ value }}" {% if form.category.data == value %}selected{% endif %}>{{ label }}</option>
+                        {% for value, label in form.category.choices if value != '' %}
+                            <option value="{{ value }}" {% if form.category.data == value or (not form.category.data and value == 'utilities') %}selected{% endif %}>{{ label }}</option>
                         {% endfor %}
                     </select>
                     {% if form.category.errors %}
@@ -66,8 +66,8 @@
                     <select name="status" id="status" class="form-control" required
                             data-bs-toggle="tooltip" title="{{ trans('bill_status_tooltip', lang=lang) | default('Select the current status of the bill') }}"
                             aria-describedby="statusTooltip">
-                        {% for value, label in form.status.choices %}
-                            <option value="{{ value }}" {% if form.status.data == value %}selected{% endif %}>{{ label }}</option>
+                        {% for value, label in form.status.choices if value != '' %}
+                            <option value="{{ value }}" {% if form.status.data == value or (not form.status.data and value == 'pending') %}selected{% endif %}>{{ label }}</option>
                         {% endfor %}
                     </select>
                     {% if form.status.errors %}
@@ -129,7 +129,7 @@
         sendEmail.addEventListener('change', function() {
             reminderDaysContainer.style.display = this.checked ? 'block' : 'none';
             if (!this.checked) {
-                reminderDays.value = ''; // Clear reminder_days when unchecked
+                reminderDays.value = '';
                 reminderDays.classList.remove('is-invalid');
             }
         });
@@ -137,29 +137,39 @@
         // Form submission validation
         form.addEventListener('submit', function(e) {
             let isValid = true;
+            console.log('Form submission attempted', {
+                frequency: frequency.value,
+                category: category.value,
+                status: status.value,
+                sendEmail: sendEmail.checked,
+                reminderDays: reminderDays.value
+            });
 
             // Validate frequency
-            if (!frequency.value || frequency.value === '') {
+            if (!frequency.value) {
                 e.preventDefault();
                 frequency.classList.add('is-invalid');
+                console.error('Validation failed: frequency is empty');
                 isValid = false;
             } else {
                 frequency.classList.remove('is-invalid');
             }
 
             // Validate category
-            if (!category.value || category.value === '') {
+            if (!category.value) {
                 e.preventDefault();
                 category.classList.add('is-invalid');
+                console.error('Validation failed: category is empty');
                 isValid = false;
             } else {
                 category.classList.remove('is-invalid');
             }
 
             // Validate status
-            if (!status.value || status.value === '') {
+            if (!status.value) {
                 e.preventDefault();
                 status.classList.add('is-invalid');
+                console.error('Validation failed: status is empty');
                 isValid = false;
             } else {
                 status.classList.remove('is-invalid');
@@ -169,6 +179,7 @@
             if (sendEmail.checked && (!reminderDays.value || reminderDays.value < 1 || reminderDays.value > 30)) {
                 e.preventDefault();
                 reminderDays.classList.add('is-invalid');
+                console.error('Validation failed: invalid reminder_days');
                 isValid = false;
             } else {
                 reminderDays.classList.remove('is-invalid');
@@ -176,6 +187,7 @@
 
             if (!isValid) {
                 e.preventDefault();
+                console.error('Form submission prevented due to validation errors');
                 return;
             }
 
@@ -193,7 +205,7 @@
         // Remove is-invalid class on input change
         [frequency, category, status, reminderDays].forEach(field => {
             field.addEventListener('change', function() {
-                if (this.value && this.value !== '') {
+                if (this.value) {
                     this.classList.remove('is-invalid');
                 }
             });
