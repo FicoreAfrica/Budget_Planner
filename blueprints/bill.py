@@ -141,74 +141,89 @@ def form_step2():
     lang = session.get('lang', 'en')
     form = BillFormStep2()
     try:
-        if request.method == 'POST' and form.validate_on_submit():
-            if form.send_email.data and not form.reminder_days.data:
-                form.reminder_days.errors.append(trans('bill_reminder_days_required', lang))
-                return render_template('bill_form_step2.html', form=form, trans=trans, lang=lang)
-            bill_data = session.get('bill_step1', {})
-            if not bill_data:
-                flash(trans('bill_session_expired', lang), 'danger')
-                current_app.logger.error("Session data missing for bill_step1")
-                return redirect(url_for('bill.form_step1'))
+        if request.method == 'POST':
+            current_app.logger.info(f"Form data received: {request.form}")
+            if form.validate_on_submit():
+                if form.send_email.data and not form.reminder_days.data:
+                    form.reminder_days.errors.append(trans('bill_reminder_days_required', lang))
+                    current_app.logger.error("Validation failed: reminder_days required when send_email is checked")
+                    return render_template('bill_form_step2.html', form=form, trans=trans, lang=lang)
+                bill_data = session.get('bill_step1', {})
+                if not bill_data:
+                    flash(trans('bill_session_expired', lang), 'danger')
+                    current_app.logger.error("Session data missing for bill_step1")
+                    return redirect(url_for('bill.form_step1'))
 
-            due_date = datetime.strptime(bill_data['due_date'], '%Y-%m-%d').date()
-            status = form.status.data
-            if status not in ['paid', 'pending'] and due_date < date.today():
-                status = 'overdue'
+                due_date = datetime.strptime(bill_data['due_date'], '%Y-%m-%d').date()
+                status = form.status.data
+                if status not in ['paid', 'pending'] and due_date < date.today():
+                    status = 'overdue'
 
-            record = {
-                'data': {
-                    'first_name': bill_data['first_name'],
-                    'bill_name': bill_data['bill_name'],
-                    'amount': bill_data['amount'],
-                    'due_date': bill_data['due_date'],
-                    'frequency': form.frequency.data,
-                    'category': form.category.data,
-                    'status': status,
-                    'send_email': form.send_email.data,
-                    'reminder_days': form.reminder_days.data if form.send_email.data else None
+                record = {
+                    'data': {
+                        'first_name': bill_data['first_name'],
+                        'bill_name': bill_data['bill_name'],
+                        'amount': bill_data['amount'],
+                        'due_date': bill_data['due_date'],
+                        'frequency': form.frequency.data,
+                        'category': form.category.data,
+                        'status': status,
+                        'send_email': form.send_email.data,
+                        'reminder_days': form.reminder_days.data if form.send_email.data else None
+                    }
                 }
-            }
-            bill_storage = current_app.config['STORAGE_MANAGERS']['bills']
-            bill_storage.append(record, user_email=bill_data['email'], session_id=session['sid'], lang=lang)
+                bill_storage = current_app.config['STORAGE_MANAGERS']['bills']
+                bill_storage.append(record, user_email=bill_data['email'], session_id=session['sid'], lang=lang)
+                current_app.logger.info(f"Bill saved successfully for {bill_data['email']}")
 
-            if form.send_email.data and bill_data['email']:
-                try:
-                    config = EMAIL_CONFIG['bill_reminder']
-                    subject = trans(config['subject_key'], lang=lang)
-                    template = config['template']
-                    send_email(
-                        app=current_app,
-                        logger=current_app.logger,
-                        to_email=bill_data['email'],
-                        subject=subject,
-                        template_name=template,
-                        data={
-                            'first_name': bill_data['first_name'],
-                            'bills': [{
-                                'bill_name': bill_data['bill_name'],
-                                'amount': bill_data['amount'],
-                                'due_date': bill_data['due_date'],
-                                'category': trans(f'bill_category_{form.category.data}', lang=lang),
-                                'status': trans(f'bill_status_{status}', lang=lang)
-                            }],
-                            'cta_url': url_for('bill.dashboard', _external=True),
-                            'unsubscribe_url': url_for('bill.unsubscribe', email=bill_data['email'], _external=True)
-                        },
-                        lang=lang
-                    )
-                except Exception as e:
-                    current_app.logger.error(f"Failed to send email: {str(e)}")
-                    flash(trans('email_send_failed', lang=lang), 'warning')
+                if form.send_email.data and bill_data['email']:
+                    try:
+                        config = EMAIL_CONFIG['bill_reminder']
+                        subject = trans(config['subject_key'], lang=lang)
+                        template = config['template']
+                        send_email(
+                            app=current_app,
+                            logger=current_app.logger,
+                            to_email=bill_data['email'],
+                            subject=subject,
+                            template_name=template,
+                            data={
+                                'first_name': bill_data['first_name'],
+                                'bills': [{
+                                    'bill_name': bill_data['bill_name'],
+                                    'amount': bill_data['amount'],
+                                    'due_date': bill_data['due_date'],
+                                    'category': trans(f'bill_category_{form.category.data}', lang=lang),
+                                    'status': trans(f'bill_status_{status}', lang=lang)
+                                }],
+                                'cta_url': url_for('bill.dashboard', _external=True),
+                                'unsubscribe_url': url_for('bill.unsubscribe', email=bill_data['email'], _external=True)
+                            },
+                            lang=lang
+                        )
+                        current_app.logger.info(f"Email sent to {bill_data['email']}")
+                    except Exception as e:
+                        current_app.logger.error(f"Failed to send email: {str(e)}")
+                        flash(trans('email_send_failed', lang=lang), 'warning')
 
-            flash(trans('bill_bill_added_dynamic_dashboard', lang=lang).format(
-                bill_name=bill_data['bill_name'],
-                dashboard_url=url_for('bill.dashboard')
-            ), 'success')
-            session.pop('bill_step1', None)
-            if request.form.get('action') == 'save_and_continue':
-                return redirect(url_for('bill.form_step1'))
-            return redirect(url_for('bill.dashboard'))
+                flash(trans('bill_bill_added_dynamic_dashboard', lang=lang).format(
+                    bill_name=bill_data['bill_name'],
+                    dashboard_url=url_for('bill.dashboard')
+                ), 'success')
+                session.pop('bill_step1', None)
+                action = request.form.get('action')
+                current_app.logger.info(f"Form action: {action}")
+                if action == 'save_and_continue':
+                    current_app.logger.info("Redirecting to bill.form_step1")
+                    return redirect(url_for('bill.form_step1'))
+                current_app.logger.info("Redirecting to bill.dashboard")
+                return redirect(url_for('bill.dashboard'))
+            else:
+                current_app.logger.error(f"Form validation failed: {form.errors}")
+                for field, errors in form.errors.items():
+                    for error in errors:
+                        flash(f"{field}: {error}", 'danger')
+                return render_template('bill_form_step2.html', form=form, trans=trans, lang=lang)
         return render_template('bill_form_step2.html', form=form, trans=trans, lang=lang)
     except Exception as e:
         current_app.logger.exception(f"Error in bill.form_step2: {str(e)}")
