@@ -6,7 +6,8 @@ from flask_login import current_user
 from mailersend_email import send_email, EMAIL_CONFIG
 from datetime import datetime, date, timedelta
 import uuid
-from app import db, trans
+from mailersend_email import trans
+from extensions import db
 from models import Bill
 
 bill_bp = Blueprint('bill', __name__, url_prefix='/bill')
