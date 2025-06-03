@@ -1,64 +1,18 @@
-import logging
 import os
 import sys
-from flask import Flask, jsonify, render_template, request, session, redirect, url_for, flash, send_from_directory, has_request_context, g, current_app, make_response
-from flask_session import Session
-from flask_wtf.csrf import CSRFProtect, CSRFError, generate_csrf
-from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager, current_user
-from translations import trans
-from blueprints.financial_health import financial_health_bp
-from blueprints.budget import budget_bp
-from blueprints.quiz import quiz_bp
-from blueprints.bill import bill_bp
-from blueprints.net_worth import net_worth_bp
-from blueprints.emergency_fund import emergency_fund_bp
-from blueprints.learning_hub import learning_hub_bp
-from blueprints.auth import auth_bp
-from scheduler_setup import init_scheduler
-import json
+import logging
 import uuid
 from datetime import datetime, timedelta
-from models import Course, FinancialHealth, Budget, Bill, NetWorth, EmergencyFund, LearningProgress, QuizResult
+from flask import Flask, jsonify, render_template, request, session, redirect, url_for, flash, send_from_directory, has_request_context, g, current_app, make_response
 from dotenv import load_dotenv
+from extensions import db, login_manager, session as flask_session, csrf
+from mailersend_email import trans
+from scheduler_setup import init_scheduler
+from models import Course, FinancialHealth, Budget, Bill, NetWorth, EmergencyFund, LearningProgress, QuizResult, User
+import json
+
+# Load environment variables
 load_dotenv()
-
-# Initialize SQLAlchemy
-db = SQLAlchemy()
-
-# Initialize Flask-Login
-login_manager = LoginManager()
-
-# Constants
-SAMPLE_COURSES = [
-    {
-        'id': 'budgeting_learning_101',
-        'title_key': 'learning_hub_course_budgeting101_title',
-        'title_en': 'Budgeting Learning 101',
-        'title_ha': 'Tsarin Kudi 101',
-        'description_en': 'Learn the basics of budgeting.',
-        'description_ha': 'Koyon asalin tsarin kudi.',
-        'is_premium': False
-    },
-    {
-        'id': 'financial_quiz',
-        'title_key': 'learning_hub_course_financial_quiz_title',
-        'title_en': 'Financial Quiz',
-        'title_ha': 'Jarabawar Kudi',
-        'description_en': 'Test your financial knowledge.',
-        'description_ha': 'Gwada ilimin ku na kudi.',
-        'is_premium': False
-    },
-    {
-        'id': 'savings_basics',
-        'title_key': 'learning_hub_course_savings_basics_title',
-        'title_en': 'Savings Basics',
-        'title_ha': 'Asalin Tattara Kudi',
-        'description_en': 'Understand how to save effectively.',
-        'description_ha': 'Fahimci yadda ake tattara kudi yadda ya kamata.',
-        'is_premium': False
-    }
-]
 
 # Set up logging
 root_logger = logging.getLogger('ficore_app')
@@ -123,6 +77,37 @@ def initialize_courses_data(app):
             logger.info("Initialized courses in database")
         app.config['COURSES'] = [course.to_dict() for course in Course.query.all()]
 
+# Constants
+SAMPLE_COURSES = [
+    {
+        'id': 'budgeting_learning_101',
+        'title_key': 'learning_hub_course_budgeting101_title',
+        'title_en': 'Budgeting Learning 101',
+        'title_ha': 'Tsarin Kudi 101',
+        'description_en': 'Learn the basics of budgeting.',
+        'description_ha': 'Koyon asalin tsarin kudi.',
+        'is_premium': False
+    },
+    {
+        'id': 'financial_quiz',
+        'title_key': 'learning_hub_course_financial_quiz_title',
+        'title_en': 'Financial Quiz',
+        'title_ha': 'Jarabawar Kudi',
+        'description_en': 'Test your financial knowledge.',
+        'description_ha': 'Gwada ilimin ku na kudi.',
+        'is_premium': False
+    },
+    {
+        'id': 'savings_basics',
+        'title_key': 'learning_hub_course_savings_basics_title',
+        'title_en': 'Savings Basics',
+        'title_ha': 'Asalin Tattara Kudi',
+        'description_en': 'Understand how to save effectively.',
+        'description_ha': 'Fahimci yadda ake tattara kudi yadda ya kamata.',
+        'is_premium': False
+    }
+]
+
 def create_app():
     app = Flask(__name__, template_folder='templates')
     app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key-please-change-me')
@@ -133,8 +118,8 @@ def create_app():
     setup_logging(app)
     setup_session(app)
     app.config['BASE_URL'] = os.environ.get('BASE_URL', 'http://localhost:5000')
-    Session(app)
-    CSRFProtect(app)
+    flask_session.init_app(app)
+    csrf.init_app(app)
 
     # Configure SQLite database
     if os.environ.get('RENDER'):
@@ -154,7 +139,6 @@ def create_app():
 
     @login_manager.user_loader
     def load_user(user_id):
-        from models import User
         return User.query.get(int(user_id))
 
     # Initialize scheduler
@@ -175,6 +159,16 @@ def create_app():
         db.create_all()
         initialize_courses_data(app)
         logger.info("Database tables created and courses initialized")
+
+    # Register blueprints
+    from blueprints.financial_health import financial_health_bp
+    from blueprints.budget import budget_bp
+    from blueprints.quiz import quiz_bp
+    from blueprints.bill import bill_bp
+    from blueprints.net_worth import net_worth_bp
+    from blueprints.emergency_fund import emergency_fund_bp
+    from blueprints.learning_hub import learning_hub_bp
+    from blueprints.auth import auth_bp
 
     app.register_blueprint(financial_health_bp, template_folder='templates/financial_health')
     app.register_blueprint(budget_bp, template_folder='templates/budget')
