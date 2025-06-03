@@ -438,6 +438,12 @@ def create_app():
         logger.error(f"404 error: {str(error)}")
         return render_template('404.html', t=translate, lang=lang), 404
 
+    @app.route('/static/<path:filename>')
+    def static_files(filename):
+    response = send_from_directory('static', filename)
+    response.headers['Cache-Control'] = 'public, max-age=31536000'
+    return response
+
     logger.info("App creation completed")
     return app
 
