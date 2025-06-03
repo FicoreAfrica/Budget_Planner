@@ -14,12 +14,12 @@ from blueprints.bill import bill_bp
 from blueprints.net_worth import net_worth_bp
 from blueprints.emergency_fund import emergency_fund_bp
 from blueprints.learning_hub import learning_hub_bp
-from blueprints.auth import auth_bp  # Import auth blueprint
+from blueprints.auth import auth_bp
 from scheduler_setup import init_scheduler
 import json
 import uuid
 from datetime import datetime, timedelta
-from models import Course, FinancialHealth, Budget, Bill, NetWorth, EmergencyFund, LearningProgress, QuizResult  # Import models
+from models import Course, FinancialHealth, Budget, Bill, NetWorth, EmergencyFund, LearningProgress, QuizResult
 
 # Initialize SQLAlchemy
 db = SQLAlchemy()
@@ -97,20 +97,9 @@ def setup_logging(app):
 
 def setup_session(app):
     session_dir = os.environ.get('SESSION_DIR', '/tmp/sessions')
-    if os.environ.get('RENDER'):
-        session_dir = '/tmp/sessions'
     try:
-        if os.path.exists(session_dir):
-            if not os.path.isdir(session_dir):
-                logger.error(f"Session path {session_dir} is not a directory. Removing and recreating.")
-                os.remove(session_dir)
-                os.makedirs(session_dir)
-                logger.info(f"Created session directory at {session_dir}")
-            else:
-                logger.info(f"Session directory exists at {session_dir}")
-        else:
-            os.makedirs(session_dir)
-            logger.info(f"Created session directory at {session_dir}")
+        os.makedirs(session_dir, exist_ok=True)
+        logger.info(f"Session directory ensured at {session_dir}")
     except (PermissionError, OSError) as e:
         logger.error(f"Failed to create session directory {session_dir}: {str(e)}. Using in-memory sessions.")
         app.config['SESSION_TYPE'] = 'null'
@@ -134,10 +123,9 @@ def initialize_courses_data(app):
 
 def create_app():
     app = Flask(__name__)
-    app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'a_fallback-secret-key-for-dev-only-change-me')
-    if not os.environ.get('FLASK_SECRET_KEY') and not app.debug:
-        logger.critical("FLASK_SECRET_KEY must be set in production")
-        raise RuntimeError("FLASK_SECRET_KEY must be set in production")
+    app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key-please-change-me')
+    if not os.environ.get('FLASK_SECRET_KEY'):
+        logger.warning("FLASK_SECRET_KEY not set. Using fallback for development. Set it in production.")
 
     logger.info("Starting app creation")
     setup_logging(app)
@@ -148,8 +136,11 @@ def create_app():
 
     # Configure SQLite database
     if os.environ.get('RENDER'):
-        db_path = '/app/data/ficore.db'
+        db_dir = '/app/data'
+        os.makedirs(db_dir, exist_ok=True)
+        db_path = os.path.join(db_dir, 'ficore.db')
     else:
+        os.makedirs(app.instance_path, exist_ok=True)
         db_path = os.path.join(app.instance_path, 'ficore.db')
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -165,7 +156,11 @@ def create_app():
         return User.query.get(int(user_id))
 
     # Initialize scheduler
-    init_scheduler(app)
+    try:
+        init_scheduler(app)
+        logger.info("Scheduler initialized successfully")
+    except Exception as e:
+        logger.error(f"Failed to initialize scheduler: {str(e)}")
 
     def format_currency(value):
         try:
@@ -186,7 +181,7 @@ def create_app():
     app.register_blueprint(net_worth_bp)
     app.register_blueprint(emergency_fund_bp)
     app.register_blueprint(learning_hub_bp)
-    app.register_blueprint(auth_bp)  # Register auth blueprint
+    app.register_blueprint(auth_bp)
 
     def translate(key, lang='en', logger=logger, **kwargs):
         translation = trans(key, lang=lang, **kwargs)
@@ -243,7 +238,7 @@ def create_app():
             'WAITLIST_FORM_URL': os.environ.get('WAITLIST_FORM_URL', '#'),
             'CONSULTANCY_FORM_URL': os.environ.get('CONSULTANCY_FORM_URL', '#'),
             'current_lang': lang,
-            'current_user': current_user  # Inject current_user for templates
+            'current_user': current_user
         }
 
     @app.route('/')
@@ -303,34 +298,26 @@ def create_app():
         logger.info("Serving general dashboard")
         data = {}
         try:
-            # Filter by user_id if authenticated, else session_id
             filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
 
-            # Financial Health
             fh_records = FinancialHealth.query.filter_by(**filter_kwargs).order_by(FinancialHealth.created_at.desc()).all()
             data['financial_health'] = {'score': fh_records[0].score} if fh_records else {'score': None}
 
-            # Budget
             budget_records = Budget.query.filter_by(**filter_kwargs).order_by(Budget.created_at.desc()).all()
             data['budget'] = {'surplus_deficit': budget_records[0].surplus_deficit} if budget_records else {'surplus_deficit': None}
 
-            # Bills
             bills = Bill.query.filter_by(**filter_kwargs).all()
             data['bills'] = [bill.to_dict() for bill in bills]
 
-            # Net Worth
             nw_records = NetWorth.query.filter_by(**filter_kwargs).order_by(NetWorth.created_at.desc()).all()
             data['net_worth'] = nw_records[0].to_dict() if nw_records else {'net_worth': None}
 
-            # Emergency Fund
             ef_records = EmergencyFund.query.filter_by(**filter_kwargs).order_by(EmergencyFund.created_at.desc()).all()
             data['emergency_fund'] = {'savings_gap': ef_records[0].savings_gap} if ef_records else {'savings_gap': None}
 
-            # Learning Progress
             lp_records = LearningProgress.query.filter_by(**filter_kwargs).all()
             data['learning_progress'] = {lp.course_id: lp.to_dict() for lp in lp_records}
 
-            # Quiz Results
             quiz_records = QuizResult.query.filter_by(**filter_kwargs).order_by(QuizResult.created_at.desc()).all()
             data['quiz'] = {'personality': quiz_records[0].personality} if quiz_records else {'personality': None}
 
@@ -368,7 +355,7 @@ def create_app():
         status = {"status": "healthy"}
         try:
             with app.app_context():
-                db.session.execute(db.text("SELECT 1"))  # Test database connection
+                db.session.execute(db.text("SELECT 1"))
             if not os.path.exists('data/storage.log'):
                 status["status"] = "warning"
                 status["details"] = "Log file data/storage.log not found"
@@ -403,7 +390,7 @@ def create_app():
     @app.route('/static/<path:filename>')
     def static_files(filename):
         response = send_from_directory('static', filename)
-        response.headers['Cache-Control'] = 'public, max-age=31536000'
+        response.headers['Cache-Control'] = 'public, max-age=31536000' if not app.debug else 'no-cache'
         return response
 
     logger.info("App creation completed")
@@ -414,6 +401,3 @@ try:
 except Exception as e:
     logger.critical(f"Error creating app: {str(e)}", exc_info=True)
     raise
-
-if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
