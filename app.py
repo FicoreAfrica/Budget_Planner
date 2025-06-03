@@ -440,9 +440,9 @@ def create_app():
 
     @app.route('/static/<path:filename>')
     def static_files(filename):
-    response = send_from_directory('static', filename)
-    response.headers['Cache-Control'] = 'public, max-age=31536000'
-    return response
+        response = send_from_directory('static', filename)
+        response.headers['Cache-Control'] = 'public, max-age=31536000'
+        return response
 
     logger.info("App creation completed")
     return app
