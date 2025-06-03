@@ -2,11 +2,11 @@ from flask import Blueprint, request, session, redirect, url_for, render_templat
 from flask_wtf import FlaskForm
 from wtforms import StringField, FloatField, BooleanField, SubmitField
 from wtforms.validators import DataRequired, NumberRange, Optional, Email, ValidationError
-from json_store import JsonStorage
+from app import db, NetWorth  # Import SQLAlchemy db and NetWorth model from app
 from mailersend_email import send_email, EMAIL_CONFIG
 from datetime import datetime
 import uuid
-import os
+import json
 
 try:
     from app import trans
@@ -16,13 +16,7 @@ except ImportError:
 
 net_worth_bp = Blueprint('net_worth', __name__, url_prefix='/net_worth')
 
-def init_storage(app):
-    """Initialize storage with app context."""
-    with app.app_context():
-        storage = JsonStorage('/tmp/data/networth.json', logger_instance=current_app.logger)
-        current_app.logger.debug("Initialized JsonStorage for net_worth")
-        return storage
-
+# Form Definitions (Unchanged)
 class Step1Form(FlaskForm):
     first_name = StringField()
     email = StringField()
@@ -115,6 +109,7 @@ class Step3Form(FlaskForm):
                 current_app.logger.error(f"Invalid loans input: {field.data}", extra={'session_id': session.get('sid', 'unknown')})
                 raise ValidationError(trans('net_worth_loans_invalid', lang=session.get('lang', 'en')))
 
+# Route Handlers
 @net_worth_bp.route('/step1', methods=['GET', 'POST'])
 def step1():
     """Handle net worth step 1 form (personal info)."""
@@ -164,7 +159,7 @@ def step2():
 
 @net_worth_bp.route('/step3', methods=['GET', 'POST'])
 def step3():
-    """Calculate net worth."""
+    """Calculate net worth and persist to SQLite."""
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
         session.permanent = True
@@ -199,35 +194,28 @@ def step3():
             if property >= total_assets * 0.5:
                 badges.append('net_worth_badge_property_mogul')
 
-            record = {
-                "id": str(uuid.uuid4()),
-                "session_id": session['sid'],
-                "data": {
-                    "first_name": step1_data.get('first_name', ''),
-                    "email": step1_data.get('email', ''),
-                    "send_email": step1_data.get('send_email', False),
-                    "cash_savings": cash_savings,
-                    "investments": investments,
-                    "property": property,
-                    "loans": loans,
-                    "total_assets": total_assets,
-                    "total_liabilities": total_liabilities,
-                    "net_worth": net_worth,
-                    "badges": badges,
-                    "created_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                }
-            }
-
-            storage = current_app.config['STORAGE_MANAGERS']['net_worth']
-            try:
-                record_id = storage.append(record, user_email=step1_data.get('email'), session_id=session['sid'], lang=lang)
-                session['networth_record_id'] = record_id
-                session.modified = True
-                current_app.logger.info(f"Successfully saved record {record_id} for session {session['sid']}")
-            except Exception as storage_error:
-                current_app.logger.error(f"Failed to save net worth record: {str(storage_error)}", extra={'session_id': session['sid']})
-                flash(trans("net_worth_storage_error", lang=lang), "danger")
-                return render_template('net_worth_step3.html', form=form, trans=trans, lang=lang), 500
+            # Create and persist NetWorth record to SQLite
+            net_worth_record = NetWorth(
+                id=str(uuid.uuid4()),
+                session_id=session['sid'],
+                first_name=step1_data.get('first_name', ''),
+                email=step1_data.get('email', ''),
+                send_email=step1_data.get('send_email', False),
+                cash_savings=cash_savings,
+                investments=investments,
+                property=property,
+                loans=loans,
+                total_assets=total_assets,
+                total_liabilities=total_liabilities,
+                net_worth=net_worth,
+                badges=json.dumps(badges),
+                timestamp=datetime.utcnow()
+            )
+            db.session.add(net_worth_record)
+            db.session.commit()
+            session['networth_record_id'] = net_worth_record.id
+            session.modified = True
+            current_app.logger.info(f"Successfully saved record {net_worth_record.id} for session {session['sid']}")
 
             email = step1_data.get('email')
             send_email_flag = step1_data.get('send_email', False)
@@ -243,16 +231,16 @@ def step3():
                         subject=subject,
                         template_name=template,
                         data={
-                            "first_name": record["data"]["first_name"],
-                            "cash_savings": record["data"]["cash_savings"],
-                            "investments": record["data"]["investments"],
-                            "property": record["data"]["property"],
-                            "loans": record["data"]["loans"],
-                            "total_assets": record["data"]["total_assets"],
-                            "total_liabilities": record["data"]["total_liabilities"],
-                            "net_worth": record["data"]["net_worth"],
-                            "badges": record["data"]["badges"],
-                            "created_at": record["data"]["created_at"],
+                            "first_name": net_worth_record.first_name,
+                            "cash_savings": net_worth_record.cash_savings,
+                            "investments": net_worth_record.investments,
+                            "property": net_worth_record.property,
+                            "loans": net_worth_record.loans,
+                            "total_assets": net_worth_record.total_assets,
+                            "total_liabilities": net_worth_record.total_liabilities,
+                            "net_worth": net_worth_record.net_worth,
+                            "badges": json.loads(net_worth_record.badges),
+                            "created_at": net_worth_record.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
                             "cta_url": url_for('net_worth.dashboard', _external=True),
                             "unsubscribe_url": url_for('net_worth.unsubscribe', email=email, _external=True)
                         },
@@ -272,44 +260,83 @@ def step3():
 
 @net_worth_bp.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
-    """Display net worth dashboard."""
+    """Display net worth dashboard using SQLite data."""
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
         session.permanent = True
     lang = session.get('lang', 'en')
 
     try:
-        storage = current_app.config['STORAGE_MANAGERS']['net_worth']
-        user_data = []
-        latest_record = {}
+        # Fetch records by session ID
+        user_records = NetWorth.query.filter_by(session_id=session['sid']).order_by(NetWorth.timestamp.desc()).all()
+        user_data = [
+            {
+                "id": record.id,
+                "data": {
+                    "first_name": record.first_name,
+                    "email": record.email,
+                    "send_email": record.send_email,
+                    "cash_savings": record.cash_savings,
+                    "investments": record.investments,
+                    "property": record.property,
+                    "loans": record.loans,
+                    "total_assets": record.total_assets,
+                    "total_liabilities": record.total_liabilities,
+                    "net_worth": record.net_worth,
+                    "badges": json.loads(record.badges) if record.badges else [],
+                    "created_at": record.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+                }
+            } for record in user_records
+        ]
 
-        # Try session ID first
-        try:
-            user_data = storage.filter_by_session(session['sid'])
-            current_app.logger.info(f"Found {len(user_data)} records for session {session['sid']}")
-        except Exception as e:
-            current_app.logger.warning(f"filter_by_session failed: {str(e)}", extra={'session_id': session['sid']})
-
-        # Fallback to email if session ID fails
+        # Fallback to email if no records found for session
         if not user_data and 'networth_step1_data' in session:
             email = session['networth_step1_data'].get('email')
             if email:
-                try:
-                    all_records = storage.read_all()
-                    user_data = [r for r in all_records if r.get('user_email') == email]
-                    current_app.logger.info(f"Found {len(user_data)} records for email {email}")
-                except Exception as e:
-                    current_app.logger.warning(f"Email-based retrieval failed: {str(e)}", extra={'session_id': session['sid']})
+                user_records = NetWorth.query.filter_by(email=email).order_by(NetWorth.timestamp.desc()).all()
+                user_data = [
+                    {
+                        "id": record.id,
+                        "data": {
+                            "first_name": record.first_name,
+                            "email": record.email,
+                            "send_email": record.send_email,
+                            "cash_savings": record.cash_savings,
+                            "investments": record.investments,
+                            "property": record.property,
+                            "loans": record.loans,
+                            "total_assets": record.total_assets,
+                            "total_liabilities": record.total_liabilities,
+                            "net_worth": record.net_worth,
+                            "badges": json.loads(record.badges) if record.badges else [],
+                            "created_at": record.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+                        }
+                    } for record in user_records
+                ]
 
         # Fallback to record ID
         if not user_data and 'networth_record_id' in session:
-            try:
-                record = storage.get_by_id(session['networth_record_id'])
-                if record:
-                    user_data = [record]
-                current_app.logger.info(f"Found {len(user_data)} records by record ID {session['networth_record_id']}")
-            except Exception as e:
-                current_app.logger.warning(f"Read by record ID failed: {str(e)}", extra={'session_id': session['sid']})
+            record = NetWorth.query.get(session['networth_record_id'])
+            if record:
+                user_data = [
+                    {
+                        "id": record.id,
+                        "data": {
+                            "first_name": record.first_name,
+                            "email": record.email,
+                            "send_email": record.send_email,
+                            "cash_savings": record.cash_savings,
+                            "investments": record.investments,
+                            "property": record.property,
+                            "loans": record.loans,
+                            "total_assets": record.total_assets,
+                            "total_liabilities": record.total_liabilities,
+                            "net_worth": record.net_worth,
+                            "badges": json.loads(record.badges) if record.badges else [],
+                            "created_at": record.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+                        }
+                    }
+                ]
 
         # Reconstruct from session data if no records found
         if not user_data:
@@ -353,19 +380,11 @@ def dashboard():
                     "created_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 }
                 user_data = [{"id": session['sid'], "data": latest_record}]
-
-        # Process records
-        if user_data and not latest_record:
-            records = [(record["id"], record["data"]) for record in user_data]
-            latest_record = records[-1][1] if records else {}
-        elif latest_record:
-            records = [(session['sid'], latest_record)]
         else:
-            records = []
+            latest_record = user_data[-1]["data"] if user_data else {}
 
-        current_app.logger.info(f"records: {records}")
-        current_app.logger.info(f"latest_record: {latest_record}")
-
+        # Process records for display
+        records = [(record["id"], record["data"]) for record in user_data]
         insights = []
         tips = [
             trans("net_worth_tip_track_ajo", lang=lang),
@@ -384,7 +403,7 @@ def dashboard():
             if latest_record.get('net_worth', 0) <= 0:
                 insights.append(trans("net_worth_insight_negative_net_worth", lang=lang))
 
-        if latest_record:
+        if user_data:
             session.pop('networth_step1_data', None)
             session.pop('networth_step2_data', None)
             session.pop('networth_step3_data', None)
@@ -421,18 +440,17 @@ def dashboard():
 
 @net_worth_bp.route('/unsubscribe/<email>')
 def unsubscribe(email):
-    """Unsubscribe user from net worth emails."""
+    """Unsubscribe user from net worth emails using SQLite."""
+    lang = session.get('lang', 'en')
     try:
-        storage = current_app.config['STORAGE_MANAGERS']['net_worth']
-        user_data = storage.get_all()
+        records = NetWorth.query.filter_by(email=email).all()
         updated = False
-        for record in user_data:
-            if record.get('user_email') == email and record['data'].get('send_email', False):
-                record['data']['send_email'] = False
-                storage.update_by_id(record['id'], record['data'])
+        for record in records:
+            if record.send_email:
+                record.send_email = False
                 updated = True
-        lang = session.get('lang', 'en')
         if updated:
+            db.session.commit()
             flash(trans("net_worth_unsubscribed_success", lang=lang), "success")
         else:
             flash(trans("net_worth_unsubscribe_failed", lang=lang), "danger")
@@ -442,39 +460,3 @@ def unsubscribe(email):
         current_app.logger.exception(f"Error in net_worth.unsubscribe: {str(e)}")
         flash(trans("net_worth_unsubscribe_error", lang=lang), "danger")
         return redirect(url_for('index'))
-
-@net_worth_bp.route('/debug/storage', methods=['GET'])
-def debug_storage():
-    """Debug endpoint to inspect storage and session cache contents."""
-    storage = current_app.config['STORAGE_MANAGERS']['net_worth']
-    try:
-        file_records = storage.read_all()
-        session_records = session.get('networth_cache', []) if has_request_context() else []
-        file_exists = os.path.exists(storage.filename)
-        backup_exists = os.path.exists(f"{storage.filename}.backup")
-        file_size = os.path.getsize(storage.filename) if file_exists else 0
-        backup_size = os.path.getsize(f"{storage.filename}.backup") if backup_exists else 0
-        file_mtime = datetime.fromtimestamp(os.path.getmtime(storage.filename)).isoformat() if file_exists else None
-        backup_mtime = datetime.fromtimestamp(os.path.getmtime(f"{storage.filename}.backup")).isoformat() if backup_exists else None
-        session_config = {
-            "permanent_session_lifetime": str(current_app.permanent_session_lifetime),
-            "session_type": current_app.config.get('SESSION_TYPE', 'filesystem')
-        }
-        response = {
-            "file_records": file_records,
-            "session_records": session_records,
-            "file_exists": file_exists,
-            "backup_exists": backup_exists,
-            "file_size_bytes": file_size,
-            "backup_size_bytes": backup_size,
-            "file_last_modified": file_mtime,
-            "backup_last_modified": backup_mtime,
-            "file_path": storage.filename,
-            "backup_path": f"{storage.filename}.backup",
-            "session_config": session_config
-        }
-        current_app.logger.info(f"Debug storage: {response}")
-        return jsonify(response)
-    except Exception as e:
-        current_app.logger.error(f"Debug storage failed: {str(e)}")
-        return jsonify({"error": str(e)}), 500
