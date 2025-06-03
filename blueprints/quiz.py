@@ -9,7 +9,7 @@ import json
 import logging
 from translations import trans
 from mailersend_email import send_email, EMAIL_CONFIG
-from app import db
+from extensions import db
 from models import QuizResult  # Import SQLAlchemy db and QuizResult model
 
 # Configure logging
