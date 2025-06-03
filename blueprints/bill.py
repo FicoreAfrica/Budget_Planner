@@ -61,16 +61,14 @@ class BillFormStep2(FlaskForm):
         self.reminder_days.validators = [Optional(), NumberRange(min=1, max=30, message=trans('bill_reminder_days_required', lang))]
 
         self.frequency.choices = [
-            ('', trans('bill_frequency_select', lang) or 'Select Frequency'),
             ('one-time', trans('bill_frequency_one_time', lang)),
             ('weekly', trans('bill_frequency_weekly', lang)),
             ('monthly', trans('bill_frequency_monthly', lang)),
             ('quarterly', trans('bill_frequency_quarterly', lang))
         ]
-        self.frequency.default = ''
+        self.frequency.default = 'monthly'
 
         self.category.choices = [
-            ('', trans('bill_category_select', lang) or 'Select Category'),
             ('utilities', trans('bill_category_utilities', lang)),
             ('rent', trans('bill_category_rent', lang)),
             ('data_internet', trans('bill_category_data_internet', lang)),
@@ -86,16 +84,15 @@ class BillFormStep2(FlaskForm):
             ('savings_investments', trans('bill_category_savings_investments', lang)),
             ('other', trans('bill_category_other', lang))
         ]
-        self.category.default = ''
+        self.category.default = 'utilities'
 
         self.status.choices = [
-            ('', trans('bill_status_select', lang) or 'Select Status'),
             ('unpaid', trans('bill_status_unpaid', lang)),
             ('paid', trans('bill_status_paid', lang)),
             ('pending', trans('bill_status_pending', lang)),
             ('overdue', trans('bill_status_overdue', lang))
         ]
-        self.status.default = ''
+        self.status.default = 'pending'
 
         self.send_email.label.text = trans('bill_send_email', lang)
         self.reminder_days.label.text = trans('bill_reminder_days', lang)
@@ -146,19 +143,35 @@ def form_step2():
     form = BillFormStep2()
     try:
         if request.method == 'POST':
-            current_app.logger.info(f"Form data received: {request.form.to_dict()}")
+            form_data = request.form.to_dict()
+            current_app.logger.info(f"Form data received: {form_data}")
+            current_app.logger.info(f"Submitted form values - frequency: {form.frequency.data or 'None'}, category: {form.category.data or 'None'}, status: {form.status.data or 'None'}, send_email: {form.send_email.data}, reminder_days: {form.reminder_days.data or 'None'}")
+            
+            # Check CSRF token
+            if not form.csrf_token.validate(form):
+                current_app.logger.error(f"CSRF validation failed: {form.csrf_token.errors}")
+                flash(trans('bill_csrf_invalid', lang) or 'Invalid CSRF token', 'danger')
+                return render_template('bill_form_step2.html', form=form, trans=trans, lang=lang)
+
             if form.validate_on_submit():
                 if form.send_email.data and not form.reminder_days.data:
                     form.reminder_days.errors.append(trans('bill_reminder_days_required', lang))
                     current_app.logger.error("Validation failed: reminder_days required when send_email is checked")
                     return render_template('bill_form_step2.html', form=form, trans=trans, lang=lang)
+                
                 bill_data = session.get('bill_step1', {})
                 if not bill_data:
-                    flash(trans('bill_session_expired', lang), 'danger')
                     current_app.logger.error("Session data missing for bill_step1")
+                    flash(trans('bill_session_expired', lang) or 'Session expired, please start over', 'danger')
                     return redirect(url_for('bill.form_step1'))
 
-                due_date = datetime.strptime(bill_data['due_date'], '%Y-%m-%d').date()
+                try:
+                    due_date = datetime.strptime(bill_data['due_date'], '%Y-%m-%d').date()
+                except ValueError:
+                    current_app.logger.error("Invalid due date format in session data")
+                    flash(trans('bill_due_date_format_invalid', lang) or 'Invalid due date format', 'danger')
+                    return redirect(url_for('bill.form_step1'))
+
                 status = form.status.data
                 if status not in ['paid', 'pending'] and due_date < date.today():
                     status = 'overdue'
@@ -177,8 +190,13 @@ def form_step2():
                     }
                 }
                 bill_storage = current_app.config['STORAGE_MANAGERS']['bills']
-                bill_storage.append(record, user_email=bill_data['email'], session_id=session['sid'], lang=lang)
-                current_app.logger.info(f"Bill saved successfully for {bill_data['email']}")
+                try:
+                    bill_storage.append(record, user_email=bill_data['email'], session_id=session['sid'], lang=lang)
+                    current_app.logger.info(f"Bill saved successfully for {bill_data['email']}")
+                except Exception as e:
+                    current_app.logger.error(f"Failed to save bill: {str(e)}")
+                    flash(trans('bill_save_failed', lang) or 'Failed to save bill', 'danger')
+                    return render_template('bill_form_step2.html', form=form, trans=trans, lang=lang)
 
                 if form.send_email.data and bill_data['email']:
                     try:
@@ -208,14 +226,14 @@ def form_step2():
                         current_app.logger.info(f"Email sent to {bill_data['email']}")
                     except Exception as e:
                         current_app.logger.error(f"Failed to send email: {str(e)}")
-                        flash(trans('email_send_failed', lang=lang), 'warning')
+                        flash(trans('email_send_failed', lang) or 'Failed to send email reminder', 'warning')
 
                 flash(trans('bill_bill_added_dynamic_dashboard', lang=lang).format(
                     bill_name=bill_data['bill_name'],
                     dashboard_url=url_for('bill.dashboard')
                 ), 'success')
                 session.pop('bill_step1', None)
-                action = request.form.get('action')
+                action = form_data.get('action')
                 current_app.logger.info(f"Form action: {action}")
                 if action == 'save_and_continue':
                     current_app.logger.info("Redirecting to bill.form_step1")
@@ -224,7 +242,7 @@ def form_step2():
                 return redirect(url_for('bill.dashboard'))
             else:
                 current_app.logger.error(f"Form validation failed: {form.errors}")
-                current_app.logger.info(f"Submitted form values - frequency: {form.frequency.data}, category: {form.category.data}, status: {form.status.data}, send_email: {form.send_email.data}, reminder_days: {form.reminder_days.data}")
+                current_app.logger.info(f"Submitted form values - frequency: {form.frequency.data or 'None'}, category: {form.category.data or 'None'}, status: {form.status.data or 'None'}, send_email: {form.send_email.data}, reminder_days: {form.reminder_days.data or 'None'}")
                 for field, errors in form.errors.items():
                     for error in errors:
                         flash(f"{trans(f'bill_{field}', lang=lang)}: {trans(error, lang=lang) or error}", 'danger')
@@ -232,7 +250,7 @@ def form_step2():
         return render_template('bill_form_step2.html', form=form, trans=trans, lang=lang)
     except Exception as e:
         current_app.logger.exception(f"Error in bill.form_step2: {str(e)}")
-        flash(trans('bill_bill_form_load_error', lang), 'danger')
+        flash(trans('bill_bill_form_load_error', lang) or 'Error loading bill form', 'danger')
         return redirect(url_for('index'))
 
 @bill_bp.route('/dashboard')
