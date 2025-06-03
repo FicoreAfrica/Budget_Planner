@@ -9,6 +9,9 @@ BILL_TRANSLATIONS = {
         'category: Category is required': 'Category is required',
         'bill_frequency_select': 'Select Frequency',
         'bill_status_select': 'Select Status',
+        'bill_invalid_records_skipped': 'Skipped {count} bill records due to missing required keys or invalid data.',
+        'bill_dashboard': 'Bill Dashboard',
+
 
         'Frequency is required': 'Frequency is required.',
         'Category is required': 'Category is required.',
@@ -401,6 +404,9 @@ BILL_TRANSLATIONS = {
         'Frequency: Frequency is required': 'Mitar: Ana buƙatar mitar.',
         'Category: Category is required': 'Rukuni: Ana buƙatar rukuni.',
         'Status: Status is required': 'Matsayi: Ana buƙatar matsayi.',
+        'bill_invalid_records_skipped': 'An tsallake bayanan kuɗin biya guda {count} saboda rashin maɓallan da ake buƙata ko bayanan da ba daidai ba.',
+        'bill_dashboard': 'Allon Kuɗin Biya',
+
         
         'bill_tip_data_topup': 'Sayi data da yawa lokaci ɗaya don adana kuɗi',
         'bill_plan_monthly_bills_to_manage': 'Shirya lissafin kowane wata don sarrafa kasafin kuɗin ka',
