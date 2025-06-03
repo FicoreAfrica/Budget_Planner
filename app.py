@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from flask import Flask, jsonify, render_template, request, session, redirect, url_for, flash, send_from_directory, has_request_context, g, current_app, make_response
 from dotenv import load_dotenv
 from extensions import db, login_manager, session as flask_session, csrf
-from mailersend_email import trans
+from translations import trans
 from scheduler_setup import init_scheduler
 from models import Course, FinancialHealth, Budget, Bill, NetWorth, EmergencyFund, LearningProgress, QuizResult, User
 import json
