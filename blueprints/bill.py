@@ -6,6 +6,7 @@ from json_store import JsonStorage
 from mailersend_email import send_email, EMAIL_CONFIG
 from datetime import datetime, date, timedelta
 import uuid
+import os
 
 try:
     from app import trans
@@ -19,7 +20,20 @@ def init_bill_storage(app):
     """Initialize bill_storage within app context."""
     with app.app_context():
         app.logger.info("Initializing bill storage")
-        return JsonStorage('data/bills.json', logger_instance=app.logger)
+        data_dir = os.path.join(app.root_path, 'data')
+        os.makedirs(data_dir, exist_ok=True)  # Ensure data directory exists
+        bills_path = os.path.join(data_dir, 'bills.json')
+        storage = JsonStorage(bills_path, logger_instance=app.logger)
+        # Initialize empty list if file is empty or invalid
+        try:
+            data = storage.get_all()
+            if not isinstance(data, list):
+                app.logger.warning(f"Invalid data in {bills_path}, initializing empty list")
+                storage._write_data([])
+        except Exception as e:
+            app.logger.error(f"Failed to read {bills_path}: {str(e)}, initializing empty list")
+            storage._write_data([])
+        return storage
 
 def strip_commas(value):
     """Remove commas from string values for numerical fields."""
@@ -185,6 +199,9 @@ def form_step2():
                     status = 'overdue'
 
                 record = {
+                    'id': str(uuid.uuid4()),
+                    'user_email': bill_data['email'],
+                    'session_id': session['sid'],
                     'data': {
                         'first_name': bill_data['first_name'],
                         'bill_name': bill_data['bill_name'],
@@ -200,7 +217,7 @@ def form_step2():
                 bill_storage = current_app.config['STORAGE_MANAGERS']['bills']
                 try:
                     bill_storage.append(record, user_email=bill_data['email'], session_id=session['sid'], lang=lang)
-                    current_app.logger.info(f"Bill saved successfully for {bill_data['email']}")
+                    current_app.logger.info(f"Bill saved successfully for {bill_data['email']}: {record['data']['bill_name']}")
                 except Exception as e:
                     current_app.logger.error(f"Failed to save bill: {str(e)}")
                     flash(trans('bill_save_failed', lang) or 'Failed to save bill', 'danger')
@@ -241,8 +258,7 @@ def form_step2():
                     dashboard_url=url_for('bill.dashboard')
                 ), 'success')
                 session.pop('bill_step1', None)
-                action = form_data.get('action')
-                current_app.logger.info(f"Form action: {action}")
+                action = form_data.get('submit')  # Changed from 'action' to 'submit' to match form
                 if action == 'save_and_continue':
                     current_app.logger.info("Redirecting to bill.form_step1")
                     return redirect(url_for('bill.form_step1'))
@@ -281,7 +297,6 @@ def dashboard():
         bill_storage = current_app.config['STORAGE_MANAGERS']['bills']
         user_data = bill_storage.filter_by_session(session['sid'])
         required_keys = ['first_name', 'bill_name', 'amount', 'due_date', 'frequency', 'category', 'status']
-        # Filter bills to include only those with all required keys
         bills = [
             (record['id'], record['data']) 
             for record in user_data 
@@ -343,7 +358,7 @@ def dashboard():
         if len(bills) < len(user_data):
             missing = len(user_data) - len(bills)
             flash(trans('bill_invalid_records_skipped', lang) or f"Skipped {missing} invalid bill(s) due to missing or incorrect data", 'warning')
-            current_app.logger.warning(f"Skipped {missing} bill records due to missing required keys")
+            current_app.logger.warning(f"Skipped {missing} bill records due to missing required keys or invalid data")
 
         return render_template(
             'bill_dashboard.html',
@@ -455,6 +470,9 @@ def view_edit():
                                     else:
                                         new_due_date = old_due_date
                                     new_record = {
+                                        'id': str(uuid.uuid4()),
+                                        'user_email': record.get('user_email', ''),
+                                        'session_id': session['sid'],
                                         'data': {
                                             'first_name': record['data'].get('first_name', ''),
                                             'bill_name': record['data'].get('bill_name', ''),
