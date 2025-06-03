@@ -3,7 +3,8 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, FloatField, BooleanField, SubmitField
 from wtforms.validators import DataRequired, NumberRange, Optional, Email, ValidationError
 from flask_login import current_user
-from app import db, trans
+from translations import trans
+from extensions import db
 from models import NetWorth
 from mailersend_email import send_email, EMAIL_CONFIG
 from datetime import datetime
