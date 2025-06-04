@@ -24,6 +24,19 @@ body {
     background: linear-gradient(90deg, #0288D1, #2E7D32);
     animation: gradientShift 5s ease infinite;
 }
+.navbar-brand {
+    padding: 0.2rem;
+    margin-right: 0.5rem;
+}
+.logo-centered {
+    max-width: 120px;
+}
+.navbar-toggler {
+    margin-left: auto;
+}
+.navbar-nav {
+    gap: 0.5rem;
+}
 .navbar-brand, .nav-link {
     color: #FFFFFF !important;
     font-weight: bold;
@@ -125,6 +138,40 @@ body {
     border-radius: 5px;
 }
 .language-btn i {
+    font-size: 1rem;
+}
+
+/* Hero */
+.hero {
+    background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), linear-gradient(135deg, #0288D1, #2E7D32);
+    color: white;
+    padding: 1rem;
+    margin-top: 40px;
+    position: relative;
+    left: 0;
+    right: 0;
+}
+.hero-content {
+    max-width: 90%;
+    margin: 0 auto;
+    text-align: center;
+}
+.hero h2 {
+    font-size: clamp(1.5rem, 5vw, 2rem);
+    color: white;
+    margin-bottom: 0.5rem;
+}
+.hero p {
+    margin-bottom: 0.5rem;
+}
+.hero-subtext {
+    font-size: 0.9rem;
+    color: #fff;
+    margin: 0.5rem 0 1rem;
+    font-weight: 400;
+}
+.hero-subtext i {
+    color: #E3F2FD;
     font-size: 1rem;
 }
 
@@ -376,9 +423,6 @@ body {
     background-color: #17a2b8;
     color: white;
 }
-.badge-badge {
-    background-color: #cdcdcd;
-}
 .badge-bronze {
     background-color: #cd7f32;
     color: white;
@@ -387,7 +431,7 @@ body {
 .badge-silver {
     background-color: #c0c0c0;
     color: #333;
-    border: 2px solid #a9a9a;
+    border: 2px solid #a9a9a9;
 }
 .badge-gold {
     background-color: #ffd700;
@@ -396,7 +440,7 @@ body {
 }
 .badge-platinum {
     background-color: #e5e4e2;
-    color: 2px;
+    color: #333;
     border: 2px solid #b0b0b0;
 }
 .badge-blue {
@@ -406,17 +450,17 @@ body {
 }
 .badge-gray {
     background-color: #e9ecef;
-    border: 2px solid #ced4da;
     color: #333;
+    border: 2px solid #ced4da;
 }
 .net-worth-highlight {
-    color: #2E7D32;
     font-weight: bold;
+    color: #2E7D32;
 }
 
 /* About Page Specific Styles */
 .about-page {
-    padding-top: 20px;
+    padding-top: 10px;
     padding-bottom: 40px;
 }
 .about-container {
@@ -540,6 +584,23 @@ body {
     .container {
         padding: 0.5rem 1rem;
     }
+    .hero {
+        padding: 0.5rem;
+        margin-top: 30px;
+    }
+    .hero-content {
+        max-width: 95%;
+    }
+    .hero h2 {
+        font-size: clamp(1.2rem, 4vw, 1.6rem);
+    }
+    .hero-subtext {
+        font-size: 0.85rem;
+    }
+    .my-3 {
+        margin-top: 0.5rem !important;
+        margin-bottom: 0.5rem !important;
+    }
     .tools-section {
         padding: 0.5rem;
     }
@@ -565,12 +626,12 @@ body {
     .tool-card button {
         font-size: 0.9rem;
     }
+    .logo-centered {
+        max-width: 80px;
+    }
     .consent-banner {
         font-size: 0.85rem;
         padding: 8px;
-    }
-    .logo-centered {
-        max-width: 120px;
     }
     .hero h2,
     .tools-section h2,
@@ -616,9 +677,6 @@ body {
     .social-icons a {
         font-size: 0.85rem;
         margin: 0 4px;
-    }
-    .hero-subtext {
-        font-size: 0.85rem;
     }
     .hero-subtext i {
         font-size: 0.9rem;
@@ -701,6 +759,21 @@ body {
     }
 }
 
+/* Very Small Screens */
+@media (max-width: 360px) {
+    .navbar-brand, .language-btn {
+        display: block;
+        margin: 0.2rem auto;
+        text-align: center;
+    }
+    .language-btn {
+        min-width: 70px;
+    }
+    .navbar-toggler {
+        margin: 0.2rem 0;
+    }
+}
+
 /* Desktop Optimizations */
 @media (min-width: 768px) {
     .tools-section {
@@ -738,27 +811,6 @@ body {
 .step-container .form-control,
 .quiz-container .form-control {
     text-align: left !important;
-}
-
-/* Remove redundant .form-label, .form-control rules */
-.form-label,
-.form-control,
-input,
-button,
-select,
-textarea {
-    /* Already covered by .step-container, .quiz-container rules */
-}
-
-/* Remove redundant .form-container rules */
-.form-container label,
-.form-container h1,
-.form-container h2,
-.form-container h3,
-.form-container h4,
-.form-container h5,
-.form-container h6 {
-    /* Already covered by .step-container, .quiz-container rules */
 }
 
 /* Ensure tool titles are centered only on index page */
@@ -846,7 +898,6 @@ textarea {
 
 /* Section Headers */
 h1, h3,
-.hero h2,
 .tools-section h2,
 .why-section h2,
 .testimonials-section h2,
@@ -860,38 +911,11 @@ h1, h3,
 }
 .card-title i,
 .tools-section h2 i,
-.hero h2 i,
 .why-section h2 i,
 .testimonials-section h2 i,
 .faq-section h2 i {
     color: #0288D1;
     margin-right: 8px;
-}
-
-/* Hero */
-.hero {
-    background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), linear-gradient(135deg, #0288D1, #2E7D32);
-    color: white;
-    padding: 1rem 2rem;
-    margin-top: 40px;
-    text-align: center;
-}
-.hero h2 {
-    color: white !important;
-    margin-bottom: 0.5rem;
-}
-.hero p {
-    margin-bottom: 0.5rem;
-}
-.hero-subtext {
-    font-size: 0.9rem;
-    color: #fff;
-    margin: 0.5rem 0 1rem;
-    font-weight: 400;
-}
-.hero-subtext i {
-    color: #E3F2FD;
-    font-size: 1rem;
 }
 
 /* Testimonials */
@@ -984,9 +1008,4 @@ h1, h3,
 }
 .footer-disclaimer a:hover {
     color: #fff;
-}
-
-/* Logo Centering */
-.logo-centered {
-    max-width: 120px;
 }
