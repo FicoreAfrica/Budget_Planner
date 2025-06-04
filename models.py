@@ -1,6 +1,8 @@
 from extensions import db
 import json
 from datetime import datetime, date
+from flask_login import LoginManager, UserMixin  # Add UserMixin import
+
 
 class User(db.Model, UserMixin):  # Add UserMixin
     __tablename__ = 'users'
