@@ -52,7 +52,6 @@ class BillFormStep2(FlaskForm):
     status = SelectField('Status', coerce=str)
     send_email = BooleanField('Send Email Reminders')
     reminder_days = IntegerField('Reminder Days', default=7)
-    js_enabled = HiddenField(default='false')
     csrf_token = HiddenField()
 
     def __init__(self, *args, **kwargs):
@@ -94,7 +93,12 @@ class BillFormStep2(FlaskForm):
         self.send_email.label.text = trans('bill_send_email', lang)
         self.reminder_days.label.text = trans('bill_reminder_days', lang)
 
+        # Set defaults to the first choice
+        self.frequency.default = self.frequency.choices[0][0]
+        self.category.default = self.category.choices[0][0]
+        self.status.default = self.status.choices[0][0]
         self.process()
+
         current_app.logger.info(f"BillFormStep2 initialized - frequency choices: {self.frequency.choices}, category choices: {self.category.choices}, status choices: {self.status.choices}")
 
 @bill_bp.route('/form/step1', methods=['GET', 'POST'])
@@ -154,23 +158,7 @@ def form_step2():
         if request.method == 'POST':
             form_data = request.form.to_dict()
             current_app.logger.info(f"Form data received: {form_data}")
-            current_app.logger.info(f"Session bill_step2: {bill_step2_data}")
-
-            # Check JavaScript status
-            js_enabled = form_data.get('js_enabled', 'false') == 'true'
-            current_app.logger.info(f"JavaScript enabled: {js_enabled}")
-
-            # Server-side validation for JavaScript-disabled submissions
-            if not js_enabled:
-                frequency = form_data.get('frequency', '')
-                category = form_data.get('category', '')
-                status = form_data.get('status', '')
-                if not frequency or frequency not in [choice[0] for choice in form.frequency.choices]:
-                    form.frequency.errors.append(trans('bill_frequency_required', lang))
-                if not category or category not in [choice[0] for choice in form.category.choices]:
-                    form.category.errors.append(trans('bill_category_required', lang))
-                if not status or status not in [choice[0] for choice in form.status.choices]:
-                    form.status.errors.append(trans('bill_status_required', lang))
+            current_app.logger.info(f"Submitted form values - frequency: {form.frequency.data or 'None'}, category: {form.category.data or 'None'}, status: {form.status.data or 'None'}, send_email: {form.send_email.data}, reminder_days: {form.reminder_days.data or 'None'}")
 
             if not form.csrf_token.validate(form):
                 current_app.logger.error(f"CSRF validation failed: {form.csrf_token.errors}")
@@ -178,7 +166,7 @@ def form_step2():
                 return render_template('bill_form_step2.html', form=form, trans=trans, lang=lang)
 
             if form.validate_on_submit():
-                current_app.logger.info(f"Submitted form values - frequency: {form.frequency.data}, category: {form.category.data}, status: {form.status.data}, send_email: {form.send_email.data}, reminder_days: {form.reminder_days.data}")
+                current_app.logger.info("Form validated successfully")
                 if form.send_email.data and not form.reminder_days.data:
                     form.reminder_days.errors.append(trans('bill_reminder_days_required', lang))
                     current_app.logger.error("Validation failed: reminder_days required when send_email is checked")
@@ -437,8 +425,9 @@ def view_edit():
         session['sid'] = str(uuid.uuid4())
         session.permanent = True
     lang = session.get('lang', 'en')
+    filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
+
     try:
-        filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
         bills = Bill.query.filter_by(**filter_kwargs).all()
         bills_data = []
         for bill in bills:
@@ -449,15 +438,12 @@ def view_edit():
                     'status': bill.status,
                     'send_email': bill.send_email,
                     'reminder_days': bill.reminder_days,
-                    'js_enabled': 'true',
                     'csrf_token': None
                 }
             )
             bills_data.append((bill.id, bill.to_dict(), form))
 
         if request.method == 'POST':
-            form_data = request.form.to_dict()
-            current_app.logger.info(f"Form data received in view_edit: {form_data}")
             action = request.form.get('action')
             bill_id = request.form.get('bill_id')
             bill = Bill.query.filter_by(id=bill_id, **filter_kwargs).first()
@@ -485,8 +471,8 @@ def view_edit():
                     current_app.logger.error(f"Form validation failed: {form.errors}")
                     for field, errors in form.errors.items():
                         for err_msg in errors:
-                            flash(f"{trans(f'bill_{field}', lang=lang) or field.capitalize()}: {err_msg}", 'danger')
-                    return redirect(url_for('bill.view_edit'))
+                            flash(f"{trans(f'bill_{field}', lang=lang)}: {err_msg}", 'danger')
+                return redirect(url_for('bill.view_edit'))
 
             elif action == 'edit':
                 session['bill_step1'] = {
@@ -526,7 +512,7 @@ def view_edit():
                     bill.status = new_status
                     db.session.commit()
                     current_app.logger.info(f"Bill status toggled: {bill_id}, new_status={new_status}")
-                    flash(trans('bill_status_toggled_success', lang) or 'Bill status updated', 'success')
+                    flash(trans('bill_bill_status_toggled_success', lang) or 'Bill status updated', 'success')
                     if new_status == 'paid' and bill.frequency != 'one-time':
                         new_due_date = calculate_next_due_date(bill.due_date, bill.frequency)
                         new_bill = Bill(
@@ -551,7 +537,7 @@ def view_edit():
                 except Exception as e:
                     db.session.rollback()
                     current_app.logger.error(f"Failed to toggle status for bill ID {bill_id}: {str(e)}")
-                    flash(trans('bill_status_toggle_failed', lang) or 'Failed to update bill status', 'danger')
+                    flash(trans('bill_bill_status_toggle_failed', lang) or 'Failed to update bill status', 'danger')
                 return redirect(url_for('bill.dashboard'))
 
         return render_template('view_edit_bills.html', bills_data=bills_data, trans=trans, lang=lang)
