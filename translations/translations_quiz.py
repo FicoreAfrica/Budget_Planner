@@ -158,6 +158,10 @@ QUIZ_TRANSLATIONS = {
         'badge_first_quiz_completed': 'An Kammala Gwaji na Farko!',
         'badge_first_quiz_completed_desc': 'Kun kammala gwaji na farko! Ku ci gaba da koyo da girma!',
         # Badges
+        'badge_gwarzon_kuɗi_desc': 'Kun nuna kyakkyawan ilimin kuɗi kuma kun sami lambar yabo ta Gwarzon Kuɗi!',
+        'badge_gwarzon_kuɗi': 'Gwarzon Kuɗi',
+        'badge_wanda_ya_fara_ɗaukar_gwaji_desc': 'Kun kammala gwajin ku na farko! Ku ci gaba da koyo da girma!',
+        'badge_wanda_ya_fara_ɗaukar_gwaji': 'Wanda Ya Fara Ɗaukar Gwaji',
         'badge_financial_guru': 'Guru na Kuɗi',
         'badge_financial_guru_desc': 'An ba da kyauta saboda kyakkyawan tsara kuɗi.',
         'badge_savings_star': 'Tauraron Ajiya',
