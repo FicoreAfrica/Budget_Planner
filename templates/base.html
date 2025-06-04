@@ -54,14 +54,14 @@
         <div class="container-fluid">
             <a class="navbar-brand" href="{{ url_for('index') }}"><img src="{{ url_for('static', filename='img/ficore_logo.png') }}" alt="{{ trans('core_ficore_africa_logo') | default('Ficore Africa Logo') }}" class="logo-centered"></a>
             <a href="{{ url_for('set_language', lang='ha' if session.lang == 'en' else 'en') }}"
-               class="btn btn-primary navbar-btn btn-outline-light language-btn ms-2 me-2"
+               class="btn btn-primary navbar-btn btn-outline-light language-btn ms-1 me-1"
                title="{{ trans('core_change_language') | default('Change Language') }}"
                aria-label="{{ trans('core_switch_to') | default('Switch to') }} {{ 'Hausa' if session.lang == 'en' else 'English' }}"
                role="button">
                 <i class="fas fa-globe me-1" aria-hidden="true"></i>
                 {{ 'Hausa' if session.lang == 'en' else 'English' }}
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="{{ trans('core_toggle_navigation') | default('Toggle navigation') }}">
+            <button class="navbar-toggler ms-auto" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="{{ trans('core_toggle_navigation') | default('Toggle navigation') }}">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
