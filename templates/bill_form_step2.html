@@ -28,63 +28,48 @@
                 <input type="hidden" name="js_enabled" id="js_enabled" value="false">
                 <div class="mb-3">
                     <label for="frequency" class="form-label">{{ trans('bill_frequency', lang=lang) | default('Frequency') }}</label>
-                    <select name="frequency" id="frequency" class="form-control" required
+                    <select name="frequency" id="frequency" class="form-control {% if form.frequency.errors %}is-invalid{% endif %}" required
                             data-bs-toggle="tooltip" title="{{ trans('bill_frequency_tooltip', lang=lang) | default('Select how often this bill or expense occurs') }}"
                             aria-describedby="frequencyTooltip">
-                        <option value="" disabled {% if not form.frequency.data %}selected{% endif %}>{{ trans('bill_select_frequency', lang=lang) | default('Select Frequency') }}</option>
                         {% for value, label in form.frequency.choices %}
-                            <option value="{{ value }}" {% if form.frequency.data == value %}selected{% endif %}>{{ label }}</option>
+                            <option value="{{ value }}" {% if form.frequency.data == value or (not form.frequency.data and value == 'monthly') %}selected{% endif %}>{{ label }}</option>
                         {% endfor %}
                     </select>
-                    {% if form.frequency.errors %}
-                        <div class="invalid-feedback d-block">
-                            {% for error in form.frequency.errors %}
-                                {{ trans(error, lang=lang) | default(error) }}<br>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <div class="invalid-feedback">{{ trans('bill_frequency_required', lang=lang) | default('Please select a frequency') }}</div>
-                    {% endif %}
+                    <div class="invalid-feedback">
+                        {% for error in form.frequency.errors %}
+                            {{ trans(error, lang=lang) | default(error) }}<br>
+                        {% endfor %}
+                    </div>
                 </div>
                 <div class="mb-3">
                     <label for="category" class="form-label">{{ trans('bill_category', lang=lang) | default('Category') }}</label>
-                    <select name="category" id="category" class="form-control" required
+                    <select name="category" id="category" class="form-control {% if form.category.errors %}is-invalid{% endif %}" required
                             data-bs-toggle="tooltip" title="{{ trans('bill_category_tooltip', lang=lang) | default('Select a category, e.g., Data/Internet, Ajo/Esusu/Adashe') }}"
                             aria-describedby="categoryTooltip">
-                        <option value="" disabled {% if not form.category.data %}selected{% endif %}>{{ trans('bill_select_category', lang=lang) | default('Select Category') }}</option>
                         {% for value, label in form.category.choices %}
-                            <option value="{{ value }}" {% if form.category.data == value %}selected{% endif %}>{{ label }}</option>
+                            <option value="{{ value }}" {% if form.category.data == value or (not form.category.data and value == 'utilities') %}selected{% endif %}>{{ label }}</option>
                         {% endfor %}
                     </select>
-                    {% if form.category.errors %}
-                        <div class="invalid-feedback d-block">
-                            {% for error in form.category.errors %}
-                                {{ trans(error, lang=lang) | default(error) }}<br>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <div class="invalid-feedback">{{ trans('bill_category_required', lang=lang) | default('Please select a category') }}</div>
-                    {% endif %}
+                    <div class="invalid-feedback">
+                        {% for error in form.category.errors %}
+                            {{ trans(error, lang=lang) | default(error) }}<br>
+                        {% endfor %}
+                    </div>
                 </div>
                 <div class="mb-3">
                     <label for="status" class="form-label">{{ trans('bill_status', lang=lang) | default('Status') }}</label>
-                    <select name="status" id="status" class="form-control" required
+                    <select name="status" id="status" class="form-control {% if form.status.errors %}is-invalid{% endif %}" required
                             data-bs-toggle="tooltip" title="{{ trans('bill_status_tooltip', lang=lang) | default('Select the current status of the bill') }}"
                             aria-describedby="statusTooltip">
-                        <option value="" disabled {% if not form.status.data %}selected{% endif %}>{{ trans('bill_select_status', lang=lang) | default('Select Status') }}</option>
                         {% for value, label in form.status.choices %}
-                            <option value="{{ value }}" {% if form.status.data == value %}selected{% endif %}>{{ label }}</option>
+                            <option value="{{ value }}" {% if form.status.data == value or (not form.status.data and value == 'pending') %}selected{% endif %}>{{ label }}</option>
                         {% endfor %}
                     </select>
-                    {% if form.status.errors %}
-                        <div class="invalid-feedback d-block">
-                            {% for error in form.status.errors %}
-                                {{ trans(error, lang=lang) | default(error) }}<br>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <div class="invalid-feedback">{{ trans('bill_status_required', lang=lang) | default('Please select a status') }}</div>
-                    {% endif %}
+                    <div class="invalid-feedback">
+                        {% for error in form.status.errors %}
+                            {{ trans(error, lang=lang) | default(error) }}<br>
+                        {% endfor %}
+                    </div>
                 </div>
                 <fieldset class="mb-3">
                     <legend>{{ trans('bill_reminder_settings', lang=lang) | default('Reminder Settings') }}</legend>
@@ -94,16 +79,12 @@
                     </div>
                     <div class="mb-3" id="reminder_days_container" style="display: {{ 'block' if form.send_email.data else 'none' }};">
                         <label for="reminder_days" class="form-label">{{ trans('bill_reminder_days', lang=lang) | default('Reminder Days') }}</label>
-                        {{ form.reminder_days(class="form-control", placeholder=trans('bill_reminder_days_placeholder', lang=lang) | default('e.g., 7'), **{'data-bs-toggle': 'tooltip', 'title': trans('bill_reminder_days_tooltip', lang=lang) | default('Number of days before due date to receive reminders (1-30)'), 'aria-describedby': 'reminderDaysTooltip'}) }}
-                        {% if form.reminder_days.errors %}
-                            <div class="invalid-feedback d-block">
-                                {% for error in form.reminder_days.errors %}
-                                    {{ trans(error, lang=lang) | default(error) }}<br>
-                                {% endfor %}
-                            </div>
-                        {% else %}
-                            <div class="invalid-feedback">{{ trans('bill_reminder_days_required', lang=lang) | default('Please enter a valid number of days (1-30)') }}</div>
-                        {% endif %}
+                        {{ form.reminder_days(class="form-control {% if form.reminder_days.errors %}is-invalid{% endif %}", placeholder=trans('bill_reminder_days_placeholder', lang=lang) | default('e.g., 7'), **{'data-bs-toggle': 'tooltip', 'title': trans('bill_reminder_days_tooltip', lang=lang) | default('Number of days before due date to receive reminders (1-30)'), 'aria-describedby': 'reminderDaysTooltip'}) }}
+                        <div class="invalid-feedback">
+                            {% for error in form.reminder_days.errors %}
+                                {{ trans(error, lang=lang) | default(error) }}<br>
+                            {% endfor %}
+                        </div>
                     </div>
                 </fieldset>
                 <button type="submit" name="action" value="save" class="btn btn-success" id="saveButton">{{ trans('bill_save_bill', lang=lang) | default('Save Bill') }}</button>
@@ -134,11 +115,17 @@
         const validCategories = ['utilities', 'rent', 'data_internet', 'ajo_esusu_adashe', 'food', 'transport', 'clothing', 'education', 'healthcare', 'entertainment', 'airtime', 'school_fees', 'savings_investments', 'other'];
         const validStatuses = ['unpaid', 'paid', 'pending', 'overdue'];
 
+        // Define default fallback values
+        const defaultFrequency = 'monthly';
+        const defaultCategory = 'utilities';
+        const defaultStatus = 'pending';
+        const defaultReminderDays = 7;
+
         // Mark JavaScript as enabled
         jsEnabled.value = 'true';
         console.log('JavaScript enabled, js_enabled set to true');
 
-        // Clear invalid session data
+        // Initialize form state and apply defaults if no data
         const initialData = {
             frequency: frequency.value,
             category: category.value,
@@ -148,17 +135,19 @@
             jsEnabled: jsEnabled.value
         };
         console.log('Initial form state', initialData);
+
+        // Clear invalid session data
         if (!validFrequencies.includes(frequency.value) && frequency.value !== '') {
-            frequency.value = '';
-            console.warn('Cleared invalid frequency value');
+            frequency.value = defaultFrequency;
+            console.warn('Cleared invalid frequency value, set to default:', defaultFrequency);
         }
         if (!validCategories.includes(category.value) && category.value !== '') {
-            category.value = '';
-            console.warn('Cleared invalid category value');
+            category.value = defaultCategory;
+            console.warn('Cleared invalid category value, set to default:', defaultCategory);
         }
         if (!validStatuses.includes(status.value) && status.value !== '') {
-            status.value = '';
-            console.warn('Cleared invalid status value');
+            status.value = defaultStatus;
+            console.warn('Cleared invalid status value, set to default:', defaultStatus);
         }
 
         // Initialize reminder_days visibility
@@ -180,7 +169,7 @@
             console.warn('Form reset attempted and prevented');
         });
 
-        // Form submission validation
+        // Form submission validation with default fallbacks
         form.addEventListener('submit', function(e) {
             let isValid = true;
             const formData = new FormData(form);
@@ -196,59 +185,53 @@
             };
             console.log('Form submission attempted', formValues);
 
-            // Validate frequency
+            // Apply defaults if validation fails
             if (!frequency.value || !validFrequencies.includes(frequency.value)) {
-                e.preventDefault();
-                frequency.classList.add('is-invalid');
-                console.error('Validation failed: invalid or empty frequency', frequency.value);
+                frequency.value = defaultFrequency;
+                frequency.classList.remove('is-invalid');
+                console.warn('Set frequency to default:', defaultFrequency);
                 isValid = false;
             } else {
                 frequency.classList.remove('is-invalid');
             }
 
-            // Validate category
             if (!category.value || !validCategories.includes(category.value)) {
-                e.preventDefault();
-                category.classList.add('is-invalid');
-                console.error('Validation failed: invalid or empty category', category.value);
+                category.value = defaultCategory;
+                category.classList.remove('is-invalid');
+                console.warn('Set category to default:', defaultCategory);
                 isValid = false;
             } else {
                 category.classList.remove('is-invalid');
             }
 
-            // Validate status
             if (!status.value || !validStatuses.includes(status.value)) {
-                e.preventDefault();
-                status.classList.add('is-invalid');
-                console.error('Validation failed: invalid or empty status', status.value);
+                status.value = defaultStatus;
+                status.classList.remove('is-invalid');
+                console.warn('Set status to default:', defaultStatus);
                 isValid = false;
             } else {
                 status.classList.remove('is-invalid');
             }
 
-            // Validate reminder_days
             if (sendEmail.checked && (!reminderDays.value || reminderDays.value < 1 || reminderDays.value > 30)) {
-                e.preventDefault();
-                reminderDays.classList.add('is-invalid');
-                console.error('Validation failed: invalid reminder_days', reminderDays.value);
+                reminderDays.value = defaultReminderDays;
+                reminderDays.classList.remove('is-invalid');
+                console.warn('Set reminder_days to default:', defaultReminderDays);
                 isValid = false;
             } else {
                 reminderDays.classList.remove('is-invalid');
             }
 
+            // Update formValues after applying defaults
+            formValues.frequency = frequency.value;
+            formValues.category = category.value;
+            formValues.status = status.value;
+            formValues.reminderDays = reminderDays.value;
+            console.log('Form values after defaults applied', formValues);
+
             if (!isValid) {
-                e.preventDefault();
-                console.error('Form submission prevented due to validation errors', formValues);
-                // Re-enable buttons
-                if (saveButton) {
-                    saveButton.disabled = false;
-                    saveButton.textContent = '{{ trans('bill_save_bill', lang=lang) | default('Save Bill') }}';
-                }
-                if (saveAndContinueButton) {
-                    saveAndContinueButton.disabled = false;
-                    saveAndContinueButton.textContent = '{{ trans('bill_add_another_bill', lang=lang) | default('Add Another Bill') }}';
-                }
-                return;
+                // Allow submission with defaults
+                console.warn('Proceeding with default values due to validation errors');
             }
 
             // Disable buttons to prevent double submission
