@@ -21,8 +21,11 @@
     {% endwith %}
     <div class="card">
         <div class="card-body">
+            <!-- Template version marker for debugging -->
+            <div style="display: none;" data-template-version="7b8c9d2e-4f5a-4d7b-9c8e-5e6f7a0b1c23"></div>
             <form method="POST" action="{{ url_for('bill.form_step2') }}" id="billFormStep2" novalidate>
                 {{ form.csrf_token }}
+                <input type="hidden" name="js_enabled" id="js_enabled" value="false">
                 <div class="mb-3">
                     <label for="frequency" class="form-label">{{ trans('bill_frequency', lang=lang) | default('Frequency') }}</label>
                     <select name="frequency" id="frequency" class="form-control" required
@@ -124,11 +127,16 @@
         const form = document.getElementById('billFormStep2');
         const saveButton = document.getElementById('saveButton');
         const saveAndContinueButton = document.getElementById('saveAndContinueButton');
+        const jsEnabled = document.getElementById('js_enabled');
 
         // Valid choices from backend (matches BillFormStep2 in bill.py)
         const validFrequencies = ['one-time', 'weekly', 'monthly', 'quarterly'];
         const validCategories = ['utilities', 'rent', 'data_internet', 'ajo_esusu_adashe', 'food', 'transport', 'clothing', 'education', 'healthcare', 'entertainment', 'airtime', 'school_fees', 'savings_investments', 'other'];
         const validStatuses = ['unpaid', 'paid', 'pending', 'overdue'];
+
+        // Mark JavaScript as enabled
+        jsEnabled.value = 'true';
+        console.log('JavaScript enabled, js_enabled set to true');
 
         // Clear invalid session data
         const initialData = {
@@ -136,7 +144,8 @@
             category: category.value,
             status: status.value,
             sendEmail: sendEmail.checked,
-            reminderDays: reminderDays.value
+            reminderDays: reminderDays.value,
+            jsEnabled: jsEnabled.value
         };
         console.log('Initial form state', initialData);
         if (!validFrequencies.includes(frequency.value) && frequency.value !== '') {
@@ -182,7 +191,8 @@
                 sendEmail: sendEmail.checked,
                 reminderDays: reminderDays.value,
                 action: formData.get('action') || 'unknown',
-                csrf_token: formData.get('csrf_token') || 'missing'
+                csrf_token: formData.get('csrf_token') || 'missing',
+                js_enabled: formData.get('js_enabled') || 'unknown'
             };
             console.log('Form submission attempted', formValues);
 
