@@ -230,7 +230,7 @@ BILL_TRANSLATIONS = {
     },
     'ha': {
         'bill_bill_planner': 'Mai Tsara Kuɗi',
-        'bill_bill_dashboard': 'Dashboard na Kuɗi',
+        'bill_bill_dashboard': 'Allon Kuɗin Biya',
         'bill_view_edit_bills': 'Duba da Gyara Kuɗaɗe',
         'bill_view_and_edit_bills': 'Duba da Gyara Kuɗaɗe',
         'bill_dashboard_subtitle': 'Sarrafa da bin diddigin dukkan kuɗaɗen ku',
