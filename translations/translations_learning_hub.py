@@ -4,6 +4,7 @@ LEARNING_HUB_TRANSLATIONS = {
         'learning_hub_course_budgeting101_title': 'Budgeting 101',
         'learning_hub_course_budgeting101_desc': 'Learn the basics of budgeting and managing your money.',
         'learning_hub_course_financial_quiz_title': 'Financial Quiz',
+        'learning_hub_success_logout': 'You have been successfully logged out.',
         'learning_hub_course_financial_quiz_desc': 'Discover your financial personality with this interactive quiz.',
         'learning_hub_course_savings_basics_title': 'Savings Basics',
         'learning_hub_course_savings_basics_desc': 'Understand the fundamentals of saving money effectively.',
@@ -206,6 +207,7 @@ LEARNING_HUB_TRANSLATIONS = {
         'learning_hub_profile': 'Bayanan Martabarki na Koyo',
         'learning_hub_profile_subtitle': 'Sarrafa bayanan sirrinki da abubuwan da kike so na koyo.',
         'learning_hub_profile_saved': 'An adana bayanan martaba cikin nasara!',
+        'learning_hub_success_logout': 'An yi nasarar fitar da kai.',
         'learning_hub_success_language_updated':'An Canza Yare Cikin Nasara!'       
     }
 }
