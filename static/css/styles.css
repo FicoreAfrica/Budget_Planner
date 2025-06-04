@@ -23,6 +23,7 @@ body {
 .navbar {
     background: linear-gradient(90deg, #0288D1, #2E7D32);
     animation: gradientShift 5s ease infinite;
+    z-index: 1000;
 }
 .navbar-brand {
     padding: 0.2rem;
@@ -136,6 +137,7 @@ body {
     min-width: 80px;
     text-align: center;
     border-radius: 5px;
+    white-space: nowrap;
 }
 .language-btn i {
     font-size: 1rem;
@@ -150,6 +152,7 @@ body {
     position: relative;
     left: 0;
     right: 0;
+    z-index: 900;
 }
 .hero-content {
     max-width: 90%;
@@ -166,7 +169,7 @@ body {
 }
 .hero-subtext {
     font-size: 0.9rem;
-    color: #fff;
+    color: white;
     margin: 0.5rem 0 1rem;
     font-weight: 400;
 }
@@ -209,7 +212,7 @@ body {
     font-weight: 600;
     margin-bottom: 0.4rem;
     max-width: 100%;
-    overflow: hidden;
+    overflow-x: hidden;
     text-overflow: ellipsis;
     white-space: normal;
 }
@@ -756,6 +759,11 @@ body {
     }
     .about-header {
         padding: 0.5rem;
+    }
+    .language-btn {
+        font-size: 0.85rem;
+        padding: 0.3rem 0.6rem;
+        min-width: 70px;
     }
 }
 
