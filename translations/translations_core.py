@@ -887,6 +887,8 @@ CORE_TRANSLATIONS = {
         'core_learning_growth_group': 'Koyo & Ci Gaba',
         'core_learning_growth_subtext': 'Gina ilimin da zai taimaka muku yin yanke shawara mai wayo game da kuɗi.',
         'Sign Up': 'Yi Rajista',
+        'An ƙara kuɗin biya cikin nasara!': 'An ƙara kuɗin biya cikin nasara!',
+        'Dashboard na Kuɗi': 'Allon Kuɗi',
         'core_email_invalid': 'Imel din baida kyau',
         'Unable to load net worth dashboard. Please try again.': 'An kasa loda allon darajar net. Don Allah a sake gwadawa.',
         'Profile saved successfully!': 'An adana bayanan martaba cikin nasara!',
