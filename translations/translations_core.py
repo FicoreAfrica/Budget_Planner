@@ -2,6 +2,7 @@ CORE_TRANSLATIONS = {
     'en': {
         'core_home': 'Home',
         'auth_username_placeholder': 'Enter your username',
+        'Bill status toggled successfully': 'Bill status toggled successfully.',
         'core_financial_assessment_group': 'Financial Assessment',
         'core_financial_assessment_subtext': 'Understand your financial behavior and readiness.',
         'core_planning_tools_group': 'Planning Tools',
@@ -889,6 +890,7 @@ CORE_TRANSLATIONS = {
         'Sign Up': 'Yi Rajista',
         'An ƙara kuɗin biya cikin nasara!': 'An ƙara kuɗin biya cikin nasara!',
         'Dashboard na Kuɗi': 'Allon Kuɗi',
+        'Bill status toggled successfully': 'An canza matsayin kuɗin biya cikin nasara.',
         'core_email_invalid': 'Imel din baida kyau',
         'Unable to load net worth dashboard. Please try again.': 'An kasa loda allon darajar net. Don Allah a sake gwadawa.',
         'Profile saved successfully!': 'An adana bayanan martaba cikin nasara!',
