@@ -28,7 +28,7 @@
                     <select name="frequency" id="frequency" class="form-control" required
                             data-bs-toggle="tooltip" title="{{ trans('bill_frequency_tooltip', lang=lang) | default('Select how often this bill or expense occurs') }}"
                             aria-describedby="frequencyTooltip">
-                        <option value="" disabled {% if not form.frequency.data %}selected{% endif %}>{{ trans('bill_select_frequency', lang=lang) | default('Select Frequency') }}</option>
+                        <option value="" disabled selected>{{ trans('bill_select_frequency', lang=lang) | default('Select Frequency') }}</option>
                         {% for value, label in form.frequency.choices %}
                             <option value="{{ value }}" {% if form.frequency.data == value %}selected{% endif %}>{{ label }}</option>
                         {% endfor %}
@@ -48,7 +48,7 @@
                     <select name="category" id="category" class="form-control" required
                             data-bs-toggle="tooltip" title="{{ trans('bill_category_tooltip', lang=lang) | default('Select a category, e.g., Data/Internet, Ajo/Esusu/Adashe') }}"
                             aria-describedby="categoryTooltip">
-                        <option value="" disabled {% if not form.category.data %}selected{% endif %}>{{ trans('bill_select_category', lang=lang) | default('Select Category') }}</option>
+                        <option value="" disabled selected>{{ trans('bill_select_category', lang=lang) | default('Select Category') }}</option>
                         {% for value, label in form.category.choices %}
                             <option value="{{ value }}" {% if form.category.data == value %}selected{% endif %}>{{ label }}</option>
                         {% endfor %}
@@ -68,9 +68,9 @@
                     <select name="status" id="status" class="form-control" required
                             data-bs-toggle="tooltip" title="{{ trans('bill_status_tooltip', lang=lang) | default('Select the current status of the bill') }}"
                             aria-describedby="statusTooltip">
-                        <option value="" disabled {% if not form.status.data %}selected{% endif %}>{{ trans('bill_select_status', lang=lang) | default('Select Status') }}</option>
+                        <option value="" disabled selected>{{ trans('bill_select_status', lang=lang) | default('Select Status') }}</option>
                         {% for value, label in form.status.choices %}
-                            <option value="{{ value }}" {% if form.status.data == value %}selected{% endif %}>{{ label }}</option>
+                            <option value="{{ value }}" {% if form.frequency.data == value %}selected{% endif %}>{{ label }}</option>
                         {% endfor %}
                     </select>
                     {% if form.status.errors %}
@@ -91,11 +91,11 @@
                     </div>
                     <div class="mb-3" id="reminder_days_container" style="display: {{ 'block' if form.send_email.data else 'none' }};">
                         <label for="reminder_days" class="form-label">{{ trans('bill_reminder_days', lang=lang) | default('Reminder Days') }}</label>
-                        {{ form.reminder_days(class="form-control", placeholder=trans('bill_reminder_days_placeholder', lang=lang) | default('') | default('e.g., 7'), **{'data-bs-toggle': 'tooltip', 'title': trans('bill_reminder_days_tooltip', lang=lang) | default('Number of days before due date to receive reminders (1-30)'), 'aria-describedby': 'reminderDaysTooltip'}) }}
+                        {{ form.reminder_days(class="form-control", placeholder=trans('bill_reminder_days_placeholder', lang=lang) | default('e.g., 7'), **{'data-bs-toggle': 'tooltip', 'title': trans('bill_reminder_days_tooltip', lang=lang) | default('Number of days before due date to receive reminders (1-30)'), 'aria-describedby': 'reminderDaysTooltip'}) }}
                         {% if form.reminder_days.errors %}
                             <div class="invalid-feedback d-block">
                                 {% for error in form.reminder_days.errors %}
-                                    {{ trans(error, lang=lang) | default(error) }}<br />
+                                    {{ trans(error, lang=lang) | default(error) }}<br>
                                 {% endfor %}
                             </div>
                         {% else %}
@@ -103,7 +103,7 @@
                         {% endif %}
                     </div>
                 </fieldset>
-                <button type="submit" name="action" value="submit" class="btn btn-success" id="saveButton">{{ trans('bill.submit', lang=lang) | default('Save Bill') }}</button>
+                <button type="submit" name="action" value="save" class="btn btn-success" id="saveButton">{{ trans('bill_save_bill', lang=lang) | default('Save Bill') }}</button>
                 <button type="submit" name="action" value="save_and_continue" class="btn btn-primary" id="saveAndContinueButton">{{ trans('bill_add_another_bill', lang=lang) | default('Add Another Bill') }}</button>
                 <button type="button" class="btn btn-outline-secondary" onclick="window.location.href='{{ url_for('bill.form_step1') }}'">{{ trans('bill_back', lang=lang) | default('Back') }}</button>
                 <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">{{ trans('bill_back_to_index', lang=lang) | default('Back to Index') }}</a>
@@ -125,12 +125,19 @@
         const saveButton = document.getElementById('saveButton');
         const saveAndContinueButton = document.getElementById('saveAndContinueButton');
 
-        // Valid choices from backend (must match BillFormStep2 choices)
+        // Valid choices from backend
         const validFrequencies = ['one-time', 'weekly', 'monthly', 'quarterly'];
         const validCategories = ['utilities', 'rent', 'data_internet', 'ajo_esusu_adashe', 'food', 'transport', 'clothing', 'education', 'healthcare', 'entertainment', 'airtime', 'school_fees', 'savings_investments', 'other'];
         const validStatuses = ['unpaid', 'paid', 'pending', 'overdue'];
 
         // Initialize reminder_days visibility
+        console.log('Initial form state', {
+            frequency: frequency.value,
+            category: category.value,
+            status: status.value,
+            sendEmail: sendEmail.checked,
+            reminderDays: reminderDays.value
+        });
         reminderDaysContainer.style.display = sendEmail.checked ? 'block' : 'none';
 
         // Toggle reminder_days visibility
@@ -145,13 +152,15 @@
         // Form submission validation
         form.addEventListener('submit', function(e) {
             let isValid = true;
-            console.log('Form submission attempted', {
+            const formData = {
                 frequency: frequency.value,
                 category: category.value,
                 status: status.value,
                 sendEmail: sendEmail.checked,
-                reminderDays: reminderDays.value
-            });
+                reminderDays: reminderDays.value,
+                action: e.submitter.value
+            };
+            console.log('Form submission attempted', formData);
 
             // Validate frequency
             if (!frequency.value || !validFrequencies.includes(frequency.value)) {
@@ -195,7 +204,16 @@
 
             if (!isValid) {
                 e.preventDefault();
-                console.error('Form submission prevented due to validation errors');
+                console.error('Form submission prevented due to validation errors', formData);
+                // Re-enable buttons if validation fails
+                if (saveButton) {
+                    saveButton.disabled = false;
+                    saveButton.textContent = '{{ trans('bill_save_bill', lang=lang) | default('Save Bill') }}';
+                }
+                if (saveAndContinueButton) {
+                    saveAndContinueButton.disabled = false;
+                    saveAndContinueButton.textContent = '{{ trans('bill_add_another_bill', lang=lang) | default('Add Another Bill') }}';
+                }
                 return;
             }
 
@@ -213,6 +231,7 @@
         // Remove is-invalid class on valid input change
         [frequency, category, status, reminderDays].forEach(field => {
             field.addEventListener('change', function() {
+                console.log(`Field changed: ${this.id} = ${this.value}`);
                 if (this.value && (
                     (this.id === 'frequency' && validFrequencies.includes(this.value)) ||
                     (this.id === 'category' && validCategories.includes(this.value)) ||
