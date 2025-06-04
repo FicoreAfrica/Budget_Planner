@@ -3,6 +3,8 @@ NET_WORTH_TRANSLATIONS = {
         # From translations_translations_net_worth.py
         'net_worth_calculator': 'Net Worth Tracker',
         'net_worth_net_worth_calculator': 'Net Worth Tracker',
+        'net_worth_net_worth_badge_wealth_builder': 'Wealth Builder Badge',
+        'net_worth_net_worth_badge_savings_champion': 'Savings Champion Badge',
         'net_worth_net_worth': 'Net Worth',
         'net_worth_dashboard': 'Net Worth Dashboard',
         'net_worth_net_worth_badge_wealth_builder': 'Wealth Builder Badge',
@@ -491,6 +493,8 @@ NET_WORTH_TRANSLATIONS = {
         'net_worth_error_assets_input': 'An samu kuskure wajen adana kadarorin ka.',
         'net_worth_error_net_worth_calculation': 'An samu kuskure wajen ƙididdige dukiyar kuɗi. Da fatan za a sake gwadawa.',
         'Enter your assets': 'Shigar da kadarorin ku',
+        'net_worth_net_worth_badge_wealth_builder': 'Alamar Mai Gina Arziki',
+        'net_worth_net_worth_badge_savings_champion': 'Alamar Zakaran Tanadi',
         'Enter your liabilities (optional)': 'Shigar da abubuwan da ake bin ku (ba dole ba)',
         'net_worth_success': 'An ƙididdige ƙimar dukiyar ku cikin nasara!',
         'net_worth_net_worth_badge_wealth_builder': 'Alamar Mai Gina Arziki',
