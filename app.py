@@ -207,6 +207,30 @@ def create_app():
             logger.warning(f"Error formatting number {value}: {str(e)}")
             return str(value)
 
+    @app.template_filter('format_datetime')
+    def format_datetime(value):
+        """
+        Format a datetime object to a readable string (e.g., 'June 4, 2025, 10:05 AM').
+        If the value is not a datetime object, return it as is.
+        """
+        if isinstance(value, datetime):
+            return value.strftime('%B %d, %Y, %I:%M %p')
+        return value
+
+    @app.template_filter('format_currency')
+    def format_currency(value):
+        """
+        Format a number as currency (e.g., 887.00 -> ₦887, 88.00 -> ₦88).
+        Removes decimal places if they are .00.
+        """
+        try:
+            value = float(value)
+            if value.is_integer():
+                return f"{int(value):,}"
+            return f"{value:,.2f}"
+        except (TypeError, ValueError):
+            return value
+
     @app.before_request
     def setup_session_and_language():
         try:
