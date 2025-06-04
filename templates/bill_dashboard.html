@@ -41,6 +41,32 @@
             </div>
         </div>
 
+        {% if due_today %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5>{{ trans('bill_due_today', lang=lang) | default('Due Today') }}</h5>
+                    <ul>
+                        {% for bill_id, bill in due_today %}
+                            <li>{{ bill.bill_name }} (₦{{ bill.amount | format_currency }})</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        {% endif %}
+
+        {% if upcoming_bills %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5>{{ trans('bill_upcoming_bills', lang=lang) | default('Upcoming Bills') }}</h5>
+                    <ul>
+                        {% for bill_id, bill in upcoming_bills %}
+                            <li>{{ bill.bill_name }} (₦{{ bill.amount | format_currency }}) - Due: {{ bill.due_date }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        {% endif %}
+
         <div class="table-responsive">
             <table class="table table-striped">
                 <thead>
@@ -58,24 +84,30 @@
                     {% for bill_id, bill in bills %}
                         {% if bill.bill_name and bill.amount is not none and bill.due_date and bill.frequency and bill.category and bill.status %}
                             <tr>
-                                <td>{{ bill['bill_name'] }}</td>
-                                <td>₦{{ bill['amount'] | format_currency }}</td>
-                                <td>{{ bill['due_date'] }}</td>
-                                <td>{{ trans('bill_category_' + bill['category'], lang=lang) | default(bill['category']) }}</td>
-                                <td>{{ trans('bill_frequency_' + bill['frequency'], lang=lang) | default(bill['frequency']) }}</td>
-                                <td>{{ trans('bill_status_' + bill['status'], lang=lang) | default(bill['status']) }}</td>
+                                <td>{{ bill.bill_name }}</td>
+                                <td>₦{{ bill.amount | format_currency }}</td>
+                                <td>{{ bill.due_date }}</td>
+                                <td>{{ trans('bill_category_' + bill.category, lang=lang) | default(bill.category) }}</td>
+                                <td>{{ trans('bill_frequency_' + bill.frequency, lang=lang) | default(bill.frequency) }}</td>
+                                <td>{{ trans('bill_status_' + bill.status, lang=lang) | default(bill.status) }}</td>
                                 <td>
                                     <form action="{{ url_for('bill.view_edit') }}" method="POST" style="display:inline;">
-                                        {{ form.csrf_token }}
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <input type="hidden" name="bill_id" value="{{ bill_id }}">
                                         <input type="hidden" name="action" value="edit">
                                         <button type="submit" class="btn btn-sm btn-primary">{{ trans('bill_edit', lang=lang) | default('Edit') }}</button>
                                     </form>
                                     <form action="{{ url_for('bill.view_edit') }}" method="POST" style="display:inline;" onsubmit="return confirm('{{ trans('bill_confirm_delete', lang=lang) | default('Are you sure you want to delete this bill?') }}');">
-                                        {{ form.csrf_token }}
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <input type="hidden" name="bill_id" value="{{ bill_id }}">
                                         <input type="hidden" name="action" value="delete">
                                         <button type="submit" class="btn btn-sm btn-danger">{{ trans('bill_delete', lang=lang) | default('Delete') }}</button>
+                                    </form>
+                                    <form action="{{ url_for('bill.view_edit') }}" method="POST" style="display:inline;">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <input type="hidden" name="bill_id" value="{{ bill_id }}">
+                                        <input type="hidden" name="action" value="toggle_status">
+                                        <button type="submit" class="btn btn-sm btn-secondary">{{ trans('bill_toggle_status', lang=lang) | default('Toggle Status') }}</button>
                                     </form>
                                 </td>
                             </tr>
