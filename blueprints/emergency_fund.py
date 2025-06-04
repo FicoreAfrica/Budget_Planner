@@ -317,7 +317,7 @@ def step4():
                 session.modified = True
 
                 flash(trans('emergency_fund_completed_successfully', lang=lang, default='Emergency fund calculation completed successfully!'), 'success')
-                return redirect(url_for('emergency_fund.success'))
+                return redirect(url_for('emergency_fund.dashboard'))
             else:
                 current_app.logger.warning(f"Step4 form errors: {form.errors}")
                 for field, errors in form.errors.items():
