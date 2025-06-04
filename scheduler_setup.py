@@ -2,8 +2,8 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from datetime import datetime, date, timedelta
 from flask import current_app, url_for, session
-from extensions import db
-from models import Bill, User
+from extensions import db, User
+from models import Bill
 from mailersend_email import send_email, trans, EMAIL_CONFIG
 import atexit
 
