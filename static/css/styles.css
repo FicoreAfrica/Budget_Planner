@@ -184,6 +184,7 @@ body {
     border-radius: 8px;
     background-color: #f9f9f9;
     transition: transform 0.3s ease-in-out;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 .tool-group:hover {
     transform: translateY(-5px);
@@ -204,7 +205,7 @@ body {
 }
 .tools-grid {
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
     gap: 1rem;
 }
 
@@ -216,6 +217,11 @@ body {
     background-color: #f9f9f9;
     border: none;
     padding: 0.8rem 1rem;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+.accordion-button:hover {
+    background-color: #E3F2FD;
+    color: #2E7D32;
 }
 .accordion-button:not(.collapsed) {
     background-color: #E3F2FD;
@@ -226,6 +232,35 @@ body {
 }
 .accordion-body {
     padding: 1rem;
+}
+.accordion-item {
+    border: none;
+    margin-bottom: 0.5rem;
+    border-bottom: 1px solid #e0e0e0;
+}
+.accordion-item:last-child {
+    border-bottom: none;
+}
+
+/* Tool Card */
+.tool-card {
+    padding: 1.2rem;
+    margin: 0.8rem auto;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    max-width: 400px;
+}
+.tool-card h3 {
+    margin-bottom: 0.4rem;
+    font-size: 1.25rem;
+}
+.tool-card p {
+    font-size: 0.95rem;
+    margin-bottom: 1rem;
+}
+.tool-card button {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.95rem;
 }
 
 /* Tool Header */
@@ -341,6 +376,9 @@ body {
     background-color: #17a2b8;
     color: white;
 }
+.badge-badge {
+    background-color: #cdcdcd;
+}
 .badge-bronze {
     background-color: #cd7f32;
     color: white;
@@ -349,7 +387,7 @@ body {
 .badge-silver {
     background-color: #c0c0c0;
     color: #333;
-    border: 2px solid #a9a9a9;
+    border: 2px solid #a9a9a;
 }
 .badge-gold {
     background-color: #ffd700;
@@ -358,7 +396,7 @@ body {
 }
 .badge-platinum {
     background-color: #e5e4e2;
-    color: #333;
+    color: 2px;
     border: 2px solid #b0b0b0;
 }
 .badge-blue {
@@ -368,17 +406,17 @@ body {
 }
 .badge-gray {
     background-color: #e9ecef;
-    color: #333;
     border: 2px solid #ced4da;
+    color: #333;
 }
 .net-worth-highlight {
-    font-weight: bold;
     color: #2E7D32;
+    font-weight: bold;
 }
 
 /* About Page Specific Styles */
 .about-page {
-    padding-top: 10px;
+    padding-top: 20px;
     padding-bottom: 40px;
 }
 .about-container {
@@ -498,7 +536,35 @@ body {
 }
 
 /* Mobile Optimizations */
-@media (max-width: 767px) {
+@media (max-width: 576px) {
+    .container {
+        padding: 0.5rem 1rem;
+    }
+    .tools-section {
+        padding: 0.5rem;
+    }
+    .accordion-body {
+        padding: 0.5rem 1rem;
+    }
+    .tools-grid {
+        flex-direction: column;
+        gap: 0.8rem;
+    }
+    .tool-card {
+        width: 100%;
+        max-width: none;
+        margin: 0.5rem 0;
+        padding: 1rem;
+    }
+    .tool-card h3 {
+        font-size: 1.1rem;
+    }
+    .tool-card p {
+        font-size: 0.85rem;
+    }
+    .tool-card button {
+        font-size: 0.9rem;
+    }
     .consent-banner {
         font-size: 0.85rem;
         padding: 8px;
@@ -522,8 +588,8 @@ body {
     .recommended-learning,
     .why-section,
     .faq-section {
-        padding: 1rem;
-        margin-bottom: 1rem;
+        padding: 0.5rem;
+        margin-bottom: 0.8rem;
     }
     .btn-primary {
         padding: 0.5rem 1rem;
@@ -534,7 +600,7 @@ body {
         display: block;
     }
     .btn-primary:last-child {
-        margin-bottom: 1rem;
+        margin-bottom: 0.8rem;
     }
     .btn-explore {
         padding: 0.7rem 1.2rem;
@@ -545,7 +611,7 @@ body {
         padding: 0.4rem 0.8rem;
     }
     .testimonial + .testimonial {
-        margin-top: 1rem;
+        margin-top: 0.8rem;
     }
     .social-icons a {
         font-size: 0.85rem;
@@ -596,32 +662,14 @@ body {
         padding: 0.3rem 0.6rem;
     }
     .tool-group {
-        padding: 0.5rem 1rem;
-        margin-bottom: 1rem;
+        padding: 0.3rem 0.5rem;
+        margin-bottom: 0.8rem;
     }
     .group-title {
         font-size: 1.2rem;
     }
     .group-subtext {
         font-size: 0.85rem;
-    }
-    .tools-grid .col-md-4, .tools-grid .col-md-6 {
-        flex: 0 0 100%;
-        max-width: 100%;
-    }
-    .tool-card {
-        padding: 1rem;
-        margin: 0.5rem auto;
-        width: 95%;
-    }
-    h2, h3 {
-        font-size: 1.1rem;
-    }
-    .tool-card p {
-        font-size: 0.85rem;
-    }
-    .tool-card button {
-        font-size: 0.9rem;
     }
     .about-title {
         font-size: 1.8rem;
@@ -639,91 +687,17 @@ body {
     .mission-statement,
     .team-why {
         padding: 0.5rem;
-        margin-bottom: 1rem;
+        margin-bottom: 0.8rem;
     }
     .about-content {
         font-size: 0.9rem;
-        margin-bottom: 1rem;
+        margin-bottom: 0.8rem;
     }
     .about-content p {
         margin-bottom: 0.5rem;
     }
     .about-header {
         padding: 0.5rem;
-    }
-}
-
-@media (max-width: 576px) {
-    .tool-card .card-title {
-        font-size: 1.4rem;
-        word-wrap: break-word;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        text-align: center;
-    }
-    .tool-card i {
-        font-size: 1.2rem;
-        display: inline-block;
-        margin-bottom: 0.3rem;
-        vertical-align: middle;
-    }
-    .tool-card {
-        margin-bottom: 0.5rem;
-    }
-    .tool-card .btn {
-        height: 40px;
-        padding: 0.5rem 1rem;
-        font-size: 0.9rem;
-        font-weight: 600;
-        border-radius: 6px;
-    }
-    .tool-card .btn:hover {
-        transform: scale(1.05);
-        background: linear-gradient(135deg, #1B5E20, #01579B);
-    }
-    .language-btn {
-        font-size: 0.85rem;
-        padding: 0.3rem 0.6rem;
-        min-width: 70px;
-    }
-    .language-btn i {
-        font-size: 0.9rem;
-    }
-    body {
-        padding: 5px;
-    }
-    .container, .step-container {
-        max-width: 100%;
-    }
-    .card-body {
-        padding: 0.5rem;
-    }
-    .btn-primary, .btn-secondary, .btn-success {
-        font-size: 0.85rem;
-        padding: 0.4rem;
-    }
-    .chart-container {
-        max-height: 200px;
-    }
-    .score-gauge {
-        max-width: 200px;
-    }
-    .tool-title {
-        font-size: 1.2rem;
-    }
-    .btn-back {
-        font-size: 0.8rem;
-        padding: 0.2rem 0.5rem;
-    }
-    .tool-group {
-        padding: 0.3rem 0.5rem;
-        margin-bottom: 0.8rem;
-    }
-    .group-title {
-        font-size: 1.1rem;
-    }
-    .group-subtext {
-        font-size: 0.8rem;
     }
 }
 
@@ -735,7 +709,7 @@ body {
         margin: 0 auto;
     }
     .tools-grid {
-        display: flex;
+        flex-direction: row;
         flex-wrap: wrap;
         justify-content: center;
         gap: 1rem;
