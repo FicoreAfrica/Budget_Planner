@@ -13,67 +13,93 @@
     </section>
     <section class="tools-section my-5" id="tools-section">
         <h2 class="text-center"><i class="fas fa-tools"></i> {{ trans('core_choose_tool') | default('Choose a Tool') }}</h2>
-        <div class="tools-grid row">
-            <div class="col-md-4 mb-4">
-                <div class="card tool-card custom-card">
-                    <div class="card-body">
-                        <h3 class="card-title"><i class="fas fa-heartbeat"></i> {{ trans('financial_health_financial_health_score') | default('Financial Health Score') }}</h3>
-                        <p class="card-text">{{ trans('financial_health_evaluate_finances') | default('Evaluates income, expenses, and debt for a health score') }}</p>
-                        <a href="{{ url_for('financial_health.step1') }}" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ trans('core_advisory_only') | default('This is an advisory tool only. Ficore does not store or access your funds.') }}" aria-label="{{ trans('financial_health_start_financial_health') | default('Start Financial Health Score') }}">{{ trans('core_start') | default('Start') }}</a>
+        <!-- Financial Assessment Group -->
+        <div class="tool-group">
+            <h3 class="group-title"><i class="fas fa-stethoscope"></i> Financial Assessment</h3>
+            <p class="group-subtext">Understand your financial behavior and readiness.</p>
+            <div class="tools-grid row">
+                <div class="col-md-4 mb-4">
+                    <div class="card tool-card custom-card">
+                        <div class="card-body">
+                            <h3 class="card-title"><i class="fas fa-heartbeat"></i> {{ trans('financial_health_financial_health_score') | default('Financial Health Score') }}</h3>
+                            <p class="card-text">{{ trans('financial_health_evaluate_finances') | default('Evaluates income, expenses, and debt for a health score') }}</p>
+                            <a href="{{ url_for('financial_health.step1') }}" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ trans('core_advisory_only') | default('This is an advisory tool only. Ficore does not store or access your funds.') }}" aria-label="{{ trans('financial_health_start_financial_health') | default('Start Financial Health Score') }}">{{ trans('core_start') | default('Start') }}</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="card tool-card custom-card">
+                        <div class="card-body">
+                            <h3 class="card-title"><i class="fas fa-question-circle"></i> {{ trans('quiz_personality_quiz') | default('Personality Quiz') }}</h3>
+                            <p class="card-text">{{ trans('quiz_assess_literacy') | default('Answer questions to assess financial literacy') }}</p>
+                            <a href="{{ url_for('quiz.step1', course_id='financial_quiz') }}" class="btn btn-primary" aria-label="{{ trans('quiz_start_personality_quiz') | default('Start Personality Quiz') }}">{{ trans('core_start') | default('Start') }}</a>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-4 mb-4">
-                <div class="card tool-card custom-card">
-                    <div class="card-body">
-                        <h3 class="card-title"><i class="fas fa-calculator"></i> {{ trans('budget_budget_planner') | default('Budget Planner') }}</h3>
-                        <p class="card-text">{{ trans('budget_allocate_income') | default('Allocate income across expense categories') }}</p>
-                        <a href="{{ url_for('budget.step1') }}" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ trans('core_advisory_only') | default('This is an advisory tool only. Ficore does not store or access your funds.') }}" aria-label="{{ trans('budget_start_budget_planner') | default('Start Monthly Budget Planner') }}">{{ trans('core_start') | default('Start') }}</a>
+        </div>
+        <!-- Planning Tools Group -->
+        <div class="tool-group">
+            <h3 class="group-title"><i class="fas fa-calendar-alt"></i> Planning Tools</h3>
+            <p class="group-subtext">Create a practical plan to manage your money with confidence.</p>
+            <div class="tools-grid row">
+                <div class="col-md-4 mb-4">
+                    <div class="card tool-card custom-card">
+                        <div class="card-body">
+                            <h3 class="card-title"><i class="fas fa-calculator"></i> {{ trans('budget_budget_planner') | default('Budget Planner') }}</h3>
+                            <p class="card-text">{{ trans('budget_allocate_income') | default('Allocate income across expense categories') }}</p>
+                            <a href="{{ url_for('budget.step1') }}" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ trans('core_advisory_only') | default('This is an advisory tool only. Ficore does not store or access your funds.') }}" aria-label="{{ trans('budget_start_budget_planner') | default('Start Monthly Budget Planner') }}">{{ trans('core_start') | default('Start') }}</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="card tool-card custom-card">
+                        <div class="card-body">
+                            <h3 class="card-title"><i class="fas fa-file-invoice"></i> {{ trans('bill_bill_planner') | default('Bill Planner') }}</h3>
+                            <p class="card-text">{{ trans('bill_manage_bills') | default('Manage and mark bills as paid') }}</p>
+                            <a href="{{ url_for('bill.form_step1') }}" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ trans('core_advisory_only') | default('This is an advisory tool only. Ficore does not store or access your funds.') }}" aria-label="{{ trans('bill_start_bill_planner') | default('Start Bill Planner') }}">{{ trans('core_start') | default('Start') }}</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="card tool-card custom-card">
+                        <div class="card-body">
+                            <h3 class="card-title"><i class="fas fa-piggy-bank"></i> {{ trans('emergency_fund_calculator') | default('Emergency Fund Planner') }}</h3>
+                            <p class="card-text">{{ trans('emergency_fund_goal') | default('Aims to cover 3-6 months of expenses for financial security') }}</p>
+                            <a href="{{ url_for('emergency_fund.step1') }}" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ trans('core_advisory_only') | default('This is an advisory tool only. Ficore does not store or access your funds.') }}" aria-label="{{ trans('emergency_fund_start_emergency_fund') | default('Start Emergency Fund Planner') }}">{{ trans('core_start') | default('Start') }}</a>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-4 mb-4">
-                <div class="card tool-card custom-card">
-                    <div class="card-body">
-                        <h3 class="card-title"><i class="fas fa-question-circle"></i> {{ trans('quiz_personality_quiz') | default('Personality Quiz') }}</h3>
-                        <p class="card-text">{{ trans('quiz_assess_literacy') | default('Answer questions to assess financial literacy') }}</p>
-                        <a href="{{ url_for('quiz.step1', course_id='financial_quiz') }}" class="btn btn-primary" aria-label="{{ trans('quiz_start_personality_quiz') | default('Start Personality Quiz') }}">{{ trans('core_start') | default('Start') }}</a>
+        </div>
+        <!-- Wealth Tracking Group -->
+        <div class="tool-group">
+            <h3 class="group-title"><i class="fas fa-chart-line"></i> Wealth Tracking</h3>
+            <p class="group-subtext">Stay aware of your financial position at all times.</p>
+            <div class="tools-grid row">
+                <div class="col-md-4 mb-4">
+                    <div class="card tool-card custom-card">
+                        <div class="card-body">
+                            <h3 class="card-title"><i class="fas fa-balance-scale"></i> {{ trans('net_worth_net_worth_calculator') | default('Net Worth Tracker') }}</h3>
+                            <p class="card-text">{{ trans('net_worth_description') | default('Your Net worth is your assets minus liabilities') }}</p>
+                            <a href="{{ url_for('net_worth.step1') }}" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ trans('core_advisory_only') | default('This is an advisory tool only. Ficore does not store or access your funds.') }}" aria-label="{{ trans('net_worth_start_net_worth') | default('Start Net Worth Tracker') }}">{{ trans('core_start') | default('Start') }}</a>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-4 mb-4">
-                <div class="card tool-card custom-card">
-                    <div class="card-body">
-                        <h3 class="card-title"><i class="fas fa-file-invoice"></i> {{ trans('bill_bill_planner') | default('Bill Planner') }}</h3>
-                        <p class="card-text">{{ trans('bill_manage_bills') | default('Manage and mark bills as paid') }}</p>
-                        <a href="{{ url_for('bill.form_step1') }}" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ trans('core_advisory_only') | default('This is an advisory tool only. Ficore does not store or access your funds.') }}" aria-label="{{ trans('bill_start_bill_planner') | default('Start Bill Planner') }}">{{ trans('core_start') | default('Start') }}</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4 mb-4">
-                <div class="card tool-card custom-card">
-                    <div class="card-body">
-                        <h3 class="card-title"><i class="fas fa-balance-scale"></i> {{ trans('net_worth_net_worth_calculator') | default('Net Worth Tracker') }}</h3>
-                        <p class="card-text">{{ trans('net_worth_description') | default('Your Net worth is your assets minus liabilities') }}</p>
-                        <a href="{{ url_for('net_worth.step1') }}" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ trans('core_advisory_only') | default('This is an advisory tool only. Ficore does not store or access your funds.') }}" aria-label="{{ trans('net_worth_start_net_worth') | default('Start Net Worth Tracker') }}">{{ trans('core_start') | default('Start') }}</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4 mb-4">
-                <div class="card tool-card custom-card">
-                    <div class="card-body">
-                        <h3 class="card-title"><i class="fas fa-piggy-bank"></i> {{ trans('emergency_fund_calculator') | default('Emergency Fund Planner') }}</h3>
-                        <p class="card-text">{{ trans('emergency_fund_goal') | default('Aims to cover 3-6 months of expenses for financial security') }}</p>
-                        <a href="{{ url_for('emergency_fund.step1') }}" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ trans('core_advisory_only') | default('This is an advisory tool only. Ficore does not store or access your funds.') }}" aria-label="{{ trans('emergency_fund_start_emergency_fund') | default('Start Emergency Fund Planner') }}">{{ trans('core_start') | default('Start') }}</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4 mb-4">
-                <div class="card tool-card custom-card">
-                    <div class="card-body">
-                        <h3 class="card-title"><i class="fas fa-graduation-cap"></i> {{ trans('learning_hub_courses') | default('Learning Hub') }}</h3>
-                        <p class="card-text">{{ trans('learning_hub_dashboard') | default('Access all courses to improve financial literacy') }}</p>
-                        <a href="{{ url_for('learning_hub.courses') }}" class="btn btn-primary" aria-label="{{ trans('learning_hub_start_course') | default('Start Course') }}">{{ trans('core_start') | default('Start') }}</a>
+        </div>
+        <!-- Learning & Growth Group -->
+        <div class="tool-group">
+            <h3 class="group-title"><i class="fas fa-graduation-cap"></i> Learning & Growth</h3>
+            <p class="group-subtext">Build knowledge that helps you make smarter financial decisions.</p>
+            <div class="tools-grid row">
+                <div class="col-md-4 mb-4">
+                    <div class="card tool-card custom-card">
+                        <div class="card-body">
+                            <h3 class="card-title"><i class="fas fa-graduation-cap"></i> {{ trans('learning_hub_courses') | default('Learning Hub') }}</h3>
+                            <p class="card-text">{{ trans('learning_hub_dashboard') | default('Access all courses to improve financial literacy') }}</p>
+                            <a href="{{ url_for('learning_hub.courses') }}" class="btn btn-primary" aria-label="{{ trans('learning_hub_start_course') | default('Start Course') }}">{{ trans('core_start') | default('Start') }}</a>
+                        </div>
                     </div>
                 </div>
             </div>
