@@ -5,6 +5,7 @@ CORE_TRANSLATIONS = {
         'auth_username_tooltip': 'Your unique username for logging in.',
         'auth_password_placeholder': 'Enter your password',
         'auth_password_tooltip': 'Your password for your account.',
+        'core_net_worth_missing_step1': 'Please complete the previous step to view your net worth.',
         'core_net_worth_missing_step2': 'Please complete the previous step to view your net worth.',
         'core_switch_to': 'Switch to',
         'remaining': 'Remaining',
@@ -809,6 +810,7 @@ CORE_TRANSLATIONS = {
         'remaining': 'Ragowar',
         'View and Edit Bills': 'Duba da Gyara Kuɗin Biya',
         'core_net_worth_missing_step2': 'Don Allah a kammala matakin baya don ganin darajar ku ta net.',
+        'core_net_worth_missing_step1': 'Don Allah a kammala matakin baya don ganin darajar ku ta net.',
         
         'Bill Planner': 'Takardun Biya',
         'auth_username_placeholder': 'Shigar da sunan mai amfani',
