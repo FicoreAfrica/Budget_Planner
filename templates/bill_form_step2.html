@@ -28,7 +28,7 @@
                     <select name="frequency" id="frequency" class="form-control" required
                             data-bs-toggle="tooltip" title="{{ trans('bill_frequency_tooltip', lang=lang) | default('Select how often this bill or expense occurs') }}"
                             aria-describedby="frequencyTooltip">
-                        <option value="" disabled selected>{{ trans('bill_select_frequency', lang=lang) | default('Select Frequency') }}</option>
+                        <option value="" disabled {% if not form.frequency.data %}selected{% endif %}>{{ trans('bill_select_frequency', lang=lang) | default('Select Frequency') }}</option>
                         {% for value, label in form.frequency.choices %}
                             <option value="{{ value }}" {% if form.frequency.data == value %}selected{% endif %}>{{ label }}</option>
                         {% endfor %}
@@ -48,7 +48,7 @@
                     <select name="category" id="category" class="form-control" required
                             data-bs-toggle="tooltip" title="{{ trans('bill_category_tooltip', lang=lang) | default('Select a category, e.g., Data/Internet, Ajo/Esusu/Adashe') }}"
                             aria-describedby="categoryTooltip">
-                        <option value="" disabled selected>{{ trans('bill_select_category', lang=lang) | default('Select Category') }}</option>
+                        <option value="" disabled {% if not form.category.data %}selected{% endif %}>{{ trans('bill_select_category', lang=lang) | default('Select Category') }}</option>
                         {% for value, label in form.category.choices %}
                             <option value="{{ value }}" {% if form.category.data == value %}selected{% endif %}>{{ label }}</option>
                         {% endfor %}
@@ -68,9 +68,9 @@
                     <select name="status" id="status" class="form-control" required
                             data-bs-toggle="tooltip" title="{{ trans('bill_status_tooltip', lang=lang) | default('Select the current status of the bill') }}"
                             aria-describedby="statusTooltip">
-                        <option value="" disabled selected>{{ trans('bill_select_status', lang=lang) | default('Select Status') }}</option>
+                        <option value="" disabled {% if not form.status.data %}selected{% endif %}>{{ trans('bill_select_status', lang=lang) | default('Select Status') }}</option>
                         {% for value, label in form.status.choices %}
-                            <option value="{{ value }}" {% if form.frequency.data == value %}selected{% endif %}>{{ label }}</option>
+                            <option value="{{ value }}" {% if form.status.data == value %}selected{% endif %}>{{ label }}</option>
                         {% endfor %}
                     </select>
                     {% if form.status.errors %}
@@ -99,7 +99,7 @@
                                 {% endfor %}
                             </div>
                         {% else %}
-                            <div class="invalid-feedback">{{ trans('bill_reminder_days_required', lang=lang) | default('Valid number of days (1-30) is required') }}</div>
+                        <div class="invalid-feedback">{{ trans('bill_reminder_days_required', lang=lang) | default('Valid number of days (1-30) is required') }}</div>
                         {% endif %}
                     </div>
                 </fieldset>
@@ -125,12 +125,12 @@
         const saveButton = document.getElementById('saveButton');
         const saveAndContinueButton = document.getElementById('saveAndContinueButton');
 
-        // Valid choices from backend
+        // Valid choices from backend (matches BillFormStep2 in bill.py)
         const validFrequencies = ['one-time', 'weekly', 'monthly', 'quarterly'];
         const validCategories = ['utilities', 'rent', 'data_internet', 'ajo_esusu_adashe', 'food', 'transport', 'clothing', 'education', 'healthcare', 'entertainment', 'airtime', 'school_fees', 'savings_investments', 'other'];
         const validStatuses = ['unpaid', 'paid', 'pending', 'overdue'];
 
-        // Initialize reminder_days visibility
+        // Log initial form state
         console.log('Initial form state', {
             frequency: frequency.value,
             category: category.value,
@@ -138,6 +138,8 @@
             sendEmail: sendEmail.checked,
             reminderDays: reminderDays.value
         });
+
+        // Initialize reminder_days visibility
         reminderDaysContainer.style.display = sendEmail.checked ? 'block' : 'none';
 
         // Toggle reminder_days visibility
@@ -147,6 +149,13 @@
                 reminderDays.value = '';
                 reminderDays.classList.remove('is-invalid');
             }
+            console.log('send_email toggled', { sendEmail: this.checked, reminderDays: reminderDays.value });
+        });
+
+        // Prevent form reset from clearing required fields
+        form.addEventListener('reset', function(e) {
+            e.preventDefault();
+            console.warn('Form reset attempted and prevented');
         });
 
         // Form submission validation
@@ -158,7 +167,7 @@
                 status: status.value,
                 sendEmail: sendEmail.checked,
                 reminderDays: reminderDays.value,
-                action: e.submitter.value
+                action: e.submitter ? e.submitter.value : 'unknown'
             };
             console.log('Form submission attempted', formData);
 
