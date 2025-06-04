@@ -28,8 +28,9 @@
                     <select name="frequency" id="frequency" class="form-control" required
                             data-bs-toggle="tooltip" title="{{ trans('bill_frequency_tooltip', lang=lang) | default('Select how often this bill or expense occurs') }}"
                             aria-describedby="frequencyTooltip">
-                        {% for value, label in form.frequency.choices if value != '' %}
-                            <option value="{{ value }}" {% if form.frequency.data == value or (not form.frequency.data and value == 'monthly') %}selected{% endif %}>{{ label }}</option>
+                        <option value="" disabled {% if not form.frequency.data %}selected{% endif %}>{{ trans('bill_select_frequency', lang=lang) | default('Select Frequency') }}</option>
+                        {% for value, label in form.frequency.choices %}
+                            <option value="{{ value }}" {% if form.frequency.data == value %}selected{% endif %}>{{ label }}</option>
                         {% endfor %}
                     </select>
                     {% if form.frequency.errors %}
@@ -47,8 +48,9 @@
                     <select name="category" id="category" class="form-control" required
                             data-bs-toggle="tooltip" title="{{ trans('bill_category_tooltip', lang=lang) | default('Select a category, e.g., Data/Internet, Ajo/Esusu/Adashe') }}"
                             aria-describedby="categoryTooltip">
-                        {% for value, label in form.category.choices if value != '' %}
-                            <option value="{{ value }}" {% if form.category.data == value or (not form.category.data and value == 'utilities') %}selected{% endif %}>{{ label }}</option>
+                        <option value="" disabled {% if not form.category.data %}selected{% endif %}>{{ trans('bill_select_category', lang=lang) | default('Select Category') }}</option>
+                        {% for value, label in form.category.choices %}
+                            <option value="{{ value }}" {% if form.category.data == value %}selected{% endif %}>{{ label }}</option>
                         {% endfor %}
                     </select>
                     {% if form.category.errors %}
@@ -66,8 +68,9 @@
                     <select name="status" id="status" class="form-control" required
                             data-bs-toggle="tooltip" title="{{ trans('bill_status_tooltip', lang=lang) | default('Select the current status of the bill') }}"
                             aria-describedby="statusTooltip">
-                        {% for value, label in form.status.choices if value != '' %}
-                            <option value="{{ value }}" {% if form.status.data == value or (not form.status.data and value == 'pending') %}selected{% endif %}>{{ label }}</option>
+                        <option value="" disabled {% if not form.status.data %}selected{% endif %}>{{ trans('bill_select_status', lang=lang) | default('Select Status') }}</option>
+                        {% for value, label in form.status.choices %}
+                            <option value="{{ value }}" {% if form.status.data == value %}selected{% endif %}>{{ label }}</option>
                         {% endfor %}
                     </select>
                     {% if form.status.errors %}
@@ -88,11 +91,11 @@
                     </div>
                     <div class="mb-3" id="reminder_days_container" style="display: {{ 'block' if form.send_email.data else 'none' }};">
                         <label for="reminder_days" class="form-label">{{ trans('bill_reminder_days', lang=lang) | default('Reminder Days') }}</label>
-                        {{ form.reminder_days(class="form-control", placeholder=trans('bill_reminder_days_placeholder', lang=lang) | default('e.g., 7'), **{'data-bs-toggle': 'tooltip', 'title': trans('bill_reminder_days_tooltip', lang=lang) | default('Number of days before due date to receive reminders (1-30)'), 'aria-describedby': 'reminderDaysTooltip'}) }}
+                        {{ form.reminder_days(class="form-control", placeholder=trans('bill_reminder_days_placeholder', lang=lang) | default('') | default('e.g., 7'), **{'data-bs-toggle': 'tooltip', 'title': trans('bill_reminder_days_tooltip', lang=lang) | default('Number of days before due date to receive reminders (1-30)'), 'aria-describedby': 'reminderDaysTooltip'}) }}
                         {% if form.reminder_days.errors %}
                             <div class="invalid-feedback d-block">
                                 {% for error in form.reminder_days.errors %}
-                                    {{ trans(error, lang=lang) | default(error) }}<br>
+                                    {{ trans(error, lang=lang) | default(error) }}<br />
                                 {% endfor %}
                             </div>
                         {% else %}
@@ -100,7 +103,7 @@
                         {% endif %}
                     </div>
                 </fieldset>
-                <button type="submit" name="action" value="save" class="btn btn-success" id="saveButton">{{ trans('bill_save_bill', lang=lang) | default('Save Bill') }}</button>
+                <button type="submit" name="action" value="submit" class="btn btn-success" id="saveButton">{{ trans('bill.submit', lang=lang) | default('Save Bill') }}</button>
                 <button type="submit" name="action" value="save_and_continue" class="btn btn-primary" id="saveAndContinueButton">{{ trans('bill_add_another_bill', lang=lang) | default('Add Another Bill') }}</button>
                 <button type="button" class="btn btn-outline-secondary" onclick="window.location.href='{{ url_for('bill.form_step1') }}'">{{ trans('bill_back', lang=lang) | default('Back') }}</button>
                 <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">{{ trans('bill_back_to_index', lang=lang) | default('Back to Index') }}</a>
@@ -121,6 +124,11 @@
         const form = document.getElementById('billFormStep2');
         const saveButton = document.getElementById('saveButton');
         const saveAndContinueButton = document.getElementById('saveAndContinueButton');
+
+        // Valid choices from backend (must match BillFormStep2 choices)
+        const validFrequencies = ['one-time', 'weekly', 'monthly', 'quarterly'];
+        const validCategories = ['utilities', 'rent', 'data_internet', 'ajo_esusu_adashe', 'food', 'transport', 'clothing', 'education', 'healthcare', 'entertainment', 'airtime', 'school_fees', 'savings_investments', 'other'];
+        const validStatuses = ['unpaid', 'paid', 'pending', 'overdue'];
 
         // Initialize reminder_days visibility
         reminderDaysContainer.style.display = sendEmail.checked ? 'block' : 'none';
@@ -146,30 +154,30 @@
             });
 
             // Validate frequency
-            if (!frequency.value) {
+            if (!frequency.value || !validFrequencies.includes(frequency.value)) {
                 e.preventDefault();
                 frequency.classList.add('is-invalid');
-                console.error('Validation failed: frequency is empty');
+                console.error('Validation failed: invalid or empty frequency', frequency.value);
                 isValid = false;
             } else {
                 frequency.classList.remove('is-invalid');
             }
 
             // Validate category
-            if (!category.value) {
+            if (!category.value || !validCategories.includes(category.value)) {
                 e.preventDefault();
                 category.classList.add('is-invalid');
-                console.error('Validation failed: category is empty');
+                console.error('Validation failed: invalid or empty category', category.value);
                 isValid = false;
             } else {
                 category.classList.remove('is-invalid');
             }
 
             // Validate status
-            if (!status.value) {
+            if (!status.value || !validStatuses.includes(status.value)) {
                 e.preventDefault();
                 status.classList.add('is-invalid');
-                console.error('Validation failed: status is empty');
+                console.error('Validation failed: invalid or empty status', status.value);
                 isValid = false;
             } else {
                 status.classList.remove('is-invalid');
@@ -179,7 +187,7 @@
             if (sendEmail.checked && (!reminderDays.value || reminderDays.value < 1 || reminderDays.value > 30)) {
                 e.preventDefault();
                 reminderDays.classList.add('is-invalid');
-                console.error('Validation failed: invalid reminder_days');
+                console.error('Validation failed: invalid reminder_days', reminderDays.value);
                 isValid = false;
             } else {
                 reminderDays.classList.remove('is-invalid');
@@ -202,10 +210,15 @@
             }
         });
 
-        // Remove is-invalid class on input change
+        // Remove is-invalid class on valid input change
         [frequency, category, status, reminderDays].forEach(field => {
             field.addEventListener('change', function() {
-                if (this.value) {
+                if (this.value && (
+                    (this.id === 'frequency' && validFrequencies.includes(this.value)) ||
+                    (this.id === 'category' && validCategories.includes(this.value)) ||
+                    (this.id === 'status' && validStatuses.includes(this.value)) ||
+                    (this.id === 'reminder_days' && this.value >= 1 && this.value <= 30)
+                )) {
                     this.classList.remove('is-invalid');
                 }
             });
