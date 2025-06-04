@@ -297,7 +297,6 @@ def dashboard():
         session['sid'] = str(uuid.uuid4())
         session.permanent = True
     lang = session.get('lang', 'en')
-    form = FlaskForm()
 
     tips = [
         trans('bill_tip_pay_early', lang),
@@ -366,7 +365,6 @@ def dashboard():
 
         return render_template(
             'bill_dashboard.html',
-            form=form,
             bills=bills_data,
             paid_count=paid_count,
             unpaid_count=unpaid_count,
@@ -390,7 +388,6 @@ def dashboard():
         flash(trans('bill_dashboard_load_error', lang) or 'Error loading bill dashboard', 'danger')
         return render_template(
             'bill_dashboard.html',
-            form=form,
             bills=[],
             paid_count=0,
             unpaid_count=0,
@@ -409,7 +406,7 @@ def dashboard():
             trans=trans,
             lang=lang
         )
-
+        
 @bill_bp.route('/view_edit', methods=['GET', 'POST'])
 def view_edit():
     if 'sid' not in session:
