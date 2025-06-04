@@ -94,6 +94,7 @@ class BillFormStep2(FlaskForm):
         self.reminder_days.label.text = trans('bill_reminder_days', lang)
 
         self.process()
+        current_app.logger.info(f"BillFormStep2 initialized - frequency choices: {self.frequency.choices}, category choices: {self.category.choices}, status choices: {self.status.choices}")
 
 @bill_bp.route('/form/step1', methods=['GET', 'POST'])
 def form_step1():
@@ -107,6 +108,8 @@ def form_step1():
         bill_data['email'] = bill_data.get('email', current_user.email)
         bill_data['first_name'] = bill_data.get('first_name', current_user.username)
     form = BillFormStep1(data=bill_data)
+    current_app.logger.info(f"BillFormStep1 initialized with data: {bill_data}")
+    
     try:
         if request.method == 'POST' and form.validate_on_submit():
             try:
@@ -144,6 +147,8 @@ def form_step2():
     bill_step2_data = session.get('bill_step2', {})
     bill_step1_data = session.get('bill_step1', {})
     form = BillFormStep2(data=bill_step2_data)
+    current_app.logger.info(f"BillFormStep2 initialized with data: {bill_step2_data}")
+
     try:
         if request.method == 'POST':
             form_data = request.form.to_dict()
@@ -156,6 +161,7 @@ def form_step2():
                 return render_template('bill_form_step2.html', form=form, trans=trans, lang=lang)
 
             if form.validate_on_submit():
+                current_app.logger.info("Form validated successfully")
                 if form.send_email.data and not form.reminder_days.data:
                     form.reminder_days.errors.append(trans('bill_reminder_days_required', lang))
                     current_app.logger.error("Validation failed: reminder_days required when send_email is checked")
@@ -283,7 +289,8 @@ def form_step2():
             else:
                 current_app.logger.error(f"Form validation failed: {form.errors}")
                 for field, errors in form.errors.items():
-                    flash(f"{trans(f'bill_{field}', lang=lang)}: {trans(error, lang=lang) or error}", 'danger')
+                    for err_msg in errors:
+                        flash(f"{trans(f'bill_{field}', lang=lang)}: {err_msg}", 'danger')
                 return render_template('bill_form_step2.html', form=form, trans=trans, lang=lang)
         return render_template('bill_form_step2.html', form=form, trans=trans, lang=lang)
     except Exception as e:
@@ -406,7 +413,7 @@ def dashboard():
             trans=trans,
             lang=lang
         )
-        
+
 @bill_bp.route('/view_edit', methods=['GET', 'POST'])
 def view_edit():
     if 'sid' not in session:
@@ -458,7 +465,8 @@ def view_edit():
                 else:
                     current_app.logger.error(f"Form validation failed: {form.errors}")
                     for field, errors in form.errors.items():
-                        flash(f"{trans(f'bill_{field}', lang=lang)}: {trans(error, lang=lang) or error}", 'danger')
+                        for err_msg in errors:
+                            flash(f"{trans(f'bill_{field}', lang=lang)}: {err_msg}", 'danger')
                 return redirect(url_for('bill.view_edit'))
 
             elif action == 'edit':
