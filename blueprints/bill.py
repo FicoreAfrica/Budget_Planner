@@ -449,9 +449,9 @@ def view_edit():
                     'status': bill.status,
                     'send_email': bill.send_email,
                     'reminder_days': bill.reminder_days,
-                    'js_enabled': True,
+                    'js_enabled': 'true',
                     'csrf_token': None
-                })
+                }
             )
             bills_data.append((bill.id, bill.to_dict(), form))
 
