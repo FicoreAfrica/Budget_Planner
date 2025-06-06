@@ -107,25 +107,8 @@ def setup_logging(app):
     root_logger.addHandler(stream_handler)
     logger.debug(f"Logger level: {root_logger.getEffectiveLevel()}")
     
-    # FileHandler with rotation
-    log_dir = os.path.join(os.path.dirname(__file__), 'data')
-    os.makedirs(log_dir, exist_ok=True)
-    try:
-        file_handler = RotatingFileHandler(
-            os.path.join(log_dir, 'storage.log'),
-            maxBytes=10*1024*1024,
-            backupCount=5
-        )
-        file_handler.setLevel(logging.DEBUG)
-        file_handler.setFormatter(formatter)
-        root_logger.addHandler(file_handler)
-        logger.info("Logging setup complete with rotating file handler")
-        if os.path.exists(os.path.join(log_dir, 'storage.log')):
-            logger.debug(f"Log file exists: {os.path.join(log_dir, 'storage.log')}")
-        else:
-            logger.warning(f"Log file does not exist: {os.path.join(log_dir, 'storage.log')}")
-    except (PermissionError, OSError) as e:
-        logger.warning(f"Failed to set up file logging: {str(e)}. Relying on stream handler.")
+    # Temporarily disable RotatingFileHandler to ensure logs go to stderr for Render
+    logger.info("RotatingFileHandler disabled for Render debugging; all logs redirected to stderr")
     
     # Configure Gunicorn logging
     gunicorn_logger = logging.getLogger('gunicorn')
@@ -141,6 +124,7 @@ def setup_session(app):
         logger.info(f"Session directory ensured at {session_dir}")
     except OSError as e:
         logger.error(f"Failed to create session directory {session_dir}: {str(e)}. Using in-memory sessions.")
+        print(f"Failed to create session directory {session_dir}: {str(e)}", file=sys.stderr, flush=True)
         app.config['SESSION_TYPE'] = 'null'
         return
     app.config['SESSION_FILE_DIR'] = session_dir
@@ -191,6 +175,7 @@ def log_tool_usage(app, tool_name):
         logger.info(f"Successfully logged tool usage: tool={tool_name}, session={session['sid']}, user_id={current_user.id if current_user.is_authenticated else 'anonymous'}")
     except Exception as e:
         logger.error(f"Error logging tool usage for {tool_name}: {str(e)}")
+        print(f"Error logging tool usage for {tool_name}: {str(e)}", file=sys.stderr, flush=True)
         db.session.rollback()
 
 def run_migrations():
@@ -204,10 +189,13 @@ def run_migrations():
             raise FileNotFoundError(f"Migration directory {alembic_path} not found")
         scripts = os.listdir(alembic_path)
         logger.info(f"Found migration scripts: {scripts}")
+        print(f"Found migration scripts: {scripts}", file=sys.stderr, flush=True)
         alembic_cfg.set_main_option('script_location', alembic_path)
         logger.info("Starting Alembic migrations...")
+        print("Starting Alembic migrations...", file=sys.stderr, flush=True)
         command.upgrade(alembic_cfg, 'head')
         logger.info("Successfully applied database migrations")
+        print("Successfully applied database migrations", file=sys.stderr, flush=True)
     except Exception as e:
         logger.critical(f"Failed to apply database migrations: {str(e)}", exc_info=True)
         print(f"Failed to apply database migrations: {str(e)}", file=sys.stderr, flush=True)
@@ -227,6 +215,7 @@ def initialize_database(app):
         admin_password = os.environ.get('ADMIN_PASSWORD', 'defaultadminpassword')
         if admin_password == 'defaultadminpassword':
             logger.warning("Using default admin password. Set ADMIN_PASSWORD environment variable in production.")
+            print("Using default admin password. Set ADMIN_PASSWORD in production.", file=sys.stderr, flush=True)
         try:
             admin_user = User.query.filter_by(email=admin_email).first()
             if not admin_user:
@@ -239,9 +228,11 @@ def initialize_database(app):
                 admin_user.set_password(admin_password)
                 db.session.add(admin_user)
                 logger.info(f"Created admin user with email {admin_email}")
+                print(f"Created admin user with email {admin_email}", file=sys.stderr, flush=True)
             elif not admin_user.is_admin:
                 admin_user.is_admin = True
                 logger.info(f"Assigned admin role to existing user {admin_email}")
+                print(f"Assigned admin role to existing user {admin_email}", file=sys.stderr, flush=True)
             db.session.commit()
         except Exception as e:
             logger.critical(f"Failed to initialize admin user: {str(e)}", exc_info=True)
@@ -263,11 +254,12 @@ def create_app():
     flask_session.init_app(app)
     csrf.init_app(app)
 
-    # Configure SQLite database
+    # Configure database
     db_dir = os.path.join(os.path.dirname(__file__), 'data')
     try:
         os.makedirs(db_dir, exist_ok=True)
         logger.info(f"Database directory ensured at {db_dir}")
+        print(f"Database directory ensured at {db_dir}", file=sys.stderr, flush=True)
     except OSError as e:
         logger.critical(f"Failed to create database directory {db_dir}: {str(e)}")
         print(f"Failed to create database directory {db_dir}: {str(e)}", file=sys.stderr, flush=True)
@@ -276,8 +268,9 @@ def create_app():
     db_url = os.environ.get('DATABASE_URL', f'sqlite:///{db_path}')
     if not os.environ.get('DATABASE_URL'):
         logger.warning("DATABASE_URL not set. Using SQLite default.")
-        print("DATABASE_URL not set", file=sys.stderr, flush=True)
+        print("DATABASE_URL not set. Using SQLite default.", file=sys.stderr, flush=True)
     logger.info(f"Using database URL: {db_url}")
+    print(f"Using database URL: {db_url}", file=sys.stderr, flush=True)
     app.config['SQLALCHEMY_DATABASE_URI'] = db_url
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     db.init_app(app)
@@ -294,6 +287,7 @@ def create_app():
     try:
         init_scheduler(app)
         logger.info("Scheduler initialized successfully")
+        print("Scheduler initialized successfully", file=sys.stderr, flush=True)
     except Exception as e:
         logger.error(f"Failed to initialize scheduler: {str(e)}")
         print(f"Failed to initialize scheduler: {str(e)}", file=sys.stderr, flush=True)
@@ -303,6 +297,7 @@ def create_app():
         initialize_database(app)
         initialize_courses_data(app)
         logger.info("Database and courses initialized successfully")
+        print("Database and courses initialized successfully", file=sys.stderr, flush=True)
     except Exception as e:
         logger.critical(f"Failed to initialize database: {str(e)}", exc_info=True)
         print(f"Failed to initialize database: {str(e)}", file=sys.stderr, flush=True)
@@ -349,6 +344,7 @@ def create_app():
             return str(value)
         except (ValueError, TypeError) as e:
             logger.warning(f"Error formatting number {value}: {str(e)}")
+            print(f"Error formatting number {value}: {str(e)}", file=sys.stderr, flush=True)
             return str(value)
 
     @app.template_filter('format_datetime')
@@ -365,6 +361,8 @@ def create_app():
                 return f"₦{int(value):,}"
             return f"₦{value:,.2f}"
         except (TypeError, ValueError):
+            logger.warning(f"Error formatting currency {value}: {str(e)}")
+            print(f"Error formatting currency {value}: {str(e)}", file=sys.stderr, flush=True)
             return value
 
     @app.before_request
@@ -375,14 +373,21 @@ def create_app():
                 session.permanent = True
                 session.modified = True
                 logger.info(f"New session ID generated: {session['sid']}")
+                print(f"New session ID generated: {session['sid']}", file=sys.stderr, flush=True)
             if 'lang' not in session:
                 session['lang'] = request.accept_languages.best_match(['en', 'ha'], 'en')
                 logger.info(f"Set default language to {session['lang']}")
+                print(f"Set default language to {session['lang']}", file=sys.stderr, flush=True)
             g.logger = logger
             logger.info(
                 f"Request: method={request.method}, path={request.path}, "
                 f"remote_addr={request.remote_addr}, user_agent={request.headers.get('User-Agent')}, "
                 f"session_id={session['sid']}, user_id={current_user.id if current_user.is_authenticated else 'anonymous'}"
+            )
+            print(
+                f"Request: method={request.method}, path={request.path}, "
+                f"remote_addr={request.remote_addr}, user_id={current_user.id if current_user.is_authenticated else 'anonymous'}",
+                file=sys.stderr, flush=True
             )
         except Exception as e:
             logger.error(f"Before request error: {str(e)}", exc_info=True)
@@ -394,27 +399,16 @@ def create_app():
             f"Response: status={response.status_code}, path={request.path}, "
             f"session_id={session.get('sid', 'no-session-id')}"
         )
+        print(
+            f"Response: status={response.status_code}, path={request.path}, "
+            f"session_id={session.get('sid', 'no-session-id')}",
+            file=sys.stderr, flush=True
+        )
         return response
 
     @app.context_processor
     def inject_translations():
-        lang = session.get('lang', 'en')
-        def context_trans(key, **kwargs):
-            used_lang = kwargs.pop('lang', lang)
-            return translate(key, lang=used_lang, logger=g.get('logger', logger), **kwargs)
-        return {
-            'trans': context_trans,
-            'current_year': datetime.now().year,
-            'LINKEDIN_URL': os.environ.get('LINKEDIN_URL', '#'),
-            'TWITTER_URL': os.environ.get('TWITTER_URL', '#'),
-            'FACEBOOK_URL': os.environ.get('FACEBOOK_URL', '#'),
-            'FEEDBACK_FORM_URL': os.environ.get('FEEDBACK_FORM_URL', url_for('feedback')),
-            'WAITLIST_FORM_URL': os.environ.get('WAITLIST_FORM_URL', '#'),
-            'CONSULTANCY_FORM_URL': os.environ.get('CONSULTANCY_FORM_URL', '#'),
-            'current_lang': lang,
-            'current_user': current_user if has_request_context() else None,
-            'csrf_token': csrf._get_token if hasattr(csrf, '_get_token') else lambda: ''
-        }
+        lang = session $
 
     def ensure_session_id(f):
         @wraps(f)
@@ -424,6 +418,7 @@ def create_app():
                 session.permanent = True
                 session.modified = True
                 logger.info(f"New session ID generated: {session['sid']}")
+                print(f"New session ID generated: {session['sid']}", file=sys.stderr, flush=True)
             return f(*args, **kwargs)
         return decorated_function
 
@@ -437,8 +432,10 @@ def create_app():
             courses = current_app.config.get('COURSES')
             if not courses:
                 logger.warning("No courses found in current_app.config['COURSES']. Falling back to SAMPLE_COURSES.")
+                print("No courses found in current_app.config['COURSES']. Falling back to SAMPLE_COURSES.", file=sys.stderr, flush=True)
                 courses = SAMPLE_COURSES
             logger.info(f"Retrieved {len(courses)} courses")
+            print(f"Retrieved {len(courses)} courses", file=sys.stderr, flush=True)
             processed_courses = courses
         except Exception as e:
             logger.error(f"Error retrieving courses from config: {str(e)}", exc_info=True)
@@ -461,38 +458,46 @@ def create_app():
         new_lang = lang if lang in valid_langs else 'en'
         session['lang'] = new_lang
         logger.info(f"Language set to {new_lang}")
+        print(f"Language set to {new_lang}", file=sys.stderr, flush=True)
         flash(translate('learning_hub_success_language_updated', default='Language updated successfully', lang=new_lang) if new_lang in valid_langs else translate('Invalid language', default='Invalid language', lang=new_lang), 'success' if new_lang in valid_langs else 'danger')
         return redirect(request.referrer or url_for('index'))
         
     @app.route('/acknowledge_consent', methods=['POST'])
     def acknowledge_consent():
         if request.method != 'POST':
+不允许
             logger.warning(f"Invalid method {request.method} for consent acknowledgement")
+            print(f"Invalid method {request.method} for consent acknowledgement", file=sys.stderr, flush=True)
             return jsonify({'error': 'Method not allowed'}), 405
         try:
             # Validate CSRF token from the form
             csrf_token = request.form.get('csrf_token')
             if not csrf_token:
                 logger.error(f"CSRF token missing in request for session {session['sid']}")
+                print(f"CSRF token missing in request for session {session['sid']}", file=sys.stderr, flush=True)
                 return jsonify({'error': 'CSRF token missing'}), 400
             validate_csrf(csrf_token)
             session['consent_acknowledged'] = True
             session.modified = True
             logger.info(f"Consent acknowledged for session {session['sid']} from IP {request.remote_addr}")
+            print(f"Consent acknowledged for session {session['sid']} from IP {request.remote_addr}", file=sys.stderr, flush=True)
             response = make_response('', 204)
             response.headers['Cache-Control'] = 'no-store'
             response.headers['X-Content-Type-Options'] = 'nosniff'
             return response
         except CSRFError as e:
             logger.error(f"CSRF validation failed for session {session['sid']}: {str(e)}")
+            print(f"CSRF validation failed for session {session['sid']}: {str(e)}", file=sys.stderr, flush=True)
             return jsonify({'error': 'Invalid CSRF token'}), 400
         except Exception as e:
             logger.error(f"Error processing consent acknowledgement for session {session['sid']}: {str(e)}")
+            print(f"Error processing consent acknowledgement for session {session['sid']}: {str(e)}", file=sys.stderr, flush=True)
             return jsonify({'error': 'Internal server error'}), 500
         
     @app.route('/favicon.ico')
     def favicon():
         logger.info("Serving favicon.ico")
+        print("Serving favicon.ico", file=sys.stderr, flush=True)
         return send_from_directory(os.path.join(app.root_path, 'static', 'img'), 'favicon-32x32.png', mimetype='image/png')
 
     @app.route('/general_dashboard')
@@ -509,6 +514,7 @@ def create_app():
             fh_records = FinancialHealth.query.filter_by(**filter_kwargs).order_by(FinancialHealth.created_at.desc()).all()
             if not fh_records:
                 logger.warning(f"No FinancialHealth records found for filter: {filter_kwargs}")
+                print(f"No FinancialHealth records found for filter: {filter_kwargs}", file=sys.stderr, flush=True)
             data['financial_health'] = {
                 'score': fh_records[0].score,
                 'status': fh_records[0].status
@@ -518,14 +524,17 @@ def create_app():
             budget_records = Budget.query.filter_by(**filter_kwargs).order_by(Budget.created_at.desc()).all()
             if not budget_records:
                 logger.warning(f"No Budget records found for filter: {filter_kwargs}")
+                print(f"No Budget records found for filter: {filter_kwargs}", file=sys.stderr, flush=True)
             data['budget'] = {
                 'surplus_deficit': budget_records[0].surplus_deficit,
-                'savings_goal': budget；
+                'savings_goal': budget_records[0].savings_goal
+            } if budget_records else {'surplus_deficit': None, 'savings_goal': None}
 
             # Bills
             bills = Bill.query.filter_by(**filter_kwargs).all()
             if not bills:
                 logger.warning(f"No Bill records found for filter: {filter_kwargs}")
+                print(f"No Bill records found for filter: {filter_kwargs}", file=sys.stderr, flush=True)
             total_amount = sum(bill.amount for bill in bills)
             unpaid_amount = sum(bill.amount for bill in bills if bill.status.lower() != 'paid')
             data['bills'] = {
@@ -538,6 +547,7 @@ def create_app():
             nw_records = NetWorth.query.filter_by(**filter_kwargs).order_by(NetWorth.created_at.desc()).all()
             if not nw_records:
                 logger.warning(f"No NetWorth records found for filter: {filter_kwargs}")
+                print(f"No NetWorth records found for filter: {filter_kwargs}", file=sys.stderr, flush=True)
             data['net_worth'] = {
                 'net_worth': nw_records[0].net_worth,
                 'total_assets': nw_records[0].total_assets
@@ -547,6 +557,7 @@ def create_app():
             ef_records = EmergencyFund.query.filter_by(**filter_kwargs).order_by(EmergencyFund.created_at.desc()).all()
             if not ef_records:
                 logger.warning(f"No EmergencyFund records found for filter: {filter_kwargs}")
+                print(f"No EmergencyFund records found for filter: {filter_kwargs}", file=sys.stderr, flush=True)
             data['emergency_fund'] = {
                 'target_amount': ef_records[0].target_amount,
                 'savings_gap': ef_records[0].savings_gap
@@ -556,18 +567,21 @@ def create_app():
             lp_records = LearningProgress.query.filter_by(**filter_kwargs).all()
             if not lp_records:
                 logger.warning(f"No LearningProgress records found for filter: {filter_kwargs}")
+                print(f"No LearningProgress records found for filter: {filter_kwargs}", file=sys.stderr, flush=True)
             data['learning_progress'] = {lp.course_id: lp.to_dict() for lp in lp_records}
 
             # Quiz Result
             quiz_records = QuizResult.query.filter_by(**filter_kwargs).order_by(QuizResult.created_at.desc()).all()
             if not quiz_records:
                 logger.warning(f"No QuizResult records found for filter: {filter_kwargs}")
+                print(f"No QuizResult records found for filter: {filter_kwargs}", file=sys.stderr, flush=True)
             data['quiz'] = {
                 'personality': quiz_records[0].personality,
                 'score': quiz_records[0].score
             } if quiz_records else {'personality': None, 'score': None}
 
             logger.info(f"Retrieved data for session {session['sid']}")
+            print(f"Retrieved data for session {session['sid']}", file=sys.stderr, flush=True)
             print("Rendering general_dashboard template", file=sys.stderr, flush=True)
             return render_template('general_dashboard.html', data=data, t=translate, lang=lang)
         except Exception as e:
@@ -590,11 +604,13 @@ def create_app():
     def feedback():
         lang = session.get('lang', 'en')
         logger.info("Handling feedback route")
+        print("Handling feedback route", file=sys.stderr, flush=True)
         tool_options = [
             'financial_health', 'budget', 'bill', 'net_worth',
             'emergency_fund', 'learning_hub', 'quiz'
         ]
         if request.method == 'GET':
+            print("Rendering feedback template", file=sys.stderr, flush=True)
             return render_template('feedback.html', t=translate, lang=lang, tool_options=tool_options)
         try:
             tool_name = request.form.get('tool_name')
@@ -603,11 +619,13 @@ def create_app():
             if not tool_name or tool_name not in tool_options:
                 flash(translate('feedback_invalid_tool', default='Please select a valid tool', lang=lang), 'error')
                 logger.error(f"Invalid feedback tool: {tool_name}")
+                print(f"Invalid feedback tool: {tool_name}", file=sys.stderr, flush=True)
                 return render_template('feedback.html', t=translate, lang=lang, tool_options=tool_options)
             if not rating or not rating.isdigit() or int(rating) < 1 or int(rating) > 5:
                 logger.error(f"Invalid feedback rating: {rating}")
+                print(f"Invalid feedback rating: {rating}", file=sys.stderr, flush=True)
                 flash(translate('feedback_invalid_rating', default='Please provide a rating between 1 and 5', lang=lang), 'error')
-                return render_template('feedback.html', t=translate, lang=lang, tool_options=tool_options)
+                return render_template('feedback.html, t=translate, lang=lang, tool_options=tool_options)
             feedback_entry = Feedback(
                 user_id=current_user.id if current_user.is_authenticated else None,
                 session_id=session['sid'],
@@ -618,6 +636,7 @@ def create_app():
             db.session.add(feedback_entry)
             db.session.commit()
             logger.info(f"Feedback submitted: tool={tool_name}, rating={rating}, session={session['sid']}")
+            print(f"Feedback submitted: tool={tool_name}, rating={rating}, session={session['sid']}", file=sys.stderr, flush=True)
             flash(translate('feedback_success', default='Thank you for your feedback!', lang=lang), 'success')
             return redirect(url_for('index'))
         except Exception as e:
@@ -630,6 +649,7 @@ def create_app():
     def logout():
         lang = session.get('lang', 'en')
         logger.info("Logging out user")
+        print("Logging out user", file=sys.stderr, flush=True)
         try:
             session_lang = session.get('lang', 'en')
             session.clear()
@@ -646,21 +666,26 @@ def create_app():
     def about():
         lang = session.get('lang', 'en')
         logger.info("Serving about page")
+        print("Serving about page", file=sys.stderr, flush=True)
         return render_template('about.html', t=translate, lang=lang)
 
     @app.route('/health')
     def health():
         logger.info("Health check requested")
+        print("Health check requested", file=sys.stderr, flush=True)
         status = {"status": "healthy"}
         try:
             with app.app_context():
                 db.session.execute('SELECT 1')
                 logger.debug("Database connection successful")
+                print("Database connection successful", file=sys.stderr, flush=True)
             if not os.path.exists(os.path.join(os.path.dirname(__file__), 'data', 'storage.log')):
                 status["status"] = "warning"
                 status["warning"] = "Log file data/storage.log not found"
                 logger.warning("Log file data/storage.log not found")
+                print("Log file data/storage.log not found", file=sys.stderr, flush=True)
             logger.info("Health check completed successfully")
+            print("Health check completed successfully", file=sys.stderr, flush=True)
             return jsonify(status), 200
         except Exception as e:
             logger.error(f"Health check failed: {str(e)}", exc_info=True)
@@ -706,7 +731,7 @@ def create_app():
         return response
 
     logger.info("App creation completed successfully")
-    print("App creation completed", file=sys.stderr, flush=True)
+    print("App creation completed successfully", file=sys.stderr, flush=True)
     return app
 
 try:
