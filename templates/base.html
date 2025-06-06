@@ -65,10 +65,10 @@
             <button id="modeToggle" class="ms-1 me-1" aria-label="{{ trans('core_toggle_dark_mode') | default('Toggle Dark Mode') }}">
                 <i class="fas fa-moon" aria-hidden="true"></i>
             </button>
-            <button class="navbar-toggler ms-auto" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="{{ trans('core_toggle_navigation') | default('Toggle navigation') }}">
+            <button class="navbar-toggler ms-auto" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="{{ trans('core_toggle_navigation') }}">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
+            <div class="collapse navbar-collapse" id="navbar">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
                         <a class="nav-link btn-primary navbar-btn" href="{{ url_for('index') }}">{{ trans('core_home') | default('Home') }}</a>
@@ -77,21 +77,26 @@
                         <a class="nav-link btn-primary navbar-btn" href="#tools-section">{{ trans('core_tools') | default('Tools') }}</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link btn-primary navbar-btn" href="{{ url_for('general_dashboard') }}">{{ trans('core_general_dashboard') | default('General Dashboard') }}</a>
+                        <a class="nav-link btn-primary navbar-btn" href="{{ url_for('general_dashboard') }}">{{ trans('general_dashboard') | default('General Usage') }}</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link btn-primary navbar-btn" href="{{ FEEDBACK_FORM_URL }}" target="_blank">{{ trans('core_feedback') | default('Feedback') }}</a>
+                        <a class="nav-link btn-primary navbar-btn" href="{{ url_for('feedback') }}">{{ trans('Feedback') | default('Feedback') }}</a>
                     </li>
-                    {% if current_user.is_authenticated %}
+                    {% if user.is_authenticated and current_user.is_admin %}
                     <li class="nav-item">
-                        <a class="nav-link btn-primary navbar-btn" href="{{ url_for('logout') }}">{{ trans('core_logout') | default('Logout') }}</a>
+                        <a class="nav-link btn-primary navbar-btn" href="{{ url_for('admin.overview') }}">{{ trans('admin_panel') | default('Admin Panel') }}</a>
+                    </li>
+                    {% endif %}
+                    {% if user.is_authenticated %}
+                    <li class="nav-item">
+                        <a class="nav-link btn-primary navbar-btn" href="{{ url_for('logout') }}">{{ trans('logout') | default('Logout') }}</a>
                     </li>
                     {% else %}
                     <li class="nav-item">
-                        <a class="nav-link btn-primary navbar-btn" href="{{ url_for('auth.signin') }}">{{ trans('core_login') | default('Login') }}</a>
+                        <a class="nav-link btn-primary navbar-btn" href="{{ url_for('auth.signin') }}">{{ trans('login') | default('Login') }}</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link btn-primary navbar-btn" href="{{ url_for('auth.signup') }}">{{ trans('core_signup') | default('Sign Up') }}</a>
+                        <a class="nav-link btn-primary navbar-btn" href="{{ url_for('auth.signup') }}">{{ trans('signup') | default (‘Sign Up') }}</a>
                     </li>
                     {% endif %}
                 </ul>
@@ -107,36 +112,36 @@
     <!-- Footer -->
     <footer class="footer mt-5" style="background: linear-gradient(90deg, #003087, #004D40); color: white;">
         <div class="container text-center py-4" role="contentinfo">
-            <p>{{ trans('core_about_ficore_africa') | default('About Ficore Africa') }}: {{ trans('core_empowering_financial_growth') | default('Empowering financial growth across Africa since 2025') }}</p>
-            <p class="footer-disclaimer"><i class="fas fa-shield-alt me-1" aria-hidden="true"></i> {{ trans('core_disclaimer') | default('Ficore is not a bank and does not hold or move funds.') }} <a href="{{ url_for('about') }}" class="text-white text-decoration-underline">{{ trans('core_learn_more') | default('Learn more') }}</a></p>
+            <p>{{ trans('core_ficore_africa') | default('About Ficore Africa') }}: {{ trans('about_ficore') | default('Empowering financial growth across Africa since 2020') }}</p>
+            <p class="footer-disclaimer"><i class="fas fa-shield-alt me-1"></i> {{ trans('disclaimer') | default('Ficore is not a bank and does not hold or move funds.') }} <a href="{{ url_for('about') }}" class="text-white text-decoration-underline">{{ trans('learn_more') | default('Learn more') }}</a></p>
             <div class="social-icons d-flex justify-content-center gap-3">
-                <a href="{{ LINKEDIN_URL }}" target="_blank" aria-label="{{ trans('core_connect_on_linkedin') | default('Connect on LinkedIn') }}" class="d-flex align-items-center text-white">
+                <a href="{{ LINKEDIN_URL }}" target="_blank" aria-label="LinkedIn" class="d-flex align-items-center text-white">
                     <i class="fab fa-linkedin me-1"></i> LinkedIn
                 </a>
-                <a href="{{ TWITTER_URL }}" target="_blank" aria-label="{{ trans('core_follow_on_twitter') | default('Follow on Twitter') }}" class="d-flex align-items-center text-white">
-                    <i class="fab fa-x-twitter me-1"></i> Twitter
+                <a href="{{ TWITTER_URL }}" target="_blank" aria-label="Twitter" class="d-flex align-items-center text-white">
+                    <i class="fab fa-twitter me-1"></i> Twitter
                 </a>
-                <a href="{{ FACEBOOK_URL }}" target="_blank" aria-label="{{ trans('core_follow_on_facebook') | default('Follow on Facebook') }}" class="d-flex align-items-center text-white">
+                <a href="{{ FACEBOOK_URL }}" target="_blank" aria-label="Facebook" class="d-flex align-items-center text-white">
                     <i class="fab fa-facebook me-1"></i> Facebook
                 </a>
             </div>
             <div class="footer-buttons mt-3">
-                <a href="mailto:support@ficoreafrica.com" class="text-white"><i class="fas fa-envelope"></i> {{ trans('core_contact_us') | default('Contact Us') }}</a>
-                <a href="{{ FEEDBACK_FORM_URL }}" target="_blank" class="text-white"><i class="fas fa-comment"></i> {{ trans('core_provide_feedback') | default('Provide Feedback') }}</a>
-                {% if current_user.is_authenticated %}
-                <a href="{{ url_for('logout') }}" class="text-white"><i class="fas fa-sign-out-alt"></i> {{ trans('core_logout') | default('Logout') }}</a>
+                <a href="mailto:support@ficoreafrica.com" class="text-white"><i class="fas fa-envelope"></i> {{ trans('contact_us') | default('Contact Us') }}</a>
+                <a href="{{ url_for('feedback') }}" class="text-white"><i class="fas fa-comment"></i> {{ trans('provide_feedback') | default('Feedback') }}</a>
+                {% if user.is_authenticated %}
+                <a href="{{ url_for('logout') }}" class="text-white"><i class="fas fa-sign-out-alt"></i> {{ trans('logout') | default('Logout') }}</a>
                 {% else %}
-                <a href="{{ url_for('auth.signin') }}" class="text-white"><i class="fas fa-sign-in-alt"></i> {{ trans('core_login') | default('Login') }}</a>
+                <a href="{{ url_for('auth.signin') }}" class="text-white"><i class="fas fa-sign-in-alt"></i> {{ trans('login') | default('Login') }}</a>
                 {% endif %}
             </div>
         </div>
     </footer>
 
     <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Custom JS -->
-    <script src="{{ url_for('static', filename='js/interactivity.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+    <script src="{{ url_for('static', filename='javascript/interactive.js') }}"></script>
+    <script src="{{ url_for('static', filename='javascript/script.js') }}"></script>
     {% block base_scripts %}
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -144,7 +149,7 @@
             document.querySelectorAll('form.validate-form').forEach(form => {
                 form.addEventListener('submit', function(e) {
                     let valid = true;
-                    form.querySelectorAll('.form-control').forEach(input => {
+                    form.querySelectorAll('.required-field').forEach(input => {
                         input.classList.add('was-validated');
                         if (!input.value.trim()) {
                             input.classList.add('is-invalid');
@@ -164,46 +169,46 @@
                     });
                     if (!valid) {
                         e.preventDefault();
-                        alert('{{ trans('core_please_complete_all_fields') | default('Please complete all required fields') }}');
+                        alert('Please complete all required fields');
                     }
                 });
             });
 
             // Consent banner handling
-            const consentBtn = document.getElementById('acknowledgeConsentBtn');
+            const consentBtn = document.getElementById('consent-button');
             if (consentBtn) {
                 consentBtn.addEventListener('click', function() {
-                    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-                    fetch('{{ url_for("acknowledge_consent") }}', {
+                    const csrf_token = document.querySelector('meta[name="csrf-token"]').content;
+                    fetch('/acknowledge', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-CSRF-Token': csrfToken
+                            'X-CSRF-Token': csrf_token
                         }
                     })
                     .then(response => {
                         if (response.status === 204) {
-                            const banner = document.getElementById('consentBanner');
+                            const banner = document.getElementById('banner');
                             if (banner) {
                                 banner.classList.remove('show');
                                 setTimeout(() => banner.remove(), 300);
                             }
                         } else if (response.status === 400) {
-                            alert('{{ trans("core_invalid_request") | default("Invalid request. Please try again.") }}');
+                            alert('Invalid input');
                         } else {
-                            alert('{{ trans("core_error_acknowledging_consent") | default("Error acknowledging consent. Please try again.") }}');
+                            alert('Error acknowledging input');
                         }
                     })
                     .catch(error => {
                         console.error('Error:', error);
-                        alert('{{ trans("core_network_error") | default("Network error. Please try again.") }}');
+                        alert('Please try again');
                     });
                 });
             }
 
             // Tooltip initialization
-            const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-            [...tooltipTriggerList].forEach(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+            const tooltip_data = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+            [...tooltip_data].forEach(tooltip => new bootstrap.Tooltip(tooltip));
         });
     </script>
     {% endblock %}
