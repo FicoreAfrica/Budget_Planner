@@ -1,216 +1,144 @@
-<!DOCTYPE html>
-<html lang="{{ session.lang | default('en') }}">
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ trans('core_ficore_africa') | default('Ficore Africa') }} | {% block title %}{% endblock %}</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <!-- Google Fonts: Poppins -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Font Awesome 6.5.1 -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer">
-    <!-- Canvas Confetti 1.9.3 -->
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
-    <!-- Custom Styles -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-    <!-- Favicon and Apple Touch Icon -->
-    <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/apple-touch-icon.png') }}">
-    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='img/favicon-32x32.png') }}">
-    <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='img/favicon-16x16.png') }}">
-    <!-- CSRF Token for POST Requests -->
-    <meta name="csrf-token" content="{{ csrf_token() }}">
     {% block extra_head %}{% endblock %}
 </head>
 <body>
-    <!-- Consent Banner -->
     {% if not session.get('consent_acknowledged') %}
-    <div class="consent-banner alert alert-info alert-dismissible fade show" id="consentBanner" role="alert">
-        <i class="fas fa-shield-alt me-1" aria-hidden="true"></i> {{ trans('core_consent_banner') | default('By using Ficore, you understand that we provide tools for planning only, not banking.') }}
-        <button type="button" class="btn btn-primary btn-sm ms-2" id="acknowledgeConsentBtn">{{ trans('core_accept') | default('Accept') }}</button>
-    </div>
+        <div class="alert alert-info alert-dismissible fade show" role="alert">
+            {{ trans('core_consent_banner') | default('By using Ficore, you understand that we provide tools for planning only, not banking.') }}
+            <button type="button" class="btn btn-primary" onclick="acknowledgeConsent()">
+                {{ trans('core_accept') | default('Accept') }}
+            </button>
+        </div>
     {% endif %}
 
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
-        <div class="container mt-3">
+        <div class="alert-container">
             {% for category, message in messages %}
               <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
                 {{ trans(message) | default(message) }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close') | default('Close') }}"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
               </div>
-            {% endfor %}
+            {% for %}
         </div>
       {% endif %}
     {% endwith %}
 
-    <!-- Header Message -->
-    <div class="header-message">
-        {{ trans('core_welcome_to_ficore') | default('Welcome to Ficore Africa Tools Suite: Use Ficore to Track your income, net worth, budgets, and bills, to grow your money with confidence.') }}
-    </div>
-
-    <!-- Navigation Bar -->
-    <nav class="navbar navbar-expand-lg">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="{{ url_for('index') }}"><img src="{{ url_for('static', filename='img/ficore_logo.png') }}" alt="{{ trans('core_ficore_africa_logo') | default('Ficore Africa Logo') }}" class="logo-centered"></a>
-            <a href="{{ url_for('set_language', lang='ha' if session.lang == 'en' else 'en') }}"
-               class="btn btn-primary navbar-btn btn-outline-light language-btn ms-1 me-1"
-               title="{{ trans('core_change_language') | default('Change Language') }}"
-               aria-label="{{ trans('core_switch_to') | default('Switch to') }} {{ 'Hausa' if session.lang == 'en' else 'English' }}"
-               role="button">
-                <i class="fas fa-globe me-1" aria-hidden="true"></i>
-                {{ 'Hausa' if session.lang == 'en' else 'English' }}
-            </a>
-            <!-- Add Mode Toggle Button -->
-            <button id="modeToggle" class="ms-1 me-1" aria-label="{{ trans('core_toggle_dark_mode') | default('Toggle Dark Mode') }}">
-                <i class="fas fa-moon" aria-hidden="true"></i>
-            </button>
-            <button class="navbar-toggler ms-auto" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="{{ trans('core_toggle_navigation') }}">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbar">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link btn-primary navbar-btn" href="{{ url_for('index') }}">{{ trans('core_home') | default('Home') }}</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link btn-primary navbar-btn" href="#tools-section">{{ trans('core_tools') | default('Tools') }}</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link btn-primary navbar-btn" href="{{ url_for('general_dashboard') }}">{{ trans('general_dashboard') | default('General Usage') }}</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link btn-primary navbar-btn" href="{{ url_for('feedback') }}">{{ trans('Feedback') | default('Feedback') }}</a>
-                    </li>
-                    {% if current_user.is_authenticated and current_user.is_admin %}
-                    <li class="nav-item">
-                        <a class="nav-link btn-primary navbar-btn" href="{{ url_for('admin.overview') }}">{{ trans('admin_panel') | default('Admin Panel') }}</a>
-                    </li>
-                    {% endif %}
-                    {% if current_user.is_authenticated %}
-                    <li class="nav-item">
-                        <a class="nav-link btn-primary navbar-btn" href="{{ url_for('logout') }}">{{ trans('logout') | default('Logout') }}</a>
-                    </li>
-                    {% else %}
-                    <li class="nav-item">
-                        <a class="nav-link btn-primary navbar-btn" href="{{ url_for('auth.signin') }}">{{ trans('login') | default('Login') }}</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link btn-primary navbar-btn" href="{{ url_for('auth.signup') }}">{{ trans('signup') | default ('Sign Up') }}</a>
-                    </li>
-                    {% endif %}
-                </ul>
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="#">{{ trans('core_welcome_to_ficore') | default('Welcome to Ficore Africa Tools Suite: Use Ficore to Track your income, net worth, budgets, and bills, to grow your money with confidence.') }}</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">{{ 'Hausa' if session.lang == 'en' else 'English' }}</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">{{ trans('core_home') | default('Home') }}</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">{{ trans('core_tools') | default('Tools') }}</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">{{ trans('general_dashboard') | default('General Usage') }}</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">{{ trans('Feedback') | default('Feedback') }}</a>
+                        </li>
+                        {% if current_user.is_authenticated and current_user.is_admin %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="#">{{ trans('admin_panel') | default('Admin Panel') }}</a>
+                            </li>
+                        {% endif %}
+                        {% if current_user.is_authenticated %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="#">{{ trans('logout') | default('Logout') }}</a>
+                            </li>
+                        {% else %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="#">{{ trans('login') | default('Login') }}</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#">{{ trans('signup') | default('Sign Up') }}</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </div>
             </div>
-        </div>
-    </nav>
+        </nav>
+    </header>
 
-    <!-- Main Content -->
-    <div class="content">
+    <main>
         {% block content %}{% endblock %}
-    </div>
+    </main>
 
-    <!-- Footer -->
-    <footer class="footer mt-5" style="background: linear-gradient(90deg, #003087, #004D40); color: white;">
-        <div class="container text-center py-4" role="contentinfo">
+    <footer class="bg-light text-center text-lg-start mt-auto">
+        <div class="container p-4">
             <p>{{ trans('core_ficore_africa') | default('About Ficore Africa') }}: {{ trans('about_ficore') | default('Empowering financial growth across Africa since 2020') }}</p>
-            <p class="footer-disclaimer"><i class="fas fa-shield-alt me-1"></i> {{ trans('disclaimer') | default('Ficore is not a bank and does not hold or move funds.') }} <a href="{{ url_for('about') }}" class="text-white text-decoration-underline">{{ trans('learn_more') | default('Learn more') }}</a></p>
-            <div class="social-icons d-flex justify-content-center gap-3">
-                <a href="{{ LINKEDIN_URL }}" target="_blank" aria-label="LinkedIn" class="d-flex align-items-center text-white">
-                    <i class="fab fa-linkedin me-1"></i> LinkedIn
-                </a>
-                <a href="{{ TWITTER_URL }}" target="_blank" aria-label="Twitter" class="d-flex align-items-center text-white">
-                    <i class="fab fa-twitter me-1"></i> Twitter
-                </a>
-                <a href="{{ FACEBOOK_URL }}" target="_blank" aria-label="Facebook" class="d-flex align-items-center text-white">
-                    <i class="fab fa-facebook me-1"></i> Facebook
-                </a>
+            <p>{{ trans('disclaimer') | default('Ficore is not a bank and does not hold or move funds.') }} <a href="#">{{ trans('learn_more') | default('Learn more') }}</a></p>
+            <div class="social-links">
+                <a href="https://www.linkedin.com" target="_blank">LinkedIn</a>
+                <a href="https://www.twitter.com" target="_blank">Twitter</a>
+                <a href="https://www.facebook.com" target="_blank">Facebook</a>
             </div>
-            <div class="footer-buttons mt-3">
-                <a href="mailto:support@ficoreafrica.com" class="text-white"><i class="fas fa-envelope"></i> {{ trans('contact_us') | default('Contact Us') }}</a>
-                <a href="{{ url_for('feedback') }}" class="text-white"><i class="fas fa-comment"></i> {{ trans('provide_feedback') | default('Feedback') }}</a>
+            <div class="footer-links">
+                <a href="#">{{ trans('contact_us') | default('Contact Us') }}</a>
+                <a href="#">{{ trans('provide_feedback') | default('Feedback') }}</a>
                 {% if current_user.is_authenticated %}
-                <a href="{{ url_for('logout') }}" class="text-white"><i class="fas fa-sign-out-alt"></i> {{ trans('logout') | default('Logout') }}</a>
+                    <a href="#">{{ trans('logout') | default('Logout') }}</a>
                 {% else %}
-                <a href="{{ url_for('auth.signin') }}" class="text-white"><i class="fas fa-sign-in-alt"></i> {{ trans('login') | default('Login') }}</a>
+                    <a href="#">{{ trans('login') | default('Login') }}</a>
                 {% endif %}
             </div>
         </div>
     </footer>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Custom JS -->
-    <script src="{{ url_for('static', filename='javascript/interactive.js') }}"></script>
-    <script src="{{ url_for('static', filename='javascript/script.js') }}"></script>
     {% block base_scripts %}
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Form validation
-            document.querySelectorAll('form.validate-form').forEach(form => {
-                form.addEventListener('submit', function(e) {
-                    let valid = true;
-                    form.querySelectorAll('.required-field').forEach(input => {
-                        input.classList.add('was-validated');
-                        if (!input.value.trim()) {
-                            input.classList.add('is-invalid');
-                            valid = false;
-                        } else {
-                            input.classList.remove('is-invalid');
-                        }
-                    });
-                    form.querySelectorAll('.form-select').forEach(select => {
-                        select.classList.add('was-validated');
-                        if (!select.value) {
-                            select.classList.add('is-invalid');
-                            valid = false;
-                        } else {
-                            select.classList.remove('is-invalid');
-                        }
-                    });
-                    if (!valid) {
-                        e.preventDefault();
-                        alert('Please complete all required fields');
-                    }
-                });
-            });
-
-            // Consent banner handling
-            const consentBtn = document.getElementById('consent-button');
-            if (consentBtn) {
-                consentBtn.addEventListener('click', function() {
-                    const csrf_token = document.querySelector('meta[name="csrf-token"]').content;
-                    fetch('/acknowledge', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-Token': csrf_token
-                        }
-                    })
-                    .then(response => {
-                        if (response.status === 204) {
-                            const banner = document.getElementById('banner');
-                            if (banner) {
-                                banner.classList.remove('show');
-                                setTimeout(() => banner.remove(), 300);
-                            }
-                        } else if (response.status === 400) {
-                            alert('Invalid input');
-                        } else {
-                            alert('Error acknowledging input');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        alert('Please try again');
-                    });
-                });
-            }
-
-            // Tooltip initialization
-            const tooltip_data = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-            [...tooltip_data].forEach(tooltip => new bootstrap.Tooltip(tooltip));
-        });
-    </script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     {% endblock %}
     {% block extra_scripts %}{% endblock %}
 </body>
