@@ -573,7 +573,7 @@ def create_app():
             session.clear()
             session['lang'] = session_lang
             flash(translate('learning_hub_success_logout', default='Successfully logged out', lang=lang), 'success')
-            return redirect(url_for 'index')
+            return redirect(url_for ('index'))
         except Exception as e:
             logger.error(f"Error in logout: {str(e)}", exc_info=True)
             flash(translate('global_error', default='An error occurred', lang=lang), 'error')
