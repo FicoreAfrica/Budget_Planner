@@ -183,7 +183,7 @@ class Bill(db.Model):
 
     __table_args__ = (
         db.Index('ix_bills_session_id', 'session_id'),
-        db.Index('ix_bills_user_id')
+        db.Index('ix_bills_user_id', 'user_id')
     )
 
     def to_dict(self):
@@ -225,7 +225,7 @@ class NetWorth(db.Model):
 
     __table_args__ = (
         db.Index('ix_net_worth_session_id', 'session_id'),
-        db.Index('ix_net_worth_user_id')
+        db.Index('ix_net_worth_user_id', 'user_id')
     )
 
     def to_dict(self):
@@ -295,14 +295,14 @@ class EmergencyFund(db.Model):
             'recommended_months': self.recommended_months,
             'target_amount': self.target_amount,
             'savings_gap': self.savings_gap,
-            'savings_rate': self.savings_rate,
-            'percent_of_income': self.percentage_of_income,
+            'monthly_savings': self.monthly_savings,
+            'percent_of_income': self.percent_of_income,
             'badges': json.loads(self.badges) if self.badges else []
-        })
+        }
 
-    class LearningProgress(db.Model):
-        __tablename__ = 'learning_progress'
-        id = db.Column(db.Integer, primary_key=True)
+class LearningProgress(db.Model):
+    __tablename__ = 'learning_progress'
+    id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     session_id = db.Column(db.String(36), nullable=False)
     course_id = db.Column(db.String(50), nullable=False)
@@ -312,8 +312,8 @@ class EmergencyFund(db.Model):
     user = db.relationship('User', backref='learning_progress_records')
 
     __table_args__ = (
-        db.UniqueConstraint('user_id', 'course_id', 'name='uix_user_course_id'),
-        db.UniqueConstraint('session_id', 'course_id', 'name='uix_session_course_id'),
+        db.UniqueConstraint('user_id', 'course_id', name='uix_user_course_id'),
+        db.UniqueConstraint('session_id', 'course_id', name='uix_session_course_id'),
         db.Index('ix_learning_progress_session_id', 'session_id'),
         db.Index('ix_learning_progress_user_id', 'user_id')
     )
@@ -417,4 +417,3 @@ class Feedback(db.Model):
             'comment': self.comment,
             'created_at': self.created_at.isoformat() + 'Z'
         }
-)
