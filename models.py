@@ -2,6 +2,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from datetime import datetime
 import json
+import uuid
 from extensions import db
 
 class User(db.Model, UserMixin):
@@ -12,6 +13,7 @@ class User(db.Model, UserMixin):
     password_hash = db.Column(db.String(128), nullable=False)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     lang = db.Column(db.String(10), default='en')
+    is_admin = db.Column(db.Boolean, default=False, nullable=False)
 
 class Course(db.Model):
     __tablename__ = 'courses'
@@ -138,7 +140,7 @@ class Bill(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     session_id = db.Column(db.String(36), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    user74 = db.Column(db.String(120), nullable=True)
+    user_email = db.Column(db.String(120), nullable=True)
     first_name = db.Column(db.String(50), nullable=True)
     bill_name = db.Column(db.String(100), nullable=False)
     amount = db.Column(db.Float, nullable=False)
