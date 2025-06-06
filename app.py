@@ -4,7 +4,7 @@ import logging
 import uuid
 from datetime import datetime, timedelta
 from flask import Flask, jsonify, render_template, request, session, redirect, url_for, flash, send_from_directory, has_request_context, g, current_app, make_response
-from flask_wtf.csrf import CSRFError
+from flask_wtf.csrf import CSRFError, validate_csrf
 from flask_login import current_user, login_required
 from dotenv import load_dotenv
 from extensions import db, login_manager, session as flask_session, csrf
@@ -468,7 +468,7 @@ def create_app():
     def acknowledge_consent():
         if request.method != 'POST':
             logger.warning(f"Invalid method {request.method} for consent acknowledgement")
-            return '', 400
+            return jsonify({'error': 'Method not allowed'}), 405
         try:
             # Validate CSRF token from the form
             csrf_token = request.form.get('csrf_token')
@@ -476,12 +476,8 @@ def create_app():
                 logger.error(f"CSRF token missing in request for session {session['sid']}")
                 return jsonify({'error': 'CSRF token missing'}), 400
             validate_csrf(csrf_token)
-            session['consent_acknowledged'] = {
-                'status': True,
-                'timestamp': datetime.utcnow().isoformat(),
-                'ip': request.remote_addr,
-                'user_agent': request.headers.get('User-Agent')
-            }
+            session['consent_acknowledged'] = True
+            session.modified = True
             logger.info(f"Consent acknowledged for session {session['sid']} from IP {request.remote_addr}")
             response = make_response('', 204)
             response.headers['Cache-Control'] = 'no-store'
@@ -524,8 +520,7 @@ def create_app():
                 logger.warning(f"No Budget records found for filter: {filter_kwargs}")
             data['budget'] = {
                 'surplus_deficit': budget_records[0].surplus_deficit,
-                'savings_goal': budget_records[0].savings_goal
-            } if budget_records else {'surplus_deficit': None, 'savings_goal': None}
+                'savings_goal': budget；
 
             # Bills
             bills = Bill.query.filter_by(**filter_kwargs).all()
@@ -609,7 +604,7 @@ def create_app():
                 flash(translate('feedback_invalid_tool', default='Please select a valid tool', lang=lang), 'error')
                 logger.error(f"Invalid feedback tool: {tool_name}")
                 return render_template('feedback.html', t=translate, lang=lang, tool_options=tool_options)
-            if not rating or not rating.is_digit() or int(rating) < 1 or int(rating) > 5:
+            if not rating or not rating.isdigit() or int(rating) < 1 or int(rating) > 5:
                 logger.error(f"Invalid feedback rating: {rating}")
                 flash(translate('feedback_invalid_rating', default='Please provide a rating between 1 and 5', lang=lang), 'error')
                 return render_template('feedback.html', t=translate, lang=lang, tool_options=tool_options)
