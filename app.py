@@ -5,7 +5,7 @@ import uuid
 from datetime import datetime, timedelta
 from flask import Flask, jsonify, render_template, request, session, redirect, url_for, flash, send_from_directory, has_request_context, g, current_app, make_response
 from flask_wtf.csrf import CSRFError
-from flask_login import current_user
+from flask_login import current_user, login_required
 from dotenv import load_dotenv
 from extensions import db, login_manager, session as flask_session, csrf
 from blueprints.auth import auth_bp
@@ -114,6 +114,17 @@ SAMPLE_COURSES = [
     }
 ]
 
+def admin_required(f):
+    @wraps(f)
+    @login_required
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_admin:
+            flash(trans('admin_access_denied', default='Access denied: Admin privileges required'), 'danger')
+            logger.warning(f"Unauthorized admin access attempt by user {current_user.username}")
+            return redirect(url_for('index'))
+        return f(*args, **kwargs)
+    return decorated_function
+
 def log_tool_usage(app, tool_name):
     """
     Log tool usage in the ToolUsage table for the current user or session.
@@ -195,6 +206,7 @@ def create_app():
     from blueprints.emergency_fund import emergency_fund_bp
     from blueprints.learning_hub import learning_hub_bp
     from blueprints.auth import auth_bp
+    from blueprints.admin import admin_bp
 
     app.register_blueprint(financial_health_bp, template_folder='templates/financial_health')
     app.register_blueprint(budget_bp, template_folder='templates/budget')
@@ -204,6 +216,7 @@ def create_app():
     app.register_blueprint(emergency_fund_bp, template_folder='templates/emergency_fund')
     app.register_blueprint(learning_hub_bp, template_folder='templates/learning_hub')
     app.register_blueprint(auth_bp, template_folder='templates/auth')
+    app.register_blueprint(admin_bp, template_folder='templates/admin')
 
     def translate(key, lang='en', logger=logger, **kwargs):
         translation = trans(key, lang=lang, **kwargs)
@@ -466,7 +479,7 @@ def create_app():
             flash(translate('feedback_success', default='Thank you for your feedback!', lang=lang), 'success')
             return redirect(url_for('index'))
         except Exception as e:
-            logger.error(f"Error processing feedback: {str(e)}", exc_info=True)
+            logger.error(f"Error processing feedback: {str(e)}")
             flash(translate('global_error_message', default='An error occurred while submitting feedback', lang=lang), 'danger')
             return render_template('feedback.html', t=translate, lang=lang, tool_options=tool_options), 500
 
@@ -497,12 +510,11 @@ def create_app():
         status = {"status": "healthy"}
         try:
             with app.app_context():
-                db.session.execute(db.text("SELECT 1"))
+                db.session.execute('SELECT 1')
             if not os.path.exists(os.path.join(os.path.dirname(__file__), 'data', 'storage.log')):
                 status["status"] = "warning"
                 status["details"] = "Log file data/storage.log not found"
                 return jsonify(status), 200
-            return jsonify(status), 200
         except Exception as e:
             logger.error(f"Health check failed: {str(e)}", exc_info=True)
             status["status"] = "unhealthy"
@@ -525,15 +537,14 @@ def create_app():
     def page_not_found(e):
         lang = session.get('lang', 'en')
         logger.error(f"404 error: {str(e)}")
-        return jsonify({'error': '404 not found'}), 404
+        return jsonify({'error': '404 Not Found'}), 404
 
     @app.route('/static/<path:filename>')
     def static_files(filename):
         response = send_from_directory('static', filename)
-        response.headers['Content-Type'] = 'text/plain'
         return response
 
-    logger.info("App creation completed")
+    logger.info("App creation completed successfully")
     return app
 
 try:
