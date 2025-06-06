@@ -24,6 +24,7 @@
 </head>
 <body>
     <!-- Consent Banner with CSRF Form -->
+    <!--
     {% if not session.get('consent_acknowledged') %}
         <div class="consent-banner alert alert-info alert-dismissible fade show" id="consentBanner" role="alert">
             <i class="fas fa-shield-alt me-1" aria-hidden="true"></i> {{ trans('core_consent_banner') | default('By using Ficore, you understand that we provide tools for planning only, not banking.') }}
@@ -33,6 +34,7 @@
             </form>
         </div>
     {% endif %}
+    -->
 
     <!-- Flashed Messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}
