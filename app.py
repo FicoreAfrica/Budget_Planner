@@ -173,7 +173,7 @@ def create_app():
         logger.critical(f"Failed to create database directory {db_dir}: {str(e)}")
         raise
     db_path = os.path.join(db_dir, 'ficore.db')
-    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', f'sqlite:///{db_path}')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     db.init_app(app)
 
@@ -216,10 +216,10 @@ def create_app():
             admin_user = User(
                 username='admin',
                 email=admin_email,
-                password_hash='hashed_password_here',  # Replace with proper hashing logic
                 created_at=datetime.utcnow(),
                 is_admin=True
             )
+            admin_user.set_password(os.environ.get('ADMIN_PASSWORD', 'defaultadminpassword'))
             db.session.add(admin_user)
             logger.info(f"Created admin user with email {admin_email}")
         elif not admin_user.is_admin:
