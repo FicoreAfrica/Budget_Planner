@@ -1,19 +1,33 @@
 import os
+import logging
 from logging.config import fileConfig
 from sqlalchemy import engine_from_config, pool
 from alembic import context
 from models import db  # Import the db instance from models.py
 
+# Set up logging
+logger = logging.getLogger('alembic.env')
+
 # This is the Alembic Config object, which provides access to the values within the .ini file in use.
 config = context.config
 
+# Ensure the data directory exists for the default SQLite path
+data_dir = os.path.join(os.path.dirname(__file__), '..', 'data')
+try:
+    os.makedirs(data_dir, exist_ok=True)
+    logger.info(f"Ensured database directory exists at {data_dir}")
+except (PermissionError, OSError) as e:
+    logger.error(f"Failed to create database directory {data_dir}: {str(e)}")
+    raise
+
 # Set the sqlalchemy.url from environment variable DATABASE_URL if available
 # Fallback to a default SQLite path if not set
-default_db_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'ficore.db')
-config.set_main_option('sqlalchemy.url', os.environ.get('DATABASE_URL', f'sqlite:///{default_db_path}'))
+default_db_path = os.path.join(data_dir, 'ficore.db')
+db_url = os.environ.get('DATABASE_URL', f'sqlite:///{default_db_path}')
+config.set_main_option('sqlalchemy.url', db_url)
+logger.info(f"Using database URL: {db_url}")
 
 # Interpret the config file for Python logging.
-# This line sets up loggers basically.
 fileConfig(config.config_file_name)
 
 # Add your model's MetaData object here for 'autogenerate' support
