@@ -160,8 +160,10 @@
                 console.log('Is Admin:', {{ current_user.is_admin | tojson if current_user.is_authenticated else 'false' }});
 
                 // Debug CSRF token
-                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || 'Not found';
-                console.log('CSRF Token:', csrfToken);
+                const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+                const csrfToken = csrfMeta ? csrfMeta.content : null;
+                console.log('CSRF Meta Tag:', csrfMeta ? csrfMeta.outerHTML : 'Not found');
+                console.log('CSRF Token:', csrfToken || 'Not found');
 
                 // Form validation
                 document.querySelectorAll('form.validate-form').forEach(form => {
@@ -196,21 +198,23 @@
                 const consentBtn = document.getElementById('acknowledgeConsentBtn');
                 if (consentBtn) {
                     consentBtn.addEventListener('click', function() {
-                        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
                         if (!csrfToken) {
-                            console.error('CSRF token not found');
-                            alert('{{ trans("core_csrf_token_missing") | default("CSRF token missing. Please refresh the page.") }}');
+                            console.error('CSRF token missing');
+                            alert('{{ trans("core_csrf_token_missing") | default("CSRF token missing. Please refresh the page and try again.") }}');
                             return;
                         }
-                        console.log('Sending CSRF Token:', csrfToken);
+                        const headers = {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrfToken,
+                            'X-CSRF-Token': csrfToken, // Fallback for potential server expectation
+                            'X-Content-Type-Options': 'nosniff'
+                        };
+                        console.log('Consent Request Headers:', headers);
                         fetch('{{ url_for("acknowledge_consent") }}', {
                             method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRFToken': csrfToken, // Flask-WTF expects 'X-CSRFToken'
-                                'X-Content-Type-Options': 'nosniff'
-                            },
-                            credentials: 'same-origin'
+                            headers: headers,
+                            credentials: 'include',
+                            body: JSON.stringify({})
                         })
                         .then(response => {
                             console.log('Consent Response Status:', response.status);
@@ -221,13 +225,16 @@
                                     setTimeout(() => banner.remove(), 300);
                                 }
                             } else if (response.status === 400) {
-                                alert('{{ trans("core_invalid_request") | default("Invalid request. Please try again.") }}');
+                                return response.json().then(data => {
+                                    console.error('Consent Error Data:', data);
+                                    alert('{{ trans("core_invalid_request") | default("Invalid request: ") }}' + (data.message || 'Please try again.'));
+                                });
                             } else {
                                 alert('{{ trans("core_error_acknowledging_consent") | default("Error acknowledging consent. Please try again.") }}');
                             }
                         })
                         .catch(error => {
-                            console.error('Consent Error:', error);
+                            console.error('Consent Fetch Error:', error);
                             alert('{{ trans("core_network_error") | default("Network error. Please try again.") }}');
                         });
                     });
