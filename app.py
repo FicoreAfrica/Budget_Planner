@@ -17,6 +17,7 @@ from functools import wraps
 from uuid import uuid4
 from alembic.config import Config
 from alembic import command
+from logging.handlers import RotatingFileHandler  # Added for safer file logging
 
 # Load environment variables
 load_dotenv()
@@ -44,20 +45,33 @@ class SessionAdapter(logging.LoggerAdapter):
 logger = SessionAdapter(root_logger, {})
 
 def setup_logging(app):
-    handler = logging.StreamHandler(sys.stderr)
-    handler.setLevel(logging.DEBUG)
-    handler.setFormatter(formatter)
-    root_logger.addHandler(handler)
+    # StreamHandler for stderr (Render logs)
+    stream_handler = logging.StreamHandler(sys.stderr)
+    stream_handler.setLevel(logging.DEBUG)
+    stream_handler.setFormatter(formatter)
+    root_logger.addHandler(stream_handler)
+    
+    # FileHandler with rotation to avoid filesystem issues
     log_dir = os.path.join(os.path.dirname(__file__), 'data')
     os.makedirs(log_dir, exist_ok=True)
     try:
-        file_handler = logging.FileHandler(os.path.join(log_dir, 'storage.log'))
+        file_handler = RotatingFileHandler(
+            os.path.join(log_dir, 'storage.log'),
+            maxBytes=10*1024*1024,  # 10MB
+            backupCount=5
+        )
         file_handler.setLevel(logging.DEBUG)
         file_handler.setFormatter(formatter)
         root_logger.addHandler(file_handler)
-        logger.info("Logging setup complete with file handler")
+        logger.info("Logging setup complete with rotating file handler")
     except (PermissionError, OSError) as e:
-        logger.warning(f"Failed to set up file logging: {str(e)}")
+        logger.warning(f"Failed to set up file logging: {str(e)}. Relying on stream handler.")
+
+    # Configure Gunicorn logging
+    gunicorn_logger = logging.getLogger('gunicorn')
+    gunicorn_logger.setLevel(logging.DEBUG)
+    gunicorn_logger.handlers = [stream_handler]  # Share the same handler
+    logger.info("Gunicorn logger configured to use stream handler")
 
 def setup_session(app):
     session_dir = os.path.join(os.path.dirname(__file__), 'data', 'sessions')
@@ -153,7 +167,7 @@ def run_migrations():
     """Run Alembic migrations to ensure the database schema is up-to-date."""
     try:
         alembic_cfg = Config(os.path.join(os.path.dirname(__file__), 'alembic.ini'))
-        alembic_path = os.path.join(os.path.dirname(__file__), 'migrations', 'versions')
+        alembic_path = os.path.join(os.path.dirname(__file__), 'migrations')
         if not os.path.exists(alembic_path):
             logger.critical(f"Migration directory {alembic_path} does not exist. Please initialize migrations.")
             raise FileNotFoundError(f"Migration directory {alembic_path} not found")
@@ -174,7 +188,6 @@ def initialize_database(app):
             run_migrations()
         except Exception as e:
             logger.critical(f"Migration failed: {str(e)}", exc_info=True)
-            # Skip admin user setup for debugging
             logger.warning("Skipping admin user initialization due to migration failure")
             return
         admin_email = os.environ.get('ADMIN_EMAIL', 'admin@example.com')
@@ -324,11 +337,22 @@ def create_app():
                 session['lang'] = request.accept_languages.best_match(['en', 'ha'], 'en')
                 logger.info(f"Set default language to {session['lang']}")
             g.logger = logger
-            g.logger.info(f"Request started for path: {request.path}")
-            if not os.path.exists(os.path.join(os.path.dirname(__file__), 'data', 'storage.log')):
-                g.logger.warning("data/storage.log not found")
+            # Enhanced request logging
+            logger.info(
+                f"Request: method={request.method}, path={request.path}, "
+                f"remote_addr={request.remote_addr}, user_agent={request.headers.get('User-Agent')}, "
+                f"session_id={session['sid']}, user_id={current_user.id if current_user.is_authenticated else 'anonymous'}"
+            )
         except Exception as e:
             logger.error(f"Before request error: {str(e)}", exc_info=True)
+
+    @app.after_request
+    def log_response(response):
+        logger.info(
+            f"Response: status={response.status_code}, path={request.path}, "
+            f"session_id={session.get('sid', 'no-session-id')}"
+        )
+        return response
 
     @app.context_processor
     def inject_translations():
@@ -516,10 +540,12 @@ def create_app():
             rating = request.form.get('rating')
             comment = request.form.get('comment', '')
             if not tool_name or tool_name not in tool_options:
-                flash(translate('feedback_invalid_tool', default='Please select a valid tool', lang=lang), 'danger')
+                flash(translate('feedback_invalid_tool', default='Please select a valid tool', lang=lang), 'error')
+                logger.error(f"Invalid feedback tool: {tool_name}")
                 return render_template('feedback.html', t=translate, lang=lang, tool_options=tool_options)
             if not rating or not rating.isdigit() or int(rating) < 1 or int(rating) > 5:
-                flash(translate('feedback_invalid_rating', default='Please provide a rating between 1 and 5', lang=lang), 'danger')
+                logger.error(f"Invalid feedback rating: {rating}")
+                flash(translate('feedback_invalid_rating', default='Please provide a rating between 1 and 5', lang=lang), 'error')
                 return render_template('feedback.html', t=translate, lang=lang, tool_options=tool_options)
             feedback_entry = Feedback(
                 user_id=current_user.id if current_user.is_authenticated else None,
@@ -534,8 +560,8 @@ def create_app():
             flash(translate('feedback_success', default='Thank you for your feedback!', lang=lang), 'success')
             return redirect(url_for('index'))
         except Exception as e:
-            logger.error(f"Error processing feedback: {str(e)}")
-            flash(translate('global_error_message', default='An error occurred while submitting feedback', lang=lang), 'danger')
+            logger.error(f"Error processing feedback: {str(e)}", exc_info=True)
+            flash(translate('global_error', default='Error occurred while submitting feedback', lang=lang), 'error')
             return render_template('feedback.html', t=translate, lang=lang, tool_options=tool_options), 500
 
     @app.route('/logout')
@@ -547,10 +573,10 @@ def create_app():
             session.clear()
             session['lang'] = session_lang
             flash(translate('learning_hub_success_logout', default='Successfully logged out', lang=lang), 'success')
-            return redirect(url_for('index'))
+            return redirect(url_for 'index')
         except Exception as e:
             logger.error(f"Error in logout: {str(e)}", exc_info=True)
-            flash(translate('global_error_message', default='An error occurred', lang=lang), 'danger')
+            flash(translate('global_error', default='An error occurred', lang=lang), 'error')
             return redirect(url_for('index'))
 
     @app.route('/about')
@@ -561,37 +587,49 @@ def create_app():
 
     @app.route('/health')
     def health():
-        logger.info("Health check")
+        logger.info("Health check requested")
         status = {"status": "healthy"}
         try:
             with app.app_context():
                 db.session.execute('SELECT 1')
+                logger.debug("Database connection successful")
             if not os.path.exists(os.path.join(os.path.dirname(__file__), 'data', 'storage.log')):
                 status["status"] = "warning"
-                status["details"] = "Log file data/storage.log not found"
-                return jsonify(status), 200
+                status["warning"] = "Log file data/storage.log not found"
+                logger.warning("Log file data/storage.log not found")
+            logger.info("Health check completed successfully")
+            return jsonify(status), 200
         except Exception as e:
             logger.error(f"Health check failed: {str(e)}", exc_info=True)
             status["status"] = "unhealthy"
-            status["details"] = str(e)
+            status["error"] = str(e)
             return jsonify(status), 500
 
-    @app.errorhandler(500)
-    def internal_error(error):
+    @app.route('/debug_log')
+    def debug_log():
+        """Debug route to test logging."""
+        logger.debug("Debug log test")
+        logger.info("Info log test")
+        logger.warning("Warning log test")
+        logger.error("Error log test")
+        return jsonify({"message": "Logged debug messages"})
+
+    @app.errorhandler(Exception)
+    def handle_exception(e):
         lang = session.get('lang', 'en')
-        logger.error(f"Server error: {str(error)}")
-        return jsonify({'error': str(error)}), 500
+        logger.error(f"Unhandled exception: {str(e)}", exc_info=True)
+        return jsonify({'error': 'Internal server error'}), 500
 
     @app.errorhandler(CSRFError)
     def handle_csrf(e):
         lang = session.get('lang', 'en')
-        logger.error(f"CSRF error: {str(e)}")
+        logger.error(f"CSRF error: {str(e)}", exc_info=True)
         return jsonify({'error': 'CSRF token invalid'}), 400
 
     @app.errorhandler(404)
     def page_not_found(e):
         lang = session.get('lang', 'en')
-        logger.error(f"404 error: {str(e)}")
+        logger.error(f"404 error: {request.path}", exc_info=True)
         return jsonify({'error': '404 Not Found'}), 404
 
     @app.route('/static/<path:filename>')
