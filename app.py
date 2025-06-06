@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 from extensions import db, login_manager, session as flask_session, csrf
 from blueprints.auth import auth_bp
 from translations import trans
-from scheduler_tools import init_scheduler
+from scheduler_setup import init_scheduler
 from models import Course, FinancialHealth, Budget, Bill, NetWorth, EmergencyFund, LearningProgress, QuizResult, User, ToolUsage, Feedback
 import json
 from functools import wraps
