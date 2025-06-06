@@ -45,6 +45,15 @@
         {% endif %}
     {% endwith %}
 
+    <!-- Debug User Status -->
+    {% if current_user.is_authenticated %}
+        <div class="container mt-3">
+            <div class="alert alert-info" role="alert">
+                Logged in as: {{ current_user.email if current_user.email else 'Unknown' }} | Admin: {{ 'Yes' if current_user.is_admin else 'No' }}
+            </div>
+        </div>
+    {% endif %}
+
     <!-- Header Message -->
     <div class="header-message">
         {{ trans('core_welcome_to_ficore') | default('Welcome to Ficore Africa Tools Suite: Use Ficore to Track your income, net worth, budgets, and bills, to grow your money with confidence.') }}
@@ -150,6 +159,10 @@
                 console.log('Authenticated:', {{ current_user.is_authenticated | tojson }});
                 console.log('Is Admin:', {{ current_user.is_admin | tojson if current_user.is_authenticated else 'false' }});
 
+                // Debug CSRF token
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || 'Not found';
+                console.log('CSRF Token:', csrfToken);
+
                 // Form validation
                 document.querySelectorAll('form.validate-form').forEach(form => {
                     form.addEventListener('submit', function(e) {
@@ -183,16 +196,24 @@
                 const consentBtn = document.getElementById('acknowledgeConsentBtn');
                 if (consentBtn) {
                     consentBtn.addEventListener('click', function() {
-                        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+                        if (!csrfToken) {
+                            console.error('CSRF token not found');
+                            alert('{{ trans("core_csrf_token_missing") | default("CSRF token missing. Please refresh the page.") }}');
+                            return;
+                        }
+                        console.log('Sending CSRF Token:', csrfToken);
                         fetch('{{ url_for("acknowledge_consent") }}', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
-                                'X-CSRF-Token': csrfToken,
+                                'X-CSRFToken': csrfToken, // Flask-WTF expects 'X-CSRFToken'
                                 'X-Content-Type-Options': 'nosniff'
-                            }
+                            },
+                            credentials: 'same-origin'
                         })
                         .then(response => {
+                            console.log('Consent Response Status:', response.status);
                             if (response.status === 204) {
                                 const banner = document.getElementById('consentBanner');
                                 if (banner) {
@@ -206,7 +227,7 @@
                             }
                         })
                         .catch(error => {
-                            console.error('Error:', error);
+                            console.error('Consent Error:', error);
                             alert('{{ trans("core_network_error") | default("Network error. Please try again.") }}');
                         });
                     });
