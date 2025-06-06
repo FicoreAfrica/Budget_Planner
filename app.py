@@ -1,4 +1,4 @@
-import osu
+import os
 import sys
 import logging
 import uuid
