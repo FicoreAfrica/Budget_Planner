@@ -1,0 +1,266 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script>{% extends "base.html" %}
+{% block title %}{{ trans('admin_dashboard_title', default='Admin Dashboard') }}{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <h1>{{ trans('admin_dashboard_title', default='Admin Dashboard') }}</h1>
+    <p class="lead">{{ trans('admin_dashboard_desc', default='View and analyze platform usage and engagement metrics') }}</p>
+    
+    <!-- Navigation Tabs -->
+    <ul class="nav nav-tabs mb-4">
+        <li class="nav-item">
+            <a class="nav-link {{ 'active' if request.endpoint == 'admin.index' }}" href="{{ url_for('admin.index') }}">{{ trans('admin_overview', default='Overview') }}</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {{ 'active' if request.endpoint == 'admin.tool_usage' }}" href="{{ url_for('admin.tool_usage') }}">{{ trans('admin_tool_usage', default='Tool Usage') }}</a>
+        </li>
+    </ul>
+
+    <!-- Filters -->
+    <form method="GET" action="{{ url_for('admin.tool_usage') }}" class="mb-4">
+        <div class="row">
+            <div class="col-md-4">
+                <label for="tool_name">{{ trans('admin_filter_tool', default='Tool Name') }}</label>
+                <select name="tool_name" id="tool_name" class="form-control">
+                    <option value="">{{ trans('admin_all_tools', default='All Tools') }}</option>
+                    {% for tool in valid_tools %}
+                        <option value="{{ tool }}" {{ 'selected' if tool == tool_name }}>{{ tool|capitalize }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="start_date">{{ trans('admin_start_date', default='Start Date') }}</label>
+                <input type="date" name="start_date" id="start_date" class="form-control" value="{{ start_date or '' }}">
+            </div>
+            <div class="col-md-3">
+                <label for="end_date">{{ trans('admin_end_date', default='End Date') }}</label>
+                <input type="date" name="end_date" id="end_date" class="form-control" value="{{ end_date or '' }}">
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary">{{ trans('admin_filter', default='Filter') }}</button>
+            </div>
+        </div>
+    </form>
+
+    <!-- Overview Metrics -->
+    {% if request.endpoint == 'admin.index' %}
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ trans('admin_total_users', default='Total Users') }}</h5>
+                    <p class="card-text display-4">{{ metrics.total_users }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ trans('admin_new_users_24h', default='New Users (24h)') }}</h5>
+                    <p class="card-text display-4">{{ metrics.new_users_last_24h }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ trans('admin_avg_feedback', default='Avg Feedback Rating') }}</h5>
+                    <p class="card-text display-4">{{ metrics.avg_feedback_rating }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ trans('admin_multi_tool_ratio', default='Multi-Tool Users (%)') }}</h5>
+                    <p class="card-text display-4">{{ metrics.multi_tool_ratio }}%</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ trans('admin_conversion_rate', default='Anon to Registered (%)') }}</h5>
+                    <p class="card-text display-4">{{ metrics.conversion_rate }}%</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">{{ trans('admin_auth_trends', default='Registration and Login Trends') }}</h5>
+            <canvas id="authChart"></canvas>
+        </div>
+    </div>
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">{{ trans('admin_tool_usage_dist', default='Tool Usage Distribution') }}</h5>
+            <canvas id="toolChart"></canvas>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Authentication Trends Chart
+        const authCtx = document.getElementById('authChart').getContext('2d');
+        new Chart(authCtx, {
+            type: 'line',
+            data: {
+                labels: {{ chart_data.labels | tojson }},
+                datasets: [
+                    {
+                        label: '{{ trans('admin_register', default='Registrations') }}',
+                        data: {{ chart_data.registrations | tojson }},
+                        borderColor: '#007bff',
+                        fill: false
+                    },
+                    {
+                        label: '{{ trans('admin_login', default='Logins') }}',
+                        data: {{ chart_data.logins | tojson }},
+                        borderColor: '#28a745',
+                        fill: false
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+
+        // Tool Usage Distribution Chart
+        const toolCtx = document.getElementById('toolChart').getContext('2d');
+        new Chart(authCtx, {
+            type: 'bar',
+            data: {
+                labels: {{ chart_data.labels | tojson }},
+                datasets: [
+                    {% for tool, counts in chart_data.tool_usage.items() %}
+                    {
+                        label: '{{ tool|capitalize }}',
+                        data: {{ counts | tojson }},
+                        backgroundColor: '{{ '#{:06x}'.format(loop.index * 123456 % 16777215) }}'
+                    },
+                    {% endfor %}
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+    </script>
+    {% endif %}
+
+    <!-- Tool Usage Logs -->
+    {% if request.endpoint == 'admin.tool_usage' %}
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">{{ trans('admin_usage_logs', default='Usage Logs') }}</h5>
+            <a href="{{ url_for('admin.export_csv', tool_name=tool_name, start_date=start_date, end_date=end_date) }}" 
+               class="btn btn-success mb-3">{{ trans('admin_export_csv', default='Export CSV') }}</a>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>{{ trans('admin_id', default='ID') }}</th>
+                        <th>{{ trans('admin_user_id', default='User ID') }}</th>
+                        <th>{{ trans('admin_session_id', default='Session ID') }}</th>
+                        <th>{{ trans('admin_tool_name', default='Tool Name') }}</th>
+                        <th>{{ trans('admin_created_at', default='Created At') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in metrics %}
+                    <tr>
+                        <td>{{ log.id }}</td>
+                        <td>{{ log.user_id or 'anonymous' }}</td>
+                        <td>{{ log.session_id }}</td>
+                        <td>{{ log.tool_name|capitalize }}</td>
+                        <td>{{ log.created_at|format_datetime }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5">{{ trans('admin_no_logs', default='No logs found') }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">{{ trans('admin_usage_trend', default='Usage Trend') }}</h5>
+            <canvas id="usageChart"></canvas>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const usageCtx = document.getElementById('usageChart').getContext('2d');
+        new Chart(usageCtx, {
+            type: 'line',
+            data: {
+                labels: {{ chart_data.labels | tojson }},
+                datasets: [{
+                    label: '{{ trans('admin_usage_count', default='Usage Count') }}',
+                    data: {{ chart_data.usage_counts | tojson }},
+                    borderColor: '#007bff',
+                    fill: false
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+    </script>
+    {% endif %}
+</div>
+{% endblock %}
