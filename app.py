@@ -62,6 +62,37 @@ class SessionAdapter(logging.LoggerAdapter):
 
 logger = SessionAdapter(root_logger, {})
 
+# Constants
+SAMPLE_COURSES = [
+    {
+        'id': 'budgeting_learning_101',
+        'title_key': 'learning_hub_course_budgeting101_title',
+        'title_en': 'Budgeting Learning 101',
+        'title_ha': 'Tsarin Kudi 101',
+        'description_en': 'Learn the basics of budgeting.',
+        'description_ha': 'Koyon asalin tsarin kudi.',
+        'is_premium': False
+    },
+    {
+        'id': 'financial_quiz',
+        'title_key': 'learning_hub_course_financial_quiz_title',
+        'title_en': 'Financial Quiz',
+        'title_ha': 'Jarabawar Kudi',
+        'description_en': 'Test your financial knowledge.',
+        'description_ha': 'Gwada ilimin ku ya na kudi.',
+        'is_premium': False
+    },
+    {
+        'id': 'savings_basics',
+        'title_key': 'learning_hub_course_savings_basics_title',
+        'title_en': 'Savings Basics',
+        'title_ha': 'Asalin Tattara Kudi',
+        'description_en': 'Understand how to save effectively.',
+        'description_ha': 'Fahimci yadda ake tattara kudi yadda ya kamata.',
+        'is_premium': False
+    }
+]
+
 def setup_logging(app):
     print("Setting up logging", file=sys.stderr, flush=True)
     # StreamHandler for stderr with immediate flushing
@@ -128,37 +159,6 @@ def initialize_courses_data(app):
             db.session.commit()
             logger.info(f"Initialized {len(SAMPLE_COURSES)} courses in database")
         app.config['COURSES'] = [course.to_dict() for course in Course.query.all()]
-
-# Constants
-SAMPLE_COURSES = [
-    {
-        'id': 'budgeting_learning_101',
-        'title_key': 'learning_hub_course_budgeting101_title',
-        'title_en': 'Budgeting Learning 101',
-        'title_ha': 'Tsarin Kudi 101',
-        'description_en': 'Learn the basics of budgeting.',
-        'description_ha': 'Koyon asalin tsarin kudi.',
-        'is_premium': False
-    },
-    {
-        'id': 'financial_quiz',
-        'title_key': 'learning_hub_course_financial_quiz_title',
-        'title_en': 'Financial Quiz',
-        'title_ha': 'Jarabawar Kudi',
-        'description_en': 'Test your financial knowledge.',
-        'description_ha': 'Gwada ilimin ku ya na kudi.',
-        'is_premium': False
-    },
-    {
-        'id': 'savings_basics',
-        'title_key': 'learning_hub_course_savings_basics_title',
-        'title_en': 'Savings Basics',
-        'title_ha': 'Asalin Tattara Kudi',
-        'description_en': 'Understand how to save effectively.',
-        'description_ha': 'Fahimci yadda ake tattara kudi yadda ya kamata.',
-        'is_premium': False
-    }
-]
 
 def admin_required(f):
     @wraps(f)
@@ -433,14 +433,19 @@ def create_app():
         lang = session.get('lang', 'en')
         logger.info("Serving index page")
         try:
-            courses = current_app.config['COURSES'] or SAMPLE_COURSES
+            # Attempt to retrieve courses from app config (populated from DB)
+            courses = current_app.config.get('COURSES')
+            if not courses:
+                logger.warning("No courses found in current_app.config['COURSES']. Falling back to SAMPLE_COURSES.")
+                courses = SAMPLE_COURSES
             logger.info(f"Retrieved {len(courses)} courses")
             processed_courses = courses
         except Exception as e:
-            logger.error(f"Error retrieving courses: {str(e)}", exc_info=True)
+            logger.error(f"Error retrieving courses from config: {str(e)}", exc_info=True)
             print(f"Error in index route: {str(e)}", file=sys.stderr, flush=True)
+            logger.info("Falling back to SAMPLE_COURSES due to error")
             processed_courses = SAMPLE_COURSES
-            flash(translate('learning_hub_error_message', default='An error occurred', lang=lang), 'danger')
+            flash(translate('learning_hub_error_message', default='An error occurred while loading courses', lang=lang), 'danger')
         print("Rendering index template", file=sys.stderr, flush=True)
         return render_template(
             'index.html',
