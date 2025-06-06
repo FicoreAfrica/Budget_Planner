@@ -480,7 +480,7 @@ def create_app():
         response.headers['Cache-Control'] = 'no-store'
         response.headers['X-Content-Type-Options'] = 'nosniff'
         return response
-
+        
     @app.route('/favicon.ico')
     def favicon():
         logger.info("Serving favicon.ico")
