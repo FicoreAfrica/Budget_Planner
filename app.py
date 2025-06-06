@@ -15,6 +15,8 @@ from models import Course, FinancialHealth, Budget, Bill, NetWorth, EmergencyFun
 import json
 from functools import wraps
 from uuid import uuid4
+from alembic.config import Config
+from alembic import command
 
 # Load environment variables
 load_dotenv()
@@ -151,6 +153,47 @@ def log_tool_usage(app, tool_name):
         logger.error(f"Error logging tool usage for {tool_name}: {str(e)}")
         db.session.rollback()
 
+def run_migrations():
+    """Run Alembic migrations to ensure the database schema is up to date."""
+    try:
+        alembic_cfg = Config(os.path.join(os.path.dirname(__file__), 'alembic.ini'))
+        if not alembic_cfg.get_main_option('script_location'):
+            alembic_cfg.set_main_option('script_location', os.path.join(os.path.dirname(__file__), 'migrations/versions'))
+        command.upgrade(alembic_cfg, 'head')
+        logger.info("Database migrations applied successfully")
+    except Exception as e:
+        logger.critical(f"Failed to apply database migrations: {str(e)}")
+        raise
+
+def initialize_database(app):
+    """Initialize the database by running migrations and setting up the admin user."""
+    with app.app_context():
+        run_migrations()
+        admin_email = os.environ.get('ADMIN_EMAIL', 'admin@example.com')
+        admin_password = os.environ.get('ADMIN_PASSWORD', 'defaultadminpassword')
+        if admin_password == 'defaultadminpassword':
+            logger.warning("Using default admin password. Set ADMIN_PASSWORD environment variable in production.")
+        try:
+            admin_user = User.query.filter_by(email=admin_email).first()
+            if not admin_user:
+                admin_user = User(
+                    username='admin',
+                    email=admin_email,
+                    created_at=datetime.utcnow(),
+                    is_admin=True
+                )
+                admin_user.set_password(admin_password)
+                db.session.add(admin_user)
+                logger.info(f"Created admin user with email {admin_email}")
+            elif not admin_user.is_admin:
+                admin_user.is_admin = True
+                logger.info(f"Assigned admin role to existing user {admin_email}")
+            db.session.commit()
+        except Exception as e:
+            logger.critical(f"Failed to initialize admin user: {str(e)}")
+            db.session.rollback()
+            raise
+
 def create_app():
     app = Flask(__name__, template_folder='templates')
     app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key-please-change-me')
@@ -192,44 +235,14 @@ def create_app():
     except Exception as e:
         logger.error(f"Failed to initialize scheduler: {str(e)}")
 
-    with app.app_context():
-        # Run Alembic migrations
-        from alembic.config import Config
-        from alembic import command
-        alembic_cfg = Config(os.path.join(os.path.dirname(__file__), 'alembic.ini'))
-        # Set script_location if not present in alembic.ini
-        if not alembic_cfg.get_main_option('script_location'):
-            alembic_cfg.set_main_option('script_location', os.path.join(os.path.dirname(__file__), 'migrations/versions'))
-        try:
-            command.upgrade(alembic_cfg, 'head')
-            logger.info("Database migration completed successfully")
-        except Exception as e:
-            logger.error(f"Database migration failed: {str(e)}")
-            raise
-
-        # Assign admin role on first run
-        from models import User
-        admin_email = os.environ.get('ADMIN_EMAIL', 'admin@example.com')
-        admin_user = User.query.filter_by(email=admin_email).first()
-        if not admin_user:
-            # Create admin user if not exists (for initial setup)
-            admin_user = User(
-                username='admin',
-                email=admin_email,
-                created_at=datetime.utcnow(),
-                is_admin=True
-            )
-            admin_user.set_password(os.environ.get('ADMIN_PASSWORD', 'defaultadminpassword'))
-            db.session.add(admin_user)
-            logger.info(f"Created admin user with email {admin_email}")
-        elif not admin_user.is_admin:
-            admin_user.is_admin = True
-            logger.info(f"Assigned admin role to existing user {admin_email}")
-        db.session.commit()
-
-        db.create_all()
+    # Initialize database and admin user
+    try:
+        initialize_database(app)
         initialize_courses_data(app)
-        logger.info("Database tables created and courses initialized")
+        logger.info("Database and courses initialized successfully")
+    except Exception as e:
+        logger.critical(f"Failed to initialize database: {str(e)}")
+        raise
 
     # Register blueprints
     from blueprints.financial_health import financial_health_bp
