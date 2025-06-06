@@ -8,11 +8,13 @@ from flask_wtf.csrf import CSRFError, generate_csrf
 from flask_login import current_user
 from dotenv import load_dotenv
 from extensions import db, login_manager, session as flask_session, csrf
-from blueprints.auth import auth_bp 
+from blueprints.auth import auth_bp
 from translations import trans
 from scheduler_setup import init_scheduler
 from models import Course, FinancialHealth, Budget, Bill, NetWorth, EmergencyFund, LearningProgress, QuizResult, User
 import json
+from functools import wraps
+from uuid import uuid4
 
 # Load environment variables
 load_dotenv()
@@ -126,7 +128,7 @@ def create_app():
     csrf.init_app(app)
 
     # Configure SQLite database
-    db_dir = os.path.join(os.path.dirname(__file__), 'data')  # Use project directory for data
+    db_dir = os.path.join(os.path.dirname(__file__), 'data')
     try:
         os.makedirs(db_dir, exist_ok=True)
         logger.info(f"Database directory ensured at {db_dir}")
@@ -152,13 +154,6 @@ def create_app():
         logger.info("Scheduler initialized successfully")
     except Exception as e:
         logger.error(f"Failed to initialize scheduler: {str(e)}")
-
-    def format_currency(value):
-        try:
-            return "₦{:,.2f}".format(float(value))
-        except (ValueError, TypeError):
-            return str(value)
-    app.jinja_env.filters['format_currency'] = format_currency
 
     with app.app_context():
         db.create_all()
@@ -209,25 +204,17 @@ def create_app():
 
     @app.template_filter('format_datetime')
     def format_datetime(value):
-        """
-        Format a datetime object to a readable string (e.g., 'June 4, 2025, 10:05 AM').
-        If the value is not a datetime object, return it as is.
-        """
         if isinstance(value, datetime):
             return value.strftime('%B %d, %Y, %I:%M %p')
         return value
 
     @app.template_filter('format_currency')
     def format_currency(value):
-        """
-        Format a number as currency (e.g., 887.00 -> ₦887, 88.00 -> ₦88).
-        Removes decimal places if they are .00.
-        """
         try:
             value = float(value)
             if value.is_integer():
-                return f"{int(value):,}"
-            return f"{value:,.2f}"
+                return f"₦{int(value):,}"
+            return f"₦{value:,.2f}"
         except (TypeError, ValueError):
             return value
 
@@ -263,9 +250,18 @@ def create_app():
             'WAITLIST_FORM_URL': os.environ.get('WAITLIST_FORM_URL', '#'),
             'CONSULTANCY_FORM_URL': os.environ.get('CONSULTANCY_FORM_URL', '#'),
             'current_lang': lang,
-            'current_user': current_user if has_request_context() else None,  # Safely handle current_user
+            'current_user': current_user if has_request_context() else None,
             'csrf_token': generate_csrf
         }
+
+    def ensure_session_id(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if 'sid' not in session:
+                session['sid'] = str(uuid4())
+                logger.info(f"New session ID generated: {session['sid']}")
+            return f(*args, **kwargs)
+        return decorated_function
 
     @app.route('/')
     def index():
@@ -319,6 +315,7 @@ def create_app():
         return send_from_directory(os.path.join(app.root_path, 'static', 'img'), 'favicon-32x32.png', mimetype='image/png')
 
     @app.route('/general_dashboard')
+    @ensure_session_id
     def general_dashboard():
         lang = session.get('lang', 'en')
         logger.info("Serving general dashboard")
@@ -326,33 +323,84 @@ def create_app():
         try:
             filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
 
+            # Financial Health
             fh_records = FinancialHealth.query.filter_by(**filter_kwargs).order_by(FinancialHealth.created_at.desc()).all()
-            data['financial_health'] = {'score': fh_records[0].score} if fh_records else {'score': None}
+            if not fh_records:
+                logger.warning(f"No FinancialHealth records found for filter: {filter_kwargs}")
+            data['financial_health'] = {
+                'score': fh_records[0].score,
+                'status': fh_records[0].status
+            } if fh_records else {'score': None, 'status': None}
 
+            # Budget
             budget_records = Budget.query.filter_by(**filter_kwargs).order_by(Budget.created_at.desc()).all()
-            data['budget'] = {'surplus_deficit': budget_records[0].surplus_deficit} if budget_records else {'surplus_deficit': None}
+            if not budget_records:
+                logger.warning(f"No Budget records found for filter: {filter_kwargs}")
+            data['budget'] = {
+                'surplus_deficit': budget_records[0].surplus_deficit,
+                'savings_goal': budget_records[0].savings_goal
+            } if budget_records else {'surplus_deficit': None, 'savings_goal': None}
 
+            # Bills
             bills = Bill.query.filter_by(**filter_kwargs).all()
-            data['bills'] = [bill.to_dict() for bill in bills]
+            if not bills:
+                logger.warning(f"No Bill records found for filter: {filter_kwargs}")
+            total_amount = sum(bill.amount for bill in bills)
+            unpaid_amount = sum(bill.amount for bill in bills if bill.status.lower() != 'paid')
+            data['bills'] = {
+                'bills': [bill.to_dict() for bill in bills],
+                'total_amount': total_amount,
+                'unpaid_amount': unpaid_amount
+            }
 
+            # Net Worth
             nw_records = NetWorth.query.filter_by(**filter_kwargs).order_by(NetWorth.created_at.desc()).all()
-            data['net_worth'] = nw_records[0].to_dict() if nw_records else {'net_worth': None}
+            if not nw_records:
+                logger.warning(f"No NetWorth records found for filter: {filter_kwargs}")
+            data['net_worth'] = {
+                'net_worth': nw_records[0].net_worth,
+                'total_assets': nw_records[0].total_assets
+            } if nw_records else {'net_worth': None, 'total_assets': None}
 
+            # Emergency Fund
             ef_records = EmergencyFund.query.filter_by(**filter_kwargs).order_by(EmergencyFund.created_at.desc()).all()
-            data['emergency_fund'] = {'savings_gap': ef_records[0].savings_gap} if ef_records else {'savings_gap': None}
+            if not ef_records:
+                logger.warning(f"No EmergencyFund records found for filter: {filter_kwargs}")
+            data['emergency_fund'] = {
+                'target_amount': ef_records[0].target_amount,
+                'savings_gap': ef_records[0].savings_gap
+            } if ef_records else {'target_amount': None, 'savings_gap': None}
 
+            # Learning Progress
             lp_records = LearningProgress.query.filter_by(**filter_kwargs).all()
+            if not lp_records:
+                logger.warning(f"No LearningProgress records found for filter: {filter_kwargs}")
             data['learning_progress'] = {lp.course_id: lp.to_dict() for lp in lp_records}
 
+            # Quiz Result
             quiz_records = QuizResult.query.filter_by(**filter_kwargs).order_by(QuizResult.created_at.desc()).all()
-            data['quiz'] = {'personality': quiz_records[0].personality} if quiz_records else {'personality': None}
+            if not quiz_records:
+                logger.warning(f"No QuizResult records found for filter: {filter_kwargs}")
+            data['quiz'] = {
+                'personality': quiz_records[0].personality,
+                'score': quiz_records[0].score
+            } if quiz_records else {'personality': None, 'score': None}
 
             logger.info(f"Retrieved data for session {session['sid']}")
             return render_template('general_dashboard.html', data=data, t=translate, lang=lang)
         except Exception as e:
             logger.error(f"Error in general_dashboard: {str(e)}", exc_info=True)
             flash(translate('global_error_message', default='An error occurred', lang=lang), 'danger')
-            return render_template('general_dashboard.html', data={}, t=translate, lang=lang), 500
+            default_data = {
+                'financial_health': {'score': None, 'status': None},
+                'budget': {'surplus_deficit': None, 'savings_goal': None},
+                'bills': {'bills': [], 'total_amount': 0, 'unpaid_amount': 0},
+                'net_worth': {'net_worth': None, 'total_assets': None},
+                'emergency_fund': {'target_amount': None, 'savings_gap': None},
+                'learning_progress': {},
+                'quiz': {'personality': None, 'score': None}
+            }
+            return render_template('general_dashboard.html', data=default_data, t=translate, lang=lang), 500
 
     @app.route('/logout')
     def logout():
@@ -377,7 +425,7 @@ def create_app():
 
     @app.route('/health')
     def health():
-        logger.info("Health check requested")
+        logger.info("Health check")
         status = {"status": "healthy"}
         try:
             with app.app_context():
@@ -386,37 +434,35 @@ def create_app():
                 status["status"] = "warning"
                 status["details"] = "Log file data/storage.log not found"
                 return jsonify(status), 200
+            return jsonify(status), 200
         except Exception as e:
             logger.error(f"Health check failed: {str(e)}", exc_info=True)
             status["status"] = "unhealthy"
             status["details"] = str(e)
             return jsonify(status), 500
-        return jsonify(status), 200
 
     @app.errorhandler(500)
     def internal_error(error):
         lang = session.get('lang', 'en')
-        logger.error(f"Server error: {str(error)}", exc_info=True)
-        flash(translate('global_error_message', default='An error occurred', lang=lang), 'danger')
-        return render_template('500.html', error=str(error), t=translate, lang=lang), 500
+        logger.error(f"Server error: {str(error)}")
+        return jsonify({'error': str(error)}), 500
 
     @app.errorhandler(CSRFError)
-    def handle_csrf_error(error):
+    def handle_csrf(e):
         lang = session.get('lang', 'en')
-        logger.warning(f"CSRF error: {str(error)}")
-        flash(translate('csrf_error', default='Invalid CSRF token', lang=lang), 'danger')
-        return render_template('error.html', error="Invalid CSRF token", t=translate, lang=lang), 400
+        logger.error(f"CSRF error: {str(e)}")
+        return jsonify({'error': 'CSRF token invalid'}), 400
 
     @app.errorhandler(404)
-    def page_not_found(error):
+    def page_not_found(e):
         lang = session.get('lang', 'en')
-        logger.error(f"404 error: {str(error)}")
-        return render_template('404.html', t=translate, lang=lang), 404
+        logger.error(f"404 error: {str(e)}")
+        return jsonify({'error': '404 not found'}), 404
 
     @app.route('/static/<path:filename>')
     def static_files(filename):
         response = send_from_directory('static', filename)
-        response.headers['Cache-Control'] = 'public, max-age=31536000' if not app.debug else 'no-cache'
+        response.headers['Content-Type'] = 'text/plain'
         return response
 
     logger.info("App creation completed")
@@ -425,5 +471,5 @@ def create_app():
 try:
     app = create_app()
 except Exception as e:
-    logger.critical(f"Error creating app: {str(e)}", exc_info=True)
+    logger.error(f"Error creating app: {e}")
     raise
