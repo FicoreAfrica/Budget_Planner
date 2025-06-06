@@ -5,10 +5,7 @@
     <section class="hero text-center my-4">
         <div class="hero-content">
             <h2><i class="fas fa-wallet"></i> {{ trans('core_all_in_one_toolkit') | default('Your All-in-One Toolkit for Financial Health Across Africa') }}</h2>
-            <p class="mt-3">{{ trans('core_money_control') | default('Your Money. Your Control. Your Tools.') }}</p>
-            <small>
-                <i class="fas fa-shield-alt"></i> {{ trans('core_no_fund_handling') | default('Take control of your money with Ficore tools.') }}
-            </small>
+            <p class="mt-3"><i class="fas fa-shield-alt me-1" aria-hidden="true"></i> {{ trans('core_money_control') | default('Your Money. Your Control. Your Tools.') }}</p>
             <div class="d-flex justify-content-center mt-3">
                 <a href="{{ url_for('financial_health.step1') }}" class="btn btn-primary btn-explore" aria-label="{{ trans('financial_health_get_health_score') | default('Start Here – Check Your Financial Health') }}">{{ trans('financial_health_get_health_score') | default('Start Here – Check Your Financial Health') }}</a>
             </div>
