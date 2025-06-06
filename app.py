@@ -1,4 +1,4 @@
-import os
+import osu
 import sys
 import logging
 import uuid
@@ -17,12 +17,30 @@ from functools import wraps
 from uuid import uuid4
 from alembic.config import Config
 from alembic import command
-from logging.handlers import RotatingFileHandler  # Added for safer file logging
+from logging.handlers import RotatingFileHandler
 
-# Load environment variables
-load_dotenv()
+# Early print to confirm module loading
+print("Loading app.py", file=sys.stderr, flush=True)
 
-# Set up logging
+# Initialize a basic logger before app creation to catch early errors
+early_logger = logging.getLogger('ficore_early')
+early_logger.setLevel(logging.DEBUG)
+early_stream_handler = logging.StreamHandler(sys.stderr)
+early_stream_handler.setLevel(logging.DEBUG)
+early_stream_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+early_logger.addHandler(early_stream_handler)
+early_logger.debug("Early logger initialized")
+
+try:
+    # Load environment variables
+    load_dotenv()
+    early_logger.debug("Environment variables loaded")
+except Exception as e:
+    print(f"Error loading environment variables: {str(e)}", file=sys.stderr, flush=True)
+    early_logger.error(f"Error loading environment variables: {str(e)}", exc_info=True)
+    raise
+
+# Set up main logger
 root_logger = logging.getLogger('ficore_app')
 root_logger.setLevel(logging.DEBUG)
 
@@ -45,32 +63,44 @@ class SessionAdapter(logging.LoggerAdapter):
 logger = SessionAdapter(root_logger, {})
 
 def setup_logging(app):
-    # StreamHandler for stderr (Render logs)
-    stream_handler = logging.StreamHandler(sys.stderr)
+    print("Setting up logging", file=sys.stderr, flush=True)
+    # StreamHandler for stderr with immediate flushing
+    class FlushingStreamHandler(logging.StreamHandler):
+        def emit(self, record):
+            super().emit(record)
+            self.flush()
+    
+    stream_handler = FlushingStreamHandler(sys.stderr)
     stream_handler.setLevel(logging.DEBUG)
     stream_handler.setFormatter(formatter)
     root_logger.addHandler(stream_handler)
+    logger.debug(f"Logger level: {root_logger.getEffectiveLevel()}")
     
-    # FileHandler with rotation to avoid filesystem issues
+    # FileHandler with rotation
     log_dir = os.path.join(os.path.dirname(__file__), 'data')
     os.makedirs(log_dir, exist_ok=True)
     try:
         file_handler = RotatingFileHandler(
             os.path.join(log_dir, 'storage.log'),
-            maxBytes=10*1024*1024,  # 10MB
+            maxBytes=10*1024*1024,
             backupCount=5
         )
         file_handler.setLevel(logging.DEBUG)
         file_handler.setFormatter(formatter)
         root_logger.addHandler(file_handler)
         logger.info("Logging setup complete with rotating file handler")
+        if os.path.exists(os.path.join(log_dir, 'storage.log')):
+            logger.debug(f"Log file exists: {os.path.join(log_dir, 'storage.log')}")
+        else:
+            logger.warning(f"Log file does not exist: {os.path.join(log_dir, 'storage.log')}")
     except (PermissionError, OSError) as e:
         logger.warning(f"Failed to set up file logging: {str(e)}. Relying on stream handler.")
-
+    
     # Configure Gunicorn logging
     gunicorn_logger = logging.getLogger('gunicorn')
     gunicorn_logger.setLevel(logging.DEBUG)
-    gunicorn_logger.handlers = [stream_handler]  # Share the same handler
+    gunicorn_logger.handlers = [stream_handler]
+    logger.debug(f"Gunicorn logger level: {gunicorn_logger.getEffectiveLevel()}")
     logger.info("Gunicorn logger configured to use stream handler")
 
 def setup_session(app):
@@ -170,6 +200,7 @@ def run_migrations():
         alembic_path = os.path.join(os.path.dirname(__file__), 'migrations')
         if not os.path.exists(alembic_path):
             logger.critical(f"Migration directory {alembic_path} does not exist. Please initialize migrations.")
+            print(f"Migration directory {alembic_path} does not exist", file=sys.stderr, flush=True)
             raise FileNotFoundError(f"Migration directory {alembic_path} not found")
         scripts = os.listdir(alembic_path)
         logger.info(f"Found migration scripts: {scripts}")
@@ -179,6 +210,7 @@ def run_migrations():
         logger.info("Successfully applied database migrations")
     except Exception as e:
         logger.critical(f"Failed to apply database migrations: {str(e)}", exc_info=True)
+        print(f"Failed to apply database migrations: {str(e)}", file=sys.stderr, flush=True)
         raise
 
 def initialize_database(app):
@@ -188,6 +220,7 @@ def initialize_database(app):
             run_migrations()
         except Exception as e:
             logger.critical(f"Migration failed: {str(e)}", exc_info=True)
+            print(f"Migration failed: {str(e)}", file=sys.stderr, flush=True)
             logger.warning("Skipping admin user initialization due to migration failure")
             return
         admin_email = os.environ.get('ADMIN_EMAIL', 'admin@example.com')
@@ -212,14 +245,17 @@ def initialize_database(app):
             db.session.commit()
         except Exception as e:
             logger.critical(f"Failed to initialize admin user: {str(e)}", exc_info=True)
+            print(f"Failed to initialize admin user: {str(e)}", file=sys.stderr, flush=True)
             db.session.rollback()
 
 def create_app():
+    print("Starting create_app", file=sys.stderr, flush=True)
     app = Flask(__name__, template_folder='templates')
     app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key-please-change-me')
     if not os.environ.get('FLASK_SECRET_KEY'):
         logger.warning("FLASK_SECRET_KEY not set. Using fallback for development. Set it in production.")
-
+        print("FLASK_SECRET_KEY not set", file=sys.stderr, flush=True)
+    
     logger.info("Starting app creation")
     setup_logging(app)
     setup_session(app)
@@ -234,9 +270,13 @@ def create_app():
         logger.info(f"Database directory ensured at {db_dir}")
     except OSError as e:
         logger.critical(f"Failed to create database directory {db_dir}: {str(e)}")
+        print(f"Failed to create database directory {db_dir}: {str(e)}", file=sys.stderr, flush=True)
         raise
     db_path = os.path.join(db_dir, 'ficore.db')
     db_url = os.environ.get('DATABASE_URL', f'sqlite:///{db_path}')
+    if not os.environ.get('DATABASE_URL'):
+        logger.warning("DATABASE_URL not set. Using SQLite default.")
+        print("DATABASE_URL not set", file=sys.stderr, flush=True)
     logger.info(f"Using database URL: {db_url}")
     app.config['SQLALCHEMY_DATABASE_URI'] = db_url
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -256,6 +296,7 @@ def create_app():
         logger.info("Scheduler initialized successfully")
     except Exception as e:
         logger.error(f"Failed to initialize scheduler: {str(e)}")
+        print(f"Failed to initialize scheduler: {str(e)}", file=sys.stderr, flush=True)
 
     # Initialize database and admin user
     try:
@@ -264,6 +305,7 @@ def create_app():
         logger.info("Database and courses initialized successfully")
     except Exception as e:
         logger.critical(f"Failed to initialize database: {str(e)}", exc_info=True)
+        print(f"Failed to initialize database: {str(e)}", file=sys.stderr, flush=True)
 
     # Register blueprints
     from blueprints.financial_health import financial_health_bp
@@ -337,7 +379,6 @@ def create_app():
                 session['lang'] = request.accept_languages.best_match(['en', 'ha'], 'en')
                 logger.info(f"Set default language to {session['lang']}")
             g.logger = logger
-            # Enhanced request logging
             logger.info(
                 f"Request: method={request.method}, path={request.path}, "
                 f"remote_addr={request.remote_addr}, user_agent={request.headers.get('User-Agent')}, "
@@ -345,6 +386,7 @@ def create_app():
             )
         except Exception as e:
             logger.error(f"Before request error: {str(e)}", exc_info=True)
+            print(f"Before request error: {str(e)}", file=sys.stderr, flush=True)
 
     @app.after_request
     def log_response(response):
@@ -387,6 +429,7 @@ def create_app():
 
     @app.route('/')
     def index():
+        print("Entering index route", file=sys.stderr, flush=True)
         lang = session.get('lang', 'en')
         logger.info("Serving index page")
         try:
@@ -395,8 +438,10 @@ def create_app():
             processed_courses = courses
         except Exception as e:
             logger.error(f"Error retrieving courses: {str(e)}", exc_info=True)
+            print(f"Error in index route: {str(e)}", file=sys.stderr, flush=True)
             processed_courses = SAMPLE_COURSES
             flash(translate('learning_hub_error_message', default='An error occurred', lang=lang), 'danger')
+        print("Rendering index template", file=sys.stderr, flush=True)
         return render_template(
             'index.html',
             t=translate,
@@ -439,6 +484,7 @@ def create_app():
     @app.route('/general_dashboard')
     @ensure_session_id
     def general_dashboard():
+        print("Entering general_dashboard route", file=sys.stderr, flush=True)
         lang = session.get('lang', 'en')
         logger.info("Serving general dashboard")
         data = {}
@@ -509,9 +555,11 @@ def create_app():
             } if quiz_records else {'personality': None, 'score': None}
 
             logger.info(f"Retrieved data for session {session['sid']}")
+            print("Rendering general_dashboard template", file=sys.stderr, flush=True)
             return render_template('general_dashboard.html', data=data, t=translate, lang=lang)
         except Exception as e:
             logger.error(f"Error in general_dashboard: {str(e)}", exc_info=True)
+            print(f"Error in general_dashboard: {str(e)}", file=sys.stderr, flush=True)
             flash(translate('global_error_message', default='An error occurred', lang=lang), 'danger')
             default_data = {
                 'financial_health': {'score': None, 'status': None},
@@ -543,7 +591,7 @@ def create_app():
                 flash(translate('feedback_invalid_tool', default='Please select a valid tool', lang=lang), 'error')
                 logger.error(f"Invalid feedback tool: {tool_name}")
                 return render_template('feedback.html', t=translate, lang=lang, tool_options=tool_options)
-            if not rating or not rating.isdigit() or int(rating) < 1 or int(rating) > 5:
+            if not rating or not rating.is_digit() or int(rating) < 1 or int(rating) > 5:
                 logger.error(f"Invalid feedback rating: {rating}")
                 flash(translate('feedback_invalid_rating', default='Please provide a rating between 1 and 5', lang=lang), 'error')
                 return render_template('feedback.html', t=translate, lang=lang, tool_options=tool_options)
@@ -561,6 +609,7 @@ def create_app():
             return redirect(url_for('index'))
         except Exception as e:
             logger.error(f"Error processing feedback: {str(e)}", exc_info=True)
+            print(f"Error processing feedback: {str(e)}", file=sys.stderr, flush=True)
             flash(translate('global_error', default='Error occurred while submitting feedback', lang=lang), 'error')
             return render_template('feedback.html', t=translate, lang=lang, tool_options=tool_options), 500
 
@@ -573,9 +622,10 @@ def create_app():
             session.clear()
             session['lang'] = session_lang
             flash(translate('learning_hub_success_logout', default='Successfully logged out', lang=lang), 'success')
-            return redirect(url_for ('index'))
+            return redirect(url_for('index'))
         except Exception as e:
             logger.error(f"Error in logout: {str(e)}", exc_info=True)
+            print(f"Error in logout: {str(e)}", file=sys.stderr, flush=True)
             flash(translate('global_error', default='An error occurred', lang=lang), 'error')
             return redirect(url_for('index'))
 
@@ -601,6 +651,7 @@ def create_app():
             return jsonify(status), 200
         except Exception as e:
             logger.error(f"Health check failed: {str(e)}", exc_info=True)
+            print(f"Health check failed: {str(e)}", file=sys.stderr, flush=True)
             status["status"] = "unhealthy"
             status["error"] = str(e)
             return jsonify(status), 500
@@ -612,24 +663,28 @@ def create_app():
         logger.info("Info log test")
         logger.warning("Warning log test")
         logger.error("Error log test")
+        print("Debug log route executed", file=sys.stderr, flush=True)
         return jsonify({"message": "Logged debug messages"})
 
     @app.errorhandler(Exception)
     def handle_exception(e):
         lang = session.get('lang', 'en')
         logger.error(f"Unhandled exception: {str(e)}", exc_info=True)
+        print(f"Caught unhandled exception: {str(e)}", file=sys.stderr, flush=True)
         return jsonify({'error': 'Internal server error'}), 500
 
     @app.errorhandler(CSRFError)
     def handle_csrf(e):
         lang = session.get('lang', 'en')
         logger.error(f"CSRF error: {str(e)}", exc_info=True)
+        print(f"CSRF error: {str(e)}", file=sys.stderr, flush=True)
         return jsonify({'error': 'CSRF token invalid'}), 400
 
     @app.errorhandler(404)
     def page_not_found(e):
         lang = session.get('lang', 'en')
         logger.error(f"404 error: {request.path}", exc_info=True)
+        print(f"404 error: {request.path}", file=sys.stderr, flush=True)
         return jsonify({'error': '404 Not Found'}), 404
 
     @app.route('/static/<path:filename>')
@@ -638,10 +693,13 @@ def create_app():
         return response
 
     logger.info("App creation completed successfully")
+    print("App creation completed", file=sys.stderr, flush=True)
     return app
 
 try:
+    print("Attempting to create app", file=sys.stderr, flush=True)
     app = create_app()
 except Exception as e:
-    logger.error(f"Error creating app: {str(e)}", exc_info=True)
+    print(f"Error creating app: {str(e)}", file=sys.stderr, flush=True)
+    early_logger.error(f"Error creating app: {str(e)}", exc_info=True)
     raise
