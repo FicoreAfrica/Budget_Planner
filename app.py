@@ -4,13 +4,13 @@ import logging
 import uuid
 from datetime import datetime, timedelta
 from flask import Flask, jsonify, render_template, request, session, redirect, url_for, flash, send_from_directory, has_request_context, g, current_app, make_response
-from flask_wtf.csrf import CSRFError, generate_csrf
+from flask_wtf.csrf import CSRFError
 from flask_login import current_user
 from dotenv import load_dotenv
 from extensions import db, login_manager, session as flask_session, csrf
 from blueprints.auth import auth_bp
 from translations import trans
-from scheduler_setup import init_scheduler
+from scheduler_tools import init_scheduler
 from models import Course, FinancialHealth, Budget, Bill, NetWorth, EmergencyFund, LearningProgress, QuizResult, User, ToolUsage, Feedback
 import json
 from functools import wraps
@@ -84,7 +84,7 @@ def initialize_courses_data(app):
         app.config['COURSES'] = [course.to_dict() for course in Course.query.all()]
 
 # Constants
-SAMPLE_COURSES = [
+SAMPLE_COURSES = [    [
     {
         'id': 'budgeting_learning_101',
         'title_key': 'learning_hub_course_budgeting101_title',
@@ -100,7 +100,7 @@ SAMPLE_COURSES = [
         'title_en': 'Financial Quiz',
         'title_ha': 'Jarabawar Kudi',
         'description_en': 'Test your financial knowledge.',
-        'description_ha': 'Gwada ilimin ku na kudi.',
+        'description_ha': 'Gwada ilimin ku ya na kudi.',
         'is_premium': False
     },
     {
@@ -113,6 +113,23 @@ SAMPLE_COURSES = [
         'is_premium': False
     }
 ]
+
+def log_tool_usage(app, tool_name):
+    """
+    Log tool usage in the ToolUsage table for the current user or session.
+    """
+    try:
+        usage_entry = ToolUsage(
+            user_id=current_user.id if current_user.is_authenticated else None,
+            session_id=session['sid'],
+            tool_name=tool_name
+        )
+        db.session.add(usage_entry)
+        db.session.commit()
+        logger.info(f"Tool usage logged: tool={tool_name}, session={session['sid']}")
+    except Exception as e:
+        logger.error(f"Error logging tool usage for {tool_name}: {str(e)}")
+        db.session.rollback()
 
 def create_app():
     app = Flask(__name__, template_folder='templates')
