@@ -1,10 +1,10 @@
-from extensions import db
+from flask_sqlalchemy import SQLAlchemy
+from flask_login import UserMixin
+from datetime import datetime
 import json
-from datetime import datetime, date
-from flask_login import UserMixin  # Add UserMixin import
+from extensions import db
 
-
-class User(db.Model, UserMixin):  # Add UserMixin
+class User(db.Model, UserMixin):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
@@ -54,7 +54,7 @@ class FinancialHealth(db.Model):
     score = db.Column(db.Float, nullable=True)
     status = db.Column(db.String(50), nullable=True)
     status_key = db.Column(db.String(50), nullable=True)
-    badges = db.Column(db.Text, nullable=True)  # JSON string
+    badges = db.Column(db.Text, nullable=True)
     step = db.Column(db.Integer, nullable=True)
     user = db.relationship('User', backref='financial_health_records')
 
@@ -138,7 +138,7 @@ class Bill(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     session_id = db.Column(db.String(36), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    user_email = db.Column(db.String(120), nullable=True)
+    user74 = db.Column(db.String(120), nullable=True)
     first_name = db.Column(db.String(50), nullable=True)
     bill_name = db.Column(db.String(100), nullable=False)
     amount = db.Column(db.Float, nullable=False)
@@ -189,7 +189,7 @@ class NetWorth(db.Model):
     total_assets = db.Column(db.Float, nullable=True)
     total_liabilities = db.Column(db.Float, nullable=True)
     net_worth = db.Column(db.Float, nullable=True)
-    badges = db.Column(db.Text, nullable=True)  # JSON string
+    badges = db.Column(db.Text, nullable=True)
     user = db.relationship('User', backref='net_worth_records')
 
     __table_args__ = (
@@ -237,7 +237,7 @@ class EmergencyFund(db.Model):
     savings_gap = db.Column(db.Float, nullable=True)
     monthly_savings = db.Column(db.Float, nullable=True)
     percent_of_income = db.Column(db.Float, nullable=True)
-    badges = db.Column(db.Text, nullable=True)  # JSON string
+    badges = db.Column(db.Text, nullable=True)
     user = db.relationship('User', backref='emergency_funds')
 
     __table_args__ = (
@@ -275,8 +275,8 @@ class LearningProgress(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     session_id = db.Column(db.String(36), nullable=False)
     course_id = db.Column(db.String(50), nullable=False)
-    lessons_completed = db.Column(db.Text, default='[]', nullable=False)  # JSON string
-    quiz_scores = db.Column(db.Text, default='{}', nullable=False)  # JSON string
+    lessons_completed = db.Column(db.Text, default='[]', nullable=False)
+    quiz_scores = db.Column(db.Text, default='{}', nullable=False)
     current_lesson = db.Column(db.String(50), nullable=True)
     user = db.relationship('User', backref='learning_progress_records')
 
@@ -309,9 +309,9 @@ class QuizResult(db.Model):
     send_email = db.Column(db.Boolean, default=False, nullable=False)
     personality = db.Column(db.String(50), nullable=True)
     score = db.Column(db.Integer, nullable=True)
-    badges = db.Column(db.Text, nullable=True)  # JSON string
-    insights = db.Column(db.Text, nullable=True)  # JSON string
-    tips = db.Column(db.Text, nullable=True)  # JSON string
+    badges = db.Column(db.Text, nullable=True)
+    insights = db.Column(db.Text, nullable=True)
+    tips = db.Column(db.Text, nullable=True)
     user = db.relationship('User', backref='quiz_results')
 
     __table_args__ = (
@@ -333,4 +333,56 @@ class QuizResult(db.Model):
             'badges': json.loads(self.badges) if self.badges else [],
             'insights': json.loads(self.insights) if self.insights else [],
             'tips': json.loads(self.tips) if self.tips else []
+        }
+
+class ToolUsage(db.Model):
+    __tablename__ = 'tool_usage'
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    session_id = db.Column(db.String(36), nullable=False)
+    tool_name = db.Column(db.String(50), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    user = db.relationship('User', backref='tool_usages')
+
+    __table_args__ = (
+        db.Index('ix_tool_usage_session_id', 'session_id'),
+        db.Index('ix_tool_usage_user_id', 'user_id'),
+        db.Index('ix_tool_usage_tool_name', 'tool_name')
+    )
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'session_id': self.session_id,
+            'tool_name': self.tool_name,
+            'created_at': self.created_at.isoformat() + "Z"
+        }
+
+class Feedback(db.Model):
+    __tablename__ = 'feedback'
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    session_id = db.Column(db.String(36), nullable=False)
+    tool_name = db.Column(db.String(50), nullable=False)
+    rating = db.Column(db.Integer, nullable=False)
+    comment = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    user = db.relationship('User', backref='feedbacks')
+
+    __table_args__ = (
+        db.Index('ix_feedback_session_id', 'session_id'),
+        db.Index('ix_feedback_user_id', 'user_id'),
+        db.Index('ix_feedback_tool_name', 'tool_name')
+    )
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'session_id': self.session_id,
+            'tool_name': self.tool_name,
+            'rating': self.rating,
+            'comment': self.comment,
+            'created_at': self.created_at.isoformat() + "Z"
         }
