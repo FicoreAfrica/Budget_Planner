@@ -38,6 +38,14 @@ except OSError as e:
     logger.error(f"Database file {db_path} is not writable: {str(e)}")
     raise
 
+# Debug: List migration scripts
+migration_dir = os.path.join(os.path.dirname(__file__), 'versions')
+if os.path.exists(migration_dir):
+    scripts = os.listdir(migration_dir)
+    logger.info(f"Found migration scripts: {scripts}")
+else:
+    logger.critical(f"Migration directory {migration_dir} does not exist")
+
 # Configure Python logging from alembic.ini
 fileConfig(config.config_file_name)
 
