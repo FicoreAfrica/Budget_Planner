@@ -49,7 +49,7 @@
     {% if current_user.is_authenticated %}
         <div class="container mt-3">
             <div class="alert alert-info" role="alert">
-                Logged in as: {{ current_user.email if current_user.email else 'Unknown' }} | Admin: {{ 'Yes' if current_user.is_admin else 'No' }}
+                Logged in as: {{ current_user.email if current_user.email else 'Unknown' }} (ID: {{ current_user.id if current_user.id else 'None' }}, Username: {{ current_user.username if current_user.username else 'None' }}) | Admin: {{ 'Yes' if current_user.is_admin else 'No' }}
             </div>
         </div>
     {% endif %}
@@ -109,6 +109,12 @@
                             <a class="nav-link btn-primary navbar-btn" href="{{ url_for('auth.signup') }}">{{ trans('core_signup') | default('Sign Up') }}</a>
                         </li>
                     {% endif %}
+                    <!-- Temporary Debug Link -->
+                    {% if current_user.is_authenticated %}
+                        <li class="nav-item">
+                            <a class="nav-link btn-warning navbar-btn" href="{{ url_for('admin.overview') }}">Debug Admin Panel</a>
+                        </li>
+                    {% endif %}
                 </ul>
             </div>
         </div>
@@ -157,7 +163,10 @@
             document.addEventListener('DOMContentLoaded', function() {
                 // Debug current_user state
                 console.log('Authenticated:', {{ current_user.is_authenticated | tojson }});
+                console.log('User ID:', {{ current_user.id | tojson if current_user.is_authenticated else 'null' }});
+                console.log('Username:', {{ current_user.username | tojson if current_user.is_authenticated else 'null' }});
                 console.log('Is Admin:', {{ current_user.is_admin | tojson if current_user.is_authenticated else 'false' }});
+                console.log('Session SID:', {{ session.get('sid') | tojson }});
 
                 // Debug CSRF token
                 const csrfMeta = document.querySelector('meta[name="csrf-token"]');
@@ -206,7 +215,7 @@
                         const headers = {
                             'Content-Type': 'application/json',
                             'X-CSRFToken': csrfToken,
-                            'X-CSRF-Token': csrfToken, // Fallback for potential server expectation
+                            'X-CSRF-Token': csrfToken,
                             'X-Content-Type-Options': 'nosniff'
                         };
                         console.log('Consent Request Headers:', headers);
