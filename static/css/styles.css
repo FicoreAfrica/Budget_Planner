@@ -437,6 +437,15 @@ body {
     font-size: 0.9rem;
 }
 
+.hero-disclaimer {
+    font-style: italic;
+    font-weight: 300;
+    font-size: 0.9rem;
+    opacity: 0.75;
+    color: white;
+    margin: 0.5rem 0;
+}
+
 /* Card */
 .card {
     background: #FFFFFF;
@@ -1414,6 +1423,13 @@ h1, h3,
 
     .hero-subtext i {
         font-size: 1rem;
+    }
+
+    .hero-disclaimer {
+        font-size: 0.9rem;
+        font-style: italic;
+        font-weight: 300;
+        opacity: 0.75;
     }
 
     .card-body {
