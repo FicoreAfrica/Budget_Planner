@@ -69,37 +69,38 @@ class SigninForm(FlaskForm):
         self.submit.label.text = trans('auth_signin', default='Sign In', lang=lang)
 
 # Routes
-@auth_bp.route('/signup', methods=['GET', 'POST'])
-def signup():
+@auth_bp.route('/signin', methods=['GET', 'POST'])
+def signin():
     if current_user.is_authenticated:
         return redirect(url_for('index'))
     
     lang = session.get('lang', 'en')
-    form = SignupForm(lang=lang, formdata=request.form if request.method == 'POST' else None)
+    form = SigninForm(lang=lang, formdata=request.form if request.method == 'POST' else None)
     
     try:
         if request.method == 'POST' and form.validate_on_submit():
-            user = User(
-                username=form.username.data,
-                email=form.email.data,
-                password_hash=generate_password_hash(form.password.data)
-            )
-            db.session.add(user)
-            db.session.commit()
-            logger.info(f"User signed up: {user.username}", extra={'session_id': session.get('sid', 'unknown'), 'user_id': user.id})
-            current_app.log_tool_usage(current_app, 'register')
-            flash(trans('auth_signup_success', default='Account created successfully! Please sign in.', lang=lang), 'success')
-            return redirect(url_for('auth.signin'))
+            user = User.query.filter_by(email=form.email.data).first()
+            if user and check_password_hash(user.password_hash, form.password.data):
+                login_user(user)
+                logger.info(f"User signed in: {user.username}, ID: {user.id}, Email: {user.email}, Is Admin: {user.is_admin}", extra={'session_id': session.get('sid', 'unknown'), 'user_id': user.id})
+                flash(f"Signed in as {user.email} | Admin: {'Yes' if user.is_admin else 'No'}", 'info')
+                current_app.log_tool_usage(current_app, 'login')
+                flash(trans('auth_signin_success', default='Signed in successfully!', lang=lang), 'success')
+                return redirect(url_for('index'))
+            else:
+                logger.warning(f"Invalid signin attempt for email: {form.email.data}", extra={'session_id': session.get('sid', 'unknown')})
+                flash(trans('auth_invalid_credentials', default='Invalid email or password.', lang=lang), 'danger')
+        
         elif form.errors:
-            logger.error(f"Signup form validation failed: {form.errors}", extra={'session_id': session.get('sid', 'unknown')})
+            logger.error(f"Signin form validation failed: {form.errors}", extra={'session_id': session.get('sid', 'unknown')})
             flash(trans('auth_form_errors', default='Please correct the errors in the form.', lang=lang), 'danger')
         
-        return render_template('signup.html', form=form, lang=lang)
+        return render_template('signin.html', form=form, lang=lang)
     except Exception as e:
-        logger.error(f"Error in signup: {str(e)}", extra={'session_id': session.get('sid', 'unknown')})
+        logger.error(f"Error in signin: {str(e)}", extra={'session_id': session.get('sid', 'unknown')})
         flash(trans('auth_error', default='An error occurred. Please try again.', lang=lang), 'danger')
-        return render_template('signup.html', form=form, lang=lang), 500
-
+        return render_template('signin.html', form=form, lang=lang), 500
+        
 @auth_bp.route('/signin', methods=['GET', 'POST'])
 def signin():
     if current_user.is_authenticated:
