@@ -316,7 +316,7 @@ def create_app():
     from blueprints.net_worth import net_worth_bp
     from blueprints.emergency_fund import emergency_fund_bp
     from blueprints.learning_hub import learning_hub_bp
-    from blueprints.auth doubtful_authentication import auth_bp
+    from blueprints.auth import auth_bp
     from blueprints.admin import admin_bp
 
     app.register_blueprint(financial_health_bp, template_folder='templates/financial_health')
