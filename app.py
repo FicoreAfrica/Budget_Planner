@@ -246,7 +246,7 @@ def create_app():
             'LINKEDIN_URL': os.environ.get('LINKEDIN_URL', '#'),
             'TWITTER_URL': os.environ.get('TWITTER_URL', '#'),
             'FACEBOOK_URL': os.environ.get('FACEBOOK_URL', '#'),
-            'FEEDBACK_FORM_URL': os.environ.get('FEEDBACK_FORM_URL', '#'),
+            'FEEDBACK_FORM_URL': os.environ.get('FEEDBACK_FORM_URL', url_for('feedback')),
             'WAITLIST_FORM_URL': os.environ.get('WAITLIST_FORM_URL', '#'),
             'CONSULTANCY_FORM_URL': os.environ.get('CONSULTANCY_FORM_URL', '#'),
             'current_lang': lang,
@@ -401,6 +401,44 @@ def create_app():
                 'quiz': {'personality': None, 'score': None}
             }
             return render_template('general_dashboard.html', data=default_data, t=translate, lang=lang), 500
+
+    @app.route('/feedback', methods=['GET', 'POST'])
+    @ensure_session_id
+    def feedback():
+        lang = session.get('lang', 'en')
+        logger.info("Handling feedback route")
+        tool_options = [
+            'financial_health', 'budget', 'bill', 'net_worth',
+            'emergency_fund', 'learning_progress', 'quiz'
+        ]
+        if request.method == 'GET':
+            return render_template('feedback.html', t=translate, lang=lang, tool_options=tool_options)
+        try:
+            tool_name = request.form.get('tool_name')
+            rating = request.form.get('rating')
+            comment = request.form.get('comment', '')
+            if not tool_name or tool_name not in tool_options:
+                flash(translate('feedback_invalid_tool', default='Please select a valid tool', lang=lang), 'danger')
+                return render_template('feedback.html', t=translate, lang=lang, tool_options=tool_options)
+            if not rating or not rating.isdigit() or int(rating) < 1 or int(rating) > 5:
+                flash(translate('feedback_invalid_rating', default='Please provide a rating between 1 and 5', lang=lang), 'danger')
+                return render_template('feedback.html', t=translate, lang=lang, tool_options=tool_options)
+            feedback_entry = Feedback(
+                user_id=current_user.id if current_user.is_authenticated else None,
+                session_id=session['sid'],
+                tool_name=tool_name,
+                rating=int(rating),
+                comment=comment.strip() or None
+            )
+            db.session.add(feedback_entry)
+            db.session.commit()
+            logger.info(f"Feedback submitted: tool={tool_name}, rating={rating}, session={session['sid']}")
+            flash(translate('feedback_success', default='Thank you for your feedback!', lang=lang), 'success')
+            return redirect(url_for('index'))
+        except Exception as e:
+            logger.error(f"Error processing feedback: {str(e)}", exc_info=True)
+            flash(translate('global_error_message', default='An error occurred while submitting feedback', lang=lang), 'danger')
+            return render_template('feedback.html', t=translate, lang=lang, tool_options=tool_options), 500
 
     @app.route('/logout')
     def logout():
