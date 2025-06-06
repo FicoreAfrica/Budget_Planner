@@ -5,6 +5,9 @@ import json
 import uuid
 from werkzeug.security import generate_password_hash, check_password_hash
 from extensions import db
+import logging
+
+logger = logging.getLogger('ficore_app.models')
 
 class User(db.Model, UserMixin):
     __tablename__ = 'users'
@@ -21,6 +24,25 @@ class User(db.Model, UserMixin):
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+
+    @classmethod
+    def set_admin_by_email(cls, email):
+        try:
+            user = cls.query.filter_by(email=email).first()
+            if user:
+                if user.is_admin:
+                    logger.info(f"User {email} is already an admin.")
+                    return True
+                user.is_admin = True
+                db.session.commit()
+                logger.info(f"Set admin status for user {email} (ID: {user.id}).")
+                return True
+            logger.warning(f"No user found with email {email}.")
+            return False
+        except Exception as e:
+            logger.error(f"Error setting admin for {email}: {str(e)}")
+            db.session.rollback()
+            return False
 
 class Course(db.Model):
     __tablename__ = 'courses'
@@ -77,7 +99,7 @@ class FinancialHealth(db.Model):
             'id': self.id,
             'user_id': self.user_id,
             'session_id': self.session_id,
-            'created_at': self.created_at.isoformat() + "Z",
+            'created_at': self.created_at.isoformat() + 'Z',
             'first_name': self.first_name,
             'email': self.email,
             'user_type': self.user_type,
@@ -126,7 +148,7 @@ class Budget(db.Model):
             'id': self.id,
             'user_id': self.user_id,
             'session_id': self.session_id,
-            'created_at': self.created_at.isoformat() + "Z",
+            'created_at': self.created_at.isoformat() + 'Z',
             'user_email': self.user_email,
             'income': self.income,
             'fixed_expenses': self.fixed_expenses,
@@ -161,7 +183,7 @@ class Bill(db.Model):
 
     __table_args__ = (
         db.Index('ix_bills_session_id', 'session_id'),
-        db.Index('ix_bills_user_id', 'user_id')
+        db.Index('ix_bills_user_id')
     )
 
     def to_dict(self):
@@ -169,7 +191,7 @@ class Bill(db.Model):
             'id': self.id,
             'user_id': self.user_id,
             'session_id': self.session_id,
-            'created_at': self.created_at.isoformat() + "Z",
+            'created_at': self.created_at.isoformat() + 'Z',
             'user_email': self.user_email,
             'first_name': self.first_name,
             'bill_name': self.bill_name,
@@ -203,7 +225,7 @@ class NetWorth(db.Model):
 
     __table_args__ = (
         db.Index('ix_net_worth_session_id', 'session_id'),
-        db.Index('ix_net_worth_user_id', 'user_id')
+        db.Index('ix_net_worth_user_id')
     )
 
     def to_dict(self):
@@ -211,7 +233,7 @@ class NetWorth(db.Model):
             'id': self.id,
             'user_id': self.user_id,
             'session_id': self.session_id,
-            'created_at': self.created_at.isoformat() + "Z",
+            'created_at': self.created_at.isoformat() + 'Z',
             'first_name': self.first_name,
             'email': self.email,
             'send_email': self.send_email,
@@ -259,7 +281,7 @@ class EmergencyFund(db.Model):
             'id': self.id,
             'user_id': self.user_id,
             'session_id': self.session_id,
-            'created_at': self.created_at.isoformat() + "Z",
+            'created_at': self.created_at.isoformat() + 'Z',
             'first_name': self.first_name,
             'email': self.email,
             'email_opt_in': self.email_opt_in,
@@ -273,14 +295,14 @@ class EmergencyFund(db.Model):
             'recommended_months': self.recommended_months,
             'target_amount': self.target_amount,
             'savings_gap': self.savings_gap,
-            'monthly_savings': self.monthly_savings,
-            'percent_of_income': self.percent_of_income,
+            'savings_rate': self.savings_rate,
+            'percent_of_income': self.percentage_of_income,
             'badges': json.loads(self.badges) if self.badges else []
-        }
+        })
 
-class LearningProgress(db.Model):
-    __tablename__ = 'learning_progress'
-    id = db.Column(db.Integer, primary_key=True)
+    class LearningProgress(db.Model):
+        __tablename__ = 'learning_progress'
+        id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     session_id = db.Column(db.String(36), nullable=False)
     course_id = db.Column(db.String(50), nullable=False)
@@ -290,8 +312,8 @@ class LearningProgress(db.Model):
     user = db.relationship('User', backref='learning_progress_records')
 
     __table_args__ = (
-        db.UniqueConstraint('user_id', 'course_id', name='uix_user_course_id'),
-        db.UniqueConstraint('session_id', 'course_id', name='uix_session_course_id'),
+        db.UniqueConstraint('user_id', 'course_id', 'name='uix_user_course_id'),
+        db.UniqueConstraint('session_id', 'course_id', 'name='uix_session_course_id'),
         db.Index('ix_learning_progress_session_id', 'session_id'),
         db.Index('ix_learning_progress_user_id', 'user_id')
     )
@@ -333,7 +355,7 @@ class QuizResult(db.Model):
             'id': self.id,
             'user_id': self.user_id,
             'session_id': self.session_id,
-            'created_at': self.created_at.isoformat() + "Z",
+            'created_at': self.created_at.isoformat() + 'Z',
             'first_name': self.first_name,
             'email': self.email,
             'send_email': self.send_email,
@@ -365,7 +387,7 @@ class ToolUsage(db.Model):
             'user_id': self.user_id,
             'session_id': self.session_id,
             'tool_name': self.tool_name,
-            'created_at': self.created_at.isoformat() + "Z"
+            'created_at': self.created_at.isoformat() + 'Z'
         }
 
 class Feedback(db.Model):
@@ -393,5 +415,6 @@ class Feedback(db.Model):
             'tool_name': self.tool_name,
             'rating': self.rating,
             'comment': self.comment,
-            'created_at': self.created_at.isoformat() + "Z"
+            'created_at': self.created_at.isoformat() + 'Z'
         }
+)
