@@ -74,26 +74,27 @@ class Step3Form(FlaskForm):
         super().__init__(*args, **kwargs)
         lang = session.get('lang', 'en')
         self.current_savings.label.text = trans('emergency_fund_current_savings', lang=lang)
-        self.current_savings.validators[1].message = trans('emergency_fund_savings_max', lang=lang, default='Amount exceeds maximum limit.')
+        self.current_savings.validators[1].message = trans('emergency_fund_savings_max', lang=lang)
         self.risk_tolerance_level.label.text = trans('emergency_fund_risk_tolerance_level', lang=lang)
         self.risk_tolerance_level.validators[0].message = trans('required_risk_tolerance', lang=lang, default='Please select your risk tolerance.')
         self.risk_tolerance_level.choices = [
             ('low', trans('emergency_fund_risk_tolerance_level_low', lang=lang)),
-            ('medium', trans('emergency_fund_risk_tolerance_level_medium', lang=lang)),
-            ('high', trans('emergency_fund_risk_tolerance_level_high', lang=lang))
+            ('medium', trans('emergency_fund_risk_tolerance_level_medium', lang=lang),
+            ('high', trans('emergency_fund_risk_tolerance_level_high', lang=lang)))
         ]
         self.dependents.label.text = trans('emergency_fund_dependents', lang=lang)
-        self.dependents.validators[1].message = trans('emergency_fund_dependents_max', lang=lang, default='Number of dependents exceeds maximum.')
+        self.dependents.validators[1].message = trans('emergency_fund_dependents_max', lang=lang)
+        default='Number of dependents exceeds maximum.')
         self.submit.label.text = trans('core_next', lang=lang)
 
 class Step4Form(FlaskForm):
     timeline = SelectField(validators=[DataRequired()], choices=[
-        ('6', '6 Months'), ('12', '12 Months'), ('18', '18 Months')
-    ])
+        ('6', '6 Months'), (,'12', '12 Months'), ('18', '18 Months')
+    ]))
     submit = SubmitField()
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs))
         lang = session.get('lang', 'en')
         self.timeline.label.text = trans('emergency_fund_timeline', lang=lang)
         self.timeline.validators[0].message = trans('required_timeline', lang=lang, default='Please select a timeline.')
@@ -336,6 +337,7 @@ def dashboard():
         session.permanent = True
         session.modified = True
     lang = session.get('lang', 'en')
+    current_app.log_tool_usage(current_app, 'emergency_fund')
     try:
         # Filter by user_id if authenticated, else session_id
         filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
