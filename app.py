@@ -193,6 +193,37 @@ def create_app():
         logger.error(f"Failed to initialize scheduler: {str(e)}")
 
     with app.app_context():
+        # Run Alembic migrations
+        from alembic.config import Config
+        from alembic import command
+        alembic_cfg = Config(os.path.join(os.path.dirname(__file__), 'alembic.ini'))
+        try:
+            command.upgrade(alembic_cfg, 'head')
+            logger.info("Database migration completed successfully")
+        except Exception as e:
+            logger.error(f"Database migration failed: {str(e)}")
+            raise
+
+        # Assign admin role on first run
+        from models import User
+        admin_email = os.environ.get('ADMIN_EMAIL', 'admin@example.com')
+        admin_user = User.query.filter_by(email=admin_email).first()
+        if not admin_user:
+            # Create admin user if not exists (for initial setup)
+            admin_user = User(
+                username='admin',
+                email=admin_email,
+                password_hash='hashed_password_here',  # Replace with proper hashing logic
+                created_at=datetime.utcnow(),
+                is_admin=True
+            )
+            db.session.add(admin_user)
+            logger.info(f"Created admin user with email {admin_email}")
+        elif not admin_user.is_admin:
+            admin_user.is_admin = True
+            logger.info(f"Assigned admin role to existing user {admin_email}")
+        db.session.commit()
+
         db.create_all()
         initialize_courses_data(app)
         logger.info("Database tables created and courses initialized")
