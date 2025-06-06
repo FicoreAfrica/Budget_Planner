@@ -10,7 +10,7 @@ import logging
 from translations import trans
 from mailersend_email import send_email, EMAIL_CONFIG
 from extensions import db
-from models import QuizResult  # Import SQLAlchemy db and QuizResult model
+from models import QuizResult
 
 # Configure logging
 logger = logging.getLogger('ficore_app')
@@ -362,7 +362,7 @@ def step2b():
                             data={
                                 "first_name": results['first_name'],
                                 "score": results['score'],
-                                "max_score": 30,  # Based on current logic: 10 questions, max 3 points each
+                                "max_score": 30,
                                 "personality": results['personality'],
                                 "badges": results['badges'],
                                 "insights": results['insights'],
@@ -414,7 +414,7 @@ def results():
     
     lang = session.get('lang', 'en')
     course_id = request.args.get('course_id', 'financial_quiz')
-    
+    current_app.log_tool_usage(current_app, 'quiz')
     try:
         # Try to fetch results from session first
         results = session.get('quiz_results')
@@ -455,7 +455,7 @@ def results():
             tips=results.get('tips', []),
             course_id=course_id,
             lang=lang,
-            max_score=30  # Based on current logic: 10 questions, max 3 points each
+            max_score=30
         )
     except Exception as e:
         logger.error(f"Error in quiz.results: {str(e)}", extra={'session_id': session['sid']})
