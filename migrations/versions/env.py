@@ -7,6 +7,11 @@ from models import db  # Import the db instance from models.py
 # This is the Alembic Config object, which provides access to the values within the .ini file in use.
 config = context.config
 
+# Set the sqlalchemy.url from environment variable DATABASE_URL if available
+# Fallback to a default SQLite path if not set
+default_db_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'ficore.db')
+config.set_main_option('sqlalchemy.url', os.environ.get('DATABASE_URL', f'sqlite:///{default_db_path}'))
+
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
 fileConfig(config.config_file_name)
@@ -14,7 +19,7 @@ fileConfig(config.config_file_name)
 # Add your model's MetaData object here for 'autogenerate' support
 target_metadata = db.metadata
 
-# Get the database URL from alembic.ini or environment variable
+# Get the database URL from the config (now set from environment or default)
 connectable = engine_from_config(
     config.get_section(config.config_ini_section),
     prefix='sqlalchemy.',
