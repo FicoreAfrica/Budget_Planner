@@ -96,11 +96,9 @@
                         <a class="nav-link btn-primary navbar-btn" href="{{ url_for('feedback') }}">{{ trans('core_feedback') | default('Feedback') }}</a>
                     </li>
                     <!-- Admin Panel (No Restriction) -->
-                    {% if current_user.is_authenticated %}
-                        <li class="nav-item">
-                            <a class="nav-link btn-primary navbar-btn" href="{{ url_for('admin.overview') }}" aria-label="{{ trans('core_admin_panel') | default('Admin Panel') }}">{{ trans('core_admin_panel') | default('Admin Panel') }}</a>
-                        </li>
-                    {% endif %}
+                    <li class="nav-item">
+                        <a class="nav-link btn-primary navbar-btn" href="{{ url_for('admin.overview') }}" aria-label="{{ trans('core_admin_panel') | default('Admin Panel') }}">{{ trans('core_admin_panel') | default('Admin Panel') }}</a>
+                    </li>
                     {% if current_user.is_authenticated %}
                         <li class="nav-item">
                             <a class="nav-link btn-primary navbar-btn" href="{{ url_for('logout') }}">{{ trans('core_logout') | default('Logout') }}</a>
@@ -208,25 +206,15 @@
                 });
 
                 // Consent banner handling
-                const consentBtn = document.getElementById('acknowledgeConsentBtn');
-                if (consentBtn) {
-                    consentBtn.addEventListener('click', function(e) {
-                        e.preventDefault(); // Prevent default form submission for fetch
-                        if (!csrfToken) {
-                            console.error('CSRF token missing');
-                            alert('{{ trans("core_csrf_token_missing") | default("CSRF token missing. Please refresh the page and try again.") }}');
-                            return;
-                        }
-                        const headers = {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': csrfToken
-                        };
-                        console.log('Consent Request Headers:', headers);
-                        fetch('{{ url_for("acknowledge_consent") }}', {
+                const consentForm = document.getElementById('consentForm');
+                if (consentForm) {
+                    consentForm.addEventListener('submit', function(e) {
+                        e.preventDefault(); // Prevent default to handle manually
+                        const formData = new FormData(consentForm);
+                        fetch(consentForm.action, {
                             method: 'POST',
-                            headers: headers,
-                            credentials: 'include',
-                            body: JSON.stringify({})
+                            body: formData,
+                            credentials: 'include'
                         })
                         .then(response => {
                             console.log('Consent Response Status:', response.status);
@@ -236,13 +224,11 @@
                                     banner.classList.remove('show');
                                     setTimeout(() => banner.remove(), 300);
                                 }
-                            } else if (response.status === 400) {
+                            } else {
                                 return response.json().then(data => {
                                     console.error('Consent Error Data:', data);
                                     alert('{{ trans("core_invalid_request") | default("Invalid request: ") }}' + (data.message || 'Please try again.'));
                                 });
-                            } else {
-                                alert('{{ trans("core_error_acknowledging_consent") | default("Error acknowledging consent. Please try again.") }}');
                             }
                         })
                         .catch(error => {
