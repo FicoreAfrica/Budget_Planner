@@ -3,6 +3,7 @@ from flask_login import UserMixin
 from datetime import datetime
 import json
 import uuid
+from werkzeug.security import generate_password_hash, check_password_hash
 from extensions import db
 
 class User(db.Model, UserMixin):
@@ -14,6 +15,12 @@ class User(db.Model, UserMixin):
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     lang = db.Column(db.String(10), default='en')
     is_admin = db.Column(db.Boolean, default=False, nullable=False)
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
 
 class Course(db.Model):
     __tablename__ = 'courses'
