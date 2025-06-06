@@ -194,40 +194,7 @@
                         }
                     });
                 });
-
-                // Consent banner handling
-                const consentForm = document.getElementById('consentForm');
-                if (consentForm) {
-                    consentForm.addEventListener('submit', function(e) {
-                        e.preventDefault(); // Prevent default to handle manually
-                        const formData = new FormData(consentForm);
-                        fetch(consentForm.action, {
-                            method: 'POST',
-                            body: formData,
-                            credentials: 'include'
-                        })
-                        .then(response => {
-                            console.log('Consent Response Status:', response.status);
-                            if (response.status === 204) {
-                                const banner = document.getElementById('consentBanner');
-                                if (banner) {
-                                    banner.classList.remove('show');
-                                    setTimeout(() => banner.remove(), 300);
-                                }
-                            } else {
-                                return response.json().then(data => {
-                                    console.error('Consent Error Data:', data);
-                                    alert('{{ trans("core_invalid_request") | default("Invalid request: ") }}' + (data.message || 'Please try again.'));
-                                });
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Consent Fetch Error:', error);
-                            alert('{{ trans("core_network_error") | default("Network error. Please try again.") }}');
-                        });
-                    });
-                }
-
+            
                 // Tooltip initialization
                 const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
                 [...tooltipTriggerList].forEach(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
