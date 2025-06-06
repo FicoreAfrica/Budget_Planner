@@ -30,7 +30,7 @@ class SignupForm(FlaskForm):
         'title': trans('auth_password_tooltip', default='At least 8 characters')
     })
     confirm_password = PasswordField(validators=[DataRequired(), EqualTo('password')], render_kw={
-        'placeholder': trans('auth_confirm_password_placeholder', default='Confirm your password'),
+        'placeholder': trans('auth_confirm_password', default='Confirm your password'),
         'title': trans('auth_confirm_password_tooltip', default='Re-enter your password')
     })
     submit = SubmitField()
@@ -86,7 +86,8 @@ def signup():
             )
             db.session.add(user)
             db.session.commit()
-            logger.info(f"User signed up: {user.username}", extra={'session_id': session.get('sid', 'unknown')})
+            logger.info(f"User signed up: {user.username}", extra={'session_id': session.get('sid', 'unknown'), 'user_id': user.id})
+            current_app.log_tool_usage(current_app, 'register')
             flash(trans('auth_signup_success', default='Account created successfully! Please sign in.', lang=lang), 'success')
             return redirect(url_for('auth.signin'))
         elif form.errors:
@@ -112,7 +113,8 @@ def signin():
             user = User.query.filter_by(email=form.email.data).first()
             if user and check_password_hash(user.password_hash, form.password.data):
                 login_user(user)
-                logger.info(f"User signed in: {user.username}", extra={'session_id': session.get('sid', 'unknown')})
+                logger.info(f"User signed in: {user.username}", extra={'session_id': session.get('sid', 'unknown'), 'user_id': user.id})
+                current_app.log_tool_usage(current_app, 'login')
                 flash(trans('auth_signin_success', default='Signed in successfully!', lang=lang), 'success')
                 return redirect(url_for('index'))
             else:
@@ -134,7 +136,9 @@ def signin():
 def logout():
     lang = session.get('lang', 'en')
     username = current_user.username
+    user_id = current_user.id
     logout_user()
-    logger.info(f"User logged out: {username}", extra={'session_id': session.get('sid', 'unknown')})
+    logger.info(f"User logged out: {username}", extra={'session_id': session.get('sid', 'unknown'), 'user_id': user_id})
+    current_app.log_tool_usage(current_app, 'logout')
     flash(trans('auth_logout_success', default='Logged out successfully!', lang=lang), 'success')
     return redirect(url_for('index'))
