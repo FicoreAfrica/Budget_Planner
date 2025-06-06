@@ -484,27 +484,6 @@ def create_app():
         flash(translate('learning_hub_success_language_updated', default='Language updated successfully', lang=new_lang) if new_lang in valid_langs else translate('Invalid language', default='Invalid language', lang=new_lang), 'success' if new_lang in valid_langs else 'danger')
         return redirect(request.referrer or url_for('index'))
 
-@app.route('/acknowledge_consent', methods=['POST'])
-def acknowledge_consent():
-    if request.method != 'POST':
-        logger.warning(f"Invalid method {request.method} for consent acknowledgment")
-        return jsonify({'error': 'Method not allowed'}), 405
-    try:
-        csrf_token = request.form.get('csrf_token')
-        if not csrf_token:
-            logger.error(f"CSRF token missing in request for session {session.get('sid', 'unknown')}. Form data: {request.form}")
-            return jsonify({'error': 'CSRF token missing'}), 400
-        validate_csrf(csrf_token)
-        session['consent_acknowledged'] = True
-        session.modified = True
-        logger.info(f"Consent acknowledged for session {session.get('sid', 'unknown')} from IP {request.remote_addr}")
-        return make_response('', 204)
-    except CSRFError as e:
-        logger.error(f"CSRF validation failed for session {session.get('sid', 'unknown')}: {str(e)}. Token: {csrf_token}, Form data: {request.form}")
-        return jsonify({'error': 'Invalid CSRF token'}), 400
-    except Exception as e:
-        logger.error(f"Error processing consent acknowledgment for session {session.get('sid', 'unknown')}: {str(e)}")
-        return jsonify({'error': 'Internal server error'}), 500
         
     @app.route('/favicon.ico')
     def favicon():
