@@ -122,6 +122,7 @@ def setup_session(app):
     try:
         os.makedirs(session_dir, exist_ok=True)
         logger.info(f"Session directory ensured at {session_dir}")
+        print(f"Session directory ensured at {session_dir}", file=sys.stderr, flush=True)
     except OSError as e:
         logger.error(f"Failed to create session directory {session_dir}: {str(e)}. Using in-memory sessions.")
         print(f"Failed to create session directory {session_dir}: {str(e)}", file=sys.stderr, flush=True)
@@ -133,6 +134,7 @@ def setup_session(app):
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
     app.config['SESSION_USE_SIGNER'] = True
     logger.info(f"Session configured: type={app.config['SESSION_TYPE']}, dir={session_dir}, lifetime={app.config['PERMANENT_SESSION_LIFETIME']}")
+    print(f"Session configured: type={app.config['SESSION_TYPE']}, dir={session_dir}", file=sys.stderr, flush=True)
 
 def initialize_courses_data(app):
     with app.app_context():
@@ -142,6 +144,7 @@ def initialize_courses_data(app):
                 db.session.add(db_course)
             db.session.commit()
             logger.info(f"Initialized {len(SAMPLE_COURSES)} courses in database")
+            print(f"Initialized {len(SAMPLE_COURSES)} courses in database", file=sys.stderr, flush=True)
         app.config['COURSES'] = [course.to_dict() for course in Course.query.all()]
 
 def admin_required(f):
@@ -151,6 +154,7 @@ def admin_required(f):
         if not current_user.is_admin:
             flash(trans('admin_access_denied', default='Access denied: Admin privileges required'), 'danger')
             logger.warning(f"Unauthorized admin access attempt by user {current_user.username}")
+            print(f"Unauthorized admin access attempt by user {current_user.username}", file=sys.stderr, flush=True)
             return redirect(url_for('index'))
         return f(*args, **kwargs)
     return decorated_function
@@ -163,6 +167,7 @@ def log_tool_usage(app, tool_name):
     ]
     if tool_name not in valid_tools:
         logger.error(f"Invalid tool_name provided: {tool_name}")
+        print(f"Invalid tool_name provided: {tool_name}", file=sys.stderr, flush=True)
         return
     try:
         usage_entry = ToolUsage(
@@ -173,6 +178,7 @@ def log_tool_usage(app, tool_name):
         db.session.add(usage_entry)
         db.session.commit()
         logger.info(f"Successfully logged tool usage: tool={tool_name}, session={session['sid']}, user_id={current_user.id if current_user.is_authenticated else 'anonymous'}")
+        print(f"Successfully logged tool usage: tool={tool_name}, session={session['sid']}", file=sys.stderr, flush=True)
     except Exception as e:
         logger.error(f"Error logging tool usage for {tool_name}: {str(e)}")
         print(f"Error logging tool usage for {tool_name}: {str(e)}", file=sys.stderr, flush=True)
@@ -254,14 +260,14 @@ def create_app():
     flask_session.init_app(app)
     csrf.init_app(app)
 
-    # Configure database
+    # Configure database connection
     db_dir = os.path.join(os.path.dirname(__file__), 'data')
     try:
         os.makedirs(db_dir, exist_ok=True)
         logger.info(f"Database directory ensured at {db_dir}")
-        print(f"Database directory ensured at {db_dir}", file=sys.stderr, flush=True)
+        print(f"Database directory ensured at: {db_dir}", file=sys.stderr, flush=True)
     except OSError as e:
-        logger.critical(f"Failed to create database directory {db_dir}: {str(e)}")
+        logger.critical(f"Failed to create database directory {db_dir}: {e}")
         print(f"Failed to create database directory {db_dir}: {str(e)}", file=sys.stderr, flush=True)
         raise
     db_path = os.path.join(db_dir, 'ficore.db')
@@ -310,7 +316,7 @@ def create_app():
     from blueprints.net_worth import net_worth_bp
     from blueprints.emergency_fund import emergency_fund_bp
     from blueprints.learning_hub import learning_hub_bp
-    from blueprints.auth import auth_bp
+    from blueprints.auth doubtful_authentication import auth_bp
     from blueprints.admin import admin_bp
 
     app.register_blueprint(financial_health_bp, template_folder='templates/financial_health')
@@ -327,9 +333,10 @@ def create_app():
         translation = trans(key, lang=lang, **kwargs)
         if translation == key and app.debug:
             logger.warning(f"Missing translation for key='{key}' in lang='{lang}'")
+            print(f"Missing translation for key='{key}' in lang={lang}", file=sys.stderr, flush=True)
         return translation
 
-    app.jinja_env.filters['trans'] = lambda key, **kwargs: translate(
+    app.jinja_env.filters['translate'] = lambda key, **kwargs: translate(
         key,
         lang=kwargs.get('lang', session.get('lang', 'en')),
         logger=g.get('logger', logger) if has_request_context() else logger,
@@ -360,7 +367,7 @@ def create_app():
             if value.is_integer():
                 return f"₦{int(value):,}"
             return f"₦{value:,.2f}"
-        except (TypeError, ValueError):
+        except (TypeError, ValueError) as e:
             logger.warning(f"Error formatting currency {value}: {str(e)}")
             print(f"Error formatting currency {value}: {str(e)}", file=sys.stderr, flush=True)
             return value
@@ -381,7 +388,7 @@ def create_app():
             g.logger = logger
             logger.info(
                 f"Request: method={request.method}, path={request.path}, "
-                f"remote_addr={request.remote_addr}, user_agent={request.headers.get('User-Agent')}, "
+                f"remote_addr={request.remote_addr}, user_agent={request.headers.get('User-Agent', 'unknown')}, "
                 f"session_id={session['sid']}, user_id={current_user.id if current_user.is_authenticated else 'anonymous'}"
             )
             print(
@@ -390,7 +397,7 @@ def create_app():
                 file=sys.stderr, flush=True
             )
         except Exception as e:
-            logger.error(f"Before request error: {str(e)}", exc_info=True)
+            logger.error(f"Before request error: {str(e)}")
             print(f"Before request error: {str(e)}", file=sys.stderr, flush=True)
 
     @app.after_request
@@ -408,7 +415,23 @@ def create_app():
 
     @app.context_processor
     def inject_translations():
-        lang = session $
+        lang = session.get('lang', 'en')
+        def context_trans(key, **kwargs):
+            used_lang = kwargs.pop('lang', lang)
+            return translate(key, lang=used_lang, logger=g.get('logger', logger), **kwargs)
+        return {
+            'trans': context_trans,
+            'current_year': datetime.now().year,
+            'LINKEDIN_URL': os.getenv('LINKEDIN_URL', '#'),
+            'TWITTER_URL': os.getenv('TWITTER_URL', '#'),
+            'FACEBOOK_URL': os.getenv('FACEBOOK_URL', '#'),
+            'FEEDBACK_FORM_URL': os.getenv('FEEDBACK_FORM_URL', url_for('feedback')),
+            'WAITLIST_FORM_URL': os.getenv('WAITLIST_FORM_URL', '#'),
+            'CONSULTANCY_FORM_URL': os.getenv('CONSULTANCY_FORM_URL', '#'),
+            'current_lang': lang,
+            'current_user': current_user if has_request_context() else None,
+            'csrf_token': csrf._get_token if hasattr(csrf, '_get_token') else lambda: ''
+        }
 
     def ensure_session_id(f):
         @wraps(f)
@@ -428,7 +451,6 @@ def create_app():
         lang = session.get('lang', 'en')
         logger.info("Serving index page")
         try:
-            # Attempt to retrieve courses from app config (populated from DB)
             courses = current_app.config.get('COURSES')
             if not courses:
                 logger.warning("No courses found in current_app.config['COURSES']. Falling back to SAMPLE_COURSES.")
@@ -438,7 +460,7 @@ def create_app():
             print(f"Retrieved {len(courses)} courses", file=sys.stderr, flush=True)
             processed_courses = courses
         except Exception as e:
-            logger.error(f"Error retrieving courses from config: {str(e)}", exc_info=True)
+            logger.error(f"Error retrieving courses from config: {str(e)}")
             print(f"Error in index route: {str(e)}", file=sys.stderr, flush=True)
             logger.info("Falling back to SAMPLE_COURSES due to error")
             processed_courses = SAMPLE_COURSES
@@ -461,16 +483,14 @@ def create_app():
         print(f"Language set to {new_lang}", file=sys.stderr, flush=True)
         flash(translate('learning_hub_success_language_updated', default='Language updated successfully', lang=new_lang) if new_lang in valid_langs else translate('Invalid language', default='Invalid language', lang=new_lang), 'success' if new_lang in valid_langs else 'danger')
         return redirect(request.referrer or url_for('index'))
-        
+
     @app.route('/acknowledge_consent', methods=['POST'])
     def acknowledge_consent():
         if request.method != 'POST':
-不允许
-            logger.warning(f"Invalid method {request.method} for consent acknowledgement")
-            print(f"Invalid method {request.method} for consent acknowledgement", file=sys.stderr, flush=True)
+            logger.warning(f"Invalid method {request.method} for consent acknowledgment")
+            print(f"Invalid method {request.method} for consent acknowledgment", file=sys.stderr, flush=True)
             return jsonify({'error': 'Method not allowed'}), 405
         try:
-            # Validate CSRF token from the form
             csrf_token = request.form.get('csrf_token')
             if not csrf_token:
                 logger.error(f"CSRF token missing in request for session {session['sid']}")
@@ -490,13 +510,13 @@ def create_app():
             print(f"CSRF validation failed for session {session['sid']}: {str(e)}", file=sys.stderr, flush=True)
             return jsonify({'error': 'Invalid CSRF token'}), 400
         except Exception as e:
-            logger.error(f"Error processing consent acknowledgement for session {session['sid']}: {str(e)}")
-            print(f"Error processing consent acknowledgement for session {session['sid']}: {str(e)}", file=sys.stderr, flush=True)
+            logger.error(f"Error processing error for session {session['sid']}: {str(e)}")
+            print(f"Error processing consent acknowledgment for session {session['sid']}: {str(e)}", file=sys.stderr, flush=True)
             return jsonify({'error': 'Internal server error'}), 500
-        
+
     @app.route('/favicon.ico')
     def favicon():
-        logger.info("Serving favicon.ico")
+        logger.info("Returning favicon.ico")
         print("Serving favicon.ico", file=sys.stderr, flush=True)
         return send_from_directory(os.path.join(app.root_path, 'static', 'img'), 'favicon-32x32.png', mimetype='image/png')
 
@@ -509,6 +529,7 @@ def create_app():
         data = {}
         try:
             filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
+            print(f"Using filter kwargs: {filter_kwargs}", file=sys.stderr, flush=True)
 
             # Financial Health
             fh_records = FinancialHealth.query.filter_by(**filter_kwargs).order_by(FinancialHealth.created_at.desc()).all()
@@ -517,7 +538,7 @@ def create_app():
                 print(f"No FinancialHealth records found for filter: {filter_kwargs}", file=sys.stderr, flush=True)
             data['financial_health'] = {
                 'score': fh_records[0].score,
-                'status': fh_records[0].status
+                'status': str(fh_records[0].status)
             } if fh_records else {'score': None, 'status': None}
 
             # Budget
@@ -533,8 +554,8 @@ def create_app():
             # Bills
             bills = Bill.query.filter_by(**filter_kwargs).all()
             if not bills:
-                logger.warning(f"No Bill records found for filter: {filter_kwargs}")
-                print(f"No Bill records found for filter: {filter_kwargs}", file=sys.stderr, flush=True)
+                logger.warning(f"No Bills found for filter: {filter_kwargs}")
+                print(f"No Bills found for filter: {filter_kwargs}", file=sys.stderr, flush=True)
             total_amount = sum(bill.amount for bill in bills)
             unpaid_amount = sum(bill.amount for bill in bills if bill.status.lower() != 'paid')
             data['bills'] = {
@@ -585,9 +606,9 @@ def create_app():
             print("Rendering general_dashboard template", file=sys.stderr, flush=True)
             return render_template('general_dashboard.html', data=data, t=translate, lang=lang)
         except Exception as e:
-            logger.error(f"Error in general_dashboard: {str(e)}", exc_info=True)
+            logger.error(f"Error in general_dashboard: {str(e)}")
             print(f"Error in general_dashboard: {str(e)}", file=sys.stderr, flush=True)
-            flash(translate('global_error_message', default='An error occurred', lang=lang), 'danger')
+            flash(translate('global_error_message', default='An error occurred', lang=lang), 'error')
             default_data = {
                 'financial_health': {'score': None, 'status': None},
                 'budget': {'surplus_deficit': None, 'savings_goal': None},
@@ -603,8 +624,8 @@ def create_app():
     @ensure_session_id
     def feedback():
         lang = session.get('lang', 'en')
-        logger.info("Handling feedback route")
-        print("Handling feedback route", file=sys.stderr, flush=True)
+        logger.info("Handling feedback request")
+        print("Handling feedback request", file=sys.stderr, flush=True)
         tool_options = [
             'financial_health', 'budget', 'bill', 'net_worth',
             'emergency_fund', 'learning_hub', 'quiz'
@@ -625,7 +646,7 @@ def create_app():
                 logger.error(f"Invalid feedback rating: {rating}")
                 print(f"Invalid feedback rating: {rating}", file=sys.stderr, flush=True)
                 flash(translate('feedback_invalid_rating', default='Please provide a rating between 1 and 5', lang=lang), 'error')
-                return render_template('feedback.html, t=translate, lang=lang, tool_options=tool_options)
+                return render_template('feedback.html', t=translate, lang=lang, tool_options=tool_options)
             feedback_entry = Feedback(
                 user_id=current_user.id if current_user.is_authenticated else None,
                 session_id=session['sid'],
@@ -640,7 +661,7 @@ def create_app():
             flash(translate('feedback_success', default='Thank you for your feedback!', lang=lang), 'success')
             return redirect(url_for('index'))
         except Exception as e:
-            logger.error(f"Error processing feedback: {str(e)}", exc_info=True)
+            logger.error(f"Error processing feedback: {str(e)}")
             print(f"Error processing feedback: {str(e)}", file=sys.stderr, flush=True)
             flash(translate('global_error', default='Error occurred while submitting feedback', lang=lang), 'error')
             return render_template('feedback.html', t=translate, lang=lang, tool_options=tool_options), 500
@@ -657,7 +678,7 @@ def create_app():
             flash(translate('learning_hub_success_logout', default='Successfully logged out', lang=lang), 'success')
             return redirect(url_for('index'))
         except Exception as e:
-            logger.error(f"Error in logout: {str(e)}", exc_info=True)
+            logger.error(f"Error in logout: {str(e)}")
             print(f"Error in logout: {str(e)}", file=sys.stderr, flush=True)
             flash(translate('global_error', default='An error occurred', lang=lang), 'error')
             return redirect(url_for('index'))
@@ -679,16 +700,11 @@ def create_app():
                 db.session.execute('SELECT 1')
                 logger.debug("Database connection successful")
                 print("Database connection successful", file=sys.stderr, flush=True)
-            if not os.path.exists(os.path.join(os.path.dirname(__file__), 'data', 'storage.log')):
-                status["status"] = "warning"
-                status["warning"] = "Log file data/storage.log not found"
-                logger.warning("Log file data/storage.log not found")
-                print("Log file data/storage.log not found", file=sys.stderr, flush=True)
             logger.info("Health check completed successfully")
             print("Health check completed successfully", file=sys.stderr, flush=True)
             return jsonify(status), 200
         except Exception as e:
-            logger.error(f"Health check failed: {str(e)}", exc_info=True)
+            logger.error(f"Health check failed: {str(e)}")
             print(f"Health check failed: {str(e)}", file=sys.stderr, flush=True)
             status["status"] = "unhealthy"
             status["error"] = str(e)
@@ -707,27 +723,29 @@ def create_app():
     @app.errorhandler(Exception)
     def handle_exception(e):
         lang = session.get('lang', 'en')
-        logger.error(f"Unhandled exception: {str(e)}", exc_info=True)
+        logger.error(f"Unhandled exception: {str(e)}")
         print(f"Caught unhandled exception: {str(e)}", file=sys.stderr, flush=True)
         return jsonify({'error': 'Internal server error'}), 500
 
     @app.errorhandler(CSRFError)
     def handle_csrf(e):
         lang = session.get('lang', 'en')
-        logger.error(f"CSRF error: {str(e)}", exc_info=True)
+        logger.error(f"CSRF error: {str(e)}")
         print(f"CSRF error: {str(e)}", file=sys.stderr, flush=True)
         return jsonify({'error': 'CSRF token invalid'}), 400
 
     @app.errorhandler(404)
     def page_not_found(e):
         lang = session.get('lang', 'en')
-        logger.error(f"404 error: {request.path}", exc_info=True)
+        logger.error(f"404 error: {request.path}")
         print(f"404 error: {request.path}", file=sys.stderr, flush=True)
         return jsonify({'error': '404 Not Found'}), 404
 
     @app.route('/static/<path:filename>')
     def static_files(filename):
         response = send_from_directory('static', filename)
+        logger.info(f"Serving static file: {filename}")
+        print(f"Serving static file: {filename}", file=sys.stderr, flush=True)
         return response
 
     logger.info("App creation completed successfully")
@@ -739,5 +757,5 @@ try:
     app = create_app()
 except Exception as e:
     print(f"Error creating app: {str(e)}", file=sys.stderr, flush=True)
-    early_logger.error(f"Error creating app: {str(e)}", exc_info=True)
+    early_logger.error(f"Error creating app: {str(e)}")
     raise
