@@ -64,7 +64,7 @@ def setup_session(app):
     try:
         os.makedirs(session_dir, exist_ok=True)
         logger.info(f"Session directory ensured at {session_dir}")
-    except (PermissionError, OSError) as e:
+    except OSError as e:
         logger.error(f"Failed to create session directory {session_dir}: {str(e)}. Using in-memory sessions.")
         app.config['SESSION_TYPE'] = 'null'
         return
@@ -82,7 +82,7 @@ def initialize_courses_data(app):
                 db_course = Course(**course)
                 db.session.add(db_course)
             db.session.commit()
-            logger.info("Initialized courses in database")
+            logger.info("Initialized {len(SAMPLE_COURSES)} courses in database")
         app.config['COURSES'] = [course.to_dict() for course in Course.query.all()]
 
 # Constants
@@ -106,14 +106,14 @@ SAMPLE_COURSES = [
         'is_premium': False
     },
     {
-        'id': 'savings_basics',
-        'title_key': 'learning_hub_course_savings_basics_title',
-        'title_en': 'Savings Basics',
-        'title_ha': 'Asalin Tattara Kudi',
-        'description_en': 'Understand how to save effectively.',
-        'description_ha': 'Fahimci yadda ake tattara kudi yadda ya kamata.',
-        'is_premium': False
-    }
+    'id': 'savings_basics',
+    'title_key': 'learning_hub_course_savings_basics_title',
+    'title_en': 'Savings Basics',
+    'title_ha': 'Asalin Tattara Kudi',
+    'description_en': 'Understand how to save effectively.',
+    'description_ha': 'Fahimci yadda ake tattara kudi yadda ya kamata.',
+    'is_premium': False
+}
 ]
 
 def admin_required(f):
@@ -148,27 +148,35 @@ def log_tool_usage(app, tool_name):
         )
         db.session.add(usage_entry)
         db.session.commit()
-        logger.info(f"Tool usage logged: tool={tool_name}, session={session.get('sid')}, user_id={current_user.id if current_user.is_authenticated else 'anonymous'}")
+        logger.info(f"Successfully logged tool usage: tool={tool_name}, session={session['sid']}, user_id={current_user.id if current_user.is_authenticated else 'anonymous'}")
     except Exception as e:
         logger.error(f"Error logging tool usage for {tool_name}: {str(e)}")
         db.session.rollback()
 
 def run_migrations():
-    """Run Alembic migrations to ensure the database schema is up to date."""
+    """Run Alembic migrations to ensure the database schema is up-to-date."""
     try:
         alembic_cfg = Config(os.path.join(os.path.dirname(__file__), 'alembic.ini'))
-        if not alembic_cfg.get_main_option('script_location'):
-            alembic_cfg.set_main_option('script_location', os.path.join(os.path.dirname(__file__), 'migrations/versions'))
+        alembic_path = os.path.join(os.path.dirname(__file__), 'migrations/versions')
+        if not os.path.exists(alembic_path):
+            logger.critical(f"Migration directory {alembic_path} does not exist. Please initialize migrations.")
+            raise FileNotFoundError(f"Migration directory {alembic_path} not found")
+        alembic_cfg.set_main_option('script_location', alembic_path)
+        logger.info("Starting Alembic migrations...")
         command.upgrade(alembic_cfg, 'head')
-        logger.info("Database migrations applied successfully")
+        logger.info("Successfully applied database migrations")
     except Exception as e:
-        logger.critical(f"Failed to apply database migrations: {str(e)}")
+        logger.critical(f"Failed to apply database migrations: {str(e)}", exc_info=True)
         raise
 
 def initialize_database(app):
     """Initialize the database by running migrations and setting up the admin user."""
     with app.app_context():
-        run_migrations()
+        try:
+            run_migrations()
+        except Exception as e:
+            logger.critical(f"Migration failed: {str(e)}", exc_info=True)
+            raise RuntimeError(f"Database migration failed: {str(e)}")
         admin_email = os.environ.get('ADMIN_EMAIL', 'admin@example.com')
         admin_password = os.environ.get('ADMIN_PASSWORD', 'defaultadminpassword')
         if admin_password == 'defaultadminpassword':
@@ -190,7 +198,7 @@ def initialize_database(app):
                 logger.info(f"Assigned admin role to existing user {admin_email}")
             db.session.commit()
         except Exception as e:
-            logger.critical(f"Failed to initialize admin user: {str(e)}")
+            logger.critical(f"Failed to initialize admin user: {str(e)}", exc_info=True)
             db.session.rollback()
             raise
 
@@ -212,11 +220,13 @@ def create_app():
     try:
         os.makedirs(db_dir, exist_ok=True)
         logger.info(f"Database directory ensured at {db_dir}")
-    except (PermissionError, OSError) as e:
+    except OSError as e:
         logger.critical(f"Failed to create database directory {db_dir}: {str(e)}")
         raise
     db_path = os.path.join(db_dir, 'ficore.db')
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', f'sqlite:///{db_path}')
+    db_url = os.environ.get('DATABASE_URL', f'sqlite:///{db_path}')
+    logger.info(f"Using database URL: {db_url}")
+    app.config['SQLALCHEMY_DATABASE_URI'] = db_url
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     db.init_app(app)
 
@@ -241,7 +251,7 @@ def create_app():
         initialize_courses_data(app)
         logger.info("Database and courses initialized successfully")
     except Exception as e:
-        logger.critical(f"Failed to initialize database: {str(e)}")
+        logger.critical(f"Failed to initialize database: {str(e)}", exc_info=True)
         raise
 
     # Register blueprints
@@ -597,5 +607,5 @@ def create_app():
 try:
     app = create_app()
 except Exception as e:
-    logger.error(f"Error creating app: {e}")
+    logger.error(f"Error creating app: {str(e)}", exc_info=True)
     raise
