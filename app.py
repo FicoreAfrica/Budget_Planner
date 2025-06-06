@@ -84,7 +84,7 @@ def initialize_courses_data(app):
         app.config['COURSES'] = [course.to_dict() for course in Course.query.all()]
 
 # Constants
-SAMPLE_COURSES = [    [
+SAMPLE_COURSES = [
     {
         'id': 'budgeting_learning_101',
         'title_key': 'learning_hub_course_budgeting101_title',
@@ -117,16 +117,25 @@ SAMPLE_COURSES = [    [
 def log_tool_usage(app, tool_name):
     """
     Log tool usage in the ToolUsage table for the current user or session.
+    Valid tool names include authentication events (register, login, logout) and tool routes.
     """
+    valid_tools = [
+        'register', 'login', 'logout',
+        'financial_health', 'budget', 'bill', 'net_worth',
+        'emergency_fund', 'learning_hub', 'quiz'
+    ]
+    if tool_name not in valid_tools:
+        logger.error(f"Invalid tool_name provided: {tool_name}")
+        return
     try:
         usage_entry = ToolUsage(
             user_id=current_user.id if current_user.is_authenticated else None,
-            session_id=session['sid'],
+            session_id=session.get('sid', str(uuid.uuid4())),
             tool_name=tool_name
         )
         db.session.add(usage_entry)
         db.session.commit()
-        logger.info(f"Tool usage logged: tool={tool_name}, session={session['sid']}")
+        logger.info(f"Tool usage logged: tool={tool_name}, session={session.get('sid')}, user_id={current_user.id if current_user.is_authenticated else 'anonymous'}")
     except Exception as e:
         logger.error(f"Error logging tool usage for {tool_name}: {str(e)}")
         db.session.rollback()
@@ -240,6 +249,8 @@ def create_app():
         try:
             if 'sid' not in session:
                 session['sid'] = str(uuid.uuid4())
+                session.permanent = True
+                session.modified = True
                 logger.info(f"New session ID generated: {session['sid']}")
             if 'lang' not in session:
                 session['lang'] = request.accept_languages.best_match(['en', 'ha'], 'en')
@@ -268,7 +279,7 @@ def create_app():
             'CONSULTANCY_FORM_URL': os.environ.get('CONSULTANCY_FORM_URL', '#'),
             'current_lang': lang,
             'current_user': current_user if has_request_context() else None,
-            'csrf_token': generate_csrf
+            'csrf_token': csrf._get_token if hasattr(csrf, '_get_token') else lambda: ''
         }
 
     def ensure_session_id(f):
@@ -276,6 +287,8 @@ def create_app():
         def decorated_function(*args, **kwargs):
             if 'sid' not in session:
                 session['sid'] = str(uuid4())
+                session.permanent = True
+                session.modified = True
                 logger.info(f"New session ID generated: {session['sid']}")
             return f(*args, **kwargs)
         return decorated_function
@@ -426,7 +439,7 @@ def create_app():
         logger.info("Handling feedback route")
         tool_options = [
             'financial_health', 'budget', 'bill', 'net_worth',
-            'emergency_fund', 'learning_progress', 'quiz'
+            'emergency_fund', 'learning_hub', 'quiz'
         ]
         if request.method == 'GET':
             return render_template('feedback.html', t=translate, lang=lang, tool_options=tool_options)
