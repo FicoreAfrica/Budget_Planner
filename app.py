@@ -463,23 +463,36 @@ def create_app():
         logger.info(f"Language set to {new_lang}")
         flash(translate('learning_hub_success_language_updated', default='Language updated successfully', lang=new_lang) if new_lang in valid_langs else translate('Invalid language', default='Invalid language', lang=new_lang), 'success' if new_lang in valid_langs else 'danger')
         return redirect(request.referrer or url_for('index'))
-
+        
     @app.route('/acknowledge_consent', methods=['POST'])
     def acknowledge_consent():
         if request.method != 'POST':
             logger.warning(f"Invalid method {request.method} for consent acknowledgement")
             return '', 400
-        session['consent_acknowledged'] = {
-            'status': True,
-            'timestamp': datetime.utcnow().isoformat(),
-            'ip': request.remote_addr,
-            'user_agent': request.headers.get('User-Agent')
-        }
-        logger.info(f"Consent acknowledged for session {session['sid']} from IP {request.remote_addr}")
-        response = make_response('', 204)
-        response.headers['Cache-Control'] = 'no-store'
-        response.headers['X-Content-Type-Options'] = 'nosniff'
-        return response
+        try:
+            # Validate CSRF token from the form
+            csrf_token = request.form.get('csrf_token')
+            if not csrf_token:
+                logger.error(f"CSRF token missing in request for session {session['sid']}")
+                return jsonify({'error': 'CSRF token missing'}), 400
+            validate_csrf(csrf_token)
+            session['consent_acknowledged'] = {
+                'status': True,
+                'timestamp': datetime.utcnow().isoformat(),
+                'ip': request.remote_addr,
+                'user_agent': request.headers.get('User-Agent')
+            }
+            logger.info(f"Consent acknowledged for session {session['sid']} from IP {request.remote_addr}")
+            response = make_response('', 204)
+            response.headers['Cache-Control'] = 'no-store'
+            response.headers['X-Content-Type-Options'] = 'nosniff'
+            return response
+        except CSRFError as e:
+            logger.error(f"CSRF validation failed for session {session['sid']}: {str(e)}")
+            return jsonify({'error': 'Invalid CSRF token'}), 400
+        except Exception as e:
+            logger.error(f"Error processing consent acknowledgement for session {session['sid']}: {str(e)}")
+            return jsonify({'error': 'Internal server error'}), 500
         
     @app.route('/favicon.ico')
     def favicon():
