@@ -77,59 +77,72 @@
                 {% for category, message in messages %}
                     <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
                         {{ trans(message) | default(message) }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ trans('core_close') | default('Close') }}"></button>
                     </div>
                 {% endfor %}
             </div>
         {% endif %}
     {% endwith %}
 
-    <header>
-        <nav class="navbar navbar-expand-lg navbar-light bg-light">
-            <div class="container-fluid">
-                <a class="navbar-brand" href="{{ url_for('index') }}">{{ trans('core_welcome_to_ficore') | default('Welcome to Ficore Africa Tools Suite: Use Ficore to Track your income, net worth, budgets, and bills, to grow your finances with confidence.') }}</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="collapse navbar-collapse" id="navbarNav">
-                    <ul class="navbar-nav ms-auto">
+    <!-- Header Message -->
+    <div class="header-message">
+        {{ trans('core_welcome_to_ficore') | default('Welcome to Ficore Africa Tools Suite: Use Ficore to Track your income, net worth, budgets, and bills, to grow your money with confidence.') }}
+    </div>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('index') }}"><img src="{{ url_for('static', filename='img/ficore_logo.png') }}" alt="{{ trans('core_ficore_africa_logo') | default('Ficore Africa Logo') }}" class="logo-centered"></a>
+            <a href="{{ url_for('set_language', lang='ha' if session.lang == 'en' else 'en') }}"
+               class="btn btn-primary navbar-btn btn-outline-light language-btn ms-1 me-1"
+               title="{{ trans('core_change_language') | default('Change Language') }}"
+               aria-label="{{ trans('core_switch_to') | default('Switch to') }} {{ 'Hausa' if session.lang == 'en' else 'English' }}"
+               role="button">
+                <i class="fas fa-globe me-1" aria-hidden="true"></i>
+                {{ 'Hausa' if session.lang == 'en' else 'English' }}
+            </a>
+            <!-- Mode Toggle Button -->
+            <button id="modeToggle" class="ms-1 me-1 btn btn-outline-light" aria-label="{{ trans('core_toggle_dark_mode') | default('Toggle Dark Mode') }}">
+                <i class="fas fa-moon" aria-hidden="true"></i>
+            </button>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="{{ trans('core_toggle_navigation') | default('Toggle navigation') }}">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('index') }}">{{ trans('core_home') | default('Home') }}</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('index') }}">{{ trans('core_tools') | default('Tools') }}</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('general_dashboard') }}">{{ trans('general_dashboard') | default('General Usage') }}</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('feedback') }}">{{ trans('Feedback') | default('Feedback') }}</a>
+                    </li>
+                    {% if current_user.is_authenticated and current_user.is_admin %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('set_language', lang='ha' if session.lang == 'en' else 'en') }}">{{ 'Hausa' if session.lang == 'en' else 'English' }}</a>
+                            <a class="nav-link" href="{{ url_for('admin.overview') }}">{{ trans('admin_panel') | default('Admin Panel') }}</a>
+                        </li>
+                    {% endif %}
+                    {% if current_user.is_authenticated %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('logout') }}">{{ trans('logout') | default('Logout') }}</a>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('auth.signin') }}">{{ trans('login') | default('Login') }}</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('index') }}">{{ trans('core_home') | default('Home') }}</a>
+                            <a class="nav-link" href="{{ url_for('auth.signup') }}">{{ trans('signup') | default('Sign Up') }}</a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('index') }}">{{ trans('core_tools') | default('Tools') }}</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('general_dashboard') }}">{{ trans('general_dashboard') | default('General Usage') }}</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('feedback') }}">{{ trans('Feedback') | default('Feedback') }}</a>
-                        </li>
-                        {% if current_user.is_authenticated and current_user.is_admin %}
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ url_for('admin.overview') }}">{{ trans('admin_panel') | default('Admin Panel') }}</a>
-                            </li>
-                        {% endif %}
-                        {% if current_user.is_authenticated %}
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ url_for('logout') }}">{{ trans('logout') | default('Logout') }}</a>
-                            </li>
-                        {% else %}
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ url_for('auth.signin') }}">{{ trans('login') | default('Login') }}</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ url_for('auth.signup') }}">{{ trans('signup') | default('Sign Up') }}</a>
-                            </li>
-                        {% endif %}
-                    </ul>
-                </div>
+                    {% endif %}
+                </ul>
             </div>
-        </nav>
-    </header>
+        </div>
+    </nav>
 
     <main>
         {% block content %}{% endblock %}
@@ -160,10 +173,12 @@
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
         <script>
             function saveConsent() {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
                 fetch('/acknowledge_consent', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'X-CSRF-Token': csrfToken,
                         'X-Content-Type-Options': 'nosniff'
                     }
                 })
@@ -178,6 +193,23 @@
                     console.error('Error acknowledging consent:', error);
                 });
             }
+
+            // Dark Mode Toggle
+            document.getElementById('modeToggle').addEventListener('click', function() {
+                const body = document.body;
+                const currentTheme = body.getAttribute('data-bs-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                body.setAttribute('data-bs-theme', newTheme);
+                this.querySelector('i').className = newTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+                localStorage.setItem('theme', newTheme);
+            });
+
+            // Apply saved theme on page load
+            document.addEventListener('DOMContentLoaded', function() {
+                const savedTheme = localStorage.getItem('theme') || 'light';
+                document.body.setAttribute('data-bs-theme', savedTheme);
+                document.getElementById('modeToggle').querySelector('i').className = savedTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+            });
         </script>
     {% endblock %}
     {% block extra_scripts %}{% endblock %}
