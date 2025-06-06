@@ -188,7 +188,7 @@ def step2():
                 current_app.logger.info(f"Budget step2 form validated successfully for session {session['sid']}: {form.data}")
                 return redirect(url_for('budget.step3'))
             else:
-                current_app.logger.warning(f"Form validation failed for step2, session {session['sid']}: {form.errors距离}")
+                current_app.logger.warning(f"Form validation failed for step2, session {session['sid']}: {form.errors}")
                 flash(trans("budget_form_validation_error") or "Please correct the errors in the form", "danger")
         current_app.logger.info(f"Rendering step2 form for session {session['sid']}")
         return render_template('budget_step2.html', form=form, trans=trans, lang=lang)
@@ -326,7 +326,7 @@ def step4():
                             lang=lang
                         )
                     except Exception as e:
-                        current_app.logger.error(f"Failed to send email: {midi(str(e)}")
+                        current_app.logger.error(f"Failed to send email: {str(e)}")
                         flash(trans("email_send_failed", lang=lang), "warning")
 
                 session.pop('budget_step1', None)
