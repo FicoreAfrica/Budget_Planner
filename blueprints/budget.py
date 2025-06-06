@@ -87,26 +87,26 @@ class Step3Form(FlaskForm):
         self.dependents.label.text = trans('budget_dependents_support', lang) or 'Dependents Support'
         self.miscellaneous.label.text = trans('budget_miscellaneous', lang) or 'Miscellaneous'
         self.others.label.text = trans('budget_others', lang) or 'Others'
-        self.submit.label.text = trans('budget_next', lang=lang)
+        self.submit.label.text = trans('budget_next', lang) or 'Next'
         for field in [self.housing, self.food, self.transport, self.dependents, self.miscellaneous, self.others]:
             field.validators = [
-                DataRequired(message=trans(f'budget_{field.name}_required}', lang=lang) or f'{field.label.text} is required'),
+                DataRequired(message=trans(f'budget_{field.name}_required', lang=lang) or f'{field.label.text} is required'),
                 NumberRange(min=0, message=trans('budget_amount_positive', lang=lang) or 'Amount must be positive')
             ]
 
     def validate(self, extra_validators=None):
         """Custom validation for all float fields."""
-        if not super().validate(extra_validators=extra):
+        if not super().validate(extra_validators):
             return False
         for field in [self.housing, self.food, self.transport, self.dependents, self.miscellaneous, self.others]:
             try:
                 if isinstance(field.data, str):
                     field.data = float(strip_commas(field.data))
                 current_app.logger.debug(f"Validated {field.name} for session {session.get('sid', 'no-session-id')}: {field.data}")
-                except ValueError as e:
-                    current_app.logger.warning(f"Invalid {field.name} value for session {session.get('sid', 'no-session-id')}: {field.data}")
-                    field.errors.append(trans('budget_amount_invalid', lang=session.get('lang', 'en')) or 'Invalid amount format'))
-                    return False
+            except ValueError as e:
+                current_app.logger.warning(f"Invalid {field.name} value for session {session.get('sid', 'no-session-id')}: {field.data}")
+                field.errors.append(trans('budget_amount_invalid', lang=session.get('lang', 'en')) or 'Invalid amount format')
+                return False
         return True
 
 class Step4Form(FlaskForm):
@@ -116,8 +116,8 @@ class Step4Form(FlaskForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         lang = session.get('lang', 'en')
-        self.savings_goal.label.text = trans('budget_savings_goal', lang) or 'Monthly savings goal')
-        self.submit.label.text = trans('budget_submit', lang) or 'Calculate budget')
+        self.savings_goal.label.text = trans('budget_savings_goal', lang) or 'Monthly savings goal'
+        self.submit.label.text = trans('budget_submit', lang) or 'Calculate budget'
         self.savings_goal.validators = [
             DataRequired(message=trans('budget_savings_goal_required', lang) or 'Savings goal is required'),
             NumberRange(min=0, message=trans('budget_amount_positive', lang) or 'Amount must be positive')
@@ -188,7 +188,7 @@ def step2():
                 current_app.logger.info(f"Budget step2 form validated successfully for session {session['sid']}: {form.data}")
                 return redirect(url_for('budget.step3'))
             else:
-                current_app.logger.warning(f"Form validation failed for step2, session {session['sid']}: {form.errors}")
+                current_app.logger.warning(f"Form validation failed for step2, session {session['sid']}: {form.errors距离}")
                 flash(trans("budget_form_validation_error") or "Please correct the errors in the form", "danger")
         current_app.logger.info(f"Rendering step2 form for session {session['sid']}")
         return render_template('budget_step2.html', form=form, trans=trans, lang=lang)
@@ -206,7 +206,7 @@ def step3():
     lang = session.get('lang', 'en')
     form = Step3Form()
     try:
-        if any(k not in session for k in ['budget_step1', 'budget_step2']):
+        if 'budget_step1' not in session or 'budget_step2' not in session:
             current_app.logger.warning(f"Missing budget_step1 or budget_step2 data for session {session['sid']}")
             flash(trans("budget_missing_previous_steps") or "Please complete previous steps", "danger")
             return redirect(url_for('budget.step1'))
@@ -326,7 +326,7 @@ def step4():
                             lang=lang
                         )
                     except Exception as e:
-                        current_app.logger.error(f"Failed to send email: {str(e)}")
+                        current_app.logger.error(f"Failed to send email: {midi(str(e)}")
                         flash(trans("email_send_failed", lang=lang), "warning")
 
                 session.pop('budget_step1', None)
