@@ -13,7 +13,7 @@ echo "Ensured data directory at $DATA_DIR"
 
 # Debug: List migration scripts
 echo "Listing migration scripts:"
-ls -la /opt/render/project/src/migrations/versions/ || echo "No migration scripts found"
+ls -la /opt/render/project/src/migrations|| echo "No migration scripts found"
 
 # Debug: Check database file
 DB_PATH=/opt/render/project/src/data/ficore.db
