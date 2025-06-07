@@ -249,8 +249,11 @@ def create_app():
     print("Starting create_app", file=sys.stderr, flush=True)
     app = Flask(__name__, template_folder='templates')
 
-    # Set secret key from environment variable
-    app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY')
+    # Set secret key from environment variable with enhanced logging
+    secret_key = os.environ.get('FLASK_SECRET_KEY')
+    logger.info(f"Raw FLASK_SECRET_KEY from environment: {secret_key}")
+    app.config['SECRET_KEY'] = secret_key
+    logger.info(f"app.config['SECRET_KEY'] set to: {app.config['SECRET_KEY']}")
     if not app.config['SECRET_KEY']:
         logger.critical("FLASK_SECRET_KEY not set in environment variables!")
         raise ValueError("FLASK_SECRET_KEY must be set in environment variables for production!")
@@ -713,14 +716,18 @@ def create_app():
     print("App creation completed successfully", file=sys.stderr, flush=True)
     return app
 
+# Move app creation to global scope to ensure single instance
+app = create_app()
+
 try:
     print("Attempting to create app", file=sys.stderr, flush=True)
-    app = create_app()
+    # Remove redundant app creation here
 except Exception as e:
     print(f"Error creating app: {str(e)}", file=sys.stderr, flush=True)
     early_logger.error(f"Error creating app: {str(e)}")
     raise
 
-if __name__ == '__main__':
-    app = create_app()
-    app.run(debug=True)
+# Remove or comment out the following block for production
+# if __name__ == '__main__':
+#     app = create_app()
+#     app.run(debug=True)
