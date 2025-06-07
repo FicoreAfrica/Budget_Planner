@@ -1,4 +1,3 @@
-```python
 import os
 import sys
 import logging
@@ -727,4 +726,3 @@ def create_app():
 
 # Move app creation to global scope to ensure single instance
 app = create_app()
-```
