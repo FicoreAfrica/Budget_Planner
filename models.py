@@ -18,6 +18,15 @@ class User(db.Model, UserMixin):
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     lang = db.Column(db.String(10), default='en')
     is_admin = db.Column(db.Boolean, default=False, nullable=False)
+    financial_health_records = db.relationship('FinancialHealth', backref='user', lazy='select')
+    budgets = db.relationship('Budget', backref='user', lazy='select')
+    bills = db.relationship('Bill', backref='user', lazy='select')
+    net_worth_records = db.relationship('NetWorth', backref='user', lazy='select')
+    emergency_funds = db.relationship('EmergencyFund', backref='user', lazy='select')
+    learning_progress_records = db.relationship('LearningProgress', backref='user', lazy='select')
+    quiz_results = db.relationship('QuizResult', backref='user', lazy='select')
+    tool_usages = db.relationship('ToolUsage', backref='user', lazy='select')
+    feedbacks = db.relationship('Feedback', backref='user', lazy='select')
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -87,7 +96,7 @@ class FinancialHealth(db.Model):
     status_key = db.Column(db.String(50), nullable=True)
     badges = db.Column(db.Text, nullable=True)
     step = db.Column(db.Integer, nullable=True)
-    user = db.relationship('User', backref='financial_health_records')
+    user = db.relationship('User', backref='financial_health_records', lazy='select')
 
     __table_args__ = (
         db.Index('ix_financial_health_session_id', 'session_id'),
@@ -136,7 +145,7 @@ class Budget(db.Model):
     dependents = db.Column(db.Float, nullable=False, default=0.0)
     miscellaneous = db.Column(db.Float, nullable=False, default=0.0)
     others = db.Column(db.Float, nullable=False, default=0.0)
-    user = db.relationship('User', backref='budgets')
+    user = db.relationship('User', backref='budgets', lazy='select')
 
     __table_args__ = (
         db.Index('ix_budget_session_id', 'session_id'),
@@ -179,7 +188,7 @@ class Bill(db.Model):
     status = db.Column(db.String(20), nullable=False)
     send_email = db.Column(db.Boolean, nullable=False, default=False)
     reminder_days = db.Column(db.Integer, nullable=True)
-    user = db.relationship('User', backref='bills')
+    user = db.relationship('User', backref='bills', lazy='select')
 
     __table_args__ = (
         db.Index('ix_bills_session_id', 'session_id'),
@@ -221,7 +230,7 @@ class NetWorth(db.Model):
     total_liabilities = db.Column(db.Float, nullable=True)
     net_worth = db.Column(db.Float, nullable=True)
     badges = db.Column(db.Text, nullable=True)
-    user = db.relationship('User', backref='net_worth_records')
+    user = db.relationship('User', backref='net_worth_records', lazy='select')
 
     __table_args__ = (
         db.Index('ix_net_worth_session_id', 'session_id'),
@@ -269,7 +278,7 @@ class EmergencyFund(db.Model):
     monthly_savings = db.Column(db.Float, nullable=True)
     percent_of_income = db.Column(db.Float, nullable=True)
     badges = db.Column(db.Text, nullable=True)
-    user = db.relationship('User', backref='emergency_funds')
+    user = db.relationship('User', backref='emergency_funds', lazy='select')
 
     __table_args__ = (
         db.Index('ix_emergency_fund_session_id', 'session_id'),
@@ -309,7 +318,7 @@ class LearningProgress(db.Model):
     lessons_completed = db.Column(db.Text, default='[]', nullable=False)
     quiz_scores = db.Column(db.Text, default='{}', nullable=False)
     current_lesson = db.Column(db.String(50), nullable=True)
-    user = db.relationship('User', backref='learning_progress_records')
+    user = db.relationship('User', backref='learning_progress_records', lazy='select')
 
     __table_args__ = (
         db.UniqueConstraint('user_id', 'course_id', name='uix_user_course_id'),
@@ -343,7 +352,7 @@ class QuizResult(db.Model):
     badges = db.Column(db.Text, nullable=True)
     insights = db.Column(db.Text, nullable=True)
     tips = db.Column(db.Text, nullable=True)
-    user = db.relationship('User', backref='quiz_results')
+    user = db.relationship('User', backref='quiz_results', lazy='select')
 
     __table_args__ = (
         db.Index('ix_quiz_results_session_id', 'session_id'),
@@ -373,7 +382,7 @@ class ToolUsage(db.Model):
     session_id = db.Column(db.String(36), nullable=False)
     tool_name = db.Column(db.String(50), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    user = db.relationship('User', backref='tool_usages')
+    user = db.relationship('User', backref='tool_usages', lazy='select')
 
     __table_args__ = (
         db.Index('ix_tool_usage_session_id', 'session_id'),
@@ -399,7 +408,7 @@ class Feedback(db.Model):
     rating = db.Column(db.Integer, nullable=False)
     comment = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    user = db.relationship('User', backref='feedbacks')
+    user = db.relationship('User', backref='feedbacks', lazy='select')
 
     __table_args__ = (
         db.Index('ix_feedback_session_id', 'session_id'),
