@@ -275,7 +275,6 @@ def dashboard():
         session.permanent = True
         session.modified = True
     lang = session.get('lang', 'en')
-    current_app.log_tool_usage(current_app, 'net_worth')
 
     try:
         # Fetch records by user_id or session_id

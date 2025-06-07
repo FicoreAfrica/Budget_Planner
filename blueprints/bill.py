@@ -309,7 +309,6 @@ def dashboard():
         session['sid'] = str(uuid.uuid4())
         session.permanent = True
     lang = session.get('lang', 'en')
-    current_app.log_tool_usage(current_app, 'bill')
 
     tips = [
         trans('bill_tip_pay_early', lang),

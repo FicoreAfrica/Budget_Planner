@@ -105,4 +105,3 @@ def init_scheduler(app):
     except Exception as e:
         app.logger.error(f"Failed to initialize scheduler: {str(e)}")
         raise
-

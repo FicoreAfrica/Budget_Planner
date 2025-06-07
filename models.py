@@ -1,13 +1,7 @@
-from flask_sqlalchemy import SQLAlchemy
-from flask_login import UserMixin
-from datetime import datetime
-import json
-import uuid
-from werkzeug.security import generate_password_hash, check_password_hash
 from extensions import db
-import logging
-
-logger = logging.getLogger('ficore_app.models')
+import json
+from datetime import datetime, date
+from flask_login import UserMixin
 
 class User(db.Model, UserMixin):
     __tablename__ = 'users'
@@ -17,41 +11,6 @@ class User(db.Model, UserMixin):
     password_hash = db.Column(db.String(128), nullable=False)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     lang = db.Column(db.String(10), default='en')
-    is_admin = db.Column(db.Boolean, default=False, nullable=False)
-    financial_health_records = db.relationship('FinancialHealth', backref='user', lazy='select')
-    budgets = db.relationship('Budget', backref='user', lazy='select')
-    bills = db.relationship('Bill', backref='user', lazy='select')
-    net_worth_records = db.relationship('NetWorth', backref='user', lazy='select')
-    emergency_funds = db.relationship('EmergencyFund', backref='user', lazy='select')
-    learning_progress_records = db.relationship('LearningProgress', backref='user', lazy='select')
-    quiz_results = db.relationship('QuizResult', backref='user', lazy='select')
-    tool_usages = db.relationship('ToolUsage', backref='user', lazy='select')
-    feedbacks = db.relationship('Feedback', backref='user', lazy='select')
-
-    def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
-
-    def check_password(self, password):
-        return check_password_hash(self.password_hash, password)
-
-    @classmethod
-    def set_admin_by_email(cls, email):
-        try:
-            user = cls.query.filter_by(email=email).first()
-            if user:
-                if user.is_admin:
-                    logger.info(f"User {email} is already an admin.")
-                    return True
-                user.is_admin = True
-                db.session.commit()
-                logger.info(f"Set admin status for user {email} (ID: {user.id}).")
-                return True
-            logger.warning(f"No user found with email {email}.")
-            return False
-        except Exception as e:
-            logger.error(f"Error setting admin for {email}: {str(e)}")
-            db.session.rollback()
-            return False
 
 class Course(db.Model):
     __tablename__ = 'courses'
@@ -94,9 +53,9 @@ class FinancialHealth(db.Model):
     score = db.Column(db.Float, nullable=True)
     status = db.Column(db.String(50), nullable=True)
     status_key = db.Column(db.String(50), nullable=True)
-    badges = db.Column(db.Text, nullable=True)
+    badges = db.Column(db.Text, nullable=True)  # JSON string
     step = db.Column(db.Integer, nullable=True)
-    user = db.relationship('User', backref='financial_health_records', lazy='select')
+    user = db.relationship('User', backref='financial_health_records')
 
     __table_args__ = (
         db.Index('ix_financial_health_session_id', 'session_id'),
@@ -108,7 +67,7 @@ class FinancialHealth(db.Model):
             'id': self.id,
             'user_id': self.user_id,
             'session_id': self.session_id,
-            'created_at': self.created_at.isoformat() + 'Z',
+            'created_at': self.created_at.isoformat() + "Z",
             'first_name': self.first_name,
             'email': self.email,
             'user_type': self.user_type,
@@ -145,7 +104,7 @@ class Budget(db.Model):
     dependents = db.Column(db.Float, nullable=False, default=0.0)
     miscellaneous = db.Column(db.Float, nullable=False, default=0.0)
     others = db.Column(db.Float, nullable=False, default=0.0)
-    user = db.relationship('User', backref='budgets', lazy='select')
+    user = db.relationship('User', backref='budgets')
 
     __table_args__ = (
         db.Index('ix_budget_session_id', 'session_id'),
@@ -157,7 +116,7 @@ class Budget(db.Model):
             'id': self.id,
             'user_id': self.user_id,
             'session_id': self.session_id,
-            'created_at': self.created_at.isoformat() + 'Z',
+            'created_at': self.created_at.isoformat() + "Z",
             'user_email': self.user_email,
             'income': self.income,
             'fixed_expenses': self.fixed_expenses,
@@ -188,7 +147,7 @@ class Bill(db.Model):
     status = db.Column(db.String(20), nullable=False)
     send_email = db.Column(db.Boolean, nullable=False, default=False)
     reminder_days = db.Column(db.Integer, nullable=True)
-    user = db.relationship('User', backref='bills', lazy='select')
+    user = db.relationship('User', backref='bills')
 
     __table_args__ = (
         db.Index('ix_bills_session_id', 'session_id'),
@@ -200,7 +159,7 @@ class Bill(db.Model):
             'id': self.id,
             'user_id': self.user_id,
             'session_id': self.session_id,
-            'created_at': self.created_at.isoformat() + 'Z',
+            'created_at': self.created_at.isoformat() + "Z",
             'user_email': self.user_email,
             'first_name': self.first_name,
             'bill_name': self.bill_name,
@@ -229,8 +188,8 @@ class NetWorth(db.Model):
     total_assets = db.Column(db.Float, nullable=True)
     total_liabilities = db.Column(db.Float, nullable=True)
     net_worth = db.Column(db.Float, nullable=True)
-    badges = db.Column(db.Text, nullable=True)
-    user = db.relationship('User', backref='net_worth_records', lazy='select')
+    badges = db.Column(db.Text, nullable=True)  # JSON string
+    user = db.relationship('User', backref='net_worth_records')
 
     __table_args__ = (
         db.Index('ix_net_worth_session_id', 'session_id'),
@@ -242,7 +201,7 @@ class NetWorth(db.Model):
             'id': self.id,
             'user_id': self.user_id,
             'session_id': self.session_id,
-            'created_at': self.created_at.isoformat() + 'Z',
+            'created_at': self.created_at.isoformat() + "Z",
             'first_name': self.first_name,
             'email': self.email,
             'send_email': self.send_email,
@@ -277,8 +236,8 @@ class EmergencyFund(db.Model):
     savings_gap = db.Column(db.Float, nullable=True)
     monthly_savings = db.Column(db.Float, nullable=True)
     percent_of_income = db.Column(db.Float, nullable=True)
-    badges = db.Column(db.Text, nullable=True)
-    user = db.relationship('User', backref='emergency_funds', lazy='select')
+    badges = db.Column(db.Text, nullable=True)  # JSON string
+    user = db.relationship('User', backref='emergency_funds')
 
     __table_args__ = (
         db.Index('ix_emergency_fund_session_id', 'session_id'),
@@ -290,7 +249,7 @@ class EmergencyFund(db.Model):
             'id': self.id,
             'user_id': self.user_id,
             'session_id': self.session_id,
-            'created_at': self.created_at.isoformat() + 'Z',
+            'created_at': self.created_at.isoformat() + "Z",
             'first_name': self.first_name,
             'email': self.email,
             'email_opt_in': self.email_opt_in,
@@ -315,10 +274,10 @@ class LearningProgress(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     session_id = db.Column(db.String(36), nullable=False)
     course_id = db.Column(db.String(50), nullable=False)
-    lessons_completed = db.Column(db.Text, default='[]', nullable=False)
-    quiz_scores = db.Column(db.Text, default='{}', nullable=False)
+    lessons_completed = db.Column(db.Text, default='[]', nullable=False)  # JSON string
+    quiz_scores = db.Column(db.Text, default='{}', nullable=False)  # JSON string
     current_lesson = db.Column(db.String(50), nullable=True)
-    user = db.relationship('User', backref='learning_progress_records', lazy='select')
+    user = db.relationship('User', backref='learning_progress_records')
 
     __table_args__ = (
         db.UniqueConstraint('user_id', 'course_id', name='uix_user_course_id'),
@@ -349,10 +308,10 @@ class QuizResult(db.Model):
     send_email = db.Column(db.Boolean, default=False, nullable=False)
     personality = db.Column(db.String(50), nullable=True)
     score = db.Column(db.Integer, nullable=True)
-    badges = db.Column(db.Text, nullable=True)
-    insights = db.Column(db.Text, nullable=True)
-    tips = db.Column(db.Text, nullable=True)
-    user = db.relationship('User', backref='quiz_results', lazy='select')
+    badges = db.Column(db.Text, nullable=True)  # JSON string
+    insights = db.Column(db.Text, nullable=True)  # JSON string
+    tips = db.Column(db.Text, nullable=True)  # JSON string
+    user = db.relationship('User', backref='quiz_results')
 
     __table_args__ = (
         db.Index('ix_quiz_results_session_id', 'session_id'),
@@ -364,7 +323,7 @@ class QuizResult(db.Model):
             'id': self.id,
             'user_id': self.user_id,
             'session_id': self.session_id,
-            'created_at': self.created_at.isoformat() + 'Z',
+            'created_at': self.created_at.isoformat() + "Z",
             'first_name': self.first_name,
             'email': self.email,
             'send_email': self.send_email,
@@ -375,45 +334,20 @@ class QuizResult(db.Model):
             'tips': json.loads(self.tips) if self.tips else []
         }
 
-class ToolUsage(db.Model):
-    __tablename__ = 'tool_usage'
-    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
-    session_id = db.Column(db.String(36), nullable=False)
-    tool_name = db.Column(db.String(50), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    user = db.relationship('User', backref='tool_usages', lazy='select')
-
-    __table_args__ = (
-        db.Index('ix_tool_usage_session_id', 'session_id'),
-        db.Index('ix_tool_usage_user_id', 'user_id'),
-        db.Index('ix_tool_usage_tool_name', 'tool_name')
-    )
-
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'user_id': self.user_id,
-            'session_id': self.session_id,
-            'tool_name': self.tool_name,
-            'created_at': self.created_at.isoformat() + 'Z'
-        }
-
 class Feedback(db.Model):
     __tablename__ = 'feedback'
-    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    id = db.Column(db.String(36), primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     session_id = db.Column(db.String(36), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     tool_name = db.Column(db.String(50), nullable=False)
     rating = db.Column(db.Integer, nullable=False)
     comment = db.Column(db.Text, nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    user = db.relationship('User', backref='feedbacks', lazy='select')
+    user = db.relationship('User', backref='feedback_records')
 
     __table_args__ = (
         db.Index('ix_feedback_session_id', 'session_id'),
-        db.Index('ix_feedback_user_id', 'user_id'),
-        db.Index('ix_feedback_tool_name', 'tool_name')
+        db.Index('ix_feedback_user_id', 'user_id')
     )
 
     def to_dict(self):
@@ -421,8 +355,8 @@ class Feedback(db.Model):
             'id': self.id,
             'user_id': self.user_id,
             'session_id': self.session_id,
+            'created_at': self.created_at.isoformat() + "Z",
             'tool_name': self.tool_name,
             'rating': self.rating,
-            'comment': self.comment,
-            'created_at': self.created_at.isoformat() + 'Z'
+            'comment': self.comment
         }

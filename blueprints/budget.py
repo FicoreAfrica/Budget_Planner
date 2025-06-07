@@ -90,8 +90,8 @@ class Step3Form(FlaskForm):
         self.submit.label.text = trans('budget_next', lang) or 'Next'
         for field in [self.housing, self.food, self.transport, self.dependents, self.miscellaneous, self.others]:
             field.validators = [
-                DataRequired(message=trans(f'budget_{field.name}_required', lang=lang) or f'{field.label.text} is required'),
-                NumberRange(min=0, message=trans('budget_amount_positive', lang=lang) or 'Amount must be positive')
+                DataRequired(message=trans(f'budget_{field.name}_required', lang) or f'{field.label.text} is required'),
+                NumberRange(min=0, message=trans('budget_amount_positive', lang) or 'Amount must be positive')
             ]
 
     def validate(self, extra_validators=None):
@@ -105,7 +105,7 @@ class Step3Form(FlaskForm):
                 current_app.logger.debug(f"Validated {field.name} for session {session.get('sid', 'no-session-id')}: {field.data}")
             except ValueError as e:
                 current_app.logger.warning(f"Invalid {field.name} value for session {session.get('sid', 'no-session-id')}: {field.data}")
-                field.errors.append(trans('budget_amount_invalid', lang=session.get('lang', 'en')) or 'Invalid amount format')
+                field.errors.append(trans('budget_amount_invalid', session.get('lang', 'en')) or 'Invalid amount format')
                 return False
         return True
 
@@ -116,8 +116,8 @@ class Step4Form(FlaskForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         lang = session.get('lang', 'en')
-        self.savings_goal.label.text = trans('budget_savings_goal', lang) or 'Monthly savings goal'
-        self.submit.label.text = trans('budget_submit', lang) or 'Calculate budget'
+        self.savings_goal.label.text = trans('budget_savings_goal', lang) or 'Monthly Savings Goal'
+        self.submit.label.text = trans('budget_submit', lang) or 'Calculate Budget'
         self.savings_goal.validators = [
             DataRequired(message=trans('budget_savings_goal_required', lang) or 'Savings goal is required'),
             NumberRange(min=0, message=trans('budget_amount_positive', lang) or 'Amount must be positive')
@@ -206,7 +206,7 @@ def step3():
     lang = session.get('lang', 'en')
     form = Step3Form()
     try:
-        if 'budget_step1' not in session or 'budget_step2' not in session:
+        if any(k not in session for k in ['budget_step1', 'budget_step2']):
             current_app.logger.warning(f"Missing budget_step1 or budget_step2 data for session {session['sid']}")
             flash(trans("budget_missing_previous_steps") or "Please complete previous steps", "danger")
             return redirect(url_for('budget.step1'))
@@ -359,7 +359,6 @@ def dashboard():
         current_app.logger.info(f"New session ID generated: {session['sid']}")
     session.permanent = True
     lang = session.get('lang', 'en')
-    current_app.log_tool_usage(current_app, 'budget')
     try:
         current_app.logger.info(f"Request started for path: /budget/dashboard [session: {session['sid']}]")
 

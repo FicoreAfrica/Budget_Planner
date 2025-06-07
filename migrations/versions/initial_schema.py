@@ -1,5 +1,4 @@
-"""
-Initial schema with all models including updated QuizResult, NetWorth, LearningProgress, ToolUsage, and Feedback
+"""Initial schema with all models including updated QuizResult, NetWorth, and LearningProgress
 
 Revision ID: initial_schema
 Revises: 
@@ -23,8 +22,6 @@ def upgrade():
         sa.Column('email', sa.String(length=120), nullable=False),
         sa.Column('password_hash', sa.String(length=128), nullable=False),
         sa.Column('created_at', sa.DateTime(), nullable=False),
-        sa.Column('lang', sa.String(length=10), server_default='en', nullable=True),
-        sa.Column('is_admin', sa.Boolean(), server_default='false', nullable=False),
         sa.PrimaryKeyConstraint('id'),
         sa.UniqueConstraint('email'),
         sa.UniqueConstraint('username')
@@ -212,47 +209,7 @@ def upgrade():
     op.create_index('ix_quiz_results_session_id', 'quiz_results', ['session_id'], unique=False)
     op.create_index('ix_quiz_results_user_id', 'quiz_results', ['user_id'], unique=False)
 
-    # ToolUsage table
-    op.create_table(
-        'tool_usage',
-        sa.Column('id', sa.String(length=36), nullable=False),
-        sa.Column('user_id', sa.Integer(), nullable=True),
-        sa.Column('session_id', sa.String(length=36), nullable=False),
-        sa.Column('tool_name', sa.String(length=50), nullable=False),
-        sa.Column('created_at', sa.DateTime(), nullable=False),
-        sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
-        sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index('ix_tool_usage_session_id', 'tool_usage', ['session_id'], unique=False)
-    op.create_index('ix_tool_usage_user_id', 'tool_usage', ['user_id'], unique=False)
-    op.create_index('ix_tool_usage_tool_name', 'tool_usage', ['tool_name'], unique=False)
-
-    # Feedback table
-    op.create_table(
-        'feedback',
-        sa.Column('id', sa.String(length=36), nullable=False),
-        sa.Column('user_id', sa.Integer(), nullable=True),
-        sa.Column('session_id', sa.String(length=36), nullable=False),
-        sa.Column('tool_name', sa.String(length=50), nullable=False),
-        sa.Column('rating', sa.Integer(), nullable=False),
-        sa.Column('comment', sa.Text(), nullable=True),
-        sa.Column('created_at', sa.DateTime(), nullable=False),
-        sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
-        sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index('ix_feedback_session_id', 'feedback', ['session_id'], unique=False)
-    op.create_index('ix_feedback_user_id', 'feedback', ['user_id'], unique=False)
-    op.create_index('ix_feedback_tool_name', 'feedback', ['tool_name'], unique=False)
-
 def downgrade():
-    op.drop_index('ix_feedback_tool_name', table_name='feedback')
-    op.drop_index('ix_feedback_user_id', table_name='feedback')
-    op.drop_index('ix_feedback_session_id', table_name='feedback')
-    op.drop_table('feedback')
-    op.drop_index('ix_tool_usage_tool_name', table_name='tool_usage')
-    op.drop_index('ix_tool_usage_user_id', table_name='tool_usage')
-    op.drop_index('ix_tool_usage_session_id', table_name='tool_usage')
-    op.drop_table('tool_usage')
     op.drop_index('ix_quiz_results_user_id', table_name='quiz_results')
     op.drop_index('ix_quiz_results_session_id', table_name='quiz_results')
     op.drop_table('quiz_results')

@@ -348,7 +348,6 @@ def dashboard():
         session.permanent = True
     lang = session.get('lang', 'en')
     current_app.logger.info(f"Starting dashboard for session {session['sid']}")
-    current_app.log_tool_usage(current_app, 'financial_health')
     try:
         # Query records from database for current user or session
         filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}

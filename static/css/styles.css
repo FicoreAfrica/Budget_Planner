@@ -1,7 +1,7 @@
 /* Define CSS Custom Properties for Colors */
 :root {
     /* Light Mode Colors */
-    --background-gradient: linear-gradient(135deg, #E3F2FD, #F5F7FA);
+    --background-gradient: #f9fbff; /* Soft blue site-wide background */
     --text-color: #333;
     --navbar-gradient: linear-gradient(90deg, #0288D1, #2E7D32);
     --header-message-gradient: linear-gradient(90deg, #0288D1, #2E7D32);
@@ -24,15 +24,15 @@
     --journey-line-gradient-horizontal: linear-gradient(to right, #0288D1, #2E7D32);
     --journey-step-hover-bg: #f8f9fa;
     --journey-icon: #0288D1;
-    --tool-group-bg: #f9f9f9;
+    --tool-group-bg: #f0f0f0;
     --tool-group-border: #e0e0e0;
     --group-title: #0288D1;
     --group-subtext: #6c757d;
-    --accordion-button-bg: #f9f9f9;
+    --accordion-button-bg: #ffffff; /* Clean white for accordion cards */
     --accordion-button-bg-hover: #E3F2FD;
     --accordion-button-text: #0288D1;
     --accordion-button-text-hover: #2E7D32;
-    --accordion-border: #e0e0e0;
+    --accordion-border: #e0e0e0; /* Light border for accordion */
     --tool-header-bg: #f8f9fa;
     --tool-header-border: #ddd;
     --tool-title-gradient: linear-gradient(90deg, #2E7D32, #0288D1);
@@ -66,7 +66,7 @@
     --info-box-bg: #fff3cd;
     --info-box-text: #856404;
     --info-box-border: #ffeeba;
-    --section-bg: #E3F2FD;
+    --section-bg: #f0f0f0;
     --section-border: #e0e0e0;
     --testimonial-text: #333;
     --testimonial-quote: #0288D1;
@@ -104,11 +104,11 @@
     --journey-line-gradient-horizontal: linear-gradient(to right, #0056b3, #1b5e20);
     --journey-step-hover-bg: #6c757d;
     --journey-icon: #4dabf7;
-    --tool-group-bg: #495057;
+    --tool-group-bg: #40444b;
     --tool-group-border: #6c757d;
     --group-title: #4dabf7;
     --group-subtext: #adb5bd;
-    --accordion-button-bg: #495057;
+    --accordion-button-bg: #40444b;
     --accordion-button-bg-hover: #6c757d;
     --accordion-button-text: #4dabf7;
     --accordion-button-text-hover: #1b5e20;
@@ -146,7 +146,7 @@
     --info-box-bg: #664d03;
     --info-box-text: #fff3cd;
     --info-box-border: #997404;
-    --section-bg: #495057;
+    --section-bg: #40444b;
     --section-border: #6c757d;
     --testimonial-text: #e9ecef;
     --testimonial-quote: #4dabf7;
@@ -170,34 +170,6 @@ body, .navbar, .header-message, .consent-banner, .btn, .hero, .card, .journey-st
 /* Smooth Scroll for Auto-Scrolling */
 body {
     scroll-behavior: smooth;
-}
-
-/* Mode Toggle Button */
-#modeToggle {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    padding: 0.75rem 1.25rem;
-    background: var(--button-gradient);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.3s ease, transform 0.2s ease;
-    width: auto;
-}
-
-#modeToggle:hover {
-    background: var(--button-gradient-hover);
-    transform: scale(1.05);
-}
-
-#modeToggle i {
-    font-size: 1rem;
-    transition: color 0.3s ease;
 }
 
 /* Mobile-First Base Styles */
@@ -232,6 +204,18 @@ body {
     align-items: center;
     justify-content: space-between;
     padding: 0.5rem 1rem;
+    position: relative;
+}
+
+.navbar::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 10px;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.1), transparent);
+    pointer-events: none;
 }
 
 .navbar-brand {
@@ -243,7 +227,10 @@ body {
 }
 
 .logo-centered {
-    max-width: 80px;
+    border-radius: 50%;
+    object-fit: contain;
+    width: 80px;
+    height: 80px;
 }
 
 .navbar-toggler {
@@ -259,6 +246,18 @@ body {
     background: var(--button-nav-gradient-hover);
 }
 
+.navbar-toggler .navbar-toggler-icon {
+    font-size: 1.2rem;
+    width: 2rem;
+    height: 2rem;
+    background-color: white;
+    color: #003366;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .navbar-nav {
     gap: 0.5rem;
     flex-direction: column;
@@ -269,6 +268,12 @@ body {
     color: #FFFFFF !important;
     font-weight: bold;
     font-size: 0.9rem;
+}
+
+.nav-item.dropdown .nav-link {
+    font-size: 0.85rem;
+    color: #FFFFFF !important;
+    padding: 0.5rem 1rem;
 }
 
 .navbar-collapse {
@@ -284,10 +289,70 @@ body {
     justify-content: flex-end;
 }
 
+.dropdown-menu {
+    background: #ffffff;
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.dropdown-item {
+    font-size: 0.85rem;
+    color: #004d26 !important;
+    padding: 0.5rem 1rem;
+    transition: background-color 0.3s ease;
+}
+
+.dropdown-item:hover {
+    background-color: #c8f0d2;
+    color: #003319 !important;
+}
+
 @keyframes gradientShift {
     0% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
     100% { background-position: 0% 50%; }
+}
+
+/* Mode Toggle Button */
+#modeToggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    background: var(--button-gradient);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.2s ease;
+    width: auto;
+}
+
+#modeToggle:hover {
+    background: var(--button-gradient-hover);
+    transform: scale(1.05);
+}
+
+#modeToggle i {
+    font-size: 1rem;
+    transition: color 0.3s ease;
+}
+
+/* Language Toggle Button */
+.language-btn {
+    font-size: 0.85rem;
+    min-width: 80px;
+    white-space: nowrap;
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.language-btn i {
+    font-size: 0.9rem;
 }
 
 /* Header Message */
@@ -395,16 +460,6 @@ body {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
-.language-btn {
-    font-size: 0.85rem;
-    min-width: 80px;
-    white-space: nowrap;
-}
-
-.language-btn i {
-    font-size: 0.9rem;
-}
-
 /* Hero */
 .hero {
     background: var(--hero-gradient);
@@ -456,10 +511,10 @@ body {
 /* Card */
 .card {
     background: #FFFFFF;
-    border-radius: 10px;
+    border-radius: 8px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
     margin-bottom: 0.8rem;
-    border: 2px solid var(--card-border);
+    border: 1px solid var(--card-border);
     opacity: 0;
     transform: translateY(20px);
     animation: slideIn 0.5s forwards;
@@ -470,7 +525,7 @@ body {
 }
 
 .card.custom-card {
-    border-radius: 10px;
+    border-radius: 8px;
     border: none;
     box-shadow: 0 2px 6px rgba(0,0,0,0.08);
 }
@@ -481,6 +536,8 @@ body {
     max-width: none;
     margin: 0.5rem 0;
     padding: 1rem;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    border-radius: 8px;
 }
 
 .card-body {
@@ -499,6 +556,7 @@ body {
     font-size: 1.1rem;
     text-wrap: balance;
     white-space: normal;
+    color: #212529;
 }
 
 .card-title i {
@@ -509,6 +567,17 @@ body {
 .card-text {
     color: var(--card-text);
     font-size: 0.85rem;
+    margin-bottom: 0.5rem;
+}
+
+/* Recommended Label */
+.recommended-label {
+    background: #198754;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    color: white;
+    display: inline-block;
     margin-bottom: 0.5rem;
 }
 
@@ -536,6 +605,9 @@ body {
     z-index: 3;
     margin-bottom: 2rem;
     margin-top: 1rem;
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--section-header);
 }
 
 /* Horizontal timeline line for mobile */
@@ -549,13 +621,14 @@ body {
     height: 4px;
     background: var(--journey-line-gradient-horizontal);
     z-index: 0;
+    margin-top: 2rem; /* Lowered to avoid text overlap */
 }
 
 .journey-steps {
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
-    gap: 1rem;
+    gap: 1.5rem;
     position: relative;
     width: 100%;
     max-width: 100%;
@@ -635,11 +708,15 @@ body {
 
 /* Step content (icon and text) */
 .journey-step p {
-    margin: 0.5rem 0 0;
+    margin: 0.75rem 0 0; /* Increased margin-top for balance */
     text-wrap: balance;
     white-space: normal;
     position: relative;
     z-index: 3;
+}
+
+.journey-step p strong {
+    font-weight: 600; /* Emphasize "Step X:" */
 }
 
 /* Tool Group */
@@ -663,7 +740,7 @@ body {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    color: var(--group-title);
+    color: #212529;
 }
 
 .group-subtext {
@@ -675,7 +752,7 @@ body {
 .tools-grid {
     display: flex;
     flex-direction: column;
-    gap: 0.8rem;
+    gap: 1.5rem; /* Consistent spacing */
 }
 
 /* Accordion */
@@ -685,8 +762,9 @@ body {
     color: var(--accordion-button-text);
     background-color: var(--accordion-button-bg);
     border: none;
-    padding: 0.8rem 1rem;
+    padding: 1.2rem 1.5rem; /* Increased padding */
     transition: background 0.3s ease, color 0.3s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* Soft shadow */
 }
 
 .accordion-button:hover {
@@ -704,28 +782,36 @@ body {
 }
 
 .accordion-body {
-    padding: 0.5rem 1rem;
+    padding: 1.5rem; /* Increased padding */
+    background-color: #ffffff; /* Clean white */
+    border: 1px solid var(--accordion-border);
+    border-top: none;
 }
 
 .accordion-item {
-    border-bottom: 1px solid var(--accordion-border);
+    border: 1px solid var(--accordion-border);
+    border-radius: 8px;
     margin-bottom: 0.5rem;
     transition: max-height 0.3s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* Soft shadow */
 }
 
 .accordion-item:last-child {
-    border-bottom: none;
+    border-bottom: 1px solid var(--accordion-border);
 }
 
 /* Tool Card */
 .tool-card h3 {
     margin-bottom: 0.4rem;
     font-size: 1.1rem;
+    font-weight: 600;
+    color: #212529;
 }
 
 .tool-card p {
     font-size: 0.85rem;
     margin-bottom: 1rem;
+    color: var(--card-text);
 }
 
 /* Financial Health Score Badge */
@@ -929,7 +1015,7 @@ body {
 
 .about-title {
     font-size: 1.8rem;
-    font-weight: 700;
+    font-weight: 600;
     color: white;
     margin-bottom: 0.5rem;
 }
@@ -1046,18 +1132,19 @@ body {
 .testimonials-section {
     background-color: var(--section-bg);
     border: 1px solid var(--section-border);
-    border-radius: 5px;
-    padding: 0.3rem;
-    margin-bottom: 0.8rem;
+    border-radius: 8px;
+    padding: 2rem 0.3rem;
+    margin-bottom: 2rem;
 }
 
-.testimonials-section h2 {
-    font-size: 1.3rem;
+.testimonials-section h2.section-heading {
+    font-size: 1.4rem;
     font-weight: 600;
     color: var(--section-header);
     text-align: center;
     line-height: 1.5;
-    padding: 0.5rem;
+    padding: 1rem;
+    border-bottom: 1px solid var(--section-border);
 }
 
 .testimonial {
@@ -1106,7 +1193,7 @@ body {
     background-color: var(--section-bg);
     border: 1px solid var(--section-border);
     padding: 0.3rem;
-    border-radius: 5px;
+    border-radius: 8px;
     margin-bottom: 0.8rem;
 }
 
@@ -1114,9 +1201,9 @@ body {
 .faq-section {
     background-color: var(--section-bg);
     border: 1px solid var(--section-border);
-    padding: 0.3rem;
-    border-radius: 5px;
-    margin-bottom: 0.8rem;
+    padding: 2rem 0.3rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
 }
 
 .faq-item {
@@ -1130,7 +1217,8 @@ body {
 
 .faq-item h3 i {
     color: var(--accent-blue);
-    font-size: 0.9rem;
+    font-size: 1.1rem;
+    margin-right: 8px;
 }
 
 .faq-item p {
@@ -1142,18 +1230,19 @@ body {
 .why-section {
     background-color: var(--section-bg);
     border: 1px solid var(--section-border);
-    padding: 0.3rem;
-    border-radius: 5px;
-    margin-bottom: 0.8rem;
+    padding: 2rem 0.3rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
 }
 
-.why-section h2 {
-    font-size: 1.3rem;
+.why-section h2.section-heading {
+    font-size: 1.4rem;
     font-weight: 600;
     color: var(--section-header);
     text-align: center;
     line-height: 1.5;
-    padding: 0.5rem;
+    padding: 1rem;
+    border-bottom: 1px solid var(--section-border);
 }
 
 .why-list li {
@@ -1209,14 +1298,17 @@ body {
 h1, h3,
 .tools-section h2,
 .recommended-learning h2,
-.faq-section h2 {
+.faq-section h2.section-heading,
+.why-section h2.section-heading,
+.testimonials-section h2.section-heading {
     font-family: 'Poppins', 'Arial', sans-serif;
     color: var(--section-header);
     font-size: 1.4rem;
     font-weight: 600;
     text-align: center;
     line-height: 1.5;
-    padding: 0.5rem;
+    padding: 1rem;
+    border-bottom: 1px solid var(--section-border);
 }
 
 .card-title i,
@@ -1327,19 +1419,20 @@ h1, h3,
     }
 
     .container {
+        max-width: 100%;
         padding: 0.3rem 0.5rem;
     }
 
     .btn, .btn-primary, .btn-explore, .language-btn, .course-link, .modal .btn {
         padding: 0.75rem 1.5rem;
         font-size: 1rem;
-        border-radius: 10px;
+        border-radius: 8px;
     }
 
     .index-page .tool-card button {
         padding: 0.75rem 1.75rem;
         font-size: 1rem;
-        border-radius: 10px;
+        border-radius: 8px;
     }
 
     .hero h2 {
@@ -1352,7 +1445,7 @@ h1, h3,
 
     .journey-steps {
         max-width: 100%;
-        gap: 0.8rem;
+        gap: 1rem;
     }
 
     .journey-step {
@@ -1366,6 +1459,13 @@ h1, h3,
         font-size: 0.9rem;
     }
 
+    .testimonials-section h2.section-heading,
+    .why-section h2.section-heading,
+    .faq-section h2.section-heading {
+        font-size: 1.2rem;
+        padding: 0.8rem;
+    }
+
     #modeToggle {
         padding: 0.75rem 1.25rem;
         font-size: 0.8rem;
@@ -1377,13 +1477,26 @@ h1, h3,
     .btn-primary.btn-explore {
         padding: 0.75rem 1.5rem;
         font-size: 1rem;
-        border-radius: 10px;
+        border-radius: 8px;
     }
 
     .index-page .tool-card button {
         padding: 0.75rem 1.75rem;
         font-size: 1rem;
-        border-radius: 10px;
+        border-radius: 8px;
+    }
+
+    .journey-steps {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        justify-content: center;
+    }
+
+    .journey-step {
+        flex: 1 1 45%;
+        max-width: 150px;
+        margin-bottom: 1rem;
     }
 }
 
@@ -1408,7 +1521,8 @@ h1, h3,
     }
 
     .logo-centered {
-        max-width: 120px;
+        width: 120px;
+        height: 120px;
     }
 
     .navbar-nav {
@@ -1418,6 +1532,14 @@ h1, h3,
 
     .nav-link {
         font-size: 1rem;
+    }
+
+    .nav-item.dropdown .nav-link {
+        font-size: 0.9rem;
+    }
+
+    .dropdown-item {
+        font-size: 0.9rem;
     }
 
     .navbar-toggler {
@@ -1513,13 +1635,14 @@ h1, h3,
         width: auto;
         height: 4px;
         background: var(--journey-line-gradient-horizontal);
+        margin-top: 2rem;
     }
 
     .journey-steps {
         flex-direction: row;
         justify-content: space-between;
         max-width: none;
-        gap: 1rem;
+        gap: 1.5rem;
         flex-wrap: nowrap;
     }
 
@@ -1541,7 +1664,7 @@ h1, h3,
     }
 
     .journey-step p {
-        margin: 0.5rem 0;
+        margin: 0.75rem 0;
     }
 
     .journey-icon {
@@ -1559,7 +1682,7 @@ h1, h3,
         flex-direction: row;
         flex-wrap: wrap;
         justify-content: center;
-        gap: 1rem;
+        gap: 1.5rem;
     }
 
     .tools-grid .col-md-4 {
@@ -1600,10 +1723,11 @@ h1, h3,
 
     .accordion-button {
         font-size: 1.6rem;
+        padding: 1.5rem 2rem;
     }
 
     .accordion-body {
-        padding: 1rem;
+        padding: 2rem;
     }
 
     .tool-header-container {
@@ -1694,11 +1818,13 @@ h1, h3,
     }
 
     .testimonials-section {
-        padding: 0.8rem;
+        padding: 2rem 0.8rem;
     }
 
-    .testimonials-section h2 {
-        font-size: 1.5rem;
+    .testimonials-section h2.section-heading {
+        font-size: 1.4rem;
+        padding: 1rem;
+        border-bottom: 1px solid var(--section-border);
     }
 
     .testimonial {
@@ -1720,59 +1846,72 @@ h1, h3,
     }
 
     .why-section {
-        padding: 0.8rem;
+        padding: 2rem 0.8rem;
     }
 
-    .why-section h2 {
-        font-size: 1.5rem;
+    .why-section h2.section-heading {
+        font-size: 1.4rem;
+        padding: 1rem;
+        border-bottom: 1px solid var(--section-border);
+    }
+
+    .faq-section {
+        padding: 2rem 0.8rem;
     }
 
     .faq-item h3 {
         font-size: 1.4rem;
     }
+}
 
-    .faq-item h3 i {
-        font-size: 1rem;
+/* Additional Media Query for Larger Screens */
+@media (min-width: 1200px) {
+    .container {
+        max-width: 1400px;
+        padding: 1.5rem 3rem;
     }
 
-    .faq-item p {
-        font-size: 0.9rem;
+    .hero h2 {
+        font-size: clamp(1.8rem, 5vw, 2.5rem);
     }
 
-    .social-icons a {
-        font-size: 0.9rem;
-        margin: 0 8px;
+    .card-title {
+        font-size: 1.4rem;
     }
 
-    .footer-disclaimer {
-        font-size: 0.8rem;
+    .tool-card {
+        max-width: 450px;
     }
 
-    .footer-disclaimer i {
-        font-size: 0.9rem;
+    .group-title {
+        font-size: 1.8rem;
     }
 
-    .course-link {
-        font-size: 0.95rem;
+    .accordion-button {
+        font-size: 1.8rem;
     }
 
-    .resources a {
-        font-size: 0.9rem;
-    }
-
-    .list-group-item a {
-        font-size: 0.9rem;
-    }
-
-    h1, h3,
-    .tools-section h2,
-    .recommended-learning h2,
-    .faq-section h2 {
+    .tool-title {
         font-size: 2rem;
     }
 
-    #modeToggle {
-        padding: 0.75rem 1.25rem;
-        font-size: 0.95rem;
+    .about-title {
+        font-size: 3rem;
+    }
+
+    .testimonials-section, .why-section, .faq-section {
+        padding: 2.5rem 1rem;
+    }
+
+    .journey-steps {
+        flex-direction: row;
+        justify-content: space-between;
+        gap: 1.5rem;
+        flex-wrap: nowrap;
+    }
+
+    .journey-step {
+        flex: 0 0 22%;
+        max-width: 22%;
     }
 }

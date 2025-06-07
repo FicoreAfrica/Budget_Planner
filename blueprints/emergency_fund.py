@@ -40,12 +40,12 @@ class Step1Form(FlaskForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         lang = session.get('lang', 'en')
-        self.first_name.label.text = trans('emergency_fund_first_name', lang=lang) or 'First Name'
+        self.first_name.label.text = trans('emergency_fund_first_name', lang=lang)
         self.first_name.validators[0].message = trans('required_first_name', lang=lang, default='Please enter your first name.')
-        self.email.label.text = trans('emergency_fund_email', lang=lang) or 'Email'
+        self.email.label.text = trans('emergency_fund_email', lang=lang)
         self.email.validators[1].message = trans('emergency_fund_email_invalid', lang=lang, default='Please enter a valid email address.')
-        self.email_opt_in.label.text = trans('emergency_fund_send_email', lang=lang) or 'Send Email Summary'
-        self.submit.label.text = trans('core_next', lang=lang) or 'Next'
+        self.email_opt_in.label.text = trans('emergency_fund_send_email', lang=lang)
+        self.submit.label.text = trans('core_next', lang=lang)
 
 class Step2Form(FlaskForm):
     monthly_expenses = CommaSeparatedFloatField(validators=[DataRequired(), NumberRange(min=0, max=10000000000)])
@@ -55,12 +55,12 @@ class Step2Form(FlaskForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         lang = session.get('lang', 'en')
-        self.monthly_expenses.label.text = trans('emergency_fund_monthly_expenses', lang=lang) or 'Monthly Expenses'
+        self.monthly_expenses.label.text = trans('emergency_fund_monthly_expenses', lang=lang)
         self.monthly_expenses.validators[0].message = trans('required_monthly_expenses', lang=lang, default='Please enter your monthly expenses.')
         self.monthly_expenses.validators[1].message = trans('emergency_fund_monthly_exceed', lang=lang, default='Amount exceeds maximum limit.')
-        self.monthly_income.label.text = trans('emergency_fund_monthly_income', lang=lang) or 'Monthly Income'
+        self.monthly_income.label.text = trans('emergency_fund_monthly_income', lang=lang)
         self.monthly_income.validators[1].message = trans('emergency_fund_monthly_exceed', lang=lang, default='Amount exceeds maximum limit.')
-        self.submit.label.text = trans('core_next', lang=lang) or 'Next'
+        self.submit.label.text = trans('core_next', lang=lang)
 
 class Step3Form(FlaskForm):
     current_savings = CommaSeparatedFloatField(validators=[Optional(), NumberRange(min=0, max=10000000000)])
@@ -73,18 +73,18 @@ class Step3Form(FlaskForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         lang = session.get('lang', 'en')
-        self.current_savings.label.text = trans('emergency_fund_current_savings', lang=lang) or 'Current Savings'
-        self.current_savings.validators[1].message = trans('emergency_fund_savings_max', lang=lang, default='Savings amount exceeds maximum limit.')
-        self.risk_tolerance_level.label.text = trans('emergency_fund_risk_tolerance_level', lang=lang) or 'Risk Tolerance Level'
+        self.current_savings.label.text = trans('emergency_fund_current_savings', lang=lang)
+        self.current_savings.validators[1].message = trans('emergency_fund_savings_max', lang=lang, default='Amount exceeds maximum limit.')
+        self.risk_tolerance_level.label.text = trans('emergency_fund_risk_tolerance_level', lang=lang)
         self.risk_tolerance_level.validators[0].message = trans('required_risk_tolerance', lang=lang, default='Please select your risk tolerance.')
         self.risk_tolerance_level.choices = [
-            ('low', trans('emergency_fund_risk_tolerance_level_low', lang=lang, default='Low')),
-            ('medium', trans('emergency_fund_risk_tolerance_level_medium', lang=lang, default='Medium')),
-            ('high', trans('emergency_fund_risk_tolerance_level_high', lang=lang, default='High'))
+            ('low', trans('emergency_fund_risk_tolerance_level_low', lang=lang)),
+            ('medium', trans('emergency_fund_risk_tolerance_level_medium', lang=lang)),
+            ('high', trans('emergency_fund_risk_tolerance_level_high', lang=lang))
         ]
-        self.dependents.label.text = trans('emergency_fund_dependents', lang=lang) or 'Number of Dependents'
+        self.dependents.label.text = trans('emergency_fund_dependents', lang=lang)
         self.dependents.validators[1].message = trans('emergency_fund_dependents_max', lang=lang, default='Number of dependents exceeds maximum.')
-        self.submit.label.text = trans('core_next', lang=lang) or 'Next'
+        self.submit.label.text = trans('core_next', lang=lang)
 
 class Step4Form(FlaskForm):
     timeline = SelectField(validators=[DataRequired()], choices=[
@@ -95,14 +95,14 @@ class Step4Form(FlaskForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         lang = session.get('lang', 'en')
-        self.timeline.label.text = trans('emergency_fund_timeline', lang=lang) or 'Timeline'
+        self.timeline.label.text = trans('emergency_fund_timeline', lang=lang)
         self.timeline.validators[0].message = trans('required_timeline', lang=lang, default='Please select a timeline.')
         self.timeline.choices = [
-            ('6', trans('emergency_fund_6_months', lang=lang, default='6 Months')),
-            ('12', trans('emergency_fund_12_months', lang=lang, default='12 Months')),
-            ('18', trans('emergency_fund_18_months', lang=lang, default='18 Months'))
+            ('6', trans('emergency_fund_6_months', lang=lang)),
+            ('12', trans('emergency_fund_12_months', lang=lang)),
+            ('18', trans('emergency_fund_18_months', lang=lang))
         ]
-        self.submit.label.text = trans('emergency_fund_calculate_button', lang=lang) or 'Calculate'
+        self.submit.label.text = trans('emergency_fund_calculate_button', lang=lang)
 
 @emergency_fund_bp.route('/step1', methods=['GET', 'POST'])
 def step1():
@@ -309,7 +309,7 @@ def step4():
                         )
                     except Exception as e:
                         current_app.logger.error(f"Failed to send email: {str(e)}")
-                        flash(trans("email_send_failed", lang=lang, default='Failed to send email.'), "danger")
+                        flash(trans("email_send_failed", lang=lang), "danger")
 
                 # Clear session data after saving
                 for key in ['emergency_fund_step1', 'emergency_fund_step2', 'emergency_fund_step3', 'emergency_fund_step4']:
@@ -336,7 +336,6 @@ def dashboard():
         session.permanent = True
         session.modified = True
     lang = session.get('lang', 'en')
-    current_app.log_tool_usage(current_app, 'emergency_fund')
     try:
         # Filter by user_id if authenticated, else session_id
         filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
@@ -354,18 +353,16 @@ def dashboard():
         insights = []
         if latest_record:
             if latest_record.get('savings_gap', 0) <= 0:
-                insights.append(trans('emergency_fund_insight_fully_funded', lang=lang, default='Your emergency fund is fully funded!'))
+                insights.append(trans('emergency_fund_insight_fully_funded', lang=lang))
             else:
                 insights.append(trans('emergency_fund_insight_savings_gap', lang=lang,
-                                     savings_gap=latest_record.get('savings_gap', 0),
-                                     months=latest_record.get('timeline', 0),
-                                     default=f'You have a savings gap of {latest_record.get("savings_gap", 0)} to cover {latest_record.get("timeline", 0)} months.'))
+                                    savings_gap=latest_record.get('savings_gap', 0),
+                                    months=latest_record.get('timeline', 0)))
                 if latest_record.get('percent_of_income') and latest_record.get('percent_of_income') > 30:
-                    insights.append(trans('emergency_fund_insight_high_income_percentage', lang=lang, default='Your savings goal requires more than 30% of your income.'))
+                    insights.append(trans('emergency_fund_insight_high_income_percentage', lang=lang))
                 if latest_record.get('dependents', 0) > 2:
                     insights.append(trans('emergency_fund_insight_large_family', lang=lang,
-                                         recommended_months=latest_record.get('recommended_months', 0),
-                                         default=f'With a large family, consider saving for {latest_record.get("recommended_months", 0)} months.'))
+                        recommended_months=latest_record.get('recommended_months', 0)))
 
         cross_tool_insights = []
         budget_data = Budget.query.filter_by(**filter_kwargs).order_by(Budget.created_at.desc()).all()
@@ -375,8 +372,7 @@ def dashboard():
                 savings_possible = latest_budget.income - latest_budget.fixed_expenses
                 if savings_possible > 0:
                     cross_tool_insights.append(trans('emergency_fund_cross_tool_savings_possible', lang=lang,
-                                                    amount=savings_possible,
-                                                    default=f'Your budget shows {savings_possible} available for savings.'))
+                                                   amount=savings_possible))
 
         return render_template(
             'emergency_fund_dashboard.html',
@@ -385,17 +381,17 @@ def dashboard():
             insights=insights,
             cross_tool_insights=cross_tool_insights,
             tips=[
-                trans('emergency_fund_tip_automate_savings', lang=lang, default='Automate your savings to stay consistent.'),
-                trans('budget_tip_ajo_savings', lang=lang, default='Consider group savings plans.'),
-                trans('emergency_fund_tip_track_expenses', lang=lang, default='Track expenses to identify savings opportunities.'),
-                trans('budget_tip_monthly_savings', lang=lang, default='Set a monthly savings goal.')
+                trans('emergency_fund_tip_automate_savings', lang=lang),
+                trans('budget_tip_ajo_savings', lang=lang),
+                trans('emergency_fund_tip_track_expenses', lang=lang),
+                trans('budget_tip_monthly_savings', lang=lang)
             ],
             trans=trans,
             lang=lang
         )
     except Exception as e:
         current_app.logger.exception(f"Error in dashboard: {str(e)}")
-        flash(trans('emergency_fund_load_dashboard_error', lang=lang, default='Error loading dashboard.'), 'danger')
+        flash(trans('emergency_fund_load_dashboard_error', lang=lang), 'danger')
         return render_template(
             'emergency_fund_dashboard.html',
             records=[],
@@ -403,10 +399,10 @@ def dashboard():
             insights=[],
             cross_tool_insights=[],
             tips=[
-                trans('emergency_fund_tip_automate_savings', lang=lang, default='Automate your savings to stay consistent.'),
-                trans('budget_tip_ajo_savings', lang=lang, default='Consider group savings plans.'),
-                trans('emergency_fund_tip_track_expenses', lang=lang, default='Track expenses to identify savings opportunities.'),
-                trans('budget_tip_monthly_savings', lang=lang, default='Set a monthly savings goal.')
+                trans('emergency_fund_tip_automate_savings', lang=lang),
+                trans('budget_tip_ajo_savings', lang=lang),
+                trans('emergency_fund_tip_track_expenses', lang=lang),
+                trans('budget_tip_monthly_savings', lang=lang)
             ],
             trans=trans,
             lang=lang
@@ -421,10 +417,10 @@ def unsubscribe(email):
         for record in records:
             record.email_opt_in = False
         db.session.commit()
-        flash(trans('emergency_fund_unsubscribed_success', lang=lang, default='Successfully unsubscribed from emails.'), 'success')
+        flash(trans("emergency_fund_unsubscribed_success", lang=lang), "success")
     except Exception as e:
         current_app.logger.exception(f"Error in emergency_fund.unsubscribe: {str(e)}")
-        flash(trans('emergency_fund_unsubscribe_error', lang=lang, default='Error unsubscribing from emails.'), 'danger')
+        flash(trans("emergency_fund_unsubscribe_error", lang=lang), "danger")
     return redirect(url_for('index'))
 
 @emergency_fund_bp.route('/debug/storage', methods=['GET'])
@@ -434,12 +430,12 @@ def debug_storage():
         records = EmergencyFund.query.filter_by(**filter_kwargs).all()
         record_dicts = [record.to_dict() for record in records]
         response = {
-            'records': record_dicts,
-            'count': len(records),
-            'session_id': session['sid']
+            "records": record_dicts,
+            "count": len(records),
+            "session_id": session['sid']
         }
         current_app.logger.info(f"Debug storage: {response}")
         return jsonify(response)
     except Exception as e:
         current_app.logger.error(f"Debug storage failed: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({"error": str(e)}), 500
