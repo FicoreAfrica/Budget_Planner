@@ -249,14 +249,13 @@ def create_app():
     print("Starting create_app", file=sys.stderr, flush=True)
     app = Flask(__name__, template_folder='templates')
 
-    # Set secret key from environment variable with enhanced logging
-    secret_key = os.environ.get('FLASK_SECRET_KEY')
+    # Set secret key with fallback to ensure session functionality
+    secret_key = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key-please-change-me')
     logger.info(f"Raw FLASK_SECRET_KEY from environment: {secret_key}")
     app.config['SECRET_KEY'] = secret_key
     logger.info(f"app.config['SECRET_KEY'] set to: {app.config['SECRET_KEY']}")
-    if not app.config['SECRET_KEY']:
-        logger.critical("FLASK_SECRET_KEY not set in environment variables!")
-        raise ValueError("FLASK_SECRET_KEY must be set in environment variables for production!")
+    if not os.environ.get('FLASK_SECRET_KEY'):
+        logger.warning("FLASK_SECRET_KEY not set. Using fallback for development. Set it in production.")
     else:
         logger.info("Secret key successfully loaded from environment")
 
@@ -719,13 +718,15 @@ def create_app():
 # Move app creation to global scope to ensure single instance
 app = create_app()
 
-try:
-    print("Attempting to create app", file=sys.stderr, flush=True)
-    # Remove redundant app creation here
-except Exception as e:
-    print(f"Error creating app: {str(e)}", file=sys.stderr, flush=True)
-    early_logger.error(f"Error creating app: {str(e)}")
-    raise
+# Remove redundant try-except block and ensure single instance
+# The following block is now unnecessary and removed
+# try:
+#     print("Attempting to create app", file=sys.stderr, flush=True)
+#     # Remove redundant app creation here
+# except Exception as e:
+#     print(f"Error creating app: {str(e)}", file=sys.stderr, flush=True)
+#     early_logger.error(f"Error creating app: {str(e)}")
+#     raise
 
 # Remove or comment out the following block for production
 # if __name__ == '__main__':
