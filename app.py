@@ -242,10 +242,8 @@ def initialize_database(app):
                 )
                 admin_user.set_password(admin_password)
                 db.session.add(admin_user)
-                logger.info(f"Created admin user with &
-```python
-                    email={admin_email}")
-                print(f"Created admin user with email={admin_email}", file=sys.stderr, flush=True)
+                logger.info(f"Created admin user with email {admin_email}")
+                print(f"Created admin user with email {admin_email}", file=sys.stderr, flush=True)
             elif not admin_user.is_admin:
                 admin_user.is_admin = True
                 logger.info(f"Assigned admin role to existing user {admin_email}")
