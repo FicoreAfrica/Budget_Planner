@@ -172,7 +172,7 @@ def create_app():
 
     # Apply migrations and initialize database
     with app.app_context():
-        apply_migrations(app)  # Run migrations before creating tables
+        # apply_migrations(app)  # Run migrations before creating tables (temporarily disabled for testing)
         db.create_all()
         initialize_courses_data(app)
         logger.info("Database tables created and courses initialized")
