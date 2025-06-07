@@ -311,7 +311,9 @@ class QuizResult(db.Model):
     badges = db.Column(db.Text, nullable=True)  # JSON string
     insights = db.Column(db.Text, nullable=True)  # JSON string
     tips = db.Column(db.Text, nullable=True)  # JSON string
-    user = db.relationship('User', backref='quiz to_dict(self):
+    user = db.relationship('User', backref='quiz_results')
+
+    def to_dict(self):
         return {
             'id': self.id,
             'user_id': self.user_id,
