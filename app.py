@@ -1,3 +1,4 @@
+```python
 import os
 import sys
 import logging
@@ -15,6 +16,8 @@ from models import Course, FinancialHealth, Budget, Bill, NetWorth, EmergencyFun
 import json
 from functools import wraps
 from uuid import uuid4
+from alembic import command
+from alembic.config import Config
 
 # Load environment variables
 load_dotenv()
@@ -83,6 +86,18 @@ def initialize_courses_data(app):
             logger.info("Initialized courses in database")
         app.config['COURSES'] = [course.to_dict() for course in Course.query.all()]
 
+def apply_migrations(app):
+    alembic_cfg = Config(os.path.join(os.path.dirname(__file__), 'alembic.ini'))
+    alembic_cfg.set_main_option('sqlalchemy.url', app.config['SQLALCHEMY_DATABASE_URI'])
+    try:
+        with app.app_context():
+            logger.info("Applying database migrations")
+            command.upgrade(alembic_cfg, "head")
+            logger.info("Database migrations applied successfully")
+    except Exception as e:
+        logger.error(f"Failed to apply migrations: {str(e)}", exc_info=True)
+        raise
+
 # Constants
 SAMPLE_COURSES = [
     {
@@ -127,7 +142,7 @@ def create_app():
     flask_session.init_app(app)
     csrf.init_app(app)
 
-    # Configure SQLite database
+    # Configure database (use DATABASE_URL for Render, fallback to SQLite for local)
     db_dir = os.path.join(os.path.dirname(__file__), 'data')
     try:
         os.makedirs(db_dir, exist_ok=True)
@@ -135,8 +150,9 @@ def create_app():
     except (PermissionError, OSError) as e:
         logger.critical(f"Failed to create database directory {db_dir}: {str(e)}")
         raise
-    db_path = os.path.join(db_dir, 'ficore.db')
-    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', f'sqlite:///{os.path.join(db_dir, "ficore.db")}')
+    if app.config['SQLALCHEMY_DATABASE_URI'].startswith('postgres://'):
+        app.config['SQLALCHEMY_DATABASE_URI'] = app.config['SQLALCHEMY_DATABASE_URI'].replace('postgres://', 'postgresql://')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     db.init_app(app)
 
@@ -155,7 +171,9 @@ def create_app():
     except Exception as e:
         logger.error(f"Failed to initialize scheduler: {str(e)}")
 
+    # Apply migrations and initialize database
     with app.app_context():
+        apply_migrations(app)  # Run migrations before creating tables
         db.create_all()
         initialize_courses_data(app)
         logger.info("Database tables created and courses initialized")
@@ -465,7 +483,6 @@ def create_app():
         response.headers['Content-Type'] = 'text/plain'
         return response
 
-    # Feedback route
     @app.route('/feedback', methods=['GET', 'POST'])
     @ensure_session_id
     def feedback():
@@ -520,3 +537,71 @@ try:
 except Exception as e:
     logger.error(f"Error creating app: {e}")
     raise
+
+from alembic import op
+import sqlalchemy as sa
+
+revision = 'update_feedback_id_to_integer'
+down_revision = 'initial_schema'
+branch_labels = None
+depends_on = None
+
+def upgrade():
+    # Create a new temporary table with the updated schema
+    op.create_table(
+        'feedback_new',
+        sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+        sa.Column('user_id', sa.Integer(), sa.ForeignKey('users.id'), nullable=True),
+        sa.Column('session_id', sa.String(length=36), nullable=False),
+        sa.Column('created_at', sa.DateTime(), nullable=False),
+        sa.Column('tool_name', sa.String(length=50), nullable=False),
+        sa.Column('rating', sa.Integer(), nullable=False),
+        sa.Column('comment', sa.Text(), nullable=True),
+        sa.ForeignKeyConstraint(['user_id'], ['users.id']),
+        sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index('ix_feedback_session_id', 'feedback_new', ['session_id'], unique=False)
+    op.create_index('ix_feedback_user_id', 'feedback_new', ['user_id'], unique=False)
+
+    # Copy data from old feedback table to new one (if any)
+    op.execute("""
+        INSERT INTO feedback_new (user_id, session_id, created_at, tool_name, rating, comment)
+        SELECT user_id, session_id, created_at, tool_name, rating, comment
+        FROM feedback
+    """)
+
+    # Drop the old feedback table
+    op.drop_table('feedback')
+
+    # Rename the new table to feedback
+    op.rename_table('feedback_new', 'feedback')
+
+def downgrade():
+    # Create a new temporary table with the original schema
+    op.create_table(
+        'feedback_old',
+        sa.Column('id', sa.String(length=36), nullable=False),
+        sa.Column('user_id', sa.Integer(), sa.ForeignKey('users.id'), nullable=True),
+        sa.Column('session_id', sa.String(length=36), nullable=False),
+        sa.Column('created_at', sa.DateTime(), nullable=False),
+        sa.Column('tool_name', sa.String(length=50), nullable=False),
+        sa.Column('rating', sa.Integer(), nullable=False),
+        sa.Column('comment', sa.Text(), nullable=True),
+        sa.ForeignKeyConstraint(['user_id'], ['users.id']),
+        sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index('ix_feedback_session_id', 'feedback_old', ['session_id'], unique=False)
+    op.create_index('ix_feedback_user_id', 'feedback_old', ['user_id'], unique=False)
+
+    # Copy data from current feedback table to old schema
+    op.execute("""
+        INSERT INTO feedback_old (id, user_id, session_id, created_at, tool_name, rating, comment)
+        SELECT CAST(id AS VARCHAR(36)), user_id, session_id, created_at, tool_name, rating, comment
+        FROM feedback
+    """)
+
+    # Drop the current feedback table
+    op.drop_table('feedback')
+
+    # Rename the old table to feedback
+    op.rename_table('feedback_old', 'feedback')
