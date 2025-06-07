@@ -1,6 +1,32 @@
 CORE_TRANSLATIONS = {
     'en': {
         'core_home': 'Home',
+        # Module: feedback
+        'feedback_page_title': 'Provide Feedback',
+        'feedback_page_description': 'We value your input! Choose how you’d like to share your feedback below.',
+        'feedback_new_form': 'Feedback (new)',
+        'feedback_new_description': 'Use our new feedback form to share your thoughts on specific tools.',
+        'feedback_tool_label': 'Tool',
+        'feedback_select_tool': 'Select a tool',
+        'feedback_rating_label': 'Rating',
+        'feedback_select_rating': 'Select a rating (1-5)',
+        'feedback_poor': 'Poor',
+        'feedback_excellent': 'Excellent',
+        'feedback_comment_label': 'Comment',
+        'feedback_comment_placeholder': 'Your feedback (optional)',
+        'feedback_submit': 'Submit Feedback',
+        'feedback_legacy_form': 'Legacy Google Form',
+        'feedback_legacy_description': 'Use our previous Google Form for general feedback.',
+        'feedback_open_google_form': 'Open Google Form',
+
+        # Module: tool
+        'tool_emergency_fund': 'Emergency Fund',
+        'tool_budget': 'Budget',
+        'tool_bill': 'Bill',
+        'tool_net_worth': 'Net Worth',
+        'tool_financial_health': 'Financial Health',
+        'tool_learning_hub': 'Learning Hub',
+        'tool_quiz': 'Quiz',
         # Module: admin
         'admin_dashboard_title': 'Admin Dashboard',
         'admin_dashboard_desc': 'View and analyze platform usage and engagement metrics',
@@ -1001,6 +1027,32 @@ CORE_TRANSLATIONS = {
         'Reflect on unplanned buying decisions.': 'Yi tunani game da shawarar siye ba tare da tsari ba.',
         'Continue': 'Ci gaba',
         'An error occurred': 'Wani kuskure ya faru',
+        # Module: feedback
+        'feedback_page_title': 'Bayar da Ra\'ayi',
+        'feedback_page_description': 'Muna daraja ra\'ayinku! Zaɓi yadda kuke son raba ra\'ayinku a ƙasa.',
+        'feedback_new_form': 'Ra\'ayi (sabon)',
+        'feedback_new_description': 'Yi amfani da sabon tsarin ra\'ayinmu don raba tunanin ku akan takamaiman kayan aiki.',
+        'feedback_tool_label': 'Kayan Aiki',
+        'feedback_select_tool': 'Zaɓi kayan aiki',
+        'feedback_rating_label': 'Kimantawa',
+        'feedback_select_rating': 'Zaɓi kimantawa (1-5)',
+        'feedback_poor': 'Mara kyau',
+        'feedback_excellent': 'Madalla',
+        'feedback_comment_label': 'Sharhi',
+        'feedback_comment_placeholder': 'Ra\'ayinku (na zaɓi)',
+        'feedback_submit': 'Gabatar da Ra\'ayi',
+        'feedback_legacy_form': 'Tsohon Tsarin Google',
+        'feedback_legacy_description': 'Yi amfani da tsarin Google na baya don ra\'ayi gabaɗaya.',
+        'feedback_open_google_form': 'Buɗe Tsarin Google',
+
+        # Module: tool
+        'tool_emergency_fund': 'Asusun Gaggawa',
+        'tool_budget': 'Kasafin Kuɗi',
+        'tool_bill': 'Kudin Biya',
+        'tool_net_worth': 'Darajar Net',
+        'tool_financial_health': 'Lafiyar Kuɗi',
+        'tool_learning_hub': 'Cibiyar Koyo',
+        'tool_quiz': 'Gwaji',
         'Enter your personal information': 'Shigar da bayanan ku na sirri'
     }
 }
