@@ -19,10 +19,9 @@ from alembic.config import Config
 from alembic import command
 from logging.handlers import RotatingFileHandler
 
-# Early print to confirm module loading
 print("Loading app.py", file=sys.stderr, flush=True)
 
-# Initialize a basic logger before app creation to catch early errors
+# Initialize early logger
 early_logger = logging.getLogger('ficore_early')
 early_logger.setLevel(logging.DEBUG)
 early_stream_handler = logging.StreamHandler(sys.stderr)
@@ -32,7 +31,6 @@ early_logger.addHandler(early_stream_handler)
 early_logger.debug("Early logger initialized")
 
 try:
-    # Load environment variables
     load_dotenv()
     early_logger.debug("Environment variables loaded")
 except Exception as e:
@@ -62,7 +60,6 @@ class SessionAdapter(logging.LoggerAdapter):
 
 logger = SessionAdapter(root_logger, {})
 
-# Constants
 SAMPLE_COURSES = [
     {
         'id': 'budgeting_learning_101',
@@ -95,7 +92,6 @@ SAMPLE_COURSES = [
 
 def setup_logging(app):
     print("Setting up logging", file=sys.stderr, flush=True)
-    # StreamHandler for stderr with immediate flushing
     class FlushingStreamHandler(logging.StreamHandler):
         def emit(self, record):
             super().emit(record)
@@ -106,11 +102,8 @@ def setup_logging(app):
     stream_handler.setFormatter(formatter)
     root_logger.addHandler(stream_handler)
     logger.debug(f"Logger level: {root_logger.getEffectiveLevel()}")
-    
-    # Temporarily disable RotatingFileHandler to ensure logs go to stderr for Render
     logger.info("RotatingFileHandler disabled for Render debugging; all logs redirected to stderr")
     
-    # Configure Gunicorn logging
     gunicorn_logger = logging.getLogger('gunicorn')
     gunicorn_logger.setLevel(logging.DEBUG)
     gunicorn_logger.handlers = [stream_handler]
@@ -118,23 +111,13 @@ def setup_logging(app):
     logger.info("Gunicorn logger configured to use stream handler")
 
 def setup_session(app):
-    session_dir = os.path.join(os.path.dirname(__file__), 'data', 'sessions')
-    try:
-        os.makedirs(session_dir, exist_ok=True)
-        logger.info(f"Session directory ensured at {session_dir}")
-        print(f"Session directory ensured at {session_dir}", file=sys.stderr, flush=True)
-    except OSError as e:
-        logger.error(f"Failed to create session directory {session_dir}: {str(e)}. Using in-memory sessions.")
-        print(f"Failed to create session directory {session_dir}: {str(e)}", file=sys.stderr, flush=True)
-        app.config['SESSION_TYPE'] = 'null'
-        return
-    app.config['SESSION_FILE_DIR'] = session_dir
-    app.config['SESSION_TYPE'] = 'filesystem'
+    # Use in-memory sessions by default for simplicity; consider Redis for production
+    app.config['SESSION_TYPE'] = 'memory'  # Changed from 'filesystem'
     app.config['SESSION_PERMANENT'] = True
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
     app.config['SESSION_USE_SIGNER'] = True
-    logger.info(f"Session configured: type={app.config['SESSION_TYPE']}, dir={session_dir}, lifetime={app.config['PERMANENT_SESSION_LIFETIME']}")
-    print(f"Session configured: type={app.config['SESSION_TYPE']}, dir={session_dir}", file=sys.stderr, flush=True)
+    logger.info(f"Session configured: type={app.config['SESSION_TYPE']}, lifetime={app.config['PERMANENT_SESSION_LIFETIME']}")
+    print(f"Session configured: type={app.config['SESSION_TYPE']}", file=sys.stderr, flush=True)
 
 def initialize_courses_data(app):
     with app.app_context():
@@ -185,7 +168,6 @@ def log_tool_usage(app, tool_name):
         db.session.rollback()
 
 def run_migrations():
-    """Run Alembic migrations to ensure the database schema is up-to-date."""
     try:
         alembic_cfg = Config(os.path.join(os.path.dirname(__file__), 'alembic.ini'))
         alembic_path = os.path.join(os.path.dirname(__file__), 'migrations')
@@ -208,7 +190,6 @@ def run_migrations():
         raise
 
 def initialize_database(app):
-    """Initialize the database by running migrations and setting up the admin user."""
     with app.app_context():
         try:
             run_migrations()
@@ -260,7 +241,6 @@ def create_app():
     flask_session.init_app(app)
     csrf.init_app(app)
 
-    # Configure database connection
     db_dir = os.path.join(os.path.dirname(__file__), 'data')
     try:
         os.makedirs(db_dir, exist_ok=True)
@@ -281,7 +261,6 @@ def create_app():
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     db.init_app(app)
 
-    # Initialize Flask-Login
     login_manager.init_app(app)
     login_manager.login_view = 'auth.signin'
 
@@ -289,7 +268,6 @@ def create_app():
     def load_user(user_id):
         return User.query.get(int(user_id))
 
-    # Initialize scheduler
     try:
         init_scheduler(app)
         logger.info("Scheduler initialized successfully")
@@ -298,7 +276,6 @@ def create_app():
         logger.error(f"Failed to initialize scheduler: {str(e)}")
         print(f"Failed to initialize scheduler: {str(e)}", file=sys.stderr, flush=True)
 
-    # Initialize database and admin user
     try:
         initialize_database(app)
         initialize_courses_data(app)
@@ -308,7 +285,6 @@ def create_app():
         logger.critical(f"Failed to initialize database: {str(e)}", exc_info=True)
         print(f"Failed to initialize database: {str(e)}", file=sys.stderr, flush=True)
 
-    # Register blueprints
     from blueprints.financial_health import financial_health_bp
     from blueprints.budget import budget_bp
     from blueprints.quiz import quiz_bp
@@ -484,7 +460,6 @@ def create_app():
         flash(translate('learning_hub_success_language_updated', default='Language updated successfully', lang=new_lang) if new_lang in valid_langs else translate('Invalid language', default='Invalid language', lang=new_lang), 'success' if new_lang in valid_langs else 'danger')
         return redirect(request.referrer or url_for('index'))
 
-        
     @app.route('/favicon.ico')
     def favicon():
         logger.info("Returning favicon.ico")
@@ -502,7 +477,6 @@ def create_app():
             filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
             print(f"Using filter kwargs: {filter_kwargs}", file=sys.stderr, flush=True)
 
-            # Financial Health
             fh_records = FinancialHealth.query.filter_by(**filter_kwargs).order_by(FinancialHealth.created_at.desc()).all()
             if not fh_records:
                 logger.warning(f"No FinancialHealth records found for filter: {filter_kwargs}")
@@ -512,7 +486,6 @@ def create_app():
                 'status': str(fh_records[0].status)
             } if fh_records else {'score': None, 'status': None}
 
-            # Budget
             budget_records = Budget.query.filter_by(**filter_kwargs).order_by(Budget.created_at.desc()).all()
             if not budget_records:
                 logger.warning(f"No Budget records found for filter: {filter_kwargs}")
@@ -522,7 +495,6 @@ def create_app():
                 'savings_goal': budget_records[0].savings_goal
             } if budget_records else {'surplus_deficit': None, 'savings_goal': None}
 
-            # Bills
             bills = Bill.query.filter_by(**filter_kwargs).all()
             if not bills:
                 logger.warning(f"No Bills found for filter: {filter_kwargs}")
@@ -535,7 +507,6 @@ def create_app():
                 'unpaid_amount': unpaid_amount
             }
 
-            # Net Worth
             nw_records = NetWorth.query.filter_by(**filter_kwargs).order_by(NetWorth.created_at.desc()).all()
             if not nw_records:
                 logger.warning(f"No NetWorth records found for filter: {filter_kwargs}")
@@ -545,7 +516,6 @@ def create_app():
                 'total_assets': nw_records[0].total_assets
             } if nw_records else {'net_worth': None, 'total_assets': None}
 
-            # Emergency Fund
             ef_records = EmergencyFund.query.filter_by(**filter_kwargs).order_by(EmergencyFund.created_at.desc()).all()
             if not ef_records:
                 logger.warning(f"No EmergencyFund records found for filter: {filter_kwargs}")
@@ -555,14 +525,12 @@ def create_app():
                 'savings_gap': ef_records[0].savings_gap
             } if ef_records else {'target_amount': None, 'savings_gap': None}
 
-            # Learning Progress
             lp_records = LearningProgress.query.filter_by(**filter_kwargs).all()
             if not lp_records:
                 logger.warning(f"No LearningProgress records found for filter: {filter_kwargs}")
                 print(f"No LearningProgress records found for filter: {filter_kwargs}", file=sys.stderr, flush=True)
             data['learning_progress'] = {lp.course_id: lp.to_dict() for lp in lp_records}
 
-            # Quiz Result
             quiz_records = QuizResult.query.filter_by(**filter_kwargs).order_by(QuizResult.created_at.desc()).all()
             if not quiz_records:
                 logger.warning(f"No QuizResult records found for filter: {filter_kwargs}")
@@ -683,7 +651,6 @@ def create_app():
 
     @app.route('/debug_log')
     def debug_log():
-        """Debug route to test logging."""
         logger.debug("Debug log test")
         logger.info("Info log test")
         logger.warning("Warning log test")
