@@ -110,6 +110,15 @@ def setup_logging(app):
     gunicorn_logger.handlers = [stream_handler]
     logger.debug(f"Gunicorn logger level: {gunicorn_logger.getEffectiveLevel()}")
     logger.info("Gunicorn logger configured to use stream handler")
+    
+    # Log secret key information
+    secret_key = app.config.get('SECRET_KEY', 'not-set')
+    if secret_key == 'not-set' or secret_key == 'dev-secret-key-please-change-me':
+        logger.warning("Secret key is not properly set or is using default value")
+        print("Secret key is not properly set or is using default value", file=sys.stderr, flush=True)
+    else:
+        logger.info("Secret key successfully configured at runtime")
+        print("Secret key successfully configured at runtime", file=sys.stderr, flush=True)
 
 def setup_session(app):
     app.config['SESSION_TYPE'] = 'memory'
@@ -233,8 +242,10 @@ def initialize_database(app):
                 )
                 admin_user.set_password(admin_password)
                 db.session.add(admin_user)
-                logger.info(f"Created admin user with email {admin_email}")
-                print(f"Created admin user with email {admin_email}", file=sys.stderr, flush=True)
+                logger.info(f"Created admin user with &
+```python
+                    email={admin_email}")
+                print(f"Created admin user with email={admin_email}", file=sys.stderr, flush=True)
             elif not admin_user.is_admin:
                 admin_user.is_admin = True
                 logger.info(f"Assigned admin role to existing user {admin_email}")
@@ -251,9 +262,9 @@ def create_app():
 
     # Set secret key with fallback to ensure session functionality
     secret_key = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key-please-change-me')
-    logger.info(f"Raw FLASK_SECRET_KEY from environment: {secret_key}")
+    logger.info(f"Raw FLASK_SECRET_KEY from environment: {'set' if os.environ.get('FLASK_SECRET_KEY') else 'not set'}")
     app.config['SECRET_KEY'] = secret_key
-    logger.info(f"app.config['SECRET_KEY'] set to: {app.config['SECRET_KEY']}")
+    logger.info(f"app.config['SECRET_KEY'] set successfully")
     if not os.environ.get('FLASK_SECRET_KEY'):
         logger.warning("FLASK_SECRET_KEY not set. Using fallback for development. Set it in production.")
     else:
@@ -717,18 +728,3 @@ def create_app():
 
 # Move app creation to global scope to ensure single instance
 app = create_app()
-
-# Remove redundant try-except block and ensure single instance
-# The following block is now unnecessary and removed
-# try:
-#     print("Attempting to create app", file=sys.stderr, flush=True)
-#     # Remove redundant app creation here
-# except Exception as e:
-#     print(f"Error creating app: {str(e)}", file=sys.stderr, flush=True)
-#     early_logger.error(f"Error creating app: {str(e)}")
-#     raise
-
-# Remove or comment out the following block for production
-# if __name__ == '__main__':
-#     app = create_app()
-#     app.run(debug=True)
