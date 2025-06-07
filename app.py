@@ -141,7 +141,7 @@ def create_app():
     flask_session.init_app(app)
     csrf.init_app(app)
 
-    # Configure database (use DATABASE_URL for Render, fallback to SQLite for local)
+    # Configure database
     db_dir = os.path.join(os.path.dirname(__file__), 'data')
     try:
         os.makedirs(db_dir, exist_ok=True)
@@ -172,7 +172,7 @@ def create_app():
 
     # Apply migrations and initialize database
     with app.app_context():
-         apply_migrations(app)  # Run migrations before creating tables (temporarily disabled for testing)
+        apply_migrations(app)  # Run migrations before creating tables
         db.create_all()
         initialize_courses_data(app)
         logger.info("Database tables created and courses initialized")
