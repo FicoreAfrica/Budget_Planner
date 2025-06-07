@@ -18,6 +18,7 @@ from uuid import uuid4
 from alembic.config import Config
 from alembic import command
 from logging.handlers import RotatingFileHandler
+from sqlalchemy import create_engine
 
 print("Loading app.py", file=sys.stderr, flush=True)
 
@@ -111,8 +112,7 @@ def setup_logging(app):
     logger.info("Gunicorn logger configured to use stream handler")
 
 def setup_session(app):
-    # Use in-memory sessions by default for simplicity; consider Redis for production
-    app.config['SESSION_TYPE'] = 'memory'  # Changed from 'filesystem'
+    app.config['SESSION_TYPE'] = 'memory'
     app.config['SESSION_PERMANENT'] = True
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
     app.config['SESSION_USE_SIGNER'] = True
@@ -191,13 +191,32 @@ def run_migrations():
 
 def initialize_database(app):
     with app.app_context():
+        db_path = app.config['SQLALCHEMY_DATABASE_URI'].replace('sqlite:///', '')
+        logger = logging.getLogger('ficore_app')
+
+        # Ensure the directory exists
+        os.makedirs(os.path.dirname(db_path), exist_ok=True)
+
+        # Check if database file exists and create it if not
+        if not os.path.exists(db_path):
+            logger.info(f"Creating new database file at {db_path}")
+            engine = create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
+            db.create_all()
+            db.session.commit()
+        else:
+            logger.info(f"Database file already exists at {db_path}")
+
+        # Apply migrations
         try:
+            logger.info("Starting Alembic migrations...")
             run_migrations()
+            logger.info("Database migrations applied successfully")
         except Exception as e:
             logger.critical(f"Migration failed: {str(e)}", exc_info=True)
             print(f"Migration failed: {str(e)}", file=sys.stderr, flush=True)
-            logger.warning("Skipping admin user initialization due to migration failure")
-            return
+            raise
+
+        # Initialize admin user
         admin_email = os.environ.get('ADMIN_EMAIL', 'admin@example.com')
         admin_password = os.environ.get('ADMIN_PASSWORD', 'defaultadminpassword')
         if admin_password == 'defaultadminpassword':
@@ -229,11 +248,15 @@ def initialize_database(app):
 def create_app():
     print("Starting create_app", file=sys.stderr, flush=True)
     app = Flask(__name__, template_folder='templates')
-    app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key-please-change-me')
-    if not os.environ.get('FLASK_SECRET_KEY'):
-        logger.warning("FLASK_SECRET_KEY not set. Using fallback for development. Set it in production.")
-        print("FLASK_SECRET_KEY not set", file=sys.stderr, flush=True)
-    
+
+    # Set secret key from environment variable
+    app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY')
+    if not app.config['SECRET_KEY']:
+        logger.critical("FLASK_SECRET_KEY not set in environment variables!")
+        raise ValueError("FLASK_SECRET_KEY must be set in environment variables for production!")
+    else:
+        logger.info("Secret key successfully loaded from environment")
+
     logger.info("Starting app creation")
     setup_logging(app)
     setup_session(app)
@@ -697,3 +720,7 @@ except Exception as e:
     print(f"Error creating app: {str(e)}", file=sys.stderr, flush=True)
     early_logger.error(f"Error creating app: {str(e)}")
     raise
+
+if __name__ == '__main__':
+    app = create_app()
+    app.run(debug=True)
