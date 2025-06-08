@@ -398,25 +398,28 @@ class ToolUsage(db.Model):
             'created_at': self.created_at.isoformat() + 'Z' if self.created_at else None
         }
 
-def log_tool_usage(tool_name, user_id, session_id, action):
+def log_tool_usage(tool_name, user_id=None, session_id=None, action=None, details=None):
     """
-    Log tool usage to the database.
+    Log tool usage to the database in a separate transaction.
     
     Args:
         tool_name (str): Name of the tool (e.g., 'financial_health', 'budget')
         user_id (int): ID of the authenticated user (None if unauthenticated)
         session_id (str): Session ID for tracking unauthenticated users
         action (str): Action performed (e.g., 'step1_view', 'dashboard_submit')
+        details (dict): Additional details for logging
     """
     try:
-        usage = ToolUsage(
-            tool_name=tool_name,
-            user_id=user_id,
-            session_id=session_id,
-            action=action
-        )
-        db.session.add(usage)
-        db.session.commit()
+        with db.session.begin_nested():  # Use nested transaction to isolate logging
+            usage = ToolUsage(
+                tool_name=tool_name,
+                user_id=user_id,
+                session_id=session_id or session.get('sid', 'unknown'),
+                action=action or 'unknown'
+            )
+            db.session.add(usage)
+            db.session.commit()
+        current_app.logger.info(f"Logged tool usage: {tool_name} for session {session_id}", extra={'details': details})
     except Exception as e:
         db.session.rollback()
-        current_app.logger.error(f"Failed to log tool usage: {str(e)}", extra={'tool_name': tool_name, 'session_id': session_id})
+        current_app.logger.error(f"Failed to log tool usage: {str(e)}", extra={'tool_name': tool_name, 'session_id': session_id, 'details': details})
