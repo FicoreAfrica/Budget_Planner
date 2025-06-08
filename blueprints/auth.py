@@ -106,8 +106,9 @@ def signup():
     form = SignupForm(lang=lang, formdata=request.form if request.method == 'POST' else None)
     referral_code = request.args.get('ref')
     referrer = None
-    session_id = session.get('sid', str(uuid.uuid4()))
-    session['sid'] = session_id
+    if 'sid' not in session:
+        session['sid'] = str(uuid.uuid4())
+    session_id = session['sid']
     
     # Log signup page view
     log_tool_usage('register', None, session_id, 'view_page')
@@ -127,6 +128,9 @@ def signup():
         except ValueError:
             logger.warning(f"Invalid referral code format: {referral_code}", extra={'session_id': session_id})
             flash(trans('auth_invalid_referral_format', default='Invalid referral code format.', lang=lang), 'warning')
+    
+    referral_link = None
+    referral_count = 0
     
     try:
         if request.method == 'POST':
@@ -153,21 +157,22 @@ def signup():
                 log_tool_usage('register', None, session_id, 'submit_error', details=f"Validation errors: {form.errors}")
                 flash(trans('auth_form_errors', default='Please correct the errors in the form.', lang=lang), 'danger')
         
-        return render_template('signup.html', form=form, lang=lang, referral_code=referral_code, referrer=referrer)
+        return render_template('signup.html', form=form, lang=lang, referral_code=referral_code, referrer=referrer, referral_link=referral_link, referral_count=referral_count)
+    
     except Exception as e:
         db.session.rollback()
         logger.error(f"Error in signup: {str(e)}", exc_info=True, extra={'session_id': session_id, 'username': form.username.data if form.username.data else 'unknown', 'email': form.email.data if form.email.data else 'unknown'})
         log_tool_usage('register', None, session_id, 'error', details=f"Exception: {str(e)}")
         flash(trans('auth_error', default='An error occurred. Please try again.', lang=lang), 'danger')
-        return render_template('signup.html', form=form, lang=lang, referral_code=referral_code, referrer=referrer), 500
-        
+        return render_template('signup.html', form=form, lang=lang, referral_code=referral_code, referrer=referrer, referral_link=referral_link, referral_count=referral_count), 500
+
 @auth_bp.route('/signin', methods=['GET', 'POST'])
 def signin():
     if current_user.is_authenticated:
         return redirect(url_for('index'))
     
     lang = session.get('lang', 'en')
-    form = SigninForm(lang=lang, formdata=request.form if request.formdata request.method == 'POST' else None)
+    form = SigninForm(lang=lang, formdata=request.form if request.method == 'POST' else None)
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
     session_id = session['sid']
@@ -188,10 +193,10 @@ def signin():
                 logger.warning(f"Invalid signin attempt for email: {form.email.data}", extra={'session_id': session_id})
                 log_tool_usage('login', None, session_id, 'submit_error')
                 flash(trans('auth_invalid_credentials', default='Invalid email or password.', lang=lang), 'danger')
-            elif form.errors:
-                logger.error(f"Signin form validation failed: {form.errors}", extra={'session_id': session_id})
-                log_tool_usage('login', None, session_id, 'submit_error')
-                flash(trans('auth_form_errors', default='Please correct the errors in the form.', lang=lang), 'danger')
+        elif form.errors:
+            logger.error(f"Signin form validation failed: {form.errors}", extra={'session_id': session_id})
+            log_tool_usage('login', None, session_id, 'submit_error')
+            flash(trans('auth_form_errors', default='Please correct the errors in the form.', lang=lang), 'danger')
     
         return render_template('signin.html', form=form, lang=lang)
     
@@ -243,13 +248,13 @@ def profile():
         referral_link = url_for('auth.signup', ref=current_user.referral_code, _external=True)
         referral_count = len(current_user.referrals)
         referred_users = current_user.referrals
-        return render_template('profile.html', lang=lang, referral_link=referral_link, referral_count=referral_count, referred_users=referrals, password_form=password_form)
+        return render_template('profile.html', lang=lang, referral_link=referral_link, referral_count=referral_count, referred_users=referred_users, password_form=password_form)
     
     except Exception as e:
         db.session.rollback()
         logger.error(f"Error in profile: {str(e)}", extra={'session_id': session_id})
         flash(trans('core_error', default='An error occurred. Please try again.', lang=lang), 'danger')
-        return render_template('profile.html', lang=lang, referral_link=referral_link, referral_count=referral_count, referred_users=referrals, password_form=password_form), 500
+        return render_template('profile.html', lang=lang, referral_link=referral_link, referral_count=referral_count, referred_users=referred_users, password_form=password_form), 500
 
 @auth_bp.route('/debug/auth')
 def debug_auth():
