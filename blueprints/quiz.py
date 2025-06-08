@@ -10,7 +10,7 @@ import logging
 from translations import trans
 from mailersend_email import send_email, EMAIL_CONFIG
 from extensions import db
-from models import QuizResult  # Import SQLAlchemy db and QuizResult model
+from models import QuizResult, log_tool_usage  # Added log_tool_usage import
 
 # Configure logging
 logger = logging.getLogger('ficore_app')
@@ -195,20 +195,33 @@ def step1():
     form = QuizStep1Form(lang=lang, data=form_data)
     
     try:
-        if request.method == 'POST' and form.validate_on_submit():
-            session['quiz_data'] = {
-                'first_name': form.first_name.data,
-                'email': form.email.data,
-                'lang': form.lang.data or 'en',
-                'send_email': form.send_email.data
-            }
-            session['lang'] = form.lang.data or 'en'
-            session.modified = True
-            logger.info(f"Quiz step 1 validated successfully for session {session['sid']}", extra={'session_id': session['sid']})
-            return redirect(url_for('quiz.step2a', course_id=course_id))
-        elif form.errors:
-            logger.error(f"Form validation failed in step1: {form.errors}", extra={'session_id': session['sid']})
-            flash(trans('quiz_form_errors', default='Please correct the errors in the form.', lang=lang), 'danger')
+        log_tool_usage(
+            tool_name='quiz',
+            user_id=current_user.id if current_user.is_authenticated else None,
+            session_id=session['sid'],
+            action='step1_view'
+        )
+        if request.method == 'POST':
+            log_tool_usage(
+                tool_name='quiz',
+                user_id=current_user.id if current_user.is_authenticated else None,
+                session_id=session['sid'],
+                action='step1_submit'
+            )
+            if form.validate_on_submit():
+                session['quiz_data'] = {
+                    'first_name': form.first_name.data,
+                    'email': form.email.data,
+                    'lang': form.lang.data or 'en',
+                    'send_email': form.send_email.data
+                }
+                session['lang'] = form.lang.data or 'en'
+                session.modified = True
+                logger.info(f"Quiz step 1 validated successfully for session {session['sid']}", extra={'session_id': session['sid']})
+                return redirect(url_for('quiz.step2a', course_id=course_id))
+            else:
+                logger.error(f"Form validation failed in step1: {form.errors}", extra={'session_id': session['sid']})
+                flash(trans('quiz_form_errors', default='Please correct the errors in the form.', lang=lang), 'danger')
         
         return render_template(
             'quiz_step1.html',
@@ -244,7 +257,19 @@ def step2a():
     ]
     
     try:
+        log_tool_usage(
+            tool_name='quiz',
+            user_id=current_user.id if current_user.is_authenticated else None,
+            session_id=session['sid'],
+            action='step2a_view'
+        )
         if request.method == 'POST':
+            log_tool_usage(
+                tool_name='quiz',
+                user_id=current_user.id if current_user.is_authenticated else None,
+                session_id=session['sid'],
+                action='step2a_submit'
+            )
             if form.back.data:
                 return redirect(url_for('quiz.step1', course_id=course_id))
             if form.validate_on_submit():
@@ -303,7 +328,19 @@ def step2b():
     ]
     
     try:
+        log_tool_usage(
+            tool_name='quiz',
+            user_id=current_user.id if current_user.is_authenticated else None,
+            session_id=session['sid'],
+            action='step2b_view'
+        )
         if request.method == 'POST':
+            log_tool_usage(
+                tool_name='quiz',
+                user_id=current_user.id if current_user.is_authenticated else None,
+                session_id=session['sid'],
+                action='step2b_submit'
+            )
             if form.back.data:
                 return redirect(url_for('quiz.step2a', course_id=course_id))
             if form.validate_on_submit():
@@ -416,6 +453,12 @@ def results():
     course_id = request.args.get('course_id', 'financial_quiz')
     
     try:
+        log_tool_usage(
+            tool_name='quiz',
+            user_id=current_user.id if current_user.is_authenticated else None,
+            session_id=session['sid'],
+            action='results_view'
+        )
         # Try to fetch results from session first
         results = session.get('quiz_results')
         
