@@ -74,11 +74,17 @@ def setup_logging(app):
         logger.warning(f"Failed to set up file logging: {str(e)}")
 
 def setup_session(app):
+    redis_host = os.environ.get('REDIS_HOST', 'localhost')
+    redis_port = int(os.environ.get('REDIS_PORT', 6379))
+    redis_db = int(os.environ.get('REDIS_DB', 0))
+    redis_password = os.environ.get('REDIS_PASSWORD', None)
+    
     app.config['SESSION_TYPE'] = 'redis'
     app.config['SESSION_REDIS'] = redis.Redis(
-        host=os.environ.get('REDIS_HOST', 'localhost'),
-        port=int(os.environ.get('REDIS_PORT', 6379)),
-        db=int(os.environ.get('REDIS_DB', 0))
+        host=redis_host,
+        port=redis_port,
+        db=redis_db,
+        password=redis_password
     )
     app.config['SESSION_PERMANENT'] = True
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
@@ -87,10 +93,11 @@ def setup_session(app):
     app.config['SESSION_COOKIE_HTTPONLY'] = True
     app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
     app.config['SESSION_COOKIE_SECURE'] = True  # Render uses HTTPS
+    
     try:
         app.config['SESSION_REDIS'].ping()
-        logger.info("Session configured: type=redis, connected successfully")
-    except Exception as e:
+        logger.info(f"Session configured: type=redis, host={redis_host}, port={redis_port}, db={redis_db}")
+    except redis.exceptions.ConnectionError as e:
         logger.critical(f"Failed to connect to Redis for sessions: {str(e)}")
         raise
     Session(app)
@@ -186,7 +193,7 @@ def create_app():
     app.config['CACHE_REDIS_HOST'] = os.environ.get('REDIS_HOST', 'localhost')
     app.config['CACHE_REDIS_PORT'] = int(os.environ.get('REDIS_PORT', 6379))
     app.config['CACHE_REDIS_DB'] = int(os.environ.get('REDIS_DB', 0))
-    app.config['CACHE_DEFAULT_TIMEOUT'] = 3600  # 1 hour
+    app.config['CACHE_REDIS_PASSWORD'] = os.environ.get('REDIS_PASSWORD', None)
     cache = Cache(app)
 
     # Initialize Flask-Login
@@ -315,7 +322,6 @@ def create_app():
                 g.logger.warning("data/storage.log not found")
         except Exception as e:
             logger.error(f"Before request error: {str(e)}", exc_info=True)
-            session.clear()  # Reset session on error
             db.session.rollback()  # Reset database session
             flash(translate('global_error_message', default='An error occurred', lang=session.get('lang', 'en')), 'danger')
 
@@ -519,7 +525,13 @@ def create_app():
             if not os.path.exists(os.path.join(os.path.dirname(__file__), 'data', 'storage.log')):
                 status["status"] = "warning"
                 status["details"] = "Log file data/storage.log not found"
-                return jsonify(status), 200
+            # Check Redis connectivity
+            try:
+                app.config['SESSION_REDIS'].ping()
+                status["redis"] = "connected"
+            except redis.exceptions.ConnectionError as e:
+                status["redis"] = f"failed: {str(e)}"
+                status["status"] = "warning"
             return jsonify(status), 200
         except Exception as e:
             logger.error(f"Health check failed: {str(e)}", exc_info=True)
@@ -527,13 +539,21 @@ def create_app():
             status["details"] = str(e)
             return jsonify(status), 500
 
+    @app.route('/test_session')
+    def test_session():
+        try:
+            session['test_key'] = session.get('test_key', 0) + 1
+            logger.info(f"Session test_key: {session['test_key']}, sid: {session.get('sid')}")
+            return jsonify({'test_key': session['test_key'], 'sid': session.get('sid')})
+        except Exception as e:
+            logger.error(f"Session test error: {str(e)}", exc_info=True)
+            return jsonify({'error': str(e)}), 500
+
     @app.errorhandler(500)
     def internal_error(error):
         lang = session.get('lang', 'en') if 'lang' in session else 'en'
         logger.error(f"Server error: {str(error)}", exc_info=True)
         db.session.rollback()  # Rollback any pending transactions
-        session.clear()  # Reset session to prevent corruption
-        db.session.remove()  # Clean up database session
         flash(translate('global_error_message', default='An internal server error occurred. Please try again.', lang=lang), 'danger')
         return render_template('error.html', t=translate, lang=lang), 500
 
@@ -542,10 +562,8 @@ def create_app():
         lang = session.get('lang', 'en') if 'lang' in session else 'en'
         logger.error(f"CSRF error: {str(e)}")
         db.session.rollback()  # Rollback on CSRF error
-        session.clear()  # Reset session
-        db.session.remove()  # Clean up database session
         flash(translate('global_csrf_error', default='Invalid CSRF token. Please try again.', lang=lang), 'danger')
-        return redirect(url_for('index'))
+        return redirect(url_for('auth.signin'))
 
     @app.errorhandler(404)
     def page_not_found(e):
