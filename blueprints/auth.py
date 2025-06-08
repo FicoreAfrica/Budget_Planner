@@ -114,14 +114,12 @@ def signup():
 
     if referral_code:
         try:
-            # Validate referral_code as a UUID
             uuid.UUID(referral_code)
             referrer = User.query.filter_by(referral_code=referral_code).first()
             if not referrer:
                 logger.warning(f"Invalid referral code: {referral_code}", extra={'session_id': session_id})
                 flash(trans('auth_invalid_referral', default='Invalid referral code.', lang=lang), 'warning')
             else:
-                # Check referral limit (e.g., max 100 referrals per user)
                 if len(referrer.referrals) >= 100:
                     logger.warning(f"Referral limit reached for referrer with code: {referral_code}", extra={'session_id': session_id})
                     flash(trans('auth_referral_limit_reached', default='This user has reached their referral limit.', lang=lang), 'warning')
@@ -133,7 +131,7 @@ def signup():
     try:
         if request.method == 'POST':
             if form.validate_on_submit():
-                is_admin = form.email.data == 'abumeemah@gmail.com'  # Assign admin status
+                is_admin = form.email.data == 'abumeemah@gmail.com'
                 user = User(
                     username=form.username.data,
                     email=form.email.data,
@@ -145,10 +143,11 @@ def signup():
                 )
                 db.session.add(user)
                 db.session.commit()
+                login_user(user)  # Automatically log in after signup
                 logger.info(f"User signed up: {user.username} with referral code: {referral_code or 'none'}, is_admin: {is_admin}", extra={'session_id': session_id})
                 log_tool_usage('register', user.id, session_id, 'submit_success')
-                flash(trans('auth_signup_success', default='Account created successfully! Please sign in.', lang=lang), 'success')
-                return redirect(url_for('auth.signin'))
+                flash(trans('auth_signup_success', default='Account created successfully! You are now signed in.', lang=lang), 'success')
+                return redirect(url_for('index'))
             else:
                 logger.error(f"Signup form validation failed: {form.errors}", extra={'session_id': session_id, 'username': form.username.data, 'email': form.email.data})
                 log_tool_usage('register', None, session_id, 'submit_error', details=f"Validation errors: {form.errors}")
@@ -156,6 +155,7 @@ def signup():
         
         return render_template('signup.html', form=form, lang=lang, referral_code=referral_code, referrer=referrer)
     except Exception as e:
+        db.session.rollback()
         logger.error(f"Error in signup: {str(e)}", extra={'session_id': session_id, 'username': form.username.data if form.username.data else 'unknown', 'email': form.email.data if form.email.data else 'unknown'})
         log_tool_usage('register', None, session_id, 'error', details=f"Exception: {str(e)}")
         flash(trans('auth_error', default='An error occurred. Please try again.', lang=lang), 'danger')
@@ -175,7 +175,7 @@ def signin():
     log_tool_usage('login', None, session_id, 'view_page')
 
     try:
-        with db.session.begin():
+        with db.session.begin():  # Use explicit transaction for signin
             if request.method == 'POST' and form.validate_on_submit():
                 user = User.query.filter_by(email=form.email.data).first()
                 if user and check_password_hash(user.password_hash, form.password.data):
@@ -240,6 +240,7 @@ def profile():
         referred_users = current_user.referrals
         return render_template('profile.html', lang=lang, referral_link=referral_link, referral_count=referral_count, referred_users=referred_users, password_form=password_form)
     except Exception as e:
+        db.session.rollback()
         logger.error(f"Error in profile: {str(e)}", extra={'session_id': session_id})
         flash(trans('core_error', default='An error occurred. Please try again.', lang=lang), 'danger')
         return render_template('profile.html', lang=lang, referral_link=referral_link, referral_count=referral_count, referred_users=referred_users, password_form=password_form), 500
