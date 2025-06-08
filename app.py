@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from flask import Flask, jsonify, render_template, request, session, redirect, url_for, flash, send_from_directory, has_request_context, g, current_app, make_response
 from flask_wtf.csrf import CSRFError, generate_csrf
 from flask_login import LoginManager, current_user
+from flask_caching import Cache
 from dotenv import load_dotenv
 from extensions import db, login_manager, session as flask_session, csrf
 from blueprints.auth import auth_bp
@@ -18,6 +19,7 @@ from uuid import uuid4
 from alembic import command
 from alembic.config import Config
 from werkzeug.security import generate_password_hash
+import redis
 
 # Load environment variables
 load_dotenv()
@@ -30,8 +32,6 @@ class SessionFormatter(logging.Formatter):
     def format(self, record):
         record.session_id = getattr(record, 'session_id', 'no-session-id')
         return super().format(record)
-
-formatter = SessionFormatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s [session: %(session_id)s]')
 
 class SessionAdapter(logging.LoggerAdapter):
     def process(self, msg, kwargs):
@@ -59,14 +59,14 @@ def admin_required(f):
 def setup_logging(app):
     handler = logging.StreamHandler(sys.stderr)
     handler.setLevel(logging.DEBUG)
-    handler.setFormatter(formatter)
+    handler.setFormatter(SessionFormatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s [session: %(session_id)s]'))
     root_logger.addHandler(handler)
     log_dir = os.path.join(os.path.dirname(__file__), 'data')
     os.makedirs(log_dir, exist_ok=True)
     try:
         file_handler = logging.FileHandler(os.path.join(log_dir, 'storage.log'))
         file_handler.setLevel(logging.DEBUG)
-        file_handler.setFormatter(formatter)
+        file_handler.setFormatter(SessionFormatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s [session: %(session_id)s]'))
         root_logger.addHandler(file_handler)
         logger.info("Logging setup complete with file handler")
     except (PermissionError, OSError) as e:
@@ -154,7 +154,7 @@ def create_app():
     flask_session.init_app(app)
     csrf.init_app(app)
 
-    # Configure database
+    # Configure database with autocommit for read-only sessions
     db_dir = os.path.join(os.path.dirname(__file__), 'data')
     try:
         os.makedirs(db_dir, exist_ok=True)
@@ -166,7 +166,19 @@ def create_app():
     if app.config['SQLALCHEMY_DATABASE_URI'].startswith('postgres://'):
         app.config['SQLALCHEMY_DATABASE_URI'] = app.config['SQLALCHEMY_DATABASE_URI'].replace('postgres://', 'postgresql://')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+        'pool_size': 20,
+        'max_overflow': 10,
+        'pool_timeout': 30,
+        'pool_pre_ping': True,
+    }
     db.init_app(app)
+
+    # Initialize caching with Redis
+    app.config['CACHE_TYPE'] = 'redis'
+    app.config['CACHE_REDIS_URL'] = os.environ.get('REDIS_HOST', 'localhost')
+    app.config['CACHE_DEFAULT_TIMEOUT'] = 3600  # 1 hour
+    cache = Cache(app)
 
     # Initialize Flask-Login
     login_manager.init_app(app)
@@ -174,7 +186,14 @@ def create_app():
 
     @login_manager.user_loader
     def load_user(user_id):
-        return User.query.get(int(user_id))
+        # Use cache to reduce database queries
+        cache_key = f"user_{user_id}"
+        user = cache.get(cache_key)
+        if user is None:
+            user = User.query.get(int(user_id))
+            if user:
+                cache.set(cache_key, user, timeout=3600)  # Cache for 1 hour
+        return user
 
     # Initialize scheduler
     try:
@@ -185,7 +204,7 @@ def create_app():
 
     # Apply migrations and initialize database
     with app.app_context():
-        apply_migrations(app)  # Run migrations before creating tables
+        apply_migrations(app)
         db.create_all()
         initialize_courses_data(app)
         logger.info("Database tables created and courses initialized")
@@ -197,7 +216,7 @@ def create_app():
             admin_user = User.query.filter_by(email=admin_email).first()
             if not admin_user:
                 admin_user = User(
-                    username='admin_' + str(uuid.uuid4())[:8],  # Unique username
+                    username='admin_' + str(uuid.uuid4())[:8],
                     email=admin_email,
                     password_hash=generate_password_hash(admin_password),
                     is_admin=True,
@@ -318,6 +337,7 @@ def create_app():
         return decorated_function
 
     @app.route('/')
+    @ensure_session_id
     def index():
         lang = session.get('lang', 'en')
         logger.info("Serving index page")
@@ -377,68 +397,56 @@ def create_app():
         try:
             filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
 
-            # Financial Health
-            fh_records = FinancialHealth.query.filter_by(**filter_kwargs).order_by(FinancialHealth.created_at.desc()).all()
-            if not fh_records:
-                logger.warning(f"No FinancialHealth records found for filter: {filter_kwargs}")
-            data['financial_health'] = {
-                'score': fh_records[0].score,
-                'status': fh_records[0].status
-            } if fh_records else {'score': None, 'status': None}
+            # Use read-only session for data retrieval
+            with db.session.no_autoflush() as read_session:  # Avoid flushing changes
+                # Financial Health
+                fh_records = read_session.query(FinancialHealth).filter_by(**filter_kwargs).order_by(FinancialHealth.created_at.desc()).all()
+                data['financial_health'] = {
+                    'score': fh_records[0].score,
+                    'status': fh_records[0].status
+                } if fh_records else {'score': None, 'status': None}
 
-            # Budget
-            budget_records = Budget.query.filter_by(**filter_kwargs).order_by(Budget.created_at.desc()).all()
-            if not budget_records:
-                logger.warning(f"No Budget records found for filter: {filter_kwargs}")
-            data['budget'] = {
-                'surplus_deficit': budget_records[0].surplus_deficit,
-                'savings_goal': budget_records[0].savings_goal
-            } if budget_records else {'surplus_deficit': None, 'savings_goal': None}
+                # Budget
+                budget_records = read_session.query(Budget).filter_by(**filter_kwargs).order_by(Budget.created_at.desc()).all()
+                data['budget'] = {
+                    'surplus_deficit': budget_records[0].surplus_deficit,
+                    'savings_goal': budget_records[0].savings_goal
+                } if budget_records else {'surplus_deficit': None, 'savings_goal': None}
 
-            # Bills
-            bills = Bill.query.filter_by(**filter_kwargs).all()
-            if not bills:
-                logger.warning(f"No Bill records found for filter: {filter_kwargs}")
-            total_amount = sum(bill.amount for bill in bills)
-            unpaid_amount = sum(bill.amount for bill in bills if bill.status.lower() != 'paid')
-            data['bills'] = {
-                'bills': [bill.to_dict() for bill in bills],
-                'total_amount': total_amount,
-                'unpaid_amount': unpaid_amount
-            }
+                # Bills
+                bills = read_session.query(Bill).filter_by(**filter_kwargs).all()
+                total_amount = sum(bill.amount for bill in bills)
+                unpaid_amount = sum(bill.amount for bill in bills if bill.status.lower() != 'paid')
+                data['bills'] = {
+                    'bills': [bill.to_dict() for bill in bills],
+                    'total_amount': total_amount,
+                    'unpaid_amount': unpaid_amount
+                }
 
-            # Net Worth
-            nw_records = NetWorth.query.filter_by(**filter_kwargs).order_by(NetWorth.created_at.desc()).all()
-            if not nw_records:
-                logger.warning(f"No NetWorth records found for filter: {filter_kwargs}")
-            data['net_worth'] = {
-                'net_worth': nw_records[0].net_worth,
-                'total_assets': nw_records[0].total_assets
-            } if nw_records else {'net_worth': None, 'total_assets': None}
+                # Net Worth
+                nw_records = read_session.query(NetWorth).filter_by(**filter_kwargs).order_by(NetWorth.created_at.desc()).all()
+                data['net_worth'] = {
+                    'net_worth': nw_records[0].net_worth,
+                    'total_assets': nw_records[0].total_assets
+                } if nw_records else {'net_worth': None, 'total_assets': None}
 
-            # Emergency Fund
-            ef_records = EmergencyFund.query.filter_by(**filter_kwargs).order_by(EmergencyFund.created_at.desc()).all()
-            if not ef_records:
-                logger.warning(f"No EmergencyFund records found for filter: {filter_kwargs}")
-            data['emergency_fund'] = {
-                'target_amount': ef_records[0].target_amount,
-                'savings_gap': ef_records[0].savings_gap
-            } if ef_records else {'target_amount': None, 'savings_gap': None}
+                # Emergency Fund
+                ef_records = read_session.query(EmergencyFund).filter_by(**filter_kwargs).order_by(EmergencyFund.created_at.desc()).all()
+                data['emergency_fund'] = {
+                    'target_amount': ef_records[0].target_amount,
+                    'savings_gap': ef_records[0].savings_gap
+                } if ef_records else {'target_amount': None, 'savings_gap': None}
 
-            # Learning Progress
-            lp_records = LearningProgress.query.filter_by(**filter_kwargs).all()
-            if not lp_records:
-                logger.warning(f"No LearningProgress records found for filter: {filter_kwargs}")
-            data['learning_progress'] = {lp.course_id: lp.to_dict() for lp in lp_records}
+                # Learning Progress
+                lp_records = read_session.query(LearningProgress).filter_by(**filter_kwargs).all()
+                data['learning_progress'] = {lp.course_id: lp.to_dict() for lp in lp_records}
 
-            # Quiz Result
-            quiz_records = QuizResult.query.filter_by(**filter_kwargs).order_by(QuizResult.created_at.desc()).all()
-            if not quiz_records:
-                logger.warning(f"No QuizResult records found for filter: {filter_kwargs}")
-            data['quiz'] = {
-                'personality': quiz_records[0].personality,
-                'score': quiz_records[0].score
-            } if quiz_records else {'personality': None, 'score': None}
+                # Quiz Result
+                quiz_records = read_session.query(QuizResult).filter_by(**filter_kwargs).order_by(QuizResult.created_at.desc()).all()
+                data['quiz'] = {
+                    'personality': quiz_records[0].personality,
+                    'score': quiz_records[0].score
+                } if quiz_records else {'personality': None, 'score': None}
 
             logger.info(f"Retrieved data for session {session['sid']}")
             return render_template('general_dashboard.html', data=data, t=translate, lang=lang)
@@ -563,20 +571,22 @@ def create_app():
     logger.info("App creation completed")
     return app
 
-def log_tool_usage(tool_name):
+def log_tool_usage(tool_name, user_id=None, session_id=None, action=None, details=None):
     try:
-        if current_user.is_authenticated:
-            user_id = current_user.id
-        else:
-            user_id = None
-        session_id = session.get('sid', 'unknown')
-        tool_usage = ToolUsage(user_id=user_id, session_id=session_id, tool_name=tool_name)
-        db.session.add(tool_usage)
+        if session_id is None:
+            session_id = session.get('sid', 'unknown')
+        usage = ToolUsage(
+            tool_name=tool_name,
+            user_id=user_id,
+            session_id=session_id,
+            action=action or 'unknown'
+        )
+        db.session.add(usage)
         db.session.commit()
-        logger.info(f"Logged tool usage: {tool_name} for session {session_id}")
+        logger.info(f"Logged tool usage: {tool_name} for session {session_id}", extra={'details': details})
     except Exception as e:
-        logger.error(f"Error logging tool usage: {str(e)}")
         db.session.rollback()
+        logger.error(f"Failed to log tool usage: {str(e)}", extra={'tool_name': tool_name, 'session_id': session_id, 'details': details})
 
 # Create the Flask app instance for Gunicorn
 app = create_app()
