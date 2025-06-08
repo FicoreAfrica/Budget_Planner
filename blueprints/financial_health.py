@@ -125,17 +125,16 @@ def step1():
     form = Step1Form(data=form_data)
     current_app.logger.info(f"Starting step1 for session {session['sid']}")
     try:
-        with db.session.begin():
-            if request.method == 'POST':
-                log_tool_usage(
-                    tool_name='financial_health',
-                    user_id=current_user.id if current_user.is_authenticated else None,
-                    session_id=session['sid'],
-                    action='step1_submit'
-                )
-                current_app.logger.debug(f"Received POST data: {request.form}")
+        if request.method == 'POST':
+            log_tool_usage(
+                tool_name='financial_health',
+                user_id=current_user.id if current_user.is_authenticated else None,
+                session_id=session['sid'],
+                action='step1_submit'
+            )  # Moved outside transaction
+            with db.session.begin():
                 if not form.validate_on_submit():
-                    current_app.logger.warning(f"Form validation failed: {form.errors}")
+                    current_app.logger.error(f"Form validation failed: {form.errors}")
                     flash(trans("financial_health_form_errors", lang=lang), "danger")
                     return render_template('health_score_step1.html', form=form, trans=trans, lang=lang)
 
@@ -167,17 +166,17 @@ def step1():
                 session['health_step1'] = form_data
                 session.modified = True
                 return redirect(url_for('financial_health.step2'))
-            log_tool_usage(
-                tool_name='financial_health',
-                user_id=current_user.id if current_user.is_authenticated else None,
-                session_id=session['sid'],
-                action='step1_view'
-            )
-            return render_template('health_score_step1.html', form=form, trans=trans, lang=lang)
+        log_tool_usage(
+            tool_name='financial_health',
+            user_id=current_user.id if current_user.is_authenticated else None,
+            session_id=session['sid'],
+            action='step1_view'
+        )  # Moved outside transaction
+        return render_template('health_score_step1.html', form=form, trans=trans, lang=lang)
     except Exception as e:
         db.session.rollback()
         current_app.logger.exception(f"Error in step1: {str(e)}")
-        flash(trans("financial_health_error_personal_info", lang=lang), "danger")
+        flash(f"{trans('financial_health_error_personal_info', lang=lang)} - {str(e)}", "danger")
         return render_template('health_score_step1.html', form=form, trans=trans, lang=lang), 500
 
 @financial_health_bp.route('/step2', methods=['GET', 'POST'])
@@ -193,16 +192,16 @@ def step2():
     form = Step2Form()
     current_app.logger.info(f"Starting step2 for session {session['sid']}")
     try:
-        with db.session.begin():
-            if request.method == 'POST':
-                log_tool_usage(
-                    tool_name='financial_health',
-                    user_id=current_user.id if current_user.is_authenticated else None,
-                    session_id=session['sid'],
-                    action='step2_submit'
-                )
+        if request.method == 'POST':
+            log_tool_usage(
+                tool_name='financial_health',
+                user_id=current_user.id if current_user.is_authenticated else None,
+                session_id=session['sid'],
+                action='step2_submit'
+            )  # Moved outside transaction
+            with db.session.begin():
                 if not form.validate_on_submit():
-                    current_app.logger.warning(f"Form validation failed: {form.errors}")
+                    current_app.logger.error(f"Form validation failed: {form.errors}")
                     flash(trans("financial_health_form_errors", lang=lang), "danger")
                     return render_template('health_score_step2.html', form=form, trans=trans, lang=lang)
 
@@ -230,13 +229,13 @@ def step2():
                 }
                 session.modified = True
                 return redirect(url_for('financial_health.step3'))
-            log_tool_usage(
-                tool_name='financial_health',
-                user_id=current_user.id if current_user.is_authenticated else None,
-                session_id=session['sid'],
-                action='step2_view'
-            )
-            return render_template('health_score_step2.html', form=form, trans=trans, lang=lang)
+        log_tool_usage(
+            tool_name='financial_health',
+            user_id=current_user.id if current_user.is_authenticated else None,
+            session_id=session['sid'],
+            action='step2_view'
+        )  # Moved outside transaction
+        return render_template('health_score_step2.html', form=form, trans=trans, lang=lang)
     except Exception as e:
         db.session.rollback()
         current_app.logger.exception(f"Error in step2: {str(e)}")
@@ -251,21 +250,21 @@ def step3():
         session.permanent = True
     lang = session.get('lang', 'en')
     if 'health_step2' not in session:
-        flash(trans('financial_health_missing_step2', lang=lang, default='Please complete step 2 first.'), 'danger')
+        flash(trans('financial_health_missing_step2', lang=lang, default='Please complete step 2 first.'), "danger")
         return redirect(url_for('financial_health.step2'))
     form = Step3Form()
     current_app.logger.info(f"Starting step3 for session {session['sid']}")
     try:
-        with db.session.begin():
-            if request.method == 'POST':
-                log_tool_usage(
-                    tool_name='financial_health',
-                    user_id=current_user.id if current_user.is_authenticated else None,
-                    session_id=session['sid'],
-                    action='step3_submit'
-                )
+        if request.method == 'POST':
+            log_tool_usage(
+                tool_name='financial_health',
+                user_id=current_user.id if current_user.is_authenticated else None,
+                session_id=session['sid'],
+                action='step3_submit'
+            )  # Moved outside transaction
+            with db.session.begin():
                 if not form.validate_on_submit():
-                    current_app.logger.warning(f"Form validation failed: {form.errors}")
+                    current_app.logger.error(f"Form validation failed: {form.errors}")
                     flash(trans("financial_health_form_errors", lang=lang), "danger")
                     return render_template('health_score_step3.html', form=form, trans=trans, lang=lang)
 
@@ -384,13 +383,13 @@ def step3():
                 session.modified = True
                 flash(trans("financial_health_health_completed_success", lang=lang), "success")
                 return redirect(url_for('financial_health.dashboard'))
-            log_tool_usage(
-                tool_name='financial_health',
-                user_id=current_user.id if current_user.is_authenticated else None,
-                session_id=session['sid'],
-                action='step3_view'
-            )
-            return render_template('health_score_step3.html', form=form, trans=trans, lang=lang)
+        log_tool_usage(
+            tool_name='financial_health',
+            user_id=current_user.id if current_user.is_authenticated else None,
+            session_id=session['sid'],
+            action='step3_view'
+        )  # Moved outside transaction
+        return render_template('health_score_step3.html', form=form, trans=trans, lang=lang)
     except Exception as e:
         db.session.rollback()
         current_app.logger.exception(f"Error in step3: {str(e)}")
