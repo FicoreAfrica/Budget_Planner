@@ -19,7 +19,6 @@ from uuid import uuid4
 from alembic import command
 from alembic.config import Config
 from werkzeug.security import generate_password_hash
-import redis
 
 # Load environment variables
 load_dotenv()
@@ -176,7 +175,9 @@ def create_app():
 
     # Initialize caching with Redis
     app.config['CACHE_TYPE'] = 'redis'
-    app.config['CACHE_REDIS_URL'] = os.environ.get('REDIS_HOST', 'localhost')
+    app.config['CACHE_REDIS_HOST'] = os.environ.get('REDIS_HOST', 'localhost')
+    app.config['CACHE_REDIS_PORT'] = int(os.environ.get('REDIS_PORT', 6379))
+    app.config['CACHE_REDIS_DB'] = int(os.environ.get('REDIS_DB', 0))
     app.config['CACHE_DEFAULT_TIMEOUT'] = 3600  # 1 hour
     cache = Cache(app)
 
