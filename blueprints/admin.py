@@ -24,7 +24,7 @@ VALID_TOOLS = [
 
 @admin_bp.route('/')
 @login_required
-#@admin_required
+@admin_required
 def overview():
     """Admin dashboard overview page."""
     lang = session.get('lang', 'en')
@@ -137,7 +137,7 @@ def overview():
 
 @admin_bp.route('/tool_usage', methods=['GET', 'POST'])
 @login_required
-#@admin_required
+@admin_required
 def tool_usage():
     """Detailed tool usage analytics with filters."""
     lang = session.get('lang', 'en')
@@ -222,7 +222,7 @@ def tool_usage():
 
 @admin_bp.route('/export_csv', methods=['GET'])
 @login_required
-#@admin_required
+@admin_required
 def export_csv():
     """Export filtered tool usage logs as CSV."""
     try:
