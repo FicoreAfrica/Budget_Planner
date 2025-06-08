@@ -16,7 +16,7 @@ class User(db.Model, UserMixin):
     lang = db.Column(db.String(10), default='en')
     referral_code = db.Column(db.String(36), unique=True, nullable=False, default=lambda: str(uuid.uuid4()))
     referred_by_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
-    referred_by = db.relationship('User', remote_side=[id], backref='referrals')
+    referred_by = db.relationship('User', remote_side=[id], backref='referrals', uselist=False, foreign_keys=[referred_by_id])
 
     __table_args__ = (
         db.Index('ix_users_referral_code', 'referral_code'),
