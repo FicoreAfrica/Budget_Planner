@@ -82,7 +82,7 @@
                             <li><a class="dropdown-item" href="{{ url_for('feedback') }}" style="font-size: 0.85rem;">{{ trans('core_feedback') | default('Feedback') }}</a></li>
                             <li><a class="dropdown-item" href="{{ url_for('general_dashboard') }}" style="font-size: 0.85rem;">{{ trans('core_general_dashboard') | default('General Dashboard') }}</a></li>
                             {% if current_user.is_authenticated and current_user.is_admin %}
-                            <li><a class="dropdown-item" href="{{ url_for('admin.overview') }}" style="font-size: 0.85rem;">{{ trans('admin_panel') | default('Admin Panel') }}</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('admin.overview') }}" style="font-size: 0.85rem;">{{ trans('core_admin_panel') | default('Admin Panel') }}</a></li>
                             {% endif %}
                         </ul>
                     </li>
