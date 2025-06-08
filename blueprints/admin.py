@@ -34,6 +34,14 @@ def overview():
         last_day = datetime.utcnow() - timedelta(days=1)
         new_users_last_24h = User.query.filter(User.created_at >= last_day).count()
 
+        # Referral Stats
+        total_referrals = User.query.filter(User.referred_by_id.isnot(None)).count()
+        new_referrals_last_24h = User.query.filter(
+            User.referred_by_id.isnot(None),
+            User.created_at >= last_day
+        ).count()
+        referral_conversion_rate = (total_referrals / total_users * 100) if total_users else 0.0
+
         # Tool Usage
         tool_usage_total = ToolUsage.query.count()
         usage_by_tool = db.session.query(ToolUsage.tool_name, func.count(ToolUsage.id)).group_by(ToolUsage.tool_name).all()
@@ -74,10 +82,25 @@ def overview():
         .order_by('date')\
         .all()
 
+        # Referral chart data
+        daily_referrals = db.session.query(
+            func.date(User.created_at).label('date'),
+            func.count(User.id).label('count')
+        )\
+        .filter(
+            User.referred_by_id.isnot(None),
+            User.created_at >= start_date,
+            User.created_at <= end_date
+        )\
+        .group_by('date')\
+        .order_by('date')\
+        .all()
+
         chart_data = {
             'labels': [],
             'registrations': [],
             'logins': [],
+            'referrals': [],
             'tool_usage': {tool: [] for tool in VALID_TOOLS if tool not in ['register', 'login', 'logout']}
         }
 
@@ -86,6 +109,7 @@ def overview():
             chart_data['labels'].append(current_date.strftime('%Y-%m-%d'))
             chart_data['registrations'].append(0)
             chart_data['logins'].append(0)
+            chart_data['referrals'].append(0)
             for tool in chart_data['tool_usage']:
                 chart_data['tool_usage'][tool].append(0)
             current_date += timedelta(days=1)
@@ -100,9 +124,17 @@ def overview():
                 elif tool_name in chart_data['tool_usage']:
                     chart_data['tool_usage'][tool_name][idx] = count
 
+        for date, count in daily_referrals:
+            idx = (datetime.strptime(date, '%Y-%m-%d') - start_date).days
+            if 0 <= idx < len(chart_data['labels']):
+                chart_data['referrals'][idx] = count
+
         metrics = {
             'total_users': total_users,
             'new_users_last_24h': new_users_last_24h,
+            'total_referrals': total_referrals,
+            'new_referrals_last_24h': new_referrals_last_24h,
+            'referral_conversion_rate': round(referral_conversion_rate, 2),
             'tool_usage_total': tool_usage_total,
             'top_tools': top_tools,
             'multi_tool_ratio': round(multi_tool_ratio, 2),
@@ -208,7 +240,7 @@ def tool_usage():
         )
     except Exception as e:
         logger.error(f"Error in tool usage analytics: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
-        flash(trans('admin_error', default='An error occurred while loading analytics.', lang=lang), 'danger')
+        flash(trans('admin_error', default='Error loading analytics.'), 'error')
         return render_template(
             'admin_dashboard.html',
             lang=lang,
@@ -268,5 +300,5 @@ def export_csv():
         )
     except Exception as e:
         logger.error(f"Error in CSV export: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
-        flash(trans('admin_export_error', default='An error occurred while exporting CSV.', lang=lang), 'danger')
+        flash(trans('admin_export_error', default='Error exporting CSV.'), 'error')
         return redirect(url_for('admin.tool_usage'))
