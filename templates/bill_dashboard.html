@@ -34,10 +34,10 @@
                 <p>{{ trans('bill_unpaid_count', lang=lang) | default('Unpaid Bills') }}: {{ unpaid_count }}</p>
                 <p>{{ trans('bill_overdue_count', lang=lang) | default('Overdue Bills') }}: {{ overdue_count }}</p>
                 <p>{{ trans('bill_pending_count', lang=lang) | default('Pending Bills') }}: {{ pending_count }}</p>
-                <p>{{ trans('bill_total_paid', lang=lang) | default('Total Paid') }}: ₦{{ total_paid | format_currency }}</p>
-                <p>{{ trans('bill_total_unpaid', lang=lang) | default('Total Unpaid') }}: ₦{{ total_unpaid | format_currency }}</p>
-                <p>{{ trans('bill_total_overdue', lang=lang) | default('Total Overdue') }}: ₦{{ total_overdue | format_currency }}</p>
-                <p>{{ trans('bill_total_bills', lang=lang) | default('Total Bills') }}: ₦{{ total_bills | format_currency }}</p>
+                <p>{{ trans('bill_total_paid', lang=lang) | default('Total Paid') }}: {{ total_paid | format_currency }}</p>
+                <p>{{ trans('bill_total_unpaid', lang=lang) | default('Total Unpaid') }}: {{ total_unpaid | format_currency }}</p>
+                <p>{{ trans('bill_total_overdue', lang=lang) | default('Total Overdue') }}: {{ total_overdue | format_currency }}</p>
+                <p>{{ trans('bill_total_bills', lang=lang) | default('Total Bills') }}: {{ total_bills | format_currency }}</p>
             </div>
         </div>
 
@@ -47,7 +47,7 @@
                     <h5>{{ trans('bill_due_today', lang=lang) | default('Due Today') }}</h5>
                     <ul>
                         {% for bill_id, bill in due_today %}
-                            <li>{{ bill.bill_name }} (₦{{ bill.amount | format_currency }})</li>
+                            <li>{{ bill.bill_name }} ({{ bill.amount | format_currency }})</li>
                         {% endfor %}
                     </ul>
                 </div>
@@ -60,7 +60,7 @@
                     <h5>{{ trans('bill_upcoming_bills', lang=lang) | default('Upcoming Bills') }}</h5>
                     <ul>
                         {% for bill_id, bill in upcoming_bills %}
-                            <li>{{ bill.bill_name }} (₦{{ bill.amount | format_currency }}) - Due: {{ bill.due_date }}</li>
+                            <li>{{ bill.bill_name }} ({{ bill.amount | format_currency }}) - Due: {{ bill.due_date }}</li>
                         {% endfor %}
                     </ul>
                 </div>
@@ -85,7 +85,7 @@
                         {% if bill.bill_name and bill.amount is not none and bill.due_date and bill.frequency and bill.category and bill.status %}
                             <tr>
                                 <td>{{ bill.bill_name }}</td>
-                                <td>₦{{ bill.amount | format_currency }}</td>
+                                <td>{{ bill.amount | format_currency }}</td>
                                 <td>{{ bill.due_date }}</td>
                                 <td>{{ trans('bill_category_' + bill.category, lang=lang) | default(bill.category) }}</td>
                                 <td>{{ trans('bill_frequency_' + bill.frequency, lang=lang) | default(bill.frequency) }}</td>
@@ -116,6 +116,25 @@
                 </tbody>
             </table>
         </div>
+
+        <!-- Share Ficore Africa Section -->
+        {% if current_user.is_authenticated %}
+            <div class="col-12 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>{{ trans('share_ficore', lang=lang) | default('Share Ficore Africa with Friends') }}</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>{{ trans('core_share_ficore_invite', lang=lang) | default('Invite your friends to join Ficore Africa and manage their finances better!') }}</p>
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" id="referralLink" value="{{ url_for('auth.signup', ref=current_user.referral_code, _external=True) }}" readonly>
+                            <button class="btn btn-primary" type="button" onclick="copyReferralLink()">{{ trans('core_profile_copy_link', lang=lang) | default('Copy') }}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
         <a href="{{ url_for('bill.form_step1') }}" class="btn btn-primary">{{ trans('bill_add_bill', lang=lang) | default('Add Bill') }}</a>
         <a href="{{ url_for('bill.view_edit') }}" class="btn btn-primary">{{ trans('bill_view_edit_bills', lang=lang) | default('View and Edit Bills') }}</a>
     {% else %}
@@ -138,6 +157,13 @@ document.addEventListener('DOMContentLoaded', function() {
         var toast = new bootstrap.Toast(toastEl);
         toast.show();
     });
+
+    function copyReferralLink() {
+        const referralLink = document.getElementById('referralLink');
+        referralLink.select();
+        document.execCommand('copy');
+        alert('{{ trans('profile_link_copied', lang=lang) | default('Referral link copied to clipboard!') }}');
+    }
 });
 </script>
 {% endblock %}
