@@ -40,7 +40,7 @@ class Step1Form(FlaskForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         lang = session.get('lang', 'en')
-        self.first_name.label.text = trans('emergency_fund_first_name', lang=lang)
+        self.first_name.label.text = trans('emergency_fund_first_name', langu=lang)
         self.first_name.validators[0].message = trans('required_first_name', lang=lang, default='Please enter your first name.')
         self.email.label.text = trans('emergency_fund_email', lang=lang)
         self.email.validators[1].message = trans('emergency_fund_email_invalid', lang=lang, default='Please enter a valid email address.')
@@ -94,13 +94,13 @@ class Step4Form(FlaskForm):
 
     def __init__(self, lang, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        lang = lang
+        self.lang = lang
         self.timeline.label.text = trans('emergency_fund_timeline', lang=lang)
         self.timeline.validators[0].message = trans('required_timeline', lang=lang, default='Please select a timeline.')
         self.timeline.choices = [
             ('6', trans('emergency_fund_6_months', lang=lang)),
             ('12', trans('emergency_fund_12_months', lang=lang)),
-            ('18', trans('emergency_fund_18_months', default='18 Months', lang=lang)
+            ('18', trans('emergency_fund_18_months', default='18 Months', lang=lang))
         ]
         self.submit.label.text = trans('emergency_fund_calculate_button', lang=lang)
 
@@ -111,7 +111,7 @@ def step1():
         session['permanent'] = True
         session['modified'] = True
     lang = session.get('lang', 'en')
-    form_data = session.get('emergency_fund_data', {}1)
+    form_data = session.get('emergency_fund_data', {})
     if current_user.is_authenticated:
         form_data['email'] = form_data.get('email', '') or current_user.email
         form_data['first_name'] = form_data.get('first_name', '') or current_user.username
@@ -130,7 +130,7 @@ def step1():
                 session_id=session['sid'],
                 action='step1_submit'
             )
-            current_app.logger.info(f"Step1 POST data: {request.form.to_dict()}}")
+            current_app.logger.info(f"Step1 POST data: {request.form.to_dict()}")
             if form.validate_on_submit():
                 session['emergency_fund_data'] = {
                     'step1_data': {
@@ -140,18 +140,18 @@ def step1():
                     }
                 }
                 session['modified'] = True
-                current_app.logger.info(f"Step1 data saved successfully to session: {session['emergency_fund_step1']}}")
+                current_app.logger.info(f"Step1 data saved successfully to session: {session['emergency_fund_data']}")
                 return redirect(url_for('emergency_fund.step2'))
             else:
-                current_app.logger.warning(f"Step1 form validation failed: {error: {form.errors}}")
+                current_app.logger.warning(f"Step1 form validation failed: {form.errors}")
                 for field, errors in form.errors.items():
                     for error in errors:
-                        flash(f"{field}: {message}", 'danger')
+                        flash(f"{field}: {error}", 'danger')
         return render_template('emergency_fund_step1.html', form=form, step_num=1, trans=trans, lang=lang)
     except Exception as e:
         current_app.logger.error(f"Error in step1: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
         flash(trans('an_unexpected_error_occurred', default='An unexpected error occurred.', lang=lang), 'danger')
-        return render_template('error.html', 'emergency_fund_step1.html', form=form, step=1, trans=trans, lang=lang), 500
+        return render_template('error.html', template='emergency_fund_step1.html', form=form, step=1, trans=trans, lang=lang), 500
 
 @emergency_fund_bp.route('/step2', methods=['GET', 'POST'])
 def step2():
@@ -160,7 +160,7 @@ def step2():
         session['permanent'] = True
         session['modified'] = True
     lang = session.get('lang', 'en')
-    if 'emergency_fund_step1' not in session:
+    if 'emergency_fund_data' not in session:
         flash(trans('emergency_fund_missing_step1', default='Please, complete step 1 first.', lang=lang), 'danger')
         return redirect(url_for('emergency_fund.step1'))
     form = Step2Form()
@@ -178,26 +178,25 @@ def step2():
                 session_id=session['sid'],
                 action='step2_submit'
             )
-            current_app.logger.info(f"Step2 POST data: {request.form.to_dict()}}")
+            current_app.logger.info(f"Step2 POST data: {request.form.to_dict()}")
             if form.validate_on_submit():
                 session['emergency_fund_step2'] = {
-                    {
                     'monthly_expenses': float(form.monthly_expenses.data),
                     'monthly_income': float(form.monthly_income.data) if form.monthly_income.data else None
                 }
                 session['modified'] = True
-                current_app.logger.info(f"Step2 data saved successfully to session: {session['emergency_fund_step2']}}")
+                current_app.logger.info(f"Step2 data saved successfully to session: {session['emergency_fund_step2']}")
                 return redirect(url_for('emergency_fund.step3'))
             else:
-                current_app.logger.warning(f"Step2 form validation failed: {error: {form.errors}}")
+                current_app.logger.warning(f"Step2 form validation failed: {form.errors}")
                 for field, errors in form.errors.items():
                     for error in errors:
-                        flash(f"{field}: {error.message}", 'danger')
+                        flash(f"{field}: {error}", 'danger')
         return render_template('emergency_fund_step2.html', form=form, step=2, trans=trans, lang=lang)
     except Exception as e:
         current_app.logger.error(f"Error in step2: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
         flash(trans('an_unexpected_error_occurred', default='An unexpected error occurred.', lang=lang), 'danger')
-        return render_template('error.html', 'emergency_fund_step2.html', form=form, step=2, trans=trans, lang=lang), 500
+        return render_template('error.html', template='emergency_fund_step2.html', form=form, step=2, trans=trans, lang=lang), 500
 
 @emergency_fund_bp.route('/step3', methods=['GET', 'POST'])
 def step3():
@@ -255,7 +254,7 @@ def step4():
     if 'emergency_fund_step3' not in session:
         flash(trans('emergency_fund_missing_step3', default='Please complete previous steps first.', lang=lang), 'danger')
         return redirect(url_for('emergency_fund.step1'))
-    form = Step4Form()
+    form = Step4Form(lang=lang)
     try:
         log_tool_usage(
             tool_name='emergency_fund',
@@ -272,7 +271,7 @@ def step4():
             )
             current_app.logger.info(f"Step4 POST data: {request.form.to_dict()}")
             if form.validate_on_submit():
-                step1_data = session['emergency_fund_step1']
+                step1_data = session['emergency_fund_data']['step1_data']
                 step2_data = session['emergency_fund_step2']
                 step3_data = session['emergency_fund_step3']
                 months = int(form.timeline.data)
@@ -300,7 +299,6 @@ def step4():
                 if step3_data['current_savings'] >= target_amount:
                     badges.append('Fund Master')
 
-                # Create and save EmergencyFund record to database
                 emergency_fund = EmergencyFund(
                     id=str(uuid.uuid4()),
                     user_id=current_user.id if current_user.is_authenticated else None,
@@ -362,8 +360,7 @@ def step4():
                         current_app.logger.error(f"Failed to send email: {str(e)}")
                         flash(trans("email_send_failed", lang=lang), "danger")
 
-                # Clear session data after saving
-                for key in ['emergency_fund_step1', 'emergency_fund_step2', 'emergency_fund_step3', 'emergency_fund_step4']:
+                for key in ['emergency_fund_data', 'emergency_fund_step2', 'emergency_fund_step3']:
                     session.pop(key, None)
                 session.modified = True
 
@@ -377,7 +374,7 @@ def step4():
         return render_template('emergency_fund_step4.html', form=form, step=4, trans=trans, lang=lang)
     except Exception as e:
         current_app.logger.exception(f"Error in step4: {str(e)}")
-        flash(trans('an_unexpected_error_occurred', default='An unexpected error occurred.'), 'danger')
+        flash(trans('an_unexpected_error_occurred', default='An unexpected error occurred.'), lang=lang)
         return render_template('emergency_fund_step4.html', form=form, step=4, trans=trans, lang=lang)
 
 @emergency_fund_bp.route('/dashboard', methods=['GET'])
@@ -394,12 +391,10 @@ def dashboard():
             session_id=session['sid'],
             action='dashboard_view'
         )
-        # Filter by user_id if authenticated, else session_id
         filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
         user_data = EmergencyFund.query.filter_by(**filter_kwargs).order_by(EmergencyFund.created_at.desc()).all()
         current_app.logger.info(f"Retrieved {len(user_data)} records from database for session {session['sid']}")
 
-        # If no records and authenticated, check by email
         if not user_data and current_user.is_authenticated and current_user.email:
             user_data = EmergencyFund.query.filter_by(email=current_user.email).order_by(EmergencyFund.created_at.desc()).all()
             current_app.logger.info(f"Retrieved {len(user_data)} records for email {current_user.email}")
