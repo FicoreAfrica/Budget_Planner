@@ -125,50 +125,57 @@ def step1():
     form = Step1Form(data=form_data)
     current_app.logger.info(f"Starting step1 for session {session['sid']}")
     try:
-        if request.method == 'POST':
+        with db.session.begin():
+            if request.method == 'POST':
+                log_tool_usage(
+                    tool_name='financial_health',
+                    user_id=current_user.id if current_user.is_authenticated else None,
+                    session_id=session['sid'],
+                    action='step1_submit'
+                )
+                current_app.logger.debug(f"Received POST data: {request.form}")
+                if not form.validate_on_submit():
+                    current_app.logger.warning(f"Form validation failed: {form.errors}")
+                    flash(trans("financial_health_form_errors", lang=lang), "danger")
+                    return render_template('health_score_step1.html', form=form, trans=trans, lang=lang)
+
+                form_data = form.data.copy()
+                if form_data.get('email') and not isinstance(form_data['email'], str):
+                    current_app.logger.error(f"Invalid email type: {type(form_data['email'])}")
+                    raise ValueError(trans("financial_health_email_must_be_string", lang=lang))
+
+                # Check for existing record
+                filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
+                financial_health = FinancialHealth.query.filter_by(**filter_kwargs, step=1).first()
+                if not financial_health:
+                    financial_health = FinancialHealth(
+                        id=str(uuid.uuid4()),
+                        user_id=current_user.id if current_user.is_authenticated else None,
+                        session_id=session['sid'],
+                        created_at=datetime.utcnow(),
+                    )
+                    db.session.add(financial_health)
+
+                financial_health.step = 1
+                financial_health.first_name = form_data['first_name']
+                financial_health.email = form_data['email']
+                financial_health.user_type = form_data['user_type']
+                financial_health.send_email = form_data['send_email']
+
+                current_app.logger.info(f"Step1 data updated/saved to database with ID {financial_health.id} for session {session['sid']}")
+
+                session['health_step1'] = form_data
+                session.modified = True
+                return redirect(url_for('financial_health.step2'))
             log_tool_usage(
                 tool_name='financial_health',
                 user_id=current_user.id if current_user.is_authenticated else None,
                 session_id=session['sid'],
-                action='step1_submit'
+                action='step1_view'
             )
-            current_app.logger.debug(f"Received POST data: {request.form}")
-            if not form.validate_on_submit():
-                current_app.logger.warning(f"Form validation failed: {form.errors}")
-                flash(trans("financial_health_form_errors", lang=lang), "danger")
-                return render_template('health_score_step1.html', form=form, trans=trans, lang=lang)
-            
-            form_data = form.data.copy()
-            if form_data.get('email') and not isinstance(form_data['email'], str):
-                current_app.logger.error(f"Invalid email type: {type(form_data['email'])}")
-                raise ValueError(trans("financial_health_email_must_be_string", lang=lang))
-            
-            # Save to database
-            financial_health = FinancialHealth(
-                id=str(uuid.uuid4()),
-                user_id=current_user.id if current_user.is_authenticated else None,
-                session_id=session['sid'],
-                step=1,
-                first_name=form_data['first_name'],
-                email=form_data['email'],
-                user_type=form_data['user_type'],
-                send_email=form_data['send_email'],
-            )
-            db.session.add(financial_health)
-            db.session.commit()
-            current_app.logger.info(f"Step1 data saved to database with ID {financial_health.id} for session {session['sid']}")
-
-            session['health_step1'] = form_data
-            session.modified = True
-            return redirect(url_for('financial_health.step2'))
-        log_tool_usage(
-            tool_name='financial_health',
-            user_id=current_user.id if current_user.is_authenticated else None,
-            session_id=session['sid'],
-            action='step1_view'
-        )
-        return render_template('health_score_step1.html', form=form, trans=trans, lang=lang)
+            return render_template('health_score_step1.html', form=form, trans=trans, lang=lang)
     except Exception as e:
+        db.session.rollback()
         current_app.logger.exception(f"Error in step1: {str(e)}")
         flash(trans("financial_health_error_personal_info", lang=lang), "danger")
         return render_template('health_score_step1.html', form=form, trans=trans, lang=lang), 500
@@ -186,45 +193,52 @@ def step2():
     form = Step2Form()
     current_app.logger.info(f"Starting step2 for session {session['sid']}")
     try:
-        if request.method == 'POST':
+        with db.session.begin():
+            if request.method == 'POST':
+                log_tool_usage(
+                    tool_name='financial_health',
+                    user_id=current_user.id if current_user.is_authenticated else None,
+                    session_id=session['sid'],
+                    action='step2_submit'
+                )
+                if not form.validate_on_submit():
+                    current_app.logger.warning(f"Form validation failed: {form.errors}")
+                    flash(trans("financial_health_form_errors", lang=lang), "danger")
+                    return render_template('health_score_step2.html', form=form, trans=trans, lang=lang)
+
+                # Update existing record
+                filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
+                financial_health = FinancialHealth.query.filter_by(**filter_kwargs, step=2).first()
+                if not financial_health:
+                    financial_health = FinancialHealth(
+                        id=str(uuid.uuid4()),
+                        user_id=current_user.id if current_user.is_authenticated else None,
+                        session_id=session['sid'],
+                        created_at=datetime.utcnow(),
+                    )
+                    db.session.add(financial_health)
+
+                financial_health.step = 2
+                financial_health.income = float(form.income.data)
+                financial_health.expenses = float(form.expenses.data)
+
+                current_app.logger.info(f"Step2 data updated/saved to database with ID {financial_health.id} for session {session['sid']}")
+
+                session['health_step2'] = {
+                    'income': float(form.income.data),
+                    'expenses': float(form.expenses.data),
+                }
+                session.modified = True
+                return redirect(url_for('financial_health.step3'))
             log_tool_usage(
                 tool_name='financial_health',
                 user_id=current_user.id if current_user.is_authenticated else None,
                 session_id=session['sid'],
-                action='step2_submit'
+                action='step2_view'
             )
-            if not form.validate_on_submit():
-                current_app.logger.warning(f"Form validation failed: {form.errors}")
-                flash(trans("financial_health_form_errors", lang=lang), "danger")
-                return render_template('health_score_step2.html', form=form, trans=trans, lang=lang)
-            
-            # Save to database
-            financial_health = FinancialHealth(
-                id=str(uuid.uuid4()),
-                user_id=current_user.id if current_user.is_authenticated else None,
-                session_id=session['sid'],
-                step=2,
-                income=float(form.income.data),
-                expenses=float(form.expenses.data),
-            )
-            db.session.add(financial_health)
-            db.session.commit()
-            current_app.logger.info(f"Step2 data saved to database with ID {financial_health.id} for session {session['sid']}")
-
-            session['health_step2'] = {
-                'income': float(form.income.data),
-                'expenses': float(form.expenses.data),
-            }
-            session.modified = True
-            return redirect(url_for('financial_health.step3'))
-        log_tool_usage(
-            tool_name='financial_health',
-            user_id=current_user.id if current_user.is_authenticated else None,
-            session_id=session['sid'],
-            action='step2_view'
-        )
-        return render_template('health_score_step2.html', form=form, trans=trans, lang=lang)
+            return render_template('health_score_step2.html', form=form, trans=trans, lang=lang)
     except Exception as e:
+        db.session.rollback()
         current_app.logger.exception(f"Error in step2: {str(e)}")
         flash(trans("financial_health_error_income_expenses", lang=lang), "danger")
         return render_template('health_score_step2.html', form=form, trans=trans, lang=lang), 500
@@ -238,140 +252,147 @@ def step3():
     lang = session.get('lang', 'en')
     if 'health_step2' not in session:
         flash(trans('financial_health_missing_step2', lang=lang, default='Please complete step 2 first.'), 'danger')
-        return redirect(url_for('financial_health.step1'))
+        return redirect(url_for('financial_health.step2'))
     form = Step3Form()
     current_app.logger.info(f"Starting step3 for session {session['sid']}")
     try:
-        if request.method == 'POST':
+        with db.session.begin():
+            if request.method == 'POST':
+                log_tool_usage(
+                    tool_name='financial_health',
+                    user_id=current_user.id if current_user.is_authenticated else None,
+                    session_id=session['sid'],
+                    action='step3_submit'
+                )
+                if not form.validate_on_submit():
+                    current_app.logger.warning(f"Form validation failed: {form.errors}")
+                    flash(trans("financial_health_form_errors", lang=lang), "danger")
+                    return render_template('health_score_step3.html', form=form, trans=trans, lang=lang)
+
+                step1_data = session.get('health_step1', {})
+                step2_data = session.get('health_step2', {})
+                debt = float(form.debt.data) if form.debt.data else 0
+                interest_rate = float(form.interest_rate.data) if form.interest_rate.data else 0
+                income = step2_data.get('income', 0)
+                expenses = step2_data.get('expenses', 0)
+
+                if income <= 0:
+                    current_app.logger.error("Income is zero or negative, cannot calculate financial health metrics")
+                    flash(trans("financial_health_income_zero_error", lang=lang), "danger")
+                    return render_template('health_score_step3.html', form=form, trans=trans, lang=lang), 500
+
+                debt_to_income = (debt / income * 100) if income > 0 else 0
+                savings_rate = ((income - expenses) / income * 100) if income > 0 else 0
+                interest_burden = ((interest_rate * debt / 100) / 12) / income * 100 if debt > 0 and income > 0 else 0
+
+                score = 100
+                if debt_to_income > 0:
+                    score -= min(debt_to_income / 50, 50)  # Corrected typo 'atlantic' to '/50'
+                if savings_rate < 0:
+                    score -= min(abs(savings_rate), 30)
+                elif savings_rate > 0:
+                    score += min(savings_rate / 2, 20)
+                score -= min(interest_burden, 20)
+                score = max(0, min(100, round(score)))
+
+                if score >= 80:
+                    status_key = "excellent"
+                    status = trans("financial_health_status_excellent", lang=lang)
+                elif score >= 60:
+                    status_key = "good"
+                    status = trans("financial_health_status_good", lang=lang)
+                else:
+                    status_key = "needs_improvement"
+                    status = trans("financial_health_status_needs_improvement", lang=lang)
+
+                badges = []
+                if score >= 80:
+                    badges.append(trans("financial_health_badge_financial_star", lang=lang))
+                if debt_to_income < 20:
+                    badges.append(trans("financial_health_badge_debt_manager", lang=lang))
+                if savings_rate >= 20:
+                    badges.append(trans("financial_health_badge_savings_pro", lang=lang))
+                if interest_burden == 0 and debt > 0:
+                    badges.append(trans("financial_health_badge_interest_free", lang=lang))
+
+                # Update existing record
+                filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
+                financial_health = FinancialHealth.query.filter_by(**filter_kwargs, step=3).first()
+                if not financial_health:
+                    financial_health = FinancialHealth(
+                        id=str(uuid.uuid4()),
+                        user_id=current_user.id if current_user.is_authenticated else None,
+                        session_id=session['sid'],
+                        created_at=datetime.utcnow(),
+                    )
+                    db.session.add(financial_health)
+
+                financial_health.step = 3
+                financial_health.first_name = step1_data.get('first_name', '')
+                financial_health.email = step1_data.get('email', '')
+                financial_health.user_type = step1_data.get('user_type', 'individual')
+                financial_health.income = income
+                financial_health.expenses = expenses
+                financial_health.debt = debt
+                financial_health.interest_rate = interest_rate
+                financial_health.debt_to_income = debt_to_income
+                financial_health.savings_rate = savings_rate
+                financial_health.interest_burden = interest_burden
+                financial_health.score = score
+                financial_health.status = status
+                financial_health.status_key = status_key
+                financial_health.badges = json.dumps(badges)
+                financial_health.send_email = step1_data.get('send_email', False)
+
+                current_app.logger.info(f"Step3 data updated/saved to database with ID {financial_health.id} for session {session['sid']}")
+
+                # Send email if opted in
+                if step1_data.get('send_email', False) and step1_data.get('email'):
+                    try:
+                        config = EMAIL_CONFIG["financial_health"]
+                        subject = trans(config["subject_key"], lang=lang)
+                        template = config["template"]
+                        send_email(
+                            app=current_app,
+                            logger=current_app.logger,
+                            to_email=step1_data['email'],
+                            subject=subject,
+                            template_name=template,
+                            data={
+                                "first_name": step1_data['first_name'],
+                                "score": score,
+                                "status": status,
+                                "income": income,
+                                "expenses": expenses,
+                                "debt": debt,
+                                "interest_rate": interest_rate,
+                                "debt_to_income": debt_to_income,
+                                "savings_rate": savings_rate,
+                                "interest_burden": interest_burden,
+                                "badges": badges,
+                                "created_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                                "cta_url": url_for('financial_health.dashboard', _external=True)
+                            },
+                            lang=lang
+                        )
+                    except Exception as e:
+                        current_app.logger.error(f"Failed to send email: {str(e)}")
+                        flash(trans("financial_health_email_failed", lang=lang), "warning")
+
+                session.pop('health_step1', None)
+                session.pop('health_step2', None)
+                session.modified = True
+                flash(trans("financial_health_health_completed_success", lang=lang), "success")
+                return redirect(url_for('financial_health.dashboard'))
             log_tool_usage(
                 tool_name='financial_health',
                 user_id=current_user.id if current_user.is_authenticated else None,
                 session_id=session['sid'],
-                action='step3_submit'
+                action='step3_view'
             )
-            if not form.validate_on_submit():
-                current_app.logger.warning(f"Form validation failed: {form.errors}")
-                flash(trans("financial_health_form_errors", lang=lang), "danger")
-                return render_template('health_score_step3.html', form=form, trans=trans, lang=lang)
-
-            step1_data = session.get('health_step1', {})
-            step2_data = session.get('health_step2', {})
-            debt = float(form.debt.data) if form.debt.data else 0
-            interest_rate = float(form.interest_rate.data) if form.interest_rate.data else 0
-            income = step2_data.get('income', 0)
-            expenses = step2_data.get('expenses', 0)
-
-            if income <= 0:
-                current_app.logger.error("Income is zero or negative, cannot calculate financial health metrics")
-                flash(trans("financial_health_income_zero_error", lang=lang), "danger")
-                return render_template('health_score_step3.html', form=form, trans=trans, lang=lang), 500
-
-            debt_to_income = (debt / income * 100) if income > 0 else 0
-            savings_rate = ((income - expenses) / income * 100) if income > 0 else 0
-            interest_burden = ((interest_rate * debt / 100) / 12) / income * 100 if debt > 0 and income > 0 else 0
-
-            score = 100
-            if debt_to_income > 0:
-                score -= min(debt_to_income,  atlantic/50)
-            if savings_rate < 0:
-                score -= min(abs(savings_rate), 30)
-            elif savings_rate > 0:
-                score += min(savings_rate / 2, 20)
-            score -= min(interest_burden, 20)
-            score = max(0, min(100, round(score)))
-
-            if score >= 80:
-                status_key = "excellent"
-                status = trans("financial_health_status_excellent", lang=lang)
-            elif score >= 60:
-                status_key = "good"
-                status = trans("financial_health_status_good", lang=lang)
-            else:
-                status_key = "needs_improvement"
-                status = trans("financial_health_status_needs_improvement", lang=lang)
-
-            badges = []
-            if score >= 80:
-                badges.append(trans("financial_health_badge_financial_star", lang=lang))
-            if debt_to_income < 20:
-                badges.append(trans("financial_health_badge_debt_manager", lang=lang))
-            if savings_rate >= 20:
-                badges.append(trans("financial_health_badge_savings_pro", lang=lang))
-            if interest_burden == 0 and debt > 0:
-                badges.append(trans("financial_health_badge_interest_free", lang=lang))
-
-            # Save complete record to database
-            financial_health = FinancialHealth(
-                id=str(uuid.uuid4()),
-                user_id=current_user.id if current_user.is_authenticated else None,
-                session_id=session['sid'],
-                step=3,
-                first_name=step1_data.get('first_name', ''),
-                email=step1_data.get('email', ''),
-                user_type=step1_data.get('user_type', 'individual'),
-                income=income,
-                expenses=expenses,
-                debt=debt,
-                interest_rate=interest_rate,
-                debt_to_income=debt_to_income,
-                savings_rate=savings_rate,
-                interest_burden=interest_burden,
-                score=score,
-                status=status,
-                status_key=status_key,
-                badges=json.dumps(badges),
-                send_email=step1_data.get('send_email', False),
-            )
-            db.session.add(financial_health)
-            db.session.commit()
-            current_app.logger.info(f"Step3 data saved to database with ID {financial_health.id} for session {session['sid']}")
-
-            # Send email if opted in
-            if step1_data.get('send_email', False) and step1_data.get('email'):
-                try:
-                    config = EMAIL_CONFIG["financial_health"]
-                    subject = trans(config["subject_key"], lang=lang)
-                    template = config["template"]
-                    send_email(
-                        app=current_app,
-                        logger=current_app.logger,
-                        to_email=step1_data['email'],
-                        subject=subject,
-                        template_name=template,
-                        data={
-                            "first_name": step1_data['first_name'],
-                            "score": score,
-                            "status": status,
-                            "income": income,
-                            "expenses": expenses,
-                            "debt": debt,
-                            "interest_rate": interest_rate,
-                            "debt_to_income": debt_to_income,
-                            "savings_rate": savings_rate,
-                            "interest_burden": interest_burden,
-                            "badges": badges,
-                            "created_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                            "cta_url": url_for('financial_health.dashboard', _external=True)
-                        },
-                        lang=lang
-                    )
-                except Exception as e:
-                    current_app.logger.error(f"Failed to send email: {str(e)}")
-                    flash(trans("financial_health_email_failed", lang=lang), "warning")
-
-            session.pop('health_step1', None)
-            session.pop('health_step2', None)
-            session.modified = True
-            flash(trans("financial_health_health_completed_success", lang=lang), "success")
-            return redirect(url_for('financial_health.dashboard'))
-        log_tool_usage(
-            tool_name='financial_health',
-            user_id=current_user.id if current_user.is_authenticated else None,
-            session_id=session['sid'],
-            action='step3_view'
-        )
-        return render_template('health_score_step3.html', form=form, trans=trans, lang=lang)
+            return render_template('health_score_step3.html', form=form, trans=trans, lang=lang)
     except Exception as e:
+        db.session.rollback()
         current_app.logger.exception(f"Error in step3: {str(e)}")
         flash(trans("financial_health_unexpected_error", lang=lang), "danger")
         return render_template('health_score_step3.html', form=form, trans=trans, lang=lang), 500
