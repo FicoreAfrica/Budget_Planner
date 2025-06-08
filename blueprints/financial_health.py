@@ -9,7 +9,7 @@ import json
 from extensions import db
 from mailersend_email import send_email, EMAIL_CONFIG
 from translations import trans
-from models import FinancialHealth
+from models import FinancialHealth, log_tool_usage
 
 financial_health_bp = Blueprint('financial_health', __name__, url_prefix='/financial_health')
 
@@ -126,6 +126,12 @@ def step1():
     current_app.logger.info(f"Starting step1 for session {session['sid']}")
     try:
         if request.method == 'POST':
+            log_tool_usage(
+                tool_name='financial_health',
+                user_id=current_user.id if current_user.is_authenticated else None,
+                session_id=session['sid'],
+                action='step1_submit'
+            )
             current_app.logger.debug(f"Received POST data: {request.form}")
             if not form.validate_on_submit():
                 current_app.logger.warning(f"Form validation failed: {form.errors}")
@@ -155,6 +161,12 @@ def step1():
             session['health_step1'] = form_data
             session.modified = True
             return redirect(url_for('financial_health.step2'))
+        log_tool_usage(
+            tool_name='financial_health',
+            user_id=current_user.id if current_user.is_authenticated else None,
+            session_id=session['sid'],
+            action='step1_view'
+        )
         return render_template('health_score_step1.html', form=form, trans=trans, lang=lang)
     except Exception as e:
         current_app.logger.exception(f"Error in step1: {str(e)}")
@@ -175,6 +187,12 @@ def step2():
     current_app.logger.info(f"Starting step2 for session {session['sid']}")
     try:
         if request.method == 'POST':
+            log_tool_usage(
+                tool_name='financial_health',
+                user_id=current_user.id if current_user.is_authenticated else None,
+                session_id=session['sid'],
+                action='step2_submit'
+            )
             if not form.validate_on_submit():
                 current_app.logger.warning(f"Form validation failed: {form.errors}")
                 flash(trans("financial_health_form_errors", lang=lang), "danger")
@@ -199,6 +217,12 @@ def step2():
             }
             session.modified = True
             return redirect(url_for('financial_health.step3'))
+        log_tool_usage(
+            tool_name='financial_health',
+            user_id=current_user.id if current_user.is_authenticated else None,
+            session_id=session['sid'],
+            action='step2_view'
+        )
         return render_template('health_score_step2.html', form=form, trans=trans, lang=lang)
     except Exception as e:
         current_app.logger.exception(f"Error in step2: {str(e)}")
@@ -212,13 +236,19 @@ def step3():
         session['sid'] = str(uuid.uuid4())
         session.permanent = True
     lang = session.get('lang', 'en')
-    if 'health_step2' not in session:
+    if 'health_step2 " not in session:
         flash(trans('financial_health_missing_step2', lang=lang, default='Please complete step 2 first.'), 'danger')
         return redirect(url_for('financial_health.step1'))
     form = Step3Form()
     current_app.logger.info(f"Starting step3 for session {session['sid']}")
     try:
         if request.method == 'POST':
+            log_tool_usage(
+                tool_name='financial_health',
+                user_id=current_user.id if current_user.is_authenticated else None,
+                session_id=session['sid'],
+                action='step3_submit'
+            )
             if not form.validate_on_submit():
                 current_app.logger.warning(f"Form validation failed: {form.errors}")
                 flash(trans("financial_health_form_errors", lang=lang), "danger")
@@ -242,7 +272,7 @@ def step3():
 
             score = 100
             if debt_to_income > 0:
-                score -= min(debt_to_income, 50)
+                score -= min(debt_to_income,  atlantic/50)
             if savings_rate < 0:
                 score -= min(abs(savings_rate), 30)
             elif savings_rate > 0:
@@ -334,6 +364,12 @@ def step3():
             session.modified = True
             flash(trans("financial_health_health_completed_success", lang=lang), "success")
             return redirect(url_for('financial_health.dashboard'))
+        log_tool_usage(
+            tool_name='financial_health',
+            user_id=current_user.id if current_user.is_authenticated else None,
+            session_id=session['sid'],
+            action='step3_view'
+        )
         return render_template('health_score_step3.html', form=form, trans=trans, lang=lang)
     except Exception as e:
         current_app.logger.exception(f"Error in step3: {str(e)}")
@@ -349,6 +385,12 @@ def dashboard():
     lang = session.get('lang', 'en')
     current_app.logger.info(f"Starting dashboard for session {session['sid']}")
     try:
+        log_tool_usage(
+            tool_name='financial_health',
+            user_id=current_user.id if current_user.is_authenticated else None,
+            session_id=session['sid'],
+            action='dashboard_view'
+        )
         # Query records from database for current user or session
         filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
         stored_records = FinancialHealth.query.filter_by(step=3, **filter_kwargs).order_by(FinancialHealth.created_at.desc()).all()
