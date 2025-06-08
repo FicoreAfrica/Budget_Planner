@@ -9,7 +9,7 @@ import uuid
 import re
 from translations import trans
 from extensions import db
-from models import Budget
+from models import Budget, log_tool_usage
 
 budget_bp = Blueprint('budget', __name__, url_prefix='/budget')
 
@@ -155,12 +155,24 @@ def step1():
         if request.method == 'POST':
             current_app.logger.info(f"POST request received for step1, session {session['sid']}: Raw form data: {dict(request.form)}")
             if form.validate_on_submit():
+                log_tool_usage(
+                    tool_name='budget',
+                    user_id=current_user.id if current_user.is_authenticated else None,
+                    session_id=session['sid'],
+                    action='step1_submit'
+                )
                 session['budget_step1'] = form.data
                 current_app.logger.info(f"Budget step1 form validated successfully for session {session['sid']}: {form.data}")
                 return redirect(url_for('budget.step2'))
             else:
                 current_app.logger.warning(f"Form validation failed for step1, session {session['sid']}: {form.errors}")
                 flash(trans("budget_form_validation_error") or "Please correct the errors in the form", "danger")
+        log_tool_usage(
+            tool_name='budget',
+            user_id=current_user.id if current_user.is_authenticated else None,
+            session_id=session['sid'],
+            action='step1_view'
+        )
         current_app.logger.info(f"Rendering step1 form for session {session['sid']}")
         return render_template('budget_step1.html', form=form, trans=trans, lang=lang)
     except Exception as e:
@@ -184,12 +196,24 @@ def step2():
         if request.method == 'POST':
             current_app.logger.info(f"POST request received for step2, session {session['sid']}: Raw form data: {dict(request.form)}")
             if form.validate_on_submit():
+                log_tool_usage(
+                    tool_name='budget',
+                    user_id=current_user.id if current_user.is_authenticated else None,
+                    session_id=session['sid'],
+                    action='step2_submit'
+                )
                 session['budget_step2'] = form.data
                 current_app.logger.info(f"Budget step2 form validated successfully for session {session['sid']}: {form.data}")
                 return redirect(url_for('budget.step3'))
             else:
                 current_app.logger.warning(f"Form validation failed for step2, session {session['sid']}: {form.errors}")
                 flash(trans("budget_form_validation_error") or "Please correct the errors in the form", "danger")
+        log_tool_usage(
+            tool_name='budget',
+            user_id=current_user.id if current_user.is_authenticated else None,
+            session_id=session['sid'],
+            action='step2_view'
+        )
         current_app.logger.info(f"Rendering step2 form for session {session['sid']}")
         return render_template('budget_step2.html', form=form, trans=trans, lang=lang)
     except Exception as e:
@@ -213,12 +237,24 @@ def step3():
         if request.method == 'POST':
             current_app.logger.info(f"POST request received for step3, session {session['sid']}: Raw form data: {dict(request.form)}")
             if form.validate_on_submit():
+                log_tool_usage(
+                    tool_name='budget',
+                    user_id=current_user.id if current_user.is_authenticated else None,
+                    session_id=session['sid'],
+                    action='step3_submit'
+                )
                 session['budget_step3'] = form.data
                 current_app.logger.info(f"Budget step3 form validated successfully for session {session['sid']}: {form.data}")
                 return redirect(url_for('budget.step4'))
             else:
                 current_app.logger.warning(f"Form validation failed for step3, session {session['sid']}: {form.errors}")
                 flash(trans("budget_form_validation_error") or "Please correct the errors in the form", "danger")
+        log_tool_usage(
+            tool_name='budget',
+            user_id=current_user.id if current_user.is_authenticated else None,
+            session_id=session['sid'],
+            action='step3_view'
+        )
         current_app.logger.info(f"Rendering step3 form for session {session['sid']}")
         return render_template('budget_step3.html', form=form, trans=trans, lang=lang)
     except Exception as e:
@@ -248,6 +284,12 @@ def step4():
         if request.method == 'POST':
             current_app.logger.info(f"POST request received for step4, session {session['sid']}: Raw form data: {dict(request.form)}")
             if form.validate_on_submit():
+                log_tool_usage(
+                    tool_name='budget',
+                    user_id=current_user.id if current_user.is_authenticated else None,
+                    session_id=session['sid'],
+                    action='step4_submit'
+                )
                 session['budget_step4'] = form.data
                 current_app.logger.info(f"Budget step4 form validated successfully for session {session['sid']}: {form.data}")
 
@@ -344,6 +386,12 @@ def step4():
                 flash(trans("budget_form_validation_error") or "Please correct the errors in the form", "danger")
                 return render_template('budget_step4.html', form=form, trans=trans, lang=lang)
 
+        log_tool_usage(
+            tool_name='budget',
+            user_id=current_user.id if current_user.is_authenticated else None,
+            session_id=session['sid'],
+            action='step4_view'
+        )
         current_app.logger.info(f"Rendering step4 form for session {session['sid']}")
         return render_template('budget_step4.html', form=form, trans=trans, lang=lang)
 
@@ -361,6 +409,12 @@ def dashboard():
     lang = session.get('lang', 'en')
     try:
         current_app.logger.info(f"Request started for path: /budget/dashboard [session: {session['sid']}]")
+        log_tool_usage(
+            tool_name='budget',
+            user_id=current_user.id if current_user.is_authenticated else None,
+            session_id=session['sid'],
+            action='dashboard_view'
+        )
 
         filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
         budgets = Budget.query.filter_by(**filter_kwargs).order_by(Budget.created_at.desc()).all()
@@ -393,6 +447,12 @@ def dashboard():
             action = request.form.get('action')
             budget_id = request.form.get('budget_id')
             if action == 'delete':
+                log_tool_usage(
+                    tool_name='budget',
+                    user_id=current_user.id if current_user.is_authenticated else None,
+                    session_id=session['sid'],
+                    action='delete_budget'
+                )
                 try:
                     budget = Budget.query.filter_by(id=budget_id, **filter_kwargs).first()
                     if budget:
