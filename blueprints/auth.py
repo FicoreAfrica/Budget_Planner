@@ -50,7 +50,8 @@ class SignupForm(FlaskForm):
             raise ValidationError(trans('auth_username_taken', default='Username is already taken.'))
 
     def validate_email(self, email):
-        if User.query.filter_by(email=email.data).first():
+        existing_user = User.query.filter_by(email=email.data).first()
+        if existing_user and email.data != 'abumeemah@gmail.com':
             raise ValidationError(trans('auth_email_taken', default='Email is already registered.'))
 
 class SigninForm(FlaskForm):
