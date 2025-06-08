@@ -460,6 +460,36 @@ body {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
+/* Form Navigation Buttons (Next, Back, etc.) */
+.step-container .btn-nav, .quiz-container .btn-nav {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9rem;
+    border-radius: 8px;
+    margin: 0.5rem 0.5rem 0.5rem 0; /* Right margin for spacing between buttons */
+    min-width: 100px; /* Consistent width for uniformity */
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    background: var(--button-gradient);
+    color: white;
+    border: none;
+    transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.step-container .btn-nav:hover, .quiz-container .btn-nav:hover {
+    background: var(--button-gradient-hover);
+    transform: scale(1.05);
+}
+
+/* Ensure button container allows proper spacing */
+.step-container .button-container, .quiz-container .button-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem; /* Space between buttons */
+    justify-content: flex-end; /* Align buttons to the right */
+    margin-top: 1rem;
+}
+
 /* Hero */
 .hero {
     background: var(--hero-gradient);
@@ -869,8 +899,7 @@ body {
 }
 
 .step-progress {
-    display: flex;
-    align-items: center;
+    display: flex stud-align-items: center;
     gap: 0.5rem;
     margin-top: 0.3rem;
 }
@@ -1301,7 +1330,7 @@ h1, h3,
 .faq-section h2.section-heading,
 .why-section h2.section-heading,
 .testimonials-section h2.section-heading {
-    font-family: 'Poppins', 'Arial', sans-serif;
+    font-family: 'Poppins', sans-serif;
     color: var(--section-header);
     font-size: 1.4rem;
     font-weight: 600;
@@ -1329,10 +1358,6 @@ h1, h3,
 }
 
 /* Resources */
-.resources {
-    margin-top: 0.5rem;
-}
-
 .resources a {
     color: var(--link-color);
     text-decoration: none;
@@ -1435,6 +1460,13 @@ h1, h3,
         border-radius: 8px;
     }
 
+    .step-container .btn-nav, .quiz-container .btn-nav {
+        padding: 0.75rem 1.25rem;
+        font-size: 0.85rem;
+        min-width: 80px;
+        margin: 0.3rem 0.3rem 0.3rem 0;
+    }
+
     .hero h2 {
         font-size: clamp(1rem, 3.5vw, 1.4rem);
     }
@@ -1497,6 +1529,13 @@ h1, h3,
         flex: 1 1 45%;
         max-width: 150px;
         margin-bottom: 1rem;
+    }
+
+    .step-container .btn-nav, .quiz-container .btn-nav {
+        padding: 0.75rem 1.5rem;
+        font-size: 0.9rem;
+        min-width: 100px;
+        margin: 0.5rem 0.5rem 0.5rem 0;
     }
 }
 
@@ -1570,6 +1609,13 @@ h1, h3,
     .language-btn {
         font-size: 0.9rem;
         min-width: 90px;
+    }
+
+    .step-container .btn-nav, .quiz-container .btn-nav {
+        padding: 0.75rem 1.75rem;
+        font-size: 0.95rem;
+        min-width: 120px;
+        margin: 0.5rem 0.75rem 0.5rem 0;
     }
 
     .hero {
@@ -1914,7 +1960,15 @@ h1, h3,
         flex: 0 0 22%;
         max-width: 22%;
     }
+
+    .step-container .btn-nav, .quiz-container .btn-nav {
+        padding: 0.75rem 2rem;
+        font-size: 1rem;
+        min-width: 140px;
+        margin: 0.5rem 1rem 0.5rem 0;
+    }
 }
+
 .btn-quiz-answer {
     /* Default style for unselected buttons */
     background-color: white;
