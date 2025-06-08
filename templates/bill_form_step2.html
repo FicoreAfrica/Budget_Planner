@@ -88,9 +88,7 @@
                     </div>
                 </fieldset>
                 <button type="submit" name="action" value="save" class="btn btn-success" id="saveButton">{{ trans('bill_save_bill', lang=lang) | default('Save Bill') }}</button>
-                <button type="submit" name="action" value="save_and_continue" class="btn btn-primary" id="saveAndContinueButton">{{ trans('bill_add_another_bill', lang=lang) | default('Add Another Bill') }}</button>
                 <button type="button" class="btn btn-outline-secondary" onclick="window.location.href='{{ url_for('bill.form_step1') }}'">{{ trans('bill_back', lang=lang) | default('Back') }}</button>
-                <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">{{ trans('bill_back_to_index', lang=lang) | default('Back to Index') }}</a>
             </form>
         </div>
     </div>
@@ -107,7 +105,6 @@
         const status = document.getElementById('status');
         const form = document.getElementById('billFormStep2');
         const saveButton = document.getElementById('saveButton');
-        const saveAndContinueButton = document.getElementById('saveAndContinueButton');
         const jsEnabled = document.getElementById('js_enabled');
 
         // Valid choices from backend (matches BillFormStep2 in bill.py)
@@ -238,10 +235,6 @@
             if (saveButton) {
                 saveButton.disabled = true;
                 saveButton.textContent = '{{ trans('bill_saving', lang=lang) | default('Saving...') }}';
-            }
-            if (saveAndContinueButton) {
-                saveAndContinueButton.disabled = true;
-                saveAndContinueButton.textContent = '{{ trans('bill_saving', lang=lang) | default('Saving...') }}';
             }
         });
 
