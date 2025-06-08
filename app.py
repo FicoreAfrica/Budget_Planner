@@ -2,12 +2,10 @@ import os
 import sys
 import logging
 import uuid
-import redis
 from datetime import datetime, timedelta
 from flask import Flask, jsonify, render_template, request, session, redirect, url_for, flash, send_from_directory, has_request_context, g, current_app, make_response
 from flask_wtf.csrf import CSRFError, generate_csrf
 from flask_login import LoginManager, current_user
-from flask_caching import Cache
 from flask_session import Session
 from dotenv import load_dotenv
 from extensions import db, login_manager, session as flask_session, csrf
@@ -74,18 +72,7 @@ def setup_logging(app):
         logger.warning(f"Failed to set up file logging: {str(e)}")
 
 def setup_session(app):
-    redis_host = os.environ.get('REDIS_HOST', 'localhost')
-    redis_port = int(os.environ.get('REDIS_PORT', 6379))
-    redis_db = int(os.environ.get('REDIS_DB', 0))
-    redis_password = os.environ.get('REDIS_PASSWORD', None)
-    
-    app.config['SESSION_TYPE'] = 'redis'
-    app.config['SESSION_REDIS'] = redis.Redis(
-        host=redis_host,
-        port=redis_port,
-        db=redis_db,
-        password=redis_password
-    )
+    app.config['SESSION_TYPE'] = 'null'  # In-memory, with signed cookies
     app.config['SESSION_PERMANENT'] = True
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
     app.config['SESSION_USE_SIGNER'] = True
@@ -93,13 +80,7 @@ def setup_session(app):
     app.config['SESSION_COOKIE_HTTPONLY'] = True
     app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
     app.config['SESSION_COOKIE_SECURE'] = True  # Render uses HTTPS
-    
-    try:
-        app.config['SESSION_REDIS'].ping()
-        logger.info(f"Session configured: type=redis, host={redis_host}, port={redis_port}, db={redis_db}")
-    except redis.exceptions.ConnectionError as e:
-        logger.critical(f"Failed to connect to Redis for sessions: {str(e)}")
-        raise
+    logger.info("Session configured: type=in-memory (null), cookie-based")
     Session(app)
 
 def initialize_courses_data(app):
@@ -188,27 +169,13 @@ def create_app():
     }
     db.init_app(app)
 
-    # Initialize caching with Redis
-    app.config['CACHE_TYPE'] = 'redis'
-    app.config['CACHE_REDIS_HOST'] = os.environ.get('REDIS_HOST', 'localhost')
-    app.config['CACHE_REDIS_PORT'] = int(os.environ.get('REDIS_PORT', 6379))
-    app.config['CACHE_REDIS_DB'] = int(os.environ.get('REDIS_DB', 0))
-    app.config['CACHE_REDIS_PASSWORD'] = os.environ.get('REDIS_PASSWORD', None)
-    cache = Cache(app)
-
     # Initialize Flask-Login
     login_manager.init_app(app)
     login_manager.login_view = 'auth.signin'
 
     @login_manager.user_loader
     def load_user(user_id):
-        # Use cache to reduce database queries
-        cache_key = f"user_{user_id}"
-        user = cache.get(cache_key)
-        if user is None:
-            user = User.query.get(int(user_id))
-            if user:
-                cache.set(cache_key, user, timeout=3600)  # Cache for 1 hour
+        user = User.query.get(int(user_id))
         return user
 
     # Initialize scheduler
@@ -322,7 +289,7 @@ def create_app():
                 g.logger.warning("data/storage.log not found")
         except Exception as e:
             logger.error(f"Before request error: {str(e)}", exc_info=True)
-            db.session.rollback()  # Reset database session
+            db.session.rollback()
             flash(translate('global_error_message', default='An error occurred', lang=session.get('lang', 'en')), 'danger')
 
     @app.context_processor
@@ -425,7 +392,7 @@ def create_app():
             filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
 
             # Use read-only session for data retrieval
-            with db.session.no_autoflush() as read_session:  # Avoid flushing changes
+            with db.session.no_autoflush() as read_session:
                 # Financial Health
                 fh_records = read_session.query(FinancialHealth).filter_by(**filter_kwargs).order_by(FinancialHealth.created_at.desc()).all()
                 data['financial_health'] = {
@@ -480,7 +447,7 @@ def create_app():
         except Exception as e:
             logger.error(f"Error in general_dashboard: {str(e)}", exc_info=True)
             flash(translate('global_error_message', default='An error occurred', lang=lang), 'danger')
-            db.session.rollback()  # Ensure rollback on error
+            db.session.rollback()
             default_data = {
                 'financial_health': {'score': None, 'status': None},
                 'budget': {'surplus_deficit': None, 'savings_goal': None},
@@ -500,12 +467,12 @@ def create_app():
             session_lang = session.get('lang', 'en')
             session.clear()
             session['lang'] = session_lang
-            db.session.remove()  # Clean up database session
+            db.session.remove()
             flash(translate('learning_hub_success_logout', default='Successfully logged out', lang=lang), 'success')
             return redirect(url_for('index'))
         except Exception as e:
             logger.error(f"Error in logout: {str(e)}", exc_info=True)
-            db.session.rollback()  # Ensure rollback on error
+            db.session.rollback()
             flash(translate('global_error_message', default='An error occurred', lang=lang), 'danger')
             return redirect(url_for('index'))
 
@@ -525,13 +492,7 @@ def create_app():
             if not os.path.exists(os.path.join(os.path.dirname(__file__), 'data', 'storage.log')):
                 status["status"] = "warning"
                 status["details"] = "Log file data/storage.log not found"
-            # Check Redis connectivity
-            try:
-                app.config['SESSION_REDIS'].ping()
-                status["redis"] = "connected"
-            except redis.exceptions.ConnectionError as e:
-                status["redis"] = f"failed: {str(e)}"
-                status["status"] = "warning"
+            status["session_type"] = "in-memory (null)"
             return jsonify(status), 200
         except Exception as e:
             logger.error(f"Health check failed: {str(e)}", exc_info=True)
@@ -553,7 +514,7 @@ def create_app():
     def internal_error(error):
         lang = session.get('lang', 'en') if 'lang' in session else 'en'
         logger.error(f"Server error: {str(error)}", exc_info=True)
-        db.session.rollback()  # Rollback any pending transactions
+        db.session.rollback()
         flash(translate('global_error_message', default='An internal server error occurred. Please try again.', lang=lang), 'danger')
         return render_template('error.html', t=translate, lang=lang), 500
 
@@ -561,7 +522,7 @@ def create_app():
     def handle_csrf(e):
         lang = session.get('lang', 'en') if 'lang' in session else 'en'
         logger.error(f"CSRF error: {str(e)}")
-        db.session.rollback()  # Rollback on CSRF error
+        db.session.rollback()
         flash(translate('global_csrf_error', default='Invalid CSRF token. Please try again.', lang=lang), 'danger')
         return redirect(url_for('auth.signin'))
 
@@ -616,7 +577,7 @@ def create_app():
             return redirect(url_for('index'))
         except Exception as e:
             logger.error(f"Error processing feedback: {str(e)}")
-            db.session.rollback()  # Ensure rollback on error
+            db.session.rollback()
             flash(translate('core_global_error', default='Error occurred while submitting feedback', lang=lang), 'error')
             return render_template('feedback.html', t=translate, lang=lang, tool_options=tool_options), 500
 
