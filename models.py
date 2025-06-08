@@ -1,8 +1,8 @@
 from extensions import db
-import json
-from datetime import datetime, date
 from flask_login import UserMixin
 import uuid
+from datetime import datetime, date
+import json
 
 class User(db.Model, UserMixin):
     __tablename__ = 'users'
@@ -14,8 +14,12 @@ class User(db.Model, UserMixin):
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     lang = db.Column(db.String(10), default='en')
     referral_code = db.Column(db.String(36), unique=True, nullable=False, default=lambda: str(uuid.uuid4()))
-    referred_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    referred_by_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
     referred_by = db.relationship('User', remote_side=[id], backref='referrals')
+
+    __table_args__ = (
+        db.Index('ix_users_referral_code', 'referral_code'),
+    )
 
 class Course(db.Model):
     __tablename__ = 'courses'
