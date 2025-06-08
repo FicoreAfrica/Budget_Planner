@@ -563,9 +563,11 @@ def create_app():
     logger.info("App creation completed")
     return app
 
+# Create the Flask app instance for Gunicorn
+app = create_app()
+
 if __name__ == "__main__":
     try:
-        app = create_app()
         app.run(debug=True)
     except Exception as e:
         logger.error(f"Error running app: {str(e)}")
