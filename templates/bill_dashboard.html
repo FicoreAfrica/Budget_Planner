@@ -55,7 +55,7 @@
         {% endif %}
 
         {% if upcoming_bills %}
-            <div class="card mb-3">
+            pouss<div class="card mb-3">
                 <div class="card-body">
                     <h5>{{ trans('bill_upcoming_bills', lang=lang) | default('Upcoming Bills') }}</h5>
                     <ul>
@@ -103,12 +103,6 @@
                                         <input type="hidden" name="action" value="delete">
                                         <button type="submit" class="btn btn-sm btn-danger">{{ trans('bill_delete', lang=lang) | default('Delete') }}</button>
                                     </form>
-                                    <form action="{{ url_for('bill.view_edit') }}" method="POST" style="display:inline;">
-                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                        <input type="hidden" name="bill_id" value="{{ bill_id }}">
-                                        <input type="hidden" name="action" value="toggle_status">
-                                        <button type="submit" class="btn btn-sm btn-secondary">{{ trans('bill_toggle_status', lang=lang) | default('Toggle Status') }}</button>
-                                    </form>
                                 </td>
                             </tr>
                         {% endif %}
@@ -137,12 +131,14 @@
 
         <a href="{{ url_for('bill.form_step1') }}" class="btn btn-primary">{{ trans('bill_add_bill', lang=lang) | default('Add Bill') }}</a>
         <a href="{{ url_for('bill.view_edit') }}" class="btn btn-primary">{{ trans('bill_view_edit_bills', lang=lang) | default('View and Edit Bills') }}</a>
+        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">{{ trans('bill_back_to_index', lang=lang) | default('Back to Index') }}</a>
     {% else %}
         <div class="card text-center">
             <div class="card-body">
                 <i class="fas fa-file-invoice fa-3x mb-3 text-muted"></i>
                 <p>{{ trans('bill_no_bills_empty_state', lang=lang) | default('No bills added yet. Start by adding one!') }}</p>
                 <a href="{{ url_for('bill.form_step1') }}" class="btn btn-primary">{{ trans('bill_add_bill', lang=lang) | default('Add Bill') }}</a>
+                <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">{{ trans('bill_back_to_index', lang=lang) | default('Back to Index') }}</a>
             </div>
         </div>
     {% endif %}
