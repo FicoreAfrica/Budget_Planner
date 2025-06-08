@@ -1,8 +1,8 @@
-"""Initial schema with all models including updated QuizResult, NetWorth, LearningProgress, and Feedback
+"""Initial schema with all models including ToolUsage
 
 Revision ID: initial_schema
 Revises: 
-Create Date: 2025-06-08 07:00:00
+Create Date: 2025-06-08 13:51:00
 """
 
 from alembic import op
@@ -23,7 +23,7 @@ def upgrade():
         sa.Column('password_hash', sa.String(length=256), nullable=False),
         sa.Column('is_admin', sa.Boolean(), nullable=False, server_default='false'),
         sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
-        sa.Column('lang', sa.String(length=10), nullable=False, server_default='en'),
+        sa.Column('lang', sa.String(length=10), nullable=True, server_default='en'),
         sa.Column('referral_code', sa.String(length=36), nullable=False, server_default=sa.text("gen_random_uuid()")),
         sa.Column('referred_by_id', sa.Integer(), nullable=True),
         sa.ForeignKeyConstraint(['referred_by_id'], ['users.id'], ondelete='SET NULL'),
@@ -232,7 +232,27 @@ def upgrade():
     op.create_index('ix_feedback_session_id', 'feedback', ['session_id'], unique=False)
     op.create_index('ix_feedback_user_id', 'feedback', ['user_id'], unique=False)
 
+    # ToolUsage table
+    op.create_table(
+        'tool_usage',
+        sa.Column('id', sa.String(length=36), nullable=False),
+        sa.Column('tool_name', sa.String(length=50), nullable=False),
+        sa.Column('user_id', sa.Integer(), nullable=True),
+        sa.Column('session_id', sa.String(length=36), nullable=False),
+        sa.Column('action', sa.String(length=100), nullable=False),
+        sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
+        sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
+        sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index('ix_tool_usage_session_id', 'tool_usage', ['session_id'], unique=False)
+    op.create_index('ix_tool_usage_user_id', 'tool_usage', ['user_id'], unique=False)
+    op.create_index('ix_tool_usage_tool_name', 'tool_usage', ['tool_name'], unique=False)
+
 def downgrade():
+    op.drop_index('ix_tool_usage_tool_name', table_name='tool_usage')
+    op.drop_index('ix_tool_usage_user_id', table_name='tool_usage')
+    op.drop_index('ix_tool_usage_session_id', table_name='tool_usage')
+    op.drop_table('tool_usage')
     op.drop_index('ix_feedback_user_id', table_name='feedback')
     op.drop_index('ix_feedback_session_id', table_name='feedback')
     op.drop_table('feedback')
