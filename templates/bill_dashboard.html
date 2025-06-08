@@ -55,7 +55,7 @@
         {% endif %}
 
         {% if upcoming_bills %}
-            pouss<div class="card mb-3">
+            <div class="card mb-3">
                 <div class="card-body">
                     <h5>{{ trans('bill_upcoming_bills', lang=lang) | default('Upcoming Bills') }}</h5>
                     <ul>
@@ -102,6 +102,12 @@
                                         <input type="hidden" name="bill_id" value="{{ bill_id }}">
                                         <input type="hidden" name="action" value="delete">
                                         <button type="submit" class="btn btn-sm btn-danger">{{ trans('bill_delete', lang=lang) | default('Delete') }}</button>
+                                    </form>
+                                    <form action="{{ url_for('bill.view_edit') }}" method="POST" style="display:inline;">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <input type="hidden" name="bill_id" value="{{ bill_id }}">
+                                        <input type="hidden" name="action" value="toggle_status">
+                                        <button type="submit" class="btn btn-sm btn-secondary">{{ trans('bill_toggle_status', lang=lang) | default('Toggle Status') }}</button>
                                     </form>
                                 </td>
                             </tr>
