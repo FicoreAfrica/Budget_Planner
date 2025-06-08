@@ -32,6 +32,7 @@ def upgrade():
         sa.UniqueConstraint('username'),
         sa.UniqueConstraint('referral_code')
     )
+    op.create_index('ix_users_referral_code', 'users', ['referral_code'], unique=False)
 
     # Courses table
     op.create_table(
@@ -257,4 +258,5 @@ def downgrade():
     op.drop_index('ix_financial_health_session_id', table_name='financial_health')
     op.drop_table('financial_health')
     op.drop_table('courses')
+    op.drop_index('ix_users_referral_code', table_name='users')
     op.drop_table('users')
