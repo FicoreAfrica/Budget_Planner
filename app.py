@@ -355,9 +355,9 @@ def create_app():
             'status': True,
             'timestamp': datetime.utcnow().isoformat(),
             'ip': request.remote_addr,
-            'user_agent': request.headers.get('User-Agent')
+            'user_agent': str(request.headers.get('User-Agent'))
         }
-        logger.info(f"Consent acknowledged for session {session['sid']} from IP {request.remote_addr}")
+        logger.info(f"Consent acknowledged for session ID: {session['sid']}")
         response = make_response('', 204)
         response.headers['Cache-Control'] = 'no-store'
         response.headers['X-Content-Type-Options'] = 'nosniff'
@@ -373,80 +373,16 @@ def create_app():
     def general_dashboard():
         lang = session.get('lang', 'en')
         logger.info("Serving general dashboard")
-        data = {}
         try:
             filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
 
             # Financial Health
-            fh_records = FinancialHealth.query.filter_by(**filter_kwargs).order_by(FinancialHealth.created_at.desc()).all()
-            if not fh_records:
-                logger.warning(f"No FinancialHealth records found for filter: {filter_kwargs}")
-            data['financial_health'] = {
-                'score': fh_records[0].score,
-                'status': fh_records[0].status
-            } if fh_records else {'score': None, 'status': None}
-
-            # Budget
-            budget_records = Budget.query.filter_by(**filter_kwargs).order_by(Budget.created_at.desc()).all()
-            if not budget_records:
-                logger.warning(f"No Budget records found for filter: {filter_kwargs}")
-            data['budget'] = {
-                'surplus_deficit': budget_records[0].surplus_deficit,
-                'savings_goal': budget_records[0].savings_goal
-            } if budget_records else {'surplus_deficit': None, 'savings_goal': None}
-
-            # Bills
-            bills = Bill.query.filter_by(**filter_kwargs).all()
-            if not bills:
-                logger.warning(f"No Bill records found for filter: {filter_kwargs}")
-            total_amount = sum(bill.amount for bill in bills)
-            unpaid_amount = sum(bill.amount for bill in bills if bill.status.lower() != 'paid')
-            data['bills'] = {
-                'bills': [bill.to_dict() for bill in bills],
-                'total_amount': total_amount,
-                'unpaid_amount': unpaid_amount
-            }
-
-            # Net Worth
-            nw_records = NetWorth.query.filter_by(**filter_kwargs).order_by(NetWorth.created_at.desc()).all()
-            if not nw_records:
-                logger.warning(f"No NetWorth records found for filter: {filter_kwargs}")
-            data['net_worth'] = {
-                'net_worth': nw_records[0].net_worth,
-                'total_assets': nw_records[0].total_assets
-            } if nw_records else {'net_worth': None, 'total_assets': None}
-
-            # Emergency Fund
-            ef_records = EmergencyFund.query.filter_by(**filter_kwargs).order_by(EmergencyFund.created_at.desc()).all()
-            if not ef_records:
-                logger.warning(f"No EmergencyFund records found for filter: {filter_kwargs}")
-            data['emergency_fund'] = {
-                'target_amount': ef_records[0].target_amount,
-                'savings_gap': ef_records[0].savings_gap
-            } if ef_records else {'target_amount': None, 'savings_gap': None}
-
-            # Learning Progress
-            lp_records = LearningProgress.query.filter_by(**filter_kwargs).all()
-            if not lp_records:
-                logger.warning(f"No LearningProgress records found for filter: {filter_kwargs}")
-            data['learning_progress'] = {lp.course_id: lp.to_dict() for lp in lp_records}
-
-            # Quiz Result
-            quiz_records = QuizResult.query.filter_by(**filter_kwargs).order_by(QuizResult.created_at.desc()).all()
-            if not quiz_records:
-                logger.warning(f"No QuizResult records found for filter: {filter_kwargs}")
-            data['quiz'] = {
-                'personality': quiz_records[0].personality,
-                'score': quiz_records[0].score
-            } if quiz_records else {'personality': None, 'score': None}
-
-            logger.info(f"Retrieved data for session {session['sid']}")
-            return render_template('general_dashboard.html', data=data, t=translate, lang=lang)
-        except Exception as e:
-            logger.error(f"Error in general_dashboard: {str(e)}", exc_info=True)
-            flash(translate('global_error_message', default='An error occurred', lang=lang), 'danger')
-            default_data = {
-                'financial_health': {'score': None, 'status': None},
+            fh_records = FinancialHealth.query.filter_by(**filter_kwargs).order_by(FinancialHealth.created_at.desc()).first()
+            data = {
+                'financial_health': {
+                    'score': fh_records.score if fh_records else None,
+                    'status': fh_records.status if fh_records else None
+                },
                 'budget': {'surplus_deficit': None, 'savings_goal': None},
                 'bills': {'bills': [], 'total_amount': 0, 'unpaid_amount': 0},
                 'net_worth': {'net_worth': None, 'total_assets': None},
@@ -454,7 +390,61 @@ def create_app():
                 'learning_progress': {},
                 'quiz': {'personality': None, 'score': None}
             }
-            return render_template('general_dashboard.html', data=default_data, t=translate, lang=lang), 500
+
+            # Budget
+            budget_records = Budget.query.filter_by(**filter_kwargs).order_by(Budget.created_at.desc()).first()
+            if budget_records:
+                data['budget'] = {
+                    'surplus_deficit': budget_records.surplus_deficit,
+                    'savings_goal': budget_records.savings_goal
+                }
+
+            # Bills
+            bills = Bill.query.filter_by(**filter_kwargs).all()
+            if bills:
+                total_amount = sum(bill.amount for bill in bills)
+                unpaid_amount = sum(bill.amount for bill in bills if bill.status.lower() != 'paid')
+                data['bills'] = {
+                    'bills': [bill.to_dict() for bill in bills],
+                    'total_amount': total_amount,
+                    'unpaid_amount': unpaid_amount
+                }
+
+            # Net Worth
+            nw_records = NetWorth.query.filter_by(**filter_kwargs).order_by(NetWorth.created_at.desc()).first()
+            if nw_records:
+                data['net_worth'] = {
+                    'net_worth': nw_records.net_worth,
+                    'total_assets': nw_records.total_assets
+                }
+
+            # Emergency Fund
+            ef_records = EmergencyFund.query.filter_by(**filter_kwargs).order_by(EmergencyFund.created_at.desc()).first()
+            if ef_records:
+                data['emergency_fund'] = {
+                    'target_amount': ef_records.target_amount,
+                    'savings_gap': ef_records.savings_gap
+                }
+
+            # Learning Progress
+            lp_records = LearningProgress.query.filter_by(**filter_kwargs).all()
+            if lp_records:
+                data['learning_progress'] = {lp.course_id: lp.to_dict() for lp in lp_records}
+
+            # Quiz Result
+            quiz_records = QuizResult.query.filter_by(**filter_kwargs).order_by(QuizResult.created_at.desc()).first()
+            if quiz_records:
+                data['quiz'] = {
+                    'personality': quiz_records.personality,
+                    'score': quiz_records.score
+                }
+
+            logger.info(f"Retrieved dashboard data for session {session['sid']}")
+            return render_template('general_dashboard.html', data=data, t=translate, lang=lang)
+        except Exception as e:
+            logger.error(f"Error in general_dashboard: {str(e)}", exc_info=True)
+            flash(translate('global_error_message', default='An error occurred', lang=lang), 'danger')
+            return render_template('general_dashboard.html', data=data, t=translate, lang=lang), 500
 
     @app.route('/logout')
     def logout():
@@ -524,21 +514,13 @@ def create_app():
     def feedback():
         lang = session.get('lang', 'en')
         logger.info("Handling feedback request")
-        print("Handling feedback request", file=sys.stderr, flush=True)
         tool_options = [
             'financial_health', 'budget', 'bill', 'net_worth',
             'emergency_fund', 'learning_hub', 'quiz'
         ]
-        if request.method == 'POST':
-            try:
-                print("Rendering feedback template", file=sys.stderr, flush=True)
-                return render_template('feedback.html', t=translate, lang=lang, tool_options=tool_options)
-            except Exception as e:
-                logger.error(f"Error processing feedback: {str(e)}")
-                print(f"Error processing feedback: {str(e)}")
-}", file=sys.stderr, flush=True)
-                flash(translate('core_global_error', default='Error occurred while submitting feedback', lang=lang), 'error')
-                return render_template('feedback.html', t=translate, lang=lang, tool_options=tool_options), 500
+        if request.method == 'GET':
+            logger.info("Rendering feedback template")
+            return render_template('feedback.html', t=translate, lang=lang, tool_options=tool_options)
         try:
             tool_name = request.form.get('tool_name')
             rating = request.form.get('rating')
@@ -546,11 +528,9 @@ def create_app():
             if not tool_name or tool_name not in tool_options:
                 flash(translate('core_feedback_invalid_tool', default='Please select a valid tool', lang=lang), 'error')
                 logger.error(f"Invalid feedback tool: {tool_name}")
-                print(f"Invalid feedback tool: {tool_name}", file=sys.stderr, flush=True)
                 return render_template('feedback.html', t=translate, lang=lang, tool_options=tool_options)
             if not rating or not rating.isdigit() or int(rating) < 1 or int(rating) > 5:
                 logger.error(f"Invalid feedback rating: {rating}")
-                print(f"Invalid feedback rating: {rating}", file=sys.stderr, flush=True)
                 flash(translate('core_feedback_invalid_rating', default='Please provide a rating between 1 and 5', lang=lang), 'error')
                 return render_template('feedback.html', t=translate, lang=lang, tool_options=tool_options)
             feedback_entry = Feedback(
@@ -563,20 +543,20 @@ def create_app():
             db.session.add(feedback_entry)
             db.session.commit()
             logger.info(f"Feedback submitted: tool={tool_name}, rating={rating}, session={session['sid']}")
-            print(f"Feedback submitted: tool={tool_name}, rating={rating}, session={session['sid']}", file=sys.stderr, flush=True)
-            flash(translate('core_feedback_success', default='Thank you for your feedback!', lang=lang), 'success')
+            flash(translate('core_feedback_success', default='Thank you for your feedback!', lang=lang'), 'success')
             return redirect(url_for('index'))
         except Exception as e:
             logger.error(f"Error processing feedback: {str(e)}")
-            print(f"Error processing feedback: {str(e)}", file=sys.stderr, flush=True)
             flash(translate('core_global_error', default='Error occurred while submitting feedback', lang=lang), 'error')
-            return render_template('feedback.html', t=translate, lang=lang, tool_options=tool_options), 500
+            return render_template('feedback.html', t=translate, lang=lang, tool_options=tool_options), 500)
 
     logger.info("App creation completed")
     return app
 
-try:
-    app = create_app()
-except Exception as e:
-    logger.error(f"Error creating app: {e}")
-    raise
+if __name__ == "__main__":
+    try:
+        app = create_app()
+        app.run(debug=True)
+    except Exception as e:
+        logger.error(f"Error running app: {str(e)}")
+        raise
