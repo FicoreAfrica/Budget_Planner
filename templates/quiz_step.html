@@ -58,7 +58,7 @@
                         <div class="btn-group" role="group" aria-label="{{ trans(question.text_key, default=question.text, lang=lang) }}">
                             {% for choice_value, choice_label in form[question.id].choices %}
                                 <input type="radio" class="btn-check" name="{{ question.id }}" id="{{ question.id }}_{{ loop.index }}" value="{{ choice_value }}" autocomplete="off" {% if form[question.id].data == choice_value %}checked{% endif %}>
-                                <label class="btn btn-outline-primary" for="{{ question.id }}_{{ loop.index }}">{{ trans(choice_value, default=choice_label, lang=lang) }}</label>
+                                <label class="btn btn-outline-primary btn-quiz-answer" for="{{ question.id }}_{{ loop.index }}">{{ trans(choice_value, default=choice_label, lang=lang) }}</label>
                             {% endfor %}
                         </div>
                         <small class="form-text text-muted" id="help_{{ question.id }}">{{ trans(question.tooltip, default='', lang=lang) }}</small>
