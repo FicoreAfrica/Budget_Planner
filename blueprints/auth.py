@@ -6,7 +6,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from translations import trans
 from extensions import db
-from models import User
+from models import User, log_tool_usage
 import logging
 import uuid
 
@@ -105,7 +105,12 @@ def signup():
     form = SignupForm(lang=lang, formdata=request.form if request.method == 'POST' else None)
     referral_code = request.args.get('ref')
     referrer = None
+    session_id = session.get('sid', str(uuid.uuid4()))
+    session['sid'] = session_id
     
+    # Log signup page view
+    log_tool_usage('register', None, session_id, 'view_page')
+
     if referral_code:
         try:
             # Validate referral_code as a UUID
@@ -131,16 +136,19 @@ def signup():
             )
             db.session.add(user)
             db.session.commit()
-            logger.info(f"User signed up: {user.username} with referral code: {referral_code or 'none'}", extra={'session_id': session.get('sid', 'unknown')})
+            logger.info(f"User signed up: {user.username} with referral code: {referral_code or 'none'}", extra={'session_id': session_id})
+            log_tool_usage('register', user.id, session_id, 'submit_success')
             flash(trans('auth_signup_success', default='Account created successfully! Please sign in.', lang=lang), 'success')
             return redirect(url_for('auth.signin'))
         elif form.errors:
-            logger.error(f"Signup form validation failed: {form.errors}", extra={'session_id': session.get('sid', 'unknown')})
+            logger.error(f"Signup form validation failed: {form.errors}", extra={'session_id': session_id})
+            log_tool_usage('register', None, session_id, 'submit_error')
             flash(trans('auth_form_errors', default='Please correct the errors in the form.', lang=lang), 'danger')
         
         return render_template('signup.html', form=form, lang=lang, referral_code=referral_code, referrer=referrer)
     except Exception as e:
-        logger.error(f"Error in signup: {str(e)}", extra={'session_id': session.get('sid', 'unknown')})
+        logger.error(f"Error in signup: {str(e)}", extra={'session_id': session_id})
+        log_tool_usage('register', None, session_id, 'error')
         flash(trans('auth_error', default='An error occurred. Please try again.', lang=lang), 'danger')
         return render_template('signup.html', form=form, lang=lang, referral_code=referral_code, referrer=referrer), 500
 
@@ -151,26 +159,35 @@ def signin():
     
     lang = session.get('lang', 'en')
     form = SigninForm(lang=lang, formdata=request.form if request.method == 'POST' else None)
+    session_id = session.get('sid', str(uuid.uuid4()))
+    session['sid'] = session_id
     
+    # Log signin page view
+    log_tool_usage('login', None, session_id, 'view_page')
+
     try:
         if request.method == 'POST' and form.validate_on_submit():
             user = User.query.filter_by(email=form.email.data).first()
             if user and check_password_hash(user.password_hash, form.password.data):
                 login_user(user)
-                logger.info(f"User signed in: {user.username}", extra={'session_id': session.get('sid', 'unknown')})
+                logger.info(f"User signed in: {user.username}", extra={'session_id': session_id})
+                log_tool_usage('login', user.id, session_id, 'submit_success')
                 flash(trans('auth_signin_success', default='Signed in successfully!', lang=lang), 'success')
                 return redirect(url_for('index'))
             else:
-                logger.warning(f"Invalid signin attempt for email: {form.email.data}", extra={'session_id': session.get('sid', 'unknown')})
+                logger.warning(f"Invalid signin attempt for email: {form.email.data}", extra={'session_id': session_id})
+                log_tool_usage('login', None, session_id, 'submit_error')
                 flash(trans('auth_invalid_credentials', default='Invalid email or password.', lang=lang), 'danger')
         
         elif form.errors:
-            logger.error(f"Signin form validation failed: {form.errors}", extra={'session_id': session.get('sid', 'unknown')})
+            logger.error(f"Signin form validation failed: {form.errors}", extra={'session_id': session_id})
+            log_tool_usage('login', None, session_id, 'submit_error')
             flash(trans('auth_form_errors', default='Please correct the errors in the form.', lang=lang), 'danger')
         
         return render_template('signin.html', form=form, lang=lang)
     except Exception as e:
-        logger.error(f"Error in signin: {str(e)}", extra={'session_id': session.get('sid', 'unknown')})
+        logger.error(f"Error in signin: {str(e)}", extra={'session_id': session_id})
+        log_tool_usage('login', None, session_id, 'error')
         flash(trans('auth_error', default='An error occurred. Please try again.', lang=lang), 'danger')
         return render_template('signin.html', form=form, lang=lang), 500
 
@@ -179,8 +196,14 @@ def signin():
 def logout():
     lang = session.get('lang', 'en')
     username = current_user.username
+    user_id = current_user.id
+    session_id = session.get('sid', str(uuid.uuid4()))
+    
+    # Log logout action
+    log_tool_usage('logout', user_id, session_id, 'submit')
+    
     logout_user()
-    logger.info(f"User logged out: {username}", extra={'session_id': session.get('sid', 'unknown')})
+    logger.info(f"User logged out: {username}", extra={'session_id': session_id})
     flash(trans('auth_logout_success', default='Logged out successfully!', lang=lang), 'success')
     return redirect(url_for('index'))
 
@@ -189,16 +212,17 @@ def logout():
 def profile():
     lang = session.get('lang', 'en')
     password_form = ChangePasswordForm(lang=lang, formdata=request.form if request.method == 'POST' else None)
+    session_id = session.get('sid', str(uuid.uuid4()))
     
     try:
         if request.method == 'POST' and password_form.validate_on_submit():
             current_user.password_hash = generate_password_hash(password_form.new_password.data)
             db.session.commit()
-            logger.info(f"User changed password: {current_user.username}", extra={'session_id': session.get('sid', 'unknown')})
+            logger.info(f"User changed password: {current_user.username}", extra={'session_id': session_id})
             flash(trans('auth_password_changed_success', default='Password changed successfully!', lang=lang), 'success')
             return redirect(url_for('auth.profile'))
         elif password_form.errors:
-            logger.error(f"Change password form validation failed: {password_form.errors}", extra={'session_id': session.get('sid', 'unknown')})
+            logger.error(f"Change password form validation failed: {password_form.errors}", extra={'session_id': session_id})
             flash(trans('auth_form_errors', default='Please correct the errors in the form.', lang=lang), 'danger')
         
         referral_link = url_for('auth.signup', ref=current_user.referral_code, _external=True)
@@ -206,6 +230,6 @@ def profile():
         referred_users = current_user.referrals
         return render_template('profile.html', lang=lang, referral_link=referral_link, referral_count=referral_count, referred_users=referred_users, password_form=password_form)
     except Exception as e:
-        logger.error(f"Error in profile: {str(e)}", extra={'session_id': session.get('sid', 'unknown')})
+        logger.error(f"Error in profile: {str(e)}", extra={'session_id': session_id})
         flash(trans('auth_error', default='An error occurred. Please try again.', lang=lang), 'danger')
         return render_template('profile.html', lang=lang, referral_link=referral_link, referral_count=referral_count, referred_users=referred_users, password_form=password_form), 500
