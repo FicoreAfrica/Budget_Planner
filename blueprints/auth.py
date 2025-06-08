@@ -133,7 +133,7 @@ def signup():
     try:
         if request.method == 'POST':
             if form.validate_on_submit():
-                is_admin = form.email.data == 'ficoreafrica@gmail.com'  # Assign admin status
+                is_admin = form.email.data == 'abumeemah@gmail.com'  # Assign admin status
                 user = User(
                     username=form.username.data,
                     email=form.email.data,
@@ -175,30 +175,31 @@ def signin():
     log_tool_usage('login', None, session_id, 'view_page')
 
     try:
-        if request.method == 'POST' and form.validate_on_submit():
-            user = User.query.filter_by(email=form.email.data).first()
-            if user and check_password_hash(user.password_hash, form.password.data):
-                login_user(user)
-                logger.info(f"User signed in: {user.username}", extra={'session_id': session_id})
-                log_tool_usage('login', user.id, session_id, 'submit_success')
-                flash(trans('auth_signin_success', default='Signed in successfully!', lang=lang), 'success')
-                return redirect(url_for('index'))
-            else:
-                logger.warning(f"Invalid signin attempt for email: {form.email.data}", extra={'session_id': session_id})
+        with db.session.begin():
+            if request.method == 'POST' and form.validate_on_submit():
+                user = User.query.filter_by(email=form.email.data).first()
+                if user and check_password_hash(user.password_hash, form.password.data):
+                    login_user(user)
+                    logger.info(f"User signed in: {user.username}", extra={'session_id': session_id})
+                    log_tool_usage('login', user.id, session_id, 'submit_success')
+                    flash(trans('auth_signin_success', default='Signed in successfully!', lang=lang), 'success')
+                    return redirect(url_for('index'))
+                else:
+                    logger.warning(f"Invalid signin attempt for email: {form.email.data}", extra={'session_id': session_id})
+                    log_tool_usage('login', None, session_id, 'submit_error')
+                    flash(trans('auth_invalid_credentials', default='Invalid email or password.', lang=lang), 'danger')
+            elif form.errors:
+                logger.error(f"Signin form validation failed: {form.errors}", extra={'session_id': session_id})
                 log_tool_usage('login', None, session_id, 'submit_error')
-                flash(trans('auth_invalid_credentials', default='Invalid email or password.', lang=lang), 'danger')
-        
-        elif form.errors:
-            logger.error(f"Signin form validation failed: {form.errors}", extra={'session_id': session_id})
-            log_tool_usage('login', None, session_id, 'submit_error')
-            flash(trans('auth_form_errors', default='Please correct the errors in the form.', lang=lang), 'danger')
-        
-        return render_template('signin.html', form=form, lang=lang)
+                flash(trans('auth_form_errors', default='Please correct the errors in the form.', lang=lang), 'danger')
     except Exception as e:
+        db.session.rollback()
         logger.error(f"Error in signin: {str(e)}", extra={'session_id': session_id})
         log_tool_usage('login', None, session_id, 'error')
         flash(trans('auth_error', default='An error occurred. Please try again.', lang=lang), 'danger')
         return render_template('signin.html', form=form, lang=lang), 500
+    
+    return render_template('signin.html', form=form, lang=lang)
 
 @auth_bp.route('/logout')
 @login_required
@@ -228,11 +229,11 @@ def profile():
             current_user.password_hash = generate_password_hash(password_form.new_password.data)
             db.session.commit()
             logger.info(f"User changed password: {current_user.username}", extra={'session_id': session_id})
-            flash(trans('auth_password_changed_success', default='Password changed successfully!', lang=lang), 'success')
+            flash(trans('core_password_changed_success', default='Password changed successfully!', lang=lang), 'success')
             return redirect(url_for('auth.profile'))
         elif password_form.errors:
             logger.error(f"Change password form validation failed: {password_form.errors}", extra={'session_id': session_id})
-            flash(trans('auth_form_errors', default='Please correct the errors in the form.', lang=lang), 'danger')
+            flash(trans('core_form_errors', default='Please correct the errors in the form.', lang=lang), 'danger')
         
         referral_link = url_for('auth.signup', ref=current_user.referral_code, _external=True)
         referral_count = len(current_user.referrals)
@@ -240,7 +241,7 @@ def profile():
         return render_template('profile.html', lang=lang, referral_link=referral_link, referral_count=referral_count, referred_users=referred_users, password_form=password_form)
     except Exception as e:
         logger.error(f"Error in profile: {str(e)}", extra={'session_id': session_id})
-        flash(trans('auth_error', default='An error occurred. Please try again.', lang=lang), 'danger')
+        flash(trans('core_error', default='An error occurred. Please try again.', lang=lang), 'danger')
         return render_template('profile.html', lang=lang, referral_link=referral_link, referral_count=referral_count, referred_users=referred_users, password_form=password_form), 500
 
 @auth_bp.route('/debug/auth')
