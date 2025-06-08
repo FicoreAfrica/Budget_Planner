@@ -68,6 +68,32 @@ class SigninForm(FlaskForm):
         self.password.label.text = trans('auth_password', default='Password', lang=lang)
         self.submit.label.text = trans('auth_signin', default='Sign In', lang=lang)
 
+class ChangePasswordForm(FlaskForm):
+    current_password = PasswordField(validators=[DataRequired()], render_kw={
+        'placeholder': trans('auth_current_password_placeholder', default='Enter your current password'),
+        'title': trans('auth_current_password_tooltip', default='Enter your current password')
+    })
+    new_password = PasswordField(validators=[DataRequired(), Length(min=8)], render_kw={
+        'placeholder': trans('auth_new_password_placeholder', default='Enter a new secure password'),
+        'title': trans('auth_new_password_tooltip', default='At least 8 characters')
+    })
+    confirm_new_password = PasswordField(validators=[DataRequired(), EqualTo('new_password')], render_kw={
+        'placeholder': trans('auth_confirm_new_password_placeholder', default='Confirm your new password'),
+        'title': trans('auth_confirm_new_password_tooltip', default='Re-enter your new password')
+    })
+    submit = SubmitField()
+
+    def __init__(self, lang='en', *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.current_password.label.text = trans('auth_current_password', default='Current Password', lang=lang)
+        self.new_password.label.text = trans('auth_new_password', default='New Password', lang=lang)
+        self.confirm_new_password.label.text = trans('auth_confirm_new_password', default='Confirm New Password', lang=lang)
+        self.submit.label.text = trans('auth_change_password', default='Change Password', lang=lang)
+
+    def validate_current_password(self, current_password):
+        if not check_password_hash(current_user.password_hash, current_password.data):
+            raise ValidationError(trans('auth_invalid_current_password', default='Current password is incorrect.'))
+
 # Routes
 @auth_bp.route('/signup', methods=['GET', 'POST'])
 def signup():
@@ -76,28 +102,36 @@ def signup():
     
     lang = session.get('lang', 'en')
     form = SignupForm(lang=lang, formdata=request.form if request.method == 'POST' else None)
+    referral_code = request.args.get('ref')
+    referrer = None
+    
+    if referral_code:
+        referrer = User.query.filter_by(referral_code=referral_code).first()
+        if not referrer:
+            flash(trans('auth_invalid_referral', default='Invalid referral code.', lang=lang), 'warning')
     
     try:
         if request.method == 'POST' and form.validate_on_submit():
             user = User(
                 username=form.username.data,
                 email=form.email.data,
-                password_hash=generate_password_hash(form.password.data)
+                password_hash=generate_password_hash(form.password.data),
+                referred_by_id=referrer.id if referrer else None
             )
             db.session.add(user)
             db.session.commit()
-            logger.info(f"User signed up: {user.username}", extra={'session_id': session.get('sid', 'unknown')})
+            logger.info(f"User signed up: {user.username} with referral code: {referral_code or 'none'}", extra={'session_id': session.get('sid', 'unknown')})
             flash(trans('auth_signup_success', default='Account created successfully! Please sign in.', lang=lang), 'success')
             return redirect(url_for('auth.signin'))
         elif form.errors:
             logger.error(f"Signup form validation failed: {form.errors}", extra={'session_id': session.get('sid', 'unknown')})
             flash(trans('auth_form_errors', default='Please correct the errors in the form.', lang=lang), 'danger')
         
-        return render_template('signup.html', form=form, lang=lang)
+        return render_template('signup.html', form=form, lang=lang, referral_code=referral_code, referrer=referrer)
     except Exception as e:
         logger.error(f"Error in signup: {str(e)}", extra={'session_id': session.get('sid', 'unknown')})
         flash(trans('auth_error', default='An error occurred. Please try again.', lang=lang), 'danger')
-        return render_template('signup.html', form=form, lang=lang), 500
+        return render_template('signup.html', form=form, lang=lang, referral_code=referral_code, referrer=referrer), 500
 
 @auth_bp.route('/signin', methods=['GET', 'POST'])
 def signin():
@@ -138,3 +172,29 @@ def logout():
     logger.info(f"User logged out: {username}", extra={'session_id': session.get('sid', 'unknown')})
     flash(trans('auth_logout_success', default='Logged out successfully!', lang=lang), 'success')
     return redirect(url_for('index'))
+
+@auth_bp.route('/profile', methods=['GET', 'POST'])
+@login_required
+def profile():
+    lang = session.get('lang', 'en')
+    password_form = ChangePasswordForm(lang=lang, formdata=request.form if request.method == 'POST' else None)
+    
+    try:
+        if request.method == 'POST' and password_form.validate_on_submit():
+            current_user.password_hash = generate_password_hash(password_form.new_password.data)
+            db.session.commit()
+            logger.info(f"User changed password: {current_user.username}", extra={'session_id': session.get('sid', 'unknown')})
+            flash(trans('auth_password_changed_success', default='Password changed successfully!', lang=lang), 'success')
+            return redirect(url_for('auth.profile'))
+        elif password_form.errors:
+            logger.error(f"Change password form validation failed: {password_form.errors}", extra={'session_id': session.get('sid', 'unknown')})
+            flash(trans('auth_form_errors', default='Please correct the errors in the form.', lang=lang), 'danger')
+        
+        referral_link = url_for('auth.signup', ref=current_user.referral_code, _external=True)
+        referral_count = len(current_user.referrals)
+        referred_users = current_user.referrals
+        return render_template('profile.html', lang=lang, referral_link=referral_link, referral_count=referral_count, referred_users=referred_users, password_form=password_form)
+    except Exception as e:
+        logger.error(f"Error in profile: {str(e)}", extra={'session_id': session.get('sid', 'unknown')})
+        flash(trans('auth_error', default='An error occurred. Please try again.', lang=lang), 'danger')
+        return render_template('profile.html', lang=lang, referral_link=referral_link, referral_count=referral_count, referred_users=referred_users, password_form=password_form), 500
