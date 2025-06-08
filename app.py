@@ -307,6 +307,9 @@ def create_app():
                 g.logger.warning("data/storage.log not found")
         except Exception as e:
             logger.error(f"Before request error: {str(e)}", exc_info=True)
+            session.clear()  # Reset session on error
+            db.session.rollback()  # Reset database session
+            flash(translate('global_error_message', default='An error occurred', lang=session.get('lang', 'en')), 'danger')
 
     @app.context_processor
     def inject_translations():
@@ -454,6 +457,7 @@ def create_app():
         except Exception as e:
             logger.error(f"Error in general_dashboard: {str(e)}", exc_info=True)
             flash(translate('global_error_message', default='An error occurred', lang=lang), 'danger')
+            db.session.rollback()  # Ensure rollback on error
             default_data = {
                 'financial_health': {'score': None, 'status': None},
                 'budget': {'surplus_deficit': None, 'savings_goal': None},
@@ -473,10 +477,12 @@ def create_app():
             session_lang = session.get('lang', 'en')
             session.clear()
             session['lang'] = session_lang
+            db.session.remove()  # Clean up database session
             flash(translate('learning_hub_success_logout', default='Successfully logged out', lang=lang), 'success')
             return redirect(url_for('index'))
         except Exception as e:
             logger.error(f"Error in logout: {str(e)}", exc_info=True)
+            db.session.rollback()  # Ensure rollback on error
             flash(translate('global_error_message', default='An error occurred', lang=lang), 'danger')
             return redirect(url_for('index'))
 
@@ -506,21 +512,30 @@ def create_app():
 
     @app.errorhandler(500)
     def internal_error(error):
-        lang = session.get('lang', 'en')
-        logger.error(f"Server error: {str(error)}")
-        return jsonify({'error': str(error)}), 500
+        lang = session.get('lang', 'en') if 'lang' in session else 'en'
+        logger.error(f"Server error: {str(error)}", exc_info=True)
+        db.session.rollback()  # Rollback any pending transactions
+        session.clear()  # Reset session to prevent corruption
+        db.session.remove()  # Clean up database session
+        flash(translate('global_error_message', default='An internal server error occurred. Please try again.', lang=lang), 'danger')
+        return render_template('error.html', t=translate, lang=lang), 500
 
     @app.errorhandler(CSRFError)
     def handle_csrf(e):
-        lang = session.get('lang', 'en')
+        lang = session.get('lang', 'en') if 'lang' in session else 'en'
         logger.error(f"CSRF error: {str(e)}")
-        return jsonify({'error': 'CSRF token invalid'}), 400
+        db.session.rollback()  # Rollback on CSRF error
+        session.clear()  # Reset session
+        db.session.remove()  # Clean up database session
+        flash(translate('global_csrf_error', default='Invalid CSRF token. Please try again.', lang=lang), 'danger')
+        return redirect(url_for('index'))
 
     @app.errorhandler(404)
     def page_not_found(e):
-        lang = session.get('lang', 'en')
+        lang = session.get('lang', 'en') if 'lang' in session else 'en'
         logger.error(f"404 error: {str(e)}")
-        return jsonify({'error': '404 not found'}), 404
+        flash(translate('global_not_found', default='Page not found.', lang=lang), 'danger')
+        return redirect(url_for('index'))
 
     @app.route('/static/<path:filename>')
     def static_files(filename):
@@ -566,6 +581,7 @@ def create_app():
             return redirect(url_for('index'))
         except Exception as e:
             logger.error(f"Error processing feedback: {str(e)}")
+            db.session.rollback()  # Ensure rollback on error
             flash(translate('core_global_error', default='Error occurred while submitting feedback', lang=lang), 'error')
             return render_template('feedback.html', t=translate, lang=lang, tool_options=tool_options), 500
 
