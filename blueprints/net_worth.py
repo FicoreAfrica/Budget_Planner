@@ -5,7 +5,7 @@ from wtforms.validators import DataRequired, NumberRange, Optional, Email, Valid
 from flask_login import current_user
 from translations import trans
 from extensions import db
-from models import NetWorth
+from models import NetWorth, log_tool_usage
 from mailersend_email import send_email, EMAIL_CONFIG
 from datetime import datetime
 import uuid
@@ -119,12 +119,28 @@ def step1():
         form_data['first_name'] = form_data.get('first_name', current_user.username)
     form = Step1Form(data=form_data)
     try:
-        if request.method == 'POST' and form.validate_on_submit():
-            form_data = form.data.copy()
-            session['networth_step1_data'] = form_data
-            session.modified = True
-            current_app.logger.info(f"Net worth step1 form data saved for session {session['sid']}: {form_data}")
-            return redirect(url_for('net_worth.step2'))
+        if request.method == 'POST':
+            log_tool_usage(
+                tool_name='net_worth',
+                user_id=current_user.id if current_user.is_authenticated else None,
+                session_id=session['sid'],
+                action='step1_submit'
+            )
+            if form.validate_on_submit():
+                form_data = form.data.copy()
+                session['networth_step1_data'] = form_data
+                session.modified = True
+                current_app.logger.info(f"Net worth step1 form data saved for session {session['sid']}: {form_data}")
+                return redirect(url_for('net_worth.step2'))
+            else:
+                current_app.logger.warning(f"Form validation failed: {form.errors}")
+                flash(trans("net_worth_form_validation_error", lang=lang), "danger")
+        log_tool_usage(
+            tool_name='net_worth',
+            user_id=current_user.id if current_user.is_authenticated else None,
+            session_id=session['sid'],
+            action='step1_view'
+        )
         return render_template('net_worth_step1.html', form=form, trans=trans, lang=lang)
     except Exception as e:
         current_app.logger.error(f"Error in net_worth.step1: {str(e)}", extra={'session_id': session.get('sid', 'unknown')})
@@ -144,17 +160,33 @@ def step2():
         return redirect(url_for('net_worth.step1'))
     form = Step2Form()
     try:
-        if request.method == 'POST' and form.validate_on_submit():
-            form_data = {
-                'cash_savings': float(form.cash_savings.data),
-                'investments': float(form.investments.data),
-                'property': float(form.property.data),
-                'submit': form.submit.data
-            }
-            session['networth_step2_data'] = form_data
-            session.modified = True
-            current_app.logger.info(f"Net worth step2 form data saved for session {session['sid']}: {form_data}")
-            return redirect(url_for('net_worth.step3'))
+        if request.method == 'POST':
+            log_tool_usage(
+                tool_name='net_worth',
+                user_id=current_user.id if current_user.is_authenticated else None,
+                session_id=session['sid'],
+                action='step2_submit'
+            )
+            if form.validate_on_submit():
+                form_data = {
+                    'cash_savings': float(form.cash_savings.data),
+                    'investments': float(form.investments.data),
+                    'property': float(form.property.data),
+                    'submit': form.submit.data
+                }
+                session['networth_step2_data'] = form_data
+                session.modified = True
+                current_app.logger.info(f"Net worth step2 form data saved for session {session['sid']}: {form_data}")
+                return redirect(url_for('net_worth.step3'))
+            else:
+                current_app.logger.warning(f"Form validation failed: {form.errors}")
+                flash(trans("net_worth_form_validation_error", lang=lang), "danger")
+        log_tool_usage(
+            tool_name='net_worth',
+            user_id=current_user.id if current_user.is_authenticated else None,
+            session_id=session['sid'],
+            action='step2_view'
+        )
         return render_template('net_worth_step2.html', form=form, trans=trans, lang=lang)
     except Exception as e:
         current_app.logger.error(f"Error in net_worth.step2: {str(e)}", extra={'session_id': session.get('sid', 'unknown')})
@@ -174,93 +206,109 @@ def step3():
         return redirect(url_for('net_worth.step1'))
     form = Step3Form()
     try:
-        if request.method == 'POST' and form.validate_on_submit():
-            step1_data = session.get('networth_step1_data', {})
-            step2_data = session.get('networth_step2_data', {})
-            form_data = form.data.copy()
-
-            session['networth_step3_data'] = {'loans': form_data.get('loans', 0) or 0}
-            session.modified = True
-            current_app.logger.info(f"Net worth step3 form data saved for session {session['sid']}: {session['networth_step3_data']}")
-
-            cash_savings = step2_data.get('cash_savings', 0)
-            investments = step2_data.get('investments', 0)
-            property = step2_data.get('property', 0)
-            loans = form_data.get('loans', 0) or 0
-
-            total_assets = cash_savings + investments + property
-            total_liabilities = loans
-            net_worth = total_assets - total_liabilities
-
-            badges = []
-            if net_worth > 0:
-                badges.append('net_worth_badge_wealth_builder')
-            if total_liabilities == 0:
-                badges.append('net_worth_badge_debt_free')
-            if cash_savings >= total_assets * 0.3:
-                badges.append('net_worth_badge_savings_champion')
-            if property >= total_assets * 0.5:
-                badges.append('net_worth_badge_property_mogul')
-
-            # Create and persist NetWorth record
-            net_worth_record = NetWorth(
-                id=str(uuid.uuid4()),
+        if request.method == 'POST':
+            log_tool_usage(
+                tool_name='net_worth',
                 user_id=current_user.id if current_user.is_authenticated else None,
                 session_id=session['sid'],
-                first_name=step1_data.get('first_name', ''),
-                email=step1_data.get('email', ''),
-                send_email=step1_data.get('send_email', False),
-                cash_savings=cash_savings,
-                investments=investments,
-                property=property,
-                loans=loans,
-                total_assets=total_assets,
-                total_liabilities=total_liabilities,
-                net_worth=net_worth,
-                badges=json.dumps(badges),
-                created_at=datetime.utcnow()
+                action='step3_submit'
             )
-            db.session.add(net_worth_record)
-            db.session.commit()
-            session['networth_record_id'] = net_worth_record.id
-            session.modified = True
-            current_app.logger.info(f"Successfully saved record {net_worth_record.id} for session {session['sid']}")
+            if form.validate_on_submit():
+                step1_data = session.get('networth_step1_data', {})
+                step2_data = session.get('networth_step2_data', {})
+                form_data = form.data.copy()
 
-            email = step1_data.get('email')
-            send_email_flag = step1_data.get('send_email', False)
-            if send_email_flag and email:
-                try:
-                    config = EMAIL_CONFIG["net_worth"]
-                    subject = trans(config["subject_key"], lang=lang)
-                    template = config["template"]
-                    send_email(
-                        app=current_app,
-                        logger=current_app.logger,
-                        to_email=email,
-                        subject=subject,
-                        template_name=template,
-                        data={
-                            "first_name": net_worth_record.first_name,
-                            "cash_savings": net_worth_record.cash_savings,
-                            "investments": net_worth_record.investments,
-                            "property": net_worth_record.property,
-                            "loans": net_worth_record.loans,
-                            "total_assets": net_worth_record.total_assets,
-                            "total_liabilities": net_worth_record.total_liabilities,
-                            "net_worth": net_worth_record.net_worth,
-                            "badges": json.loads(net_worth_record.badges),
-                            "created_at": net_worth_record.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-                            "cta_url": url_for('net_worth.dashboard', _external=True),
-                            "unsubscribe_url": url_for('net_worth.unsubscribe', email=email, _external=True)
-                        },
-                        lang=lang
-                    )
-                except Exception as e:
-                    current_app.logger.error(f"Failed to send email: {str(e)}")
-                    flash(trans("net_worth_email_failed", lang=lang), "warning")
+                session['networth_step3_data'] = {'loans': form_data.get('loans', 0) or 0}
+                session.modified = True
+                current_app.logger.info(f"Net worth step3 form data saved for session {session['sid']}: {session['networth_step3_data']}")
 
-            flash(trans("net_worth_success", lang=lang), "success")
-            return redirect(url_for('net_worth.dashboard'))
+                cash_savings = step2_data.get('cash_savings', 0)
+                investments = step2_data.get('investments', 0)
+                property = step2_data.get('property', 0)
+                loans = form_data.get('loans', 0) or 0
+
+                total_assets = cash_savings + investments + property
+                total_liabilities = loans
+                net_worth = total_assets - total_liabilities
+
+                badges = []
+                if net_worth > 0:
+                    badges.append('net_worth_badge_wealth_builder')
+                if total_liabilities == 0:
+                    badges.append('net_worth_badge_debt_free')
+                if cash_savings >= total_assets * 0.3:
+                    badges.append('net_worth_badge_savings_champion')
+                if property >= total_assets * 0.5:
+                    badges.append('net_worth_badge_property_mogul')
+
+                # Create and persist NetWorth record
+                net_worth_record = NetWorth(
+                    id=str(uuid.uuid4()),
+                    user_id=current_user.id if current_user.is_authenticated else None,
+                    session_id=session['sid'],
+                    first_name=step1_data.get('first_name', ''),
+                    email=step1_data.get('email', ''),
+                    send_email=step1_data.get('send_email', False),
+                    cash_savings=cash_savings,
+                    investments=investments,
+                    property=property,
+                    loans=loans,
+                    total_assets=total_assets,
+                    total_liabilities=total_liabilities,
+                    net_worth=net_worth,
+                    badges=json.dumps(badges),
+                    created_at=datetime.utcnow()
+                )
+                db.session.add(net_worth_record)
+                db.session.commit()
+                session['networth_record_id'] = net_worth_record.id
+                session.modified = True
+                current_app.logger.info(f"Successfully saved record {net_worth_record.id} for session {session['sid']}")
+
+                email = step1_data.get('email')
+                send_email_flag = step1_data.get('send_email', False)
+                if send_email_flag and email:
+                    try:
+                        config = EMAIL_CONFIG["net_worth"]
+                        subject = trans(config["subject_key"], lang=lang)
+                        template = config["template"]
+                        send_email(
+                            app=current_app,
+                            logger=current_app.logger,
+                            to_email=email,
+                            subject=subject,
+                            template_name=template,
+                            data={
+                                "first_name": net_worth_record.first_name,
+                                "cash_savings": net_worth_record.cash_savings,
+                                "investments": net_worth_record.investments,
+                                "property": net_worth_record.property,
+                                "loans": net_worth_record.loans,
+                                "total_assets": net_worth_record.total_assets,
+                                "total_liabilities": net_worth_record.total_liabilities,
+                                "net_worth": net_worth_record.net_worth,
+                                "badges": json.loads(net_worth_record.badges),
+                                "created_at": net_worth_record.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                                "cta_url": url_for('net_worth.dashboard', _external=True),
+                                "unsubscribe_url": url_for('net_worth.unsubscribe', email=email, _external=True)
+                            },
+                            lang=lang
+                        )
+                    except Exception as e:
+                        current_app.logger.error(f"Failed to send email: {str(e)}")
+                        flash(trans("net_worth_email_failed", lang=lang), "warning")
+
+                flash(trans("net_worth_success", lang=lang), "success")
+                return redirect(url_for('net_worth.dashboard'))
+            else:
+                current_app.logger.warning(f"Form validation failed: {form.errors}")
+                flash(trans("net_worth_form_validation_error", lang=lang), "danger")
+        log_tool_usage(
+            tool_name='net_worth',
+            user_id=current_user.id if current_user.is_authenticated else None,
+            session_id=session['sid'],
+            action='step3_view'
+        )
         return render_template('net_worth_step3.html', form=form, trans=trans, lang=lang)
     except Exception as e:
         current_app.logger.error(f"Error in net_worth.step3: {str(e)}", extra={'session_id': session.get('sid', 'unknown')})
@@ -275,8 +323,13 @@ def dashboard():
         session.permanent = True
         session.modified = True
     lang = session.get('lang', 'en')
-
     try:
+        log_tool_usage(
+            tool_name='net_worth',
+            user_id=current_user.id if current_user.is_authenticated else None,
+            session_id=session['sid'],
+            action='dashboard_view'
+        )
         # Fetch records by user_id or session_id
         filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
         user_records = NetWorth.query.filter_by(**filter_kwargs).order_by(NetWorth.created_at.desc()).all()
@@ -377,7 +430,6 @@ def dashboard():
             trans=trans,
             lang=lang
         )
-
     except Exception as e:
         current_app.logger.error(f"Error in net_worth.dashboard: {str(e)}", extra={'session_id': session.get('sid', 'unknown')})
         flash(trans("net_worth_dashboard_load_error", lang=lang), "danger")
@@ -399,8 +451,17 @@ def dashboard():
 @net_worth_bp.route('/unsubscribe/<email>')
 def unsubscribe(email):
     """Unsubscribe user from net worth emails using database."""
+    if 'sid' not in session:
+        session['sid'] = str(uuid.uuid4())
+        session.permanent = True
     lang = session.get('lang', 'en')
     try:
+        log_tool_usage(
+            tool_name='net_worth',
+            user_id=current_user.id if current_user.is_authenticated else None,
+            session_id=session['sid'],
+            action='unsubscribe'
+        )
         filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
         records = NetWorth.query.filter_by(email=email, **filter_kwargs).all()
         updated = False
