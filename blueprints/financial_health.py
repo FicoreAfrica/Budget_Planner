@@ -236,7 +236,7 @@ def step3():
         session['sid'] = str(uuid.uuid4())
         session.permanent = True
     lang = session.get('lang', 'en')
-    if 'health_step2 " not in session:
+    if 'health_step2' not in session:
         flash(trans('financial_health_missing_step2', lang=lang, default='Please complete step 2 first.'), 'danger')
         return redirect(url_for('financial_health.step1'))
     form = Step3Form()
