@@ -11,7 +11,7 @@ from extensions import db, login_manager, session as flask_session, csrf
 from blueprints.auth import auth_bp
 from translations import trans
 from scheduler_setup import init_scheduler
-from models import Course, FinancialHealth, Budget, Bill, NetWorth, EmergencyFund, LearningProgress, QuizResult, User, Feedback
+from models import Course, FinancialHealth, Budget, Bill, NetWorth, EmergencyFund, LearningProgress, QuizResult, User, Feedback, ToolUsage
 import json
 from functools import wraps
 from uuid import uuid4
@@ -562,6 +562,21 @@ def create_app():
 
     logger.info("App creation completed")
     return app
+
+def log_tool_usage(tool_name):
+    try:
+        if current_user.is_authenticated:
+            user_id = current_user.id
+        else:
+            user_id = None
+        session_id = session.get('sid', 'unknown')
+        tool_usage = ToolUsage(user_id=user_id, session_id=session_id, tool_name=tool_name)
+        db.session.add(tool_usage)
+        db.session.commit()
+        logger.info(f"Logged tool usage: {tool_name} for session {session_id}")
+    except Exception as e:
+        logger.error(f"Error logging tool usage: {str(e)}")
+        db.session.rollback()
 
 # Create the Flask app instance for Gunicorn
 app = create_app()
