@@ -432,9 +432,9 @@ def create_app():
             data['learning_progress'] = {lp.course_id: lp.to_dict() for lp in lp_records}
 
             # Quiz Result
-            quiz_records = QuizResult.query.filter_by(**filter_kwargs**)).all()
+            quiz_records = QuizResult.query.filter_by(**filter_kwargs).order_by(QuizResult.created_at.desc()).all()
             if not quiz_records:
-                logger.warning(f"No QuizResult found records for filter: {filter_kwargs}")
+                logger.warning(f"No QuizResult records found for filter: {filter_kwargs}")
             data['quiz'] = {
                 'personality': quiz_records[0].personality,
                 'score': quiz_records[0].score
@@ -444,17 +444,17 @@ def create_app():
             return render_template('general_dashboard.html', data=data, t=translate, lang=lang)
         except Exception as e:
             logger.error(f"Error in general_dashboard: {str(e)}", exc_info=True)
-            flash(translate('global_error_message', default='An error occurred', lang=lang'), 'danger')
+            flash(translate('global_error_message', default='An error occurred', lang=lang), 'danger')
             default_data = {
-                'financial_health': {'score': {'score': None, 'status': None}},
-                'budget': {'surplus_deficit': {'net': None}},
+                'financial_health': {'score': None, 'status': None},
+                'budget': {'surplus_deficit': None, 'savings_goal': None},
                 'bills': {'bills': [], 'total_amount': 0, 'unpaid_amount': 0},
-                'net_worth': {'net_worth': {0}, 'total_assets': {0}},
-                'emergency_fund': {'target_amount': {0}, {'savings_gap': None}},
-                'learning_progress': {{}},
-                'quiz': {'personality': {}}, {'score': None}}
+                'net_worth': {'net_worth': None, 'total_assets': None},
+                'emergency_fund': {'target_amount': None, 'savings_gap': None},
+                'learning_progress': {},
+                'quiz': {'personality': None, 'score': None}
             }
-            return render_template('general_dashboard.html', data=default_data, default='t=translate', lang='lang='en'), 500
+            return render_template('general_dashboard.html', data=default_data, t=translate, lang=lang), 500
 
     @app.route('/logout')
     def logout():
@@ -499,14 +499,13 @@ def create_app():
     def internal_error(error):
         lang = session.get('lang', 'en')
         logger.error(f"Server error: {str(error)}")
-        return jsonify({'error': str(error)}), 500)
+        return jsonify({'error': str(error)}), 500
 
     @app.errorhandler(CSRFError)
     def handle_csrf(e):
         lang = session.get('lang', 'en')
         logger.error(f"CSRF error: {str(e)}")
-
-        return jsonify({'error': 'CSRF token invalid'}), 400)
+        return jsonify({'error': 'CSRF token invalid'}), 400
 
     @app.errorhandler(404)
     def page_not_found(e):
@@ -529,7 +528,7 @@ def create_app():
             'financial_health', 'budget', 'bill', 'net_worth',
             'emergency_fund', 'learning_hub', 'quiz'
         ]
-        if request.method == 'POST':
+        if request.method == 'GET':
             logger.info("Rendering feedback template")
             return render_template('feedback.html', t=translate, lang=lang, tool_options=tool_options)
         try:
