@@ -3,7 +3,7 @@ import os
 from sqlalchemy import engine_from_config, pool
 from alembic import context
 from app import db
-from models import User, Course, FinancialHealth, Budget, Bill, NetWorth, EmergencyFund, LearningProgress, QuizResult, Feedback
+from models import User, Course, FinancialHealth, Budget, Bill, NetWorth, EmergencyFund, LearningProgress, QuizResult, Feedback, ToolUsage
 
 # Alembic Config object
 config = context.config
@@ -29,7 +29,9 @@ try:
     with connectable.connect() as connection:
         context.configure(
             connection=connection,
-            target_metadata=db.metadata
+            target_metadata=db.metadata,
+            compare_type=True,
+            compare_server_default=True
         )
 
         with context.begin_transaction():
