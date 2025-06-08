@@ -21,11 +21,16 @@ def upgrade():
         sa.Column('username', sa.String(length=80), nullable=False),
         sa.Column('email', sa.String(length=120), nullable=False),
         sa.Column('password_hash', sa.String(length=128), nullable=False),
+        sa.Column('is_admin', sa.Boolean(), nullable=False, server_default='false'),
         sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
         sa.Column('lang', sa.String(length=10), nullable=False, server_default='en'),
+        sa.Column('referral_code', sa.String(length=36), nullable=False, server_default=sa.text("gen_random_uuid()")),
+        sa.Column('referred_by_id', sa.Integer(), nullable=True),
+        sa.ForeignKeyConstraint(['referred_by_id'], ['users.id'], ondelete='SET NULL'),
         sa.PrimaryKeyConstraint('id'),
         sa.UniqueConstraint('email'),
-        sa.UniqueConstraint('username')
+        sa.UniqueConstraint('username'),
+        sa.UniqueConstraint('referral_code')
     )
 
     # Courses table
