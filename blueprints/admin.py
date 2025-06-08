@@ -7,7 +7,7 @@ from app import admin_required, trans
 import logging
 import csv
 from io import StringIO
-from sqlalchemy import func
+from sqlalchemy import func, exc
 
 # Configure logging
 logger = logging.getLogger('ficore_app.analytics')
@@ -27,7 +27,7 @@ VALID_TOOLS = [
 @admin_required
 def overview():
     """Admin dashboard overview page."""
-    lang = session.get('lang', 'en')
+    lang = session.get('lang', 'en') if 'lang' in session else 'en'
     try:
         # Use read-only session for data retrieval
         with db.session.no_autoflush() as read_session:
@@ -167,8 +167,21 @@ def overview():
             start_date=None,
             end_date=None
         )
+    except exc.SQLAlchemyError as e:
+        logger.error(f"Database error in admin overview: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
+        flash(trans('admin_error', default='A database error occurred while loading the dashboard.', lang=lang), 'danger')
+        return render_template(
+            'admin_dashboard.html',
+            lang=lang,
+            metrics={},
+            chart_data={},
+            valid_tools=VALID_TOOLS[3:],
+            tool_name=None,
+            start_date=None,
+            end_date=None
+        ), 500
     except Exception as e:
-        logger.error(f"Error in admin overview: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
+        logger.error(f"Unexpected error in admin overview: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
         flash(trans('admin_error', default='An error occurred while loading the dashboard.', lang=lang), 'danger')
         return render_template(
             'admin_dashboard.html',
@@ -186,7 +199,7 @@ def overview():
 @admin_required
 def tool_usage():
     """Detailed tool usage analytics with filters."""
-    lang = session.get('lang', 'en')
+    lang = session.get('lang', 'en') if 'lang' in session else 'en'
     try:
         tool_name = request.args.get('tool_name')
         start_date_str = request.args.get('start_date')
@@ -243,6 +256,7 @@ def tool_usage():
                         for act, count in action_counts:
                             if act not in chart_data['usage_counts']:
                                 chart_data['usage_counts'][act] = [0] * len(chart_data['labels'])
+                            chart_data['usage_counts'].setdefault(act, [0] * len(chart_data['labels']))
                             chart_data['usage_counts'][act][-1] = count
                     current_date += timedelta(days=1)
             else:
@@ -269,7 +283,8 @@ def tool_usage():
                         chart_data['labels'].append(current_date.strftime('%Y-%m-%d'))
                         chart_data['total_counts'].append(0)
                         for act in chart_data['usage_counts']:
-                            chart_data['usage_counts'][act].append(0)
+                            if idx >= len(chart_data['usage_counts'].get(act, [])):
+                                chart_data['usage_counts'].setdefault(act, [0] * (idx + 1))[-1] = 0
                         current_date += timedelta(days=1)
                         idx += 1
                     if current_date.strftime('%Y-%m-%d') == date:
@@ -286,7 +301,8 @@ def tool_usage():
                     chart_data['labels'].append(current_date.strftime('%Y-%m-%d'))
                     chart_data['total_counts'].append(0)
                     for act in chart_data['usage_counts']:
-                        chart_data['usage_counts'][act].append(0)
+                        if idx >= len(chart_data['usage_counts'].get(act, [])):
+                            chart_data['usage_counts'].setdefault(act, [0] * (idx + 1))[-1] = 0
                     current_date += timedelta(days=1)
 
         logger.info(
@@ -305,8 +321,23 @@ def tool_usage():
             action=action,
             available_actions=available_actions
         )
+    except exc.SQLAlchemyError as e:
+        logger.error(f"Database error in tool usage analytics: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
+        flash(trans('admin_error', default='A database error occurred while loading analytics.', lang=lang), 'error')
+        return render_template(
+            'admin_dashboard.html',
+            lang=lang,
+            metrics=[],
+            chart_data={},
+            valid_tools=VALID_TOOLS[3:],
+            tool_name=None,
+            start_date=None,
+            end_date=None,
+            action=None,
+            available_actions=[]
+        ), 500
     except Exception as e:
-        logger.error(f"Error in tool usage analytics: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
+        logger.error(f"Unexpected error in tool usage analytics: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
         flash(trans('admin_error', default='Error loading analytics.', lang=lang), 'error')
         return render_template(
             'admin_dashboard.html',
@@ -326,6 +357,7 @@ def tool_usage():
 @admin_required
 def export_csv():
     """Export filtered tool usage logs as CSV."""
+    lang = session.get('lang', 'en') if 'lang' in session else 'en'
     try:
         tool_name = request.args.get('tool_name')
         start_date_str = request.args.get('start_date')
@@ -358,7 +390,7 @@ def export_csv():
                 log.session_id,
                 log.tool_name,
                 log.action,
-                log.created_at.isoformat()
+                log.created_at.isoformat() if log.created_at else 'N/A'
             ])
 
         output = si.getvalue()
@@ -373,7 +405,14 @@ def export_csv():
             mimetype='text/csv',
             headers={'Content-Disposition': 'attachment; filename=tool_usage_export.csv'}
         )
+    except exc.SQLAlchemyError as e:
+        logger.error(f"Database error in CSV export: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
+        flash(trans('admin_export_error', default='A database error occurred while exporting CSV.', lang=lang), 'error')
+        return redirect(url_for('admin.tool_usage'))
     except Exception as e:
-        logger.error(f"Error in CSV export: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
+        logger.error(f"Unexpected error in CSV export: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
         flash(trans('admin_export_error', default='Error exporting CSV.', lang=lang), 'error')
         return redirect(url_for('admin.tool_usage'))
+    finally:
+        if 'si' in locals():
+            si.close()
