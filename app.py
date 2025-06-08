@@ -344,15 +344,24 @@ def create_app():
     @ensure_session_id
     def index():
         lang = session.get('lang', 'en')
-        logger.info("Serving index page")
+        logger.info("Step 1: Language retrieved", extra={'lang': lang})
+
+        # Log authentication state
+        if current_user.is_authenticated:
+            logger.info(f"User authenticated: {current_user.username}", extra={'user_id': current_user.id})
+        else:
+            logger.info("User not authenticated")
+
         try:
             courses = current_app.config['COURSES'] or SAMPLE_COURSES
-            logger.info(f"Retrieved {len(courses)} courses")
+            logger.info(f"Step 2: Retrieved {len(courses)} courses", extra={'course_count': len(courses)})
             processed_courses = courses
         except Exception as e:
             logger.error(f"Error retrieving courses: {str(e)}", exc_info=True)
             processed_courses = SAMPLE_COURSES
-            flash(translate('learning_hub_error_message', default='An error occurred', lang=lang), 'danger')
+            flash(trans('learning_hub_error_message', default='An error occurred', lang=lang), 'danger')
+
+        logger.info("Step 3: About to render template")
         return render_template(
             'index.html',
             t=translate,
