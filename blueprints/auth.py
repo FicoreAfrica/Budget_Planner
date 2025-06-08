@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app, jsonify
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import DataRequired, Email, Length, EqualTo, ValidationError
@@ -9,6 +9,7 @@ from extensions import db
 from models import User, log_tool_usage
 import logging
 import uuid
+from datetime import datetime
 
 # Configure logging
 logger = logging.getLogger('ficore_app')
@@ -117,38 +118,46 @@ def signup():
             uuid.UUID(referral_code)
             referrer = User.query.filter_by(referral_code=referral_code).first()
             if not referrer:
+                logger.warning(f"Invalid referral code: {referral_code}", extra={'session_id': session_id})
                 flash(trans('auth_invalid_referral', default='Invalid referral code.', lang=lang), 'warning')
             else:
                 # Check referral limit (e.g., max 100 referrals per user)
                 if len(referrer.referrals) >= 100:
+                    logger.warning(f"Referral limit reached for referrer with code: {referral_code}", extra={'session_id': session_id})
                     flash(trans('auth_referral_limit_reached', default='This user has reached their referral limit.', lang=lang), 'warning')
                     referrer = None
         except ValueError:
+            logger.warning(f"Invalid referral code format: {referral_code}", extra={'session_id': session_id})
             flash(trans('auth_invalid_referral_format', default='Invalid referral code format.', lang=lang), 'warning')
     
     try:
-        if request.method == 'POST' and form.validate_on_submit():
-            user = User(
-                username=form.username.data,
-                email=form.email.data,
-                password_hash=generate_password_hash(form.password.data),
-                referred_by_id=referrer.id if referrer else None
-            )
-            db.session.add(user)
-            db.session.commit()
-            logger.info(f"User signed up: {user.username} with referral code: {referral_code or 'none'}", extra={'session_id': session_id})
-            log_tool_usage('register', user.id, session_id, 'submit_success')
-            flash(trans('auth_signup_success', default='Account created successfully! Please sign in.', lang=lang), 'success')
-            return redirect(url_for('auth.signin'))
-        elif form.errors:
-            logger.error(f"Signup form validation failed: {form.errors}", extra={'session_id': session_id})
-            log_tool_usage('register', None, session_id, 'submit_error')
-            flash(trans('auth_form_errors', default='Please correct the errors in the form.', lang=lang), 'danger')
+        if request.method == 'POST':
+            if form.validate_on_submit():
+                is_admin = form.email.data == 'ficoreafrica@gmail.com'  # Assign admin status
+                user = User(
+                    username=form.username.data,
+                    email=form.email.data,
+                    password_hash=generate_password_hash(form.password.data),
+                    is_admin=is_admin,
+                    referred_by_id=referrer.id if referrer else None,
+                    created_at=datetime.utcnow(),
+                    lang=lang
+                )
+                db.session.add(user)
+                db.session.commit()
+                logger.info(f"User signed up: {user.username} with referral code: {referral_code or 'none'}, is_admin: {is_admin}", extra={'session_id': session_id})
+                log_tool_usage('register', user.id, session_id, 'submit_success')
+                flash(trans('auth_signup_success', default='Account created successfully! Please sign in.', lang=lang), 'success')
+                return redirect(url_for('auth.signin'))
+            else:
+                logger.error(f"Signup form validation failed: {form.errors}", extra={'session_id': session_id, 'username': form.username.data, 'email': form.email.data})
+                log_tool_usage('register', None, session_id, 'submit_error', details=f"Validation errors: {form.errors}")
+                flash(trans('auth_form_errors', default='Please correct the errors in the form.', lang=lang), 'danger')
         
         return render_template('signup.html', form=form, lang=lang, referral_code=referral_code, referrer=referrer)
     except Exception as e:
-        logger.error(f"Error in signup: {str(e)}", extra={'session_id': session_id})
-        log_tool_usage('register', None, session_id, 'error')
+        logger.error(f"Error in signup: {str(e)}", extra={'session_id': session_id, 'username': form.username.data if form.username.data else 'unknown', 'email': form.email.data if form.email.data else 'unknown'})
+        log_tool_usage('register', None, session_id, 'error', details=f"Exception: {str(e)}")
         flash(trans('auth_error', default='An error occurred. Please try again.', lang=lang), 'danger')
         return render_template('signup.html', form=form, lang=lang, referral_code=referral_code, referrer=referrer), 500
 
@@ -233,3 +242,18 @@ def profile():
         logger.error(f"Error in profile: {str(e)}", extra={'session_id': session_id})
         flash(trans('auth_error', default='An error occurred. Please try again.', lang=lang), 'danger')
         return render_template('profile.html', lang=lang, referral_link=referral_link, referral_count=referral_count, referred_users=referred_users, password_form=password_form), 500
+
+@auth_bp.route('/debug/auth')
+def debug_auth():
+    session_id = session.get('sid', str(uuid.uuid4()))
+    try:
+        return jsonify({
+            'is_authenticated': current_user.is_authenticated,
+            'is_admin': current_user.is_admin if current_user.is_authenticated else False,
+            'email': current_user.email if current_user.is_authenticated else None,
+            'username': current_user.username if current_user.is_authenticated else None,
+            'session_id': session_id
+        })
+    except Exception as e:
+        logger.error(f"Error in debug_auth: {str(e)}", extra={'session_id': session_id})
+        return jsonify({'error': str(e)}), 500
