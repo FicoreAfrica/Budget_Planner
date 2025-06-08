@@ -17,6 +17,7 @@ from functools import wraps
 from uuid import uuid4
 from alembic import command
 from alembic.config import Config
+from werkzeug.security import generate_password_hash
 
 # Load environment variables
 load_dotenv()
@@ -188,6 +189,28 @@ def create_app():
         db.create_all()
         initialize_courses_data(app)
         logger.info("Database tables created and courses initialized")
+
+        # Check and create admin user
+        admin_email = os.environ.get('ADMIN_EMAIL')
+        admin_password = os.environ.get('ADMIN_PASSWORD')
+        if admin_email and admin_password:
+            admin_user = User.query.filter_by(email=admin_email).first()
+            if not admin_user:
+                admin_user = User(
+                    username='admin_' + str(uuid.uuid4())[:8],  # Unique username
+                    email=admin_email,
+                    password_hash=generate_password_hash(admin_password),
+                    is_admin=True,
+                    created_at=datetime.utcnow(),
+                    lang='en'
+                )
+                db.session.add(admin_user)
+                db.session.commit()
+                logger.info(f"Admin user created with email: {admin_email}")
+            else:
+                logger.info(f"Admin user already exists with email: {admin_email}")
+        else:
+            logger.warning("ADMIN_EMAIL or ADMIN_PASSWORD not set in environment variables.")
 
     # Register blueprints
     from blueprints.financial_health import financial_health_bp
@@ -506,9 +529,16 @@ def create_app():
             'financial_health', 'budget', 'bill', 'net_worth',
             'emergency_fund', 'learning_hub', 'quiz'
         ]
-        if request.method == 'GET':
-            print("Rendering feedback template", file=sys.stderr, flush=True)
-            return render_template('feedback.html', t=translate, lang=lang, tool_options=tool_options)
+        if request.method == 'POST':
+            try:
+                print("Rendering feedback template", file=sys.stderr, flush=True)
+                return render_template('feedback.html', t=translate, lang=lang, tool_options=tool_options)
+            except Exception as e:
+                logger.error(f"Error processing feedback: {str(e)}")
+                print(f"Error processing feedback: {str(e)}")
+}", file=sys.stderr, flush=True)
+                flash(translate('core_global_error', default='Error occurred while submitting feedback', lang=lang), 'error')
+                return render_template('feedback.html', t=translate, lang=lang, tool_options=tool_options), 500
         try:
             tool_name = request.form.get('tool_name')
             rating = request.form.get('rating')
