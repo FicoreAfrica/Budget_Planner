@@ -3,6 +3,7 @@ from flask_login import UserMixin
 import uuid
 from datetime import datetime, date
 import json
+from flask import current_app
 
 class User(db.Model, UserMixin):
     __tablename__ = 'users'
@@ -292,7 +293,7 @@ class LearningProgress(db.Model):
         db.UniqueConstraint('user_id', 'course_id', name='uix_user_course_id'),
         db.UniqueConstraint('session_id', 'course_id', name='uix_session_course_id'),
         db.Index('ix_learning_progress_session_id', 'session_id'),
-        db.Index('ix_learning_progress_user_id', 'user_id')
+        db.Index('ix_learning_progress_user_id', 'user_id'),
     )
 
     def to_dict(self):
@@ -364,3 +365,58 @@ class Feedback(db.Model):
             'rating': self.rating,
             'comment': self.comment
         }
+
+class ToolUsage(db.Model):
+    __tablename__ = 'tool_usage'
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    tool_name = db.Column(db.String(50), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    session_id = db.Column(db.String(36), nullable=False)
+    action = db.Column(db.String(100), nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    user = db.relationship('User', backref='tool_usage_records')
+
+    __table_args__ = (
+        db.Index('ix_tool_usage_session_id', 'session_id'),
+        db.Index('ix_tool_usage_user_id', 'user_id'),
+        db.Index('ix_tool_usage_tool_name', 'tool_name')
+    )
+
+    def __init__(self, tool_name, user_id, session_id, action):
+        self.tool_name = tool_name
+        self.user_id = user_id
+        self.session_id = session_id
+        self.action = action
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'tool_name': self.tool_name,
+            'user_id': self.user_id,
+            'session_id': self.session_id,
+            'action': self.action,
+            'created_at': self.created_at.isoformat() + 'Z' if self.created_at else None
+        }
+
+def log_tool_usage(tool_name, user_id, session_id, action):
+    """
+    Log tool usage to the database.
+    
+    Args:
+        tool_name (str): Name of the tool (e.g., 'financial_health', 'budget')
+        user_id (int): ID of the authenticated user (None if unauthenticated)
+        session_id (str): Session ID for tracking unauthenticated users
+        action (str): Action performed (e.g., 'step1_view', 'dashboard_submit')
+    """
+    try:
+        usage = ToolUsage(
+            tool_name=tool_name,
+            user_id=user_id,
+            session_id=session_id,
+            action=action
+        )
+        db.session.add(usage)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Failed to log tool usage: {str(e)}", extra={'tool_name': tool_name, 'session_id': session_id})
