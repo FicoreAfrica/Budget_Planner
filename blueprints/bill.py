@@ -8,7 +8,7 @@ from datetime import datetime, date, timedelta
 import uuid
 from translations import trans
 from extensions import db
-from models import Bill
+from models import Bill, log_tool_usage
 
 bill_bp = Blueprint('bill', __name__, url_prefix='/bill')
 
@@ -117,6 +117,12 @@ def form_step1():
     
     try:
         if request.method == 'POST' and form.validate_on_submit():
+            log_tool_usage(
+                tool_name='bill',
+                user_id=current_user.id if current_user.is_authenticated else None,
+                session_id=session['sid'],
+                action='form_step1_submit'
+            )
             try:
                 due_date = datetime.strptime(form.due_date.data, '%Y-%m-%d').date()
                 if due_date < date.today():
@@ -137,6 +143,12 @@ def form_step1():
             }
             current_app.logger.info(f"Step 1 session data saved: {session['bill_step1']}")
             return redirect(url_for('bill.form_step2'))
+        log_tool_usage(
+            tool_name='bill',
+            user_id=current_user.id if current_user.is_authenticated else None,
+            session_id=session['sid'],
+            action='form_step1_view'
+        )
         return render_template('bill_form_step1.html', form=form, trans=trans, lang=lang)
     except Exception as e:
         current_app.logger.exception(f"Error in bill.form_step1: {str(e)}")
@@ -156,6 +168,12 @@ def form_step2():
 
     try:
         if request.method == 'POST':
+            log_tool_usage(
+                tool_name='bill',
+                user_id=current_user.id if current_user.is_authenticated else None,
+                session_id=session['sid'],
+                action='form_step2_submit'
+            )
             form_data = request.form.to_dict()
             current_app.logger.info(f"Form data received: {form_data}")
             current_app.logger.info(f"Submitted form values - frequency: {form.frequency.data or 'None'}, category: {form.category.data or 'None'}, status: {form.status.data or 'None'}, send_email: {form.send_email.data}, reminder_days: {form.reminder_days.data or 'None'}")
@@ -297,6 +315,12 @@ def form_step2():
                     for err_msg in errors:
                         flash(f"{trans(f'bill_{field}', lang=lang)}: {err_msg}", 'danger')
                 return render_template('bill_form_step2.html', form=form, trans=trans, lang=lang)
+        log_tool_usage(
+            tool_name='bill',
+            user_id=current_user.id if current_user.is_authenticated else None,
+            session_id=session['sid'],
+            action='form_step2_view'
+        )
         return render_template('bill_form_step2.html', form=form, trans=trans, lang=lang)
     except Exception as e:
         current_app.logger.exception(f"Error in bill.form_step2: {str(e)}")
@@ -309,6 +333,13 @@ def dashboard():
         session['sid'] = str(uuid.uuid4())
         session.permanent = True
     lang = session.get('lang', 'en')
+
+    log_tool_usage(
+        tool_name='bill',
+        user_id=current_user.id if current_user.is_authenticated else None,
+        session_id=session['sid'],
+        action='dashboard_view'
+    )
 
     tips = [
         trans('bill_tip_pay_early', lang),
@@ -427,6 +458,13 @@ def view_edit():
     lang = session.get('lang', 'en')
     filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
 
+    log_tool_usage(
+        tool_name='bill',
+        user_id=current_user.id if current_user.is_authenticated else None,
+        session_id=session['sid'],
+        action='view_edit_view'
+    )
+
     try:
         bills = Bill.query.filter_by(**filter_kwargs).all()
         bills_data = []
@@ -452,6 +490,12 @@ def view_edit():
                 return redirect(url_for('bill.view_edit'))
 
             if action == 'update':
+                log_tool_usage(
+                    tool_name='bill',
+                    user_id=current_user.id if current_user.is_authenticated else None,
+                    session_id=session['sid'],
+                    action='update_bill'
+                )
                 form = BillFormStep2()
                 if form.validate_on_submit():
                     try:
@@ -475,6 +519,12 @@ def view_edit():
                 return redirect(url_for('bill.view_edit'))
 
             elif action == 'edit':
+                log_tool_usage(
+                    tool_name='bill',
+                    user_id=current_user.id if current_user.is_authenticated else None,
+                    session_id=session['sid'],
+                    action='edit_bill'
+                )
                 session['bill_step1'] = {
                     'first_name': bill.first_name,
                     'email': bill.user_email,
@@ -494,6 +544,12 @@ def view_edit():
                 return redirect(url_for('bill.form_step1'))
 
             elif action == 'delete':
+                log_tool_usage(
+                    tool_name='bill',
+                    user_id=current_user.id if current_user.is_authenticated else None,
+                    session_id=session['sid'],
+                    action='delete_bill'
+                )
                 try:
                     db.session.delete(bill)
                     db.session.commit()
@@ -506,6 +562,12 @@ def view_edit():
                 return redirect(url_for('bill.dashboard'))
 
             elif action == 'toggle_status':
+                log_tool_usage(
+                    tool_name='bill',
+                    user_id=current_user.id if current_user.is_authenticated else None,
+                    session_id=session['sid'],
+                    action='toggle_status'
+                )
                 try:
                     current_status = bill.status
                     new_status = 'paid' if current_status == 'unpaid' else 'unpaid'
@@ -548,6 +610,12 @@ def view_edit():
 
 @bill_bp.route('/unsubscribe/<email>')
 def unsubscribe():
+    log_tool_usage(
+        tool_name='bill',
+        user_id=current_user.id if current_user.is_authenticated else None,
+        session_id=session['sid'],
+        action='unsubscribe'
+    )
     try:
         lang = session.get('lang', 'en')
         bills = Bill.query.filter_by(user_email=email).all()
