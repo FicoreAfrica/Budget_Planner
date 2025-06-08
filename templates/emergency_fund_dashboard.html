@@ -94,6 +94,22 @@
         </div>
     </div>
     
+    <!-- Share Ficore Africa Section -->
+    {% if current_user.is_authenticated %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>{{ trans('share_ficore', lang=lang) | default('Share Ficore Africa with Friends') }}</h5>
+            </div>
+            <div class="card-body">
+                <p>{{ trans('core_share_ficore_invite', lang=lang) | default('Invite your friends to join Ficore Africa and manage their finances better!') }}</p>
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" id="referralLink" value="{{ url_for('auth.signup', ref=current_user.referral_code, _external=True) }}" readonly>
+                    <button class="btn btn-primary" type="button" onclick="copyReferralLink()">{{ trans('core_profile_copy_link', lang=lang) | default('Copy') }}</button>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+    
     {% if records | length > 1 %}
         <div class="card">
             <div class="card-body">
@@ -132,6 +148,13 @@
         tooltipTriggerList.forEach(function(tooltipTriggerEl) {
             new bootstrap.Tooltip(tooltipTriggerEl);
         });
+
+        function copyReferralLink() {
+            const referralLink = document.getElementById('referralLink');
+            referralLink.select();
+            document.execCommand('copy');
+            alert('{{ trans('profile_link_copied', lang=lang) | default('Referral link copied to clipboard!') }}');
+        }
     });
 </script>
 {% endblock %}
