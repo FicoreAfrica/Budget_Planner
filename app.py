@@ -2,11 +2,13 @@ import os
 import sys
 import logging
 import uuid
+import redis
 from datetime import datetime, timedelta
 from flask import Flask, jsonify, render_template, request, session, redirect, url_for, flash, send_from_directory, has_request_context, g, current_app, make_response
 from flask_wtf.csrf import CSRFError, generate_csrf
 from flask_login import LoginManager, current_user
 from flask_caching import Cache
+from flask_session import Session
 from dotenv import load_dotenv
 from extensions import db, login_manager, session as flask_session, csrf
 from blueprints.auth import auth_bp
@@ -72,20 +74,26 @@ def setup_logging(app):
         logger.warning(f"Failed to set up file logging: {str(e)}")
 
 def setup_session(app):
-    session_dir = os.path.join(os.path.dirname(__file__), 'data', 'sessions')
-    try:
-        os.makedirs(session_dir, exist_ok=True)
-        logger.info(f"Session directory ensured at {session_dir}")
-    except (PermissionError, OSError) as e:
-        logger.error(f"Failed to create session directory {session_dir}: {str(e)}. Using in-memory sessions.")
-        app.config['SESSION_TYPE'] = 'null'
-        return
-    app.config['SESSION_FILE_DIR'] = session_dir
-    app.config['SESSION_TYPE'] = 'filesystem'
+    app.config['SESSION_TYPE'] = 'redis'
+    app.config['SESSION_REDIS'] = redis.Redis(
+        host=os.environ.get('REDIS_HOST', 'localhost'),
+        port=int(os.environ.get('REDIS_PORT', 6379)),
+        db=int(os.environ.get('REDIS_DB', 0))
+    )
     app.config['SESSION_PERMANENT'] = True
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
     app.config['SESSION_USE_SIGNER'] = True
-    logger.info(f"Session configured: type={app.config['SESSION_TYPE']}, dir={session_dir}, lifetime={app.config['PERMANENT_SESSION_LIFETIME']}")
+    app.config['SESSION_COOKIE_NAME'] = 'ficore_session'
+    app.config['SESSION_COOKIE_HTTPONLY'] = True
+    app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+    app.config['SESSION_COOKIE_SECURE'] = True  # Render uses HTTPS
+    try:
+        app.config['SESSION_REDIS'].ping()
+        logger.info("Session configured: type=redis, connected successfully")
+    except Exception as e:
+        logger.critical(f"Failed to connect to Redis for sessions: {str(e)}")
+        raise
+    Session(app)
 
 def initialize_courses_data(app):
     with app.app_context():
@@ -149,7 +157,7 @@ def create_app():
     logger.info("Starting app creation")
     setup_logging(app)
     setup_session(app)
-    app.config['BASE_URL'] = os.environ.get('BASE_URL', 'http://localhost:5000')
+    app.config['BASE_URL'] = os.environ.get('BASE_URL', 'https://your-app.onrender.com')
     flask_session.init_app(app)
     csrf.init_app(app)
 
