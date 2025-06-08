@@ -8,6 +8,7 @@ from translations import trans
 from extensions import db
 from models import User
 import logging
+import uuid
 
 # Configure logging
 logger = logging.getLogger('ficore_app')
@@ -106,9 +107,19 @@ def signup():
     referrer = None
     
     if referral_code:
-        referrer = User.query.filter_by(referral_code=referral_code).first()
-        if not referrer:
-            flash(trans('auth_invalid_referral', default='Invalid referral code.', lang=lang), 'warning')
+        try:
+            # Validate referral_code as a UUID
+            uuid.UUID(referral_code)
+            referrer = User.query.filter_by(referral_code=referral_code).first()
+            if not referrer:
+                flash(trans('auth_invalid_referral', default='Invalid referral code.', lang=lang), 'warning')
+            else:
+                # Check referral limit (e.g., max 100 referrals per user)
+                if len(referrer.referrals) >= 100:
+                    flash(trans('auth_referral_limit_reached', default='This user has reached their referral limit.', lang=lang), 'warning')
+                    referrer = None
+        except ValueError:
+            flash(trans('auth_invalid_referral_format', default='Invalid referral code format.', lang=lang), 'warning')
     
     try:
         if request.method == 'POST' and form.validate_on_submit():
