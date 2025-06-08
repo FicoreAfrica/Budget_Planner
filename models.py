@@ -3,7 +3,7 @@ from flask_login import UserMixin
 import uuid
 from datetime import datetime, date
 import json
-from flask import current_app
+from flask import current_app, session
 
 class User(db.Model, UserMixin):
     __tablename__ = 'users'
@@ -73,6 +73,11 @@ class FinancialHealth(db.Model):
     )
 
     def to_dict(self):
+        try:
+            badges = json.loads(self.badges) if self.badges and self.badges.strip() else []
+        except json.JSONDecodeError:
+            current_app.logger.error(f"Invalid JSON in badges for FinancialHealth ID {self.id}")
+            badges = []
         return {
             'id': self.id,
             'user_id': self.user_id,
@@ -92,7 +97,7 @@ class FinancialHealth(db.Model):
             'score': self.score,
             'status': self.status,
             'status_key': self.status_key,
-            'badges': json.loads(self.badges) if self.badges else [],
+            'badges': badges,
             'step': self.step
         }
 
@@ -207,6 +212,11 @@ class NetWorth(db.Model):
     )
 
     def to_dict(self):
+        try:
+            badges = json.loads(self.badges) if self.badges and self.badges.strip() else []
+        except json.JSONDecodeError:
+            current_app.logger.error(f"Invalid JSON in badges for NetWorth ID {self.id}")
+            badges = []
         return {
             'id': self.id,
             'user_id': self.user_id,
@@ -222,7 +232,7 @@ class NetWorth(db.Model):
             'total_assets': self.total_assets,
             'total_liabilities': self.total_liabilities,
             'net_worth': self.net_worth,
-            'badges': json.loads(self.badges) if self.badges else []
+            'badges': badges
         }
 
 class EmergencyFund(db.Model):
@@ -255,6 +265,11 @@ class EmergencyFund(db.Model):
     )
 
     def to_dict(self):
+        try:
+            badges = json.loads(self.badges) if self.badges and self.badges.strip() else []
+        except json.JSONDecodeError:
+            current_app.logger.error(f"Invalid JSON in badges for EmergencyFund ID {self.id}")
+            badges = []
         return {
             'id': self.id,
             'user_id': self.user_id,
@@ -275,7 +290,7 @@ class EmergencyFund(db.Model):
             'savings_gap': self.savings_gap,
             'monthly_savings': self.monthly_savings,
             'percent_of_income': self.percent_of_income,
-            'badges': json.loads(self.badges) if self.badges else []
+            'badges': badges
         }
 
 class LearningProgress(db.Model):
@@ -297,13 +312,20 @@ class LearningProgress(db.Model):
     )
 
     def to_dict(self):
+        try:
+            lessons_completed = json.loads(self.lessons_completed)
+            quiz_scores = json.loads(self.quiz_scores)
+        except json.JSONDecodeError:
+            current_app.logger.error(f"Invalid JSON in LearningProgress ID {self.id}")
+            lessons_completed = []
+            quiz_scores = {}
         return {
             'id': self.id,
             'user_id': self.user_id,
             'session_id': self.session_id,
             'course_id': self.course_id,
-            'lessons_completed': json.loads(self.lessons_completed),
-            'quiz_scores': json.loads(self.quiz_scores),
+            'lessons_completed': lessons_completed,
+            'quiz_scores': quiz_scores,
             'current_lesson': self.current_lesson
         }
 
@@ -324,6 +346,15 @@ class QuizResult(db.Model):
     user = db.relationship('User', backref='quiz_results')
 
     def to_dict(self):
+        try:
+            badges = json.loads(self.badges) if self.badges and self.badges.strip() else []
+            insights = json.loads(self.insights) if self.insights and self.insights.strip() else []
+            tips = json.loads(self.tips) if self.tips and self.tips.strip() else []
+        except json.JSONDecodeError:
+            current_app.logger.error(f"Invalid JSON in QuizResult ID {self.id}")
+            badges = []
+            insights = []
+            tips = []
         return {
             'id': self.id,
             'user_id': self.user_id,
@@ -334,9 +365,9 @@ class QuizResult(db.Model):
             'send_email': self.send_email,
             'personality': self.personality,
             'score': self.score,
-            'badges': json.loads(self.badges) if self.badges else [],
-            'insights': json.loads(self.insights) if self.insights else [],
-            'tips': json.loads(self.tips) if self.tips else []
+            'badges': badges,
+            'insights': insights,
+            'tips': tips
         }
 
 class Feedback(db.Model):
@@ -423,3 +454,5 @@ def log_tool_usage(tool_name, user_id=None, session_id=None, action=None, detail
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(f"Failed to log tool usage: {str(e)}", extra={'tool_name': tool_name, 'session_id': session_id, 'details': details})
+        # Re-raise to ensure the calling code can handle it if needed
+        raise
