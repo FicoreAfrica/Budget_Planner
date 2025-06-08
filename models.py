@@ -2,6 +2,7 @@ from extensions import db
 import json
 from datetime import datetime, date
 from flask_login import UserMixin
+import uuid
 
 class User(db.Model, UserMixin):
     __tablename__ = 'users'
@@ -9,9 +10,12 @@ class User(db.Model, UserMixin):
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(128), nullable=False)
-    is_admin = db.Column(db.Boolean, default=False, nullable=False)  # Added is_admin field
+    is_admin = db.Column(db.Boolean, default=False, nullable=False)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     lang = db.Column(db.String(10), default='en')
+    referral_code = db.Column(db.String(36), unique=True, nullable=False, default=lambda: str(uuid.uuid4()))
+    referred_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    referred_by = db.relationship('User', remote_side=[id], backref='referrals')
 
 class Course(db.Model):
     __tablename__ = 'courses'
@@ -54,7 +58,7 @@ class FinancialHealth(db.Model):
     score = db.Column(db.Float, nullable=True)
     status = db.Column(db.String(50), nullable=True)
     status_key = db.Column(db.String(50), nullable=True)
-    badges = db.Column(db.Text, nullable=True)  # JSON string
+    badges = db.Column(db.Text, nullable=True)
     step = db.Column(db.Integer, nullable=True)
     user = db.relationship('User', backref='financial_health_records')
 
@@ -189,7 +193,7 @@ class NetWorth(db.Model):
     total_assets = db.Column(db.Float, nullable=True)
     total_liabilities = db.Column(db.Float, nullable=True)
     net_worth = db.Column(db.Float, nullable=True)
-    badges = db.Column(db.Text, nullable=True)  # JSON string
+    badges = db.Column(db.Text, nullable=True)
     user = db.relationship('User', backref='net_worth_records')
 
     __table_args__ = (
@@ -237,7 +241,7 @@ class EmergencyFund(db.Model):
     savings_gap = db.Column(db.Float, nullable=True)
     monthly_savings = db.Column(db.Float, nullable=True)
     percent_of_income = db.Column(db.Float, nullable=True)
-    badges = db.Column(db.Text, nullable=True)  # JSON string
+    badges = db.Column(db.Text, nullable=True)
     user = db.relationship('User', backref='emergency_funds')
 
     __table_args__ = (
@@ -275,8 +279,8 @@ class LearningProgress(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     session_id = db.Column(db.String(36), nullable=False)
     course_id = db.Column(db.String(50), nullable=False)
-    lessons_completed = db.Column(db.Text, default='[]', nullable=False)  # JSON string
-    quiz_scores = db.Column(db.Text, default='{}', nullable=False)  # JSON string
+    lessons_completed = db.Column(db.Text, default='[]', nullable=False)
+    quiz_scores = db.Column(db.Text, default='{}', nullable=False)
     current_lesson = db.Column(db.String(50), nullable=True)
     user = db.relationship('User', backref='learning_progress_records')
 
@@ -309,9 +313,9 @@ class QuizResult(db.Model):
     send_email = db.Column(db.Boolean, default=False, nullable=False)
     personality = db.Column(db.String(50), nullable=True)
     score = db.Column(db.Integer, nullable=True)
-    badges = db.Column(db.Text, nullable=True)  # JSON string
-    insights = db.Column(db.Text, nullable=True)  # JSON string
-    tips = db.Column(db.Text, nullable=True)  # JSON string
+    badges = db.Column(db.Text, nullable=True)
+    insights = db.Column(db.Text, nullable=True)
+    tips = db.Column(db.Text, nullable=True)
     user = db.relationship('User', backref='quiz_results')
 
     def to_dict(self):
