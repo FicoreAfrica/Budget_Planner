@@ -10,6 +10,7 @@ from models import User, log_tool_usage
 import logging
 import uuid
 from datetime import datetime
+from sqlalchemy import exc
 
 # Configure logging
 logger = logging.getLogger('ficore_app')
@@ -94,7 +95,7 @@ class ChangePasswordForm(FlaskForm):
         self.submit.label.text = trans('auth_change_password', default='Change Password', lang=lang)
 
     def validate_current_password(self, current_password):
-        if not check_password_hash(current_user.password_hash, current_password.data):
+        if not current_user.password_hash or not check_password_hash(current_user.password_hash, current_password.data):
             raise ValidationError(trans('auth_invalid_current_password', default='Current password is incorrect.'))
 
 # Routes
@@ -116,7 +117,11 @@ def signup():
 
     if referral_code:
         try:
-            uuid.UUID(referral_code)
+            # Attempt to validate as UUID, but allow fallback to existing codes
+            try:
+                uuid.UUID(referral_code)
+            except ValueError:
+                pass  # Allow non-UUID referral codes if they exist in the database
             referrer = User.query.filter_by(referral_code=referral_code).first()
             if not referrer:
                 logger.warning(f"Invalid referral code: {referral_code}", extra={'session_id': session_id})
@@ -126,8 +131,8 @@ def signup():
                     logger.warning(f"Referral limit reached for referrer with code: {referral_code}", extra={'session_id': session_id})
                     flash(trans('auth_referral_limit_reached', default='This user has reached their referral limit.', lang=lang), 'warning')
                     referrer = None
-        except ValueError:
-            logger.warning(f"Invalid referral code format: {referral_code}", extra={'session_id': session_id})
+        except Exception as e:
+            logger.error(f"Error validating referral code: {str(e)}", extra={'session_id': session_id})
             flash(trans('auth_invalid_referral_format', default='Invalid referral code format.', lang=lang), 'warning')
     
     referral_link = None
@@ -160,6 +165,12 @@ def signup():
         
         return render_template('signup.html', form=form, lang=lang, referral_code=referral_code, referrer=referrer, referral_link=referral_link, referral_count=referral_count)
     
+    except exc.IntegrityError as e:
+        db.session.rollback()
+        logger.error(f"Database integrity error in signup: {str(e)}", extra={'session_id': session_id, 'username': form.username.data if form.username.data else 'unknown', 'email': form.email.data if form.email.data else 'unknown'})
+        log_tool_usage('register', None, session_id, 'error', details=f"IntegrityError: {str(e)}")
+        flash(trans('auth_error', default='An error occurred. Please try again.', lang=lang), 'danger')
+        return render_template('signup.html', form=form, lang=lang, referral_code=referral_code, referrer=referrer, referral_link=referral_link, referral_count=referral_count), 500
     except Exception as e:
         db.session.rollback()
         logger.error(f"Error in signup: {str(e)}", exc_info=True, extra={'session_id': session_id, 'username': form.username.data if form.username.data else 'unknown', 'email': form.email.data if form.email.data else 'unknown'})
@@ -184,7 +195,7 @@ def signin():
     try:
         if request.method == 'POST' and form.validate_on_submit():
             user = User.query.filter_by(email=form.email.data).first()
-            if user and check_password_hash(user.password_hash, form.password.data):
+            if user and user.password_hash and check_password_hash(user.password_hash, form.password.data):
                 login_user(user)
                 logger.info(f"User signed in: {user.username}", extra={'session_id': session_id})
                 log_tool_usage('login', user.id, session_id, 'submit_success')
@@ -251,9 +262,14 @@ def profile():
         referred_users = current_user.referrals
         return render_template('profile.html', lang=lang, referral_link=referral_link, referral_count=referral_count, referred_users=referred_users, password_form=password_form)
     
+    except exc.IntegrityError as e:
+        db.session.rollback()
+        logger.error(f"Database integrity error in profile: {str(e)}", extra={'session_id': session_id})
+        flash(trans('core_error', default='An error occurred. Please try again.', lang=lang), 'danger')
+        return render_template('profile.html', lang=lang, referral_link=referral_link, referral_count=referral_count, referred_users=referred_users, password_form=password_form), 500
     except Exception as e:
         db.session.rollback()
-        logger.error(f"Error in profile: {str(e)}", extra={'session_id': session_id})
+        logger.error(f"Error in profile: {str(e)}", exc_info=True, extra={'session_id': session_id})
         flash(trans('core_error', default='An error occurred. Please try again.', lang=lang), 'danger')
         return render_template('profile.html', lang=lang, referral_link=referral_link, referral_count=referral_count, referred_users=referred_users, password_form=password_form), 500
 
