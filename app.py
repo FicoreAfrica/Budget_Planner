@@ -5,7 +5,7 @@ import uuid
 from datetime import datetime, timedelta
 from flask import Flask, jsonify, render_template, request, session, redirect, url_for, flash, send_from_directory, has_request_context, g, current_app, make_response
 from flask_wtf.csrf import CSRFError, generate_csrf
-from flask_login import current_user
+from flask_login import LoginManager, current_user
 from dotenv import load_dotenv
 from extensions import db, login_manager, session as flask_session, csrf
 from blueprints.auth import auth_bp
@@ -42,6 +42,18 @@ class SessionAdapter(logging.LoggerAdapter):
         return msg, kwargs
 
 logger = SessionAdapter(root_logger, {})
+
+# Define admin_required decorator
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated:
+            return redirect(url_for('auth.signin', next=request.url))
+        if not current_user.is_admin:
+            flash('You do not have permission to access this page.', 'danger')
+            return redirect(url_for('index'))
+        return f(*args, **kwargs)
+    return decorated_function
 
 def setup_logging(app):
     handler = logging.StreamHandler(sys.stderr)
@@ -186,6 +198,7 @@ def create_app():
     from blueprints.emergency_fund import emergency_fund_bp
     from blueprints.learning_hub import learning_hub_bp
     from blueprints.auth import auth_bp
+    from blueprints.admin import admin_bp
 
     app.register_blueprint(financial_health_bp, template_folder='templates/financial_health')
     app.register_blueprint(budget_bp, template_folder='templates/budget')
@@ -195,6 +208,7 @@ def create_app():
     app.register_blueprint(emergency_fund_bp, template_folder='templates/emergency_fund')
     app.register_blueprint(learning_hub_bp, template_folder='templates/learning_hub')
     app.register_blueprint(auth_bp, template_folder='templates/auth')
+    app.register_blueprint(admin_bp, template_folder='templates/admin')
 
     def translate(key, lang='en', logger=logger, **kwargs):
         translation = trans(key, lang=lang, **kwargs)
