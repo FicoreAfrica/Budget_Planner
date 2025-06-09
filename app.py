@@ -43,18 +43,6 @@ class SessionAdapter(logging.LoggerAdapter):
 
 logger = SessionAdapter(root_logger, {})
 
-# Define admin_required decorator
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if not current_user.is_authenticated:
-            return redirect(url_for('auth.signin', next=request.url))
-        if not current_user.is_admin:
-            flash('You do not have permission to access this page.', 'danger')
-            return redirect(url_for('index'))
-        return f(*args, **kwargs)
-    return decorated_function
-
 def setup_logging(app):
     # Avoid duplicate handlers
     if not root_logger.handlers:
@@ -223,7 +211,6 @@ def create_app():
     from blueprints.emergency_fund import emergency_fund_bp
     from blueprints.learning_hub import learning_hub_bp
     from blueprints.auth import auth_bp
-    from blueprints.admin import admin_bp
 
     app.register_blueprint(financial_health_bp, template_folder='templates/financial_health')
     app.register_blueprint(budget_bp, template_folder='templates/budget')
@@ -233,7 +220,6 @@ def create_app():
     app.register_blueprint(emergency_fund_bp, template_folder='templates/emergency_fund')
     app.register_blueprint(learning_hub_bp, template_folder='templates/learning_hub')
     app.register_blueprint(auth_bp, template_folder='templates/auth')
-    app.register_blueprint(admin_bp, template_folder='templates/admin')
 
     def translate(key, lang='en', logger=logger, **kwargs):
         translation = trans(key, lang=lang, **kwargs)
