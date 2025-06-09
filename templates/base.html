@@ -72,7 +72,7 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
-                    <!-- Group 1: Home, Feedback, General Dashboard, Admin Panel (if admin) -->
+                    <!-- Group 1: Home, Feedback, General Dashboard, Admin Panel -->
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="mainMenuDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="font-size: 0.85rem;">
                             {{ trans('core_main_menu') | default('Main Menu') }}
@@ -81,7 +81,7 @@
                             <li><a class="dropdown-item" href="{{ url_for('index') }}" style="font-size: 0.85rem;">{{ trans('core_home') | default('Home') }}</a></li>
                             <li><a class="dropdown-item" href="{{ url_for('feedback') }}" style="font-size: 0.85rem;">{{ trans('core_feedback') | default('Feedback') }}</a></li>
                             <li><a class="dropdown-item" href="{{ url_for('general_dashboard') }}" style="font-size: 0.85rem;">{{ trans('core_general_dashboard') | default('General Dashboard') }}</a></li>
-                            {% if current_user.is_authenticated and current_user.is_admin %}
+                            {% if current_user.is_authenticated %}
                             <li><a class="dropdown-item" href="{{ url_for('admin.overview') }}" style="font-size: 0.85rem;">{{ trans('core_admin_panel') | default('Admin Panel') }}</a></li>
                             {% endif %}
                         </ul>
