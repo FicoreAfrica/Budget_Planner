@@ -141,11 +141,11 @@ def step1():
             session_id=session['sid'],
             action='step1_view'
         )
-        return render_template('net_worth_step1.html', form=form, trans=trans, lang=lang)
+        return render_template('NETWORTH/net_worth_step1.html', form=form, trans=trans, lang=lang)
     except Exception as e:
         current_app.logger.error(f"Error in net_worth.step1: {str(e)}", extra={'session_id': session.get('sid', 'unknown')})
         flash(trans("net_worth_error_personal_info", lang=lang), "danger")
-        return render_template('net_worth_step1.html', form=form, trans=trans, lang=lang), 500
+        return render_template('NETWORTH/net_worth_step1.html', form=form, trans=trans, lang=lang), 500
 
 @net_worth_bp.route('/step2', methods=['GET', 'POST'])
 def step2():
@@ -187,11 +187,11 @@ def step2():
             session_id=session['sid'],
             action='step2_view'
         )
-        return render_template('net_worth_step2.html', form=form, trans=trans, lang=lang)
+        return render_template('NETWORTH/net_worth_step2.html', form=form, trans=trans, lang=lang)
     except Exception as e:
         current_app.logger.error(f"Error in net_worth.step2: {str(e)}", extra={'session_id': session.get('sid', 'unknown')})
         flash(trans("net_worth_error_assets", lang=lang), "danger")
-        return render_template('net_worth_step2.html', form=form, trans=trans, lang=lang), 500
+        return render_template('NETWORTH/net_worth_step2.html', form=form, trans=trans, lang=lang), 500
 
 @net_worth_bp.route('/step3', methods=['GET', 'POST'])
 def step3():
@@ -309,11 +309,11 @@ def step3():
             session_id=session['sid'],
             action='step3_view'
         )
-        return render_template('net_worth_step3.html', form=form, trans=trans, lang=lang)
+        return render_template('NETWORTH/net_worth_step3.html', form=form, trans=trans, lang=lang)
     except Exception as e:
         current_app.logger.error(f"Error in net_worth.step3: {str(e)}", extra={'session_id': session.get('sid', 'unknown')})
         flash(trans("net_worth_calculation_error", lang=lang), "danger")
-        return render_template('net_worth_step3.html', form=form, trans=trans, lang=lang), 500
+        return render_template('NETWORTH/net_worth_step3.html', form=form, trans=trans, lang=lang), 500
 
 @net_worth_bp.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
@@ -422,7 +422,7 @@ def dashboard():
 
         current_app.logger.info(f"Dashboard rendering with {len(records)} records for session {session['sid']}")
         return render_template(
-            'net_worth_dashboard.html',
+            'NETWORTH/net_worth_dashboard.html',
             records=records,
             latest_record=latest_record,
             insights=insights,
@@ -434,7 +434,7 @@ def dashboard():
         current_app.logger.error(f"Error in net_worth.dashboard: {str(e)}", extra={'session_id': session.get('sid', 'unknown')})
         flash(trans("net_worth_dashboard_load_error", lang=lang), "danger")
         return render_template(
-            'net_worth_dashboard.html',
+            'NETWORTH/net_worth_dashboard.html',
             records=[],
             latest_record={},
             insights=[],
