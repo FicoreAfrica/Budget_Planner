@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, session, request, redirect, url_for, flash, current_app, send_from_directory
 from flask_wtf import FlaskForm
-from wtforms import StringField, BooleanField, SubmitField, HiddenField
+from wtforms import StringField, BooleanField, SubmitField, HiddenField, FileField
 from wtforms.validators import DataRequired, Email, Optional
 from flask_wtf.csrf import CSRFProtect, CSRFError
 from flask_login import current_user
@@ -8,16 +8,30 @@ from datetime import datetime
 from mailersend_email import send_email, EMAIL_CONFIG
 import uuid
 import json
+import os
 from translations import trans
 from extensions import db
 from models import LearningProgress, Course, log_tool_usage
+from werkzeug.utils import secure_filename
 
 learning_hub_bp = Blueprint('learning_hub', __name__)
 
 # Initialize CSRF protection
 csrf = CSRFProtect()
 
-# Define courses and quizzes data
+# Define allowed file extensions and upload folder
+ALLOWED_EXTENSIONS = {'mp4', 'pdf', 'txt'}
+UPLOAD_FOLDER = 'static/uploads'
+
+# Ensure upload folder exists
+def init_app(app):
+    os.makedirs(app.config.get('UPLOAD_FOLDER', UPLOAD_FOLDER), exist_ok=True)
+    init_storage(app)
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+# Courses data with multimedia support
 courses_data = {
     "budgeting_101": {
         "id": "budgeting_101",
@@ -35,12 +49,14 @@ courses_data = {
                     {
                         "id": "budgeting_101-module-1-lesson-1",
                         "title_key": "learning_hub_lesson_income_sources_title",
-                        "content_key": "learning_hub_lesson_income_sources_content",
+                        "content_type": "video",
+                        "content_path": "uploads/budgeting_101_lesson1.mp4",
                         "quiz_id": "quiz-1-1"
                     },
                     {
                         "id": "budgeting_101-module-1-lesson-2",
                         "title_key": "learning_hub_lesson_net_income_title",
+                        "content_type": "text",
                         "content_key": "learning_hub_lesson_net_income_content",
                         "quiz_id": None
                     }
@@ -64,6 +80,7 @@ courses_data = {
                     {
                         "id": "financial_quiz-module-1-lesson-1",
                         "title_key": "learning_hub_lesson_quiz_intro_title",
+                        "content_type": "text",
                         "content_key": "learning_hub_lesson_quiz_intro_content",
                         "quiz_id": "quiz-financial-1"
                     }
@@ -87,6 +104,7 @@ courses_data = {
                     {
                         "id": "savings_basics-module-1-lesson-1",
                         "title_key": "learning_hub_lesson_savings_strategies_title",
+                        "content_type": "text",
                         "content_key": "learning_hub_lesson_savings_strategies_content",
                         "quiz_id": None
                     }
@@ -160,6 +178,18 @@ class QuizForm(FlaskForm):
         super().__init__(*args, **kwargs)
         lang = session.get('lang', 'en')
         self.submit.label.text = trans('learning_hub_submit_quiz', lang=lang)
+
+class ContentUploadForm(FlaskForm):
+    course_id = StringField('Course ID', validators=[DataRequired()])
+    lesson_id = StringField('Lesson ID', validators=[DataRequired()])
+    content_type = StringField('Content Type', validators=[DataRequired()])
+    file = FileField('Upload File', validators=[DataRequired()])
+    submit = SubmitField('Upload')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        lang = session.get('lang', 'en')
+        self.submit.label.text = trans('learning_hub_upload', lang=lang)
 
 def get_progress():
     """Retrieve learning progress from database."""
@@ -235,21 +265,6 @@ def lesson_lookup(course, lesson_id):
             if lesson.get('id') == lesson_id:
                 return lesson, module
     return None, None
-
-@learning_hub_bp.errorhandler(404)
-def handle_not_found(e):
-    """Handle 404 errors with user-friendly message."""
-    lang = session.get('lang', 'en')
-    current_app.logger.error(f"404 error on {request.path}: {str(e)}, Session: {session.get('sid', 'no-session-id')}")
-    flash(trans("learning_hub_not_found", default="The requested page was not found. Please check the URL or return to courses.", lang=lang), "danger")
-    return redirect(url_for('learning_hub.courses'))
-
-@learning_hub_bp.errorhandler(CSRFError)
-def handle_csrf_error(e):
-    """Handle CSRF errors with user-friendly message."""
-    current_app.logger.error(f"CSRF error on {request.path}: {e.description}, Session: {session.get('sid', 'no-session-id')}, Form Data: {request.form}")
-    flash(trans("learning_hub_csrf_error", default="Form submission failed due to a missing security token. Please refresh and try again.", lang=session.get('lang', 'en')), "danger")
-    return render_template('400.html', message=trans("learning_hub_csrf_error", default="Form submission failed due to a missing security token. Please refresh and try again.", lang=session.get('lang', 'en'))), 400
 
 @learning_hub_bp.route('/courses')
 def courses():
@@ -564,6 +579,80 @@ def unsubscribe(email):
         flash(trans("learning_hub_unsubscribe_error", lang=lang), "danger")
         return redirect(url_for('index'))
 
+@learning_hub_bp.route('/upload_content', methods=['GET', 'POST'])
+def upload_content():
+    """Handle course content upload."""
+    if 'sid' not in session:
+        session['sid'] = str(uuid.uuid4())
+        session.permanent = True
+        session.modified = True
+    lang = session.get('lang', 'en')
+    form = ContentUploadForm()
+    if request.method == 'POST' and form.validate_on_submit():
+        file = form.file.data
+        course_id = form.course_id.data
+        lesson_id = form.lesson_id.data
+        content_type = form.content_type.data
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            file_path = os.path.join(current_app.config.get('UPLOAD_FOLDER', UPLOAD_FOLDER), filename)
+            file.save(file_path)
+            # Update courses_data or database
+            course = course_lookup(course_id)
+            if course:
+                for module in course['modules']:
+                    for lesson in module['lessons']:
+                        if lesson['id'] == lesson_id:
+                            lesson['content_type'] = content_type
+                            lesson['content_path'] = f"uploads/{filename}"
+                            break
+            # Optionally, store metadata in a new database table
+            try:
+                content_metadata = ContentMetadata(
+                    course_id=course_id,
+                    lesson_id=lesson_id,
+                    content_type=content_type,
+                    content_path=f"uploads/{filename}",
+                    uploaded_by=current_user.id if current_user.is_authenticated else None,
+                    upload_date=datetime.now()
+                )
+                db.session.add(content_metadata)
+                db.session.commit()
+            except Exception as e:
+                db.session.rollback()
+                current_app.logger.error(f"Error saving content metadata: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
+            flash(trans('learning_hub_content_uploaded', default='Content uploaded successfully'), 'success')
+            return redirect(url_for('learning_hub.courses'))
+        else:
+            flash(trans('learning_hub_invalid_file', default='Invalid file type'), 'danger')
+    return render_template('learning_hub_upload.html', form=form, trans=trans, lang=lang)
+
+@learning_hub_bp.route('/static/uploads/<path:filename>')
+def serve_uploaded_file(filename):
+    """Serve uploaded files securely."""
+    try:
+        log_tool_usage(
+            tool_name='learning_hub',
+            user_id=current_user.id if current_user.is_authenticated else None,
+            session_id=session['sid'],
+            action='serve_uploaded_file'
+        )
+        response = send_from_directory(current_app.config.get('UPLOAD_FOLDER', UPLOAD_FOLDER), filename)
+        response.headers['Cache-Control'] = 'public, max-age=31536000'
+        return response
+    except Exception as e:
+        current_app.logger.error(f"Error serving uploaded file {filename}: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
+        flash(trans("learning_hub_file_not_found", default="File not found"), "danger")
+        return redirect(url_for('learning_hub.courses')), 404
+
+@learning_hub_bp.errorhandler(404)
+def handle_not_found(e):
+    """Handle 404 errors with user-friendly message."""
+    lang = session.get('lang', 'en')
+    current_app.logger.error(f"404 error on {request.path}: {str(e)}, Session: {session.get('sid', 'no-session-id')}")
+    flash(trans("learning_hub_not_found", default="The requested page was not found. Please check the URL or return to courses.", lang=lang), "danger")
+    return redirect(url_for('learning_hub.courses'))
+
 @learning_hub_bp.route('/static/<path:filename>')
 def static_files(filename):
     """Serve static files with cache control."""
@@ -580,3 +669,10 @@ def static_files(filename):
     except Exception as e:
         current_app.logger.error(f"Error serving static file {filename}: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
         return redirect(url_for('learning_hub.courses')), 404
+
+@learning_hub_bp.errorhandler(CSRFError)
+def handle_csrf_error(e):
+    """Handle CSRF errors with user-friendly message."""
+    current_app.logger.error(f"CSRF error on {request.path}: {e.description}, Session: {session.get('sid', 'no-session-id')}, Form Data: {request.form}")
+    flash(trans("learning_hub_csrf_error", default="Form submission failed due to a missing security token. Please refresh and try again.", lang=session.get('lang', 'en')), "danger")
+    return render_template('400.html', message=trans("learning_hub_csrf_error", default="Form submission failed due to a missing security token. Please refresh and try again.", lang=session.get('lang', 'en'))), 400
