@@ -44,7 +44,7 @@
     {% endif %}
     <div class="card">
         <div class="card-body">
-            <form method="POST" action="{{ url_for('quiz.step' ~ ('2a' if step_num == 2 else '2b'), course_id=course_id) }}">
+            <form method="POST" action="{{ url_for('quiz.step' ~ ('2a' if step_num == 2 else '2b')) }}">
                 {{ form.csrf_token }}
                 {% for question in questions %}
                     <div class="question-block border-bottom pb-3 mb-3">
