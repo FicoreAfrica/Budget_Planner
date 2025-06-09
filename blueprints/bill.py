@@ -149,7 +149,7 @@ def form_step1():
             session_id=session['sid'],
             action='form_step1_view'
         )
-        return render_template('bill_form_step1.html', form=form, trans=trans, lang=lang)
+        return render_template('BILL/bill_form_step1.html', form=form, trans=trans, lang=lang)
     except Exception as e:
         current_app.logger.exception(f"Error in bill.form_step1: {str(e)}")
         flash(trans('bill_bill_form_load_error', lang), 'danger')
@@ -181,14 +181,14 @@ def form_step2():
             if not form.csrf_token.validate(form):
                 current_app.logger.error(f"CSRF validation failed: {form.csrf_token.errors}")
                 flash(trans('bill_csrf_invalid', lang) or 'Invalid CSRF token', 'danger')
-                return render_template('bill_form_step2.html', form=form, trans=trans, lang=lang)
+                return render_template('BILL/bill_form_step2.html', form=form, trans=trans, lang=lang)
 
             if form.validate_on_submit():
                 current_app.logger.info("Form validated successfully")
                 if form.send_email.data and not form.reminder_days.data:
                     form.reminder_days.errors.append(trans('bill_reminder_days_required', lang))
                     current_app.logger.error("Validation failed: reminder_days required when send_email is checked")
-                    return render_template('bill_form_step2.html', form=form, trans=trans, lang=lang)
+                    return render_template('BILL/bill_form_step2.html', form=form, trans=trans, lang=lang)
 
                 if not bill_step1_data:
                     current_app.logger.error("Session data missing for bill_step1")
@@ -237,7 +237,7 @@ def form_step2():
                             db.session.rollback()
                             current_app.logger.error(f"Failed to update bill: {str(e)}")
                             flash(trans('bill_update_failed', lang) or 'Failed to update bill', 'danger')
-                            return render_template('bill_form_step2.html', form=form, trans=trans, lang=lang)
+                            return render_template('BILL/bill_form_step2.html', form=form, trans=trans, lang=lang)
                     else:
                         flash(trans('bill_not_found', lang) or 'Bill not found', 'danger')
                         return redirect(url_for('bill.dashboard'))
@@ -267,7 +267,7 @@ def form_step2():
                         db.session.rollback()
                         current_app.logger.error(f"Failed to save bill: {str(e)}")
                         flash(trans('bill_save_failed', lang) or 'Failed to save bill', 'danger')
-                        return render_template('bill_form_step2.html', form=form, trans=trans, lang=lang)
+                        return render_template('BILL/bill_form_step2.html', form=form, trans=trans, lang=lang)
 
                 if form.send_email.data and bill_step1_data['email']:
                     try:
@@ -314,14 +314,14 @@ def form_step2():
                 for field, errors in form.errors.items():
                     for err_msg in errors:
                         flash(f"{trans(f'bill_{field}', lang=lang)}: {err_msg}", 'danger')
-                return render_template('bill_form_step2.html', form=form, trans=trans, lang=lang)
+                return render_template('BILL/bill_form_step2.html', form=form, trans=trans, lang=lang)
         log_tool_usage(
             tool_name='bill',
             user_id=current_user.id if current_user.is_authenticated else None,
             session_id=session['sid'],
             action='form_step2_view'
         )
-        return render_template('bill_form_step2.html', form=form, trans=trans, lang=lang)
+        return render_template('BILL/bill_form_step2.html', form=form, trans=trans, lang=lang)
     except Exception as e:
         current_app.logger.exception(f"Error in bill.form_step2: {str(e)}")
         flash(trans('bill_bill_form_load_error', lang) or 'Error loading bill form', 'danger')
@@ -407,7 +407,7 @@ def dashboard():
                 continue
 
         return render_template(
-            'bill_dashboard.html',
+            'BILL/bill_dashboard.html',
             bills=bills_data,
             paid_count=paid_count,
             unpaid_count=unpaid_count,
@@ -430,7 +430,7 @@ def dashboard():
         current_app.logger.exception(f"Error in bill.dashboard: {str(e)}")
         flash(trans('bill_dashboard_load_error', lang) or 'Error loading bill dashboard', 'danger')
         return render_template(
-            'bill_dashboard.html',
+            'BILL/bill_dashboard.html',
             bills=[],
             paid_count=0,
             unpaid_count=0,
@@ -602,7 +602,7 @@ def view_edit():
                     flash(trans('bill_bill_status_toggle_failed', lang) or 'Failed to update bill status', 'danger')
                 return redirect(url_for('bill.dashboard'))
 
-        return render_template('view_edit_bills.html', bills_data=bills_data, trans=trans, lang=lang)
+        return render_template('BILL/view_edit_bills.html', bills_data=bills_data, trans=trans, lang=lang)
     except Exception as e:
         current_app.logger.exception(f"Error in bill.view_edit: {str(e)}")
         flash(trans('bill_view_edit_template_error', lang) or 'Error loading bill edit page', 'danger')
