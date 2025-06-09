@@ -152,7 +152,7 @@ def signup():
             else:
                 logger.error(f"Signup form validation failed: {form.errors}", extra={'session_id': session_id, 'username': form.username.data, 'email': form.email.data})
                 log_tool_usage('register', None, session_id, 'submit_error', details=f"Validation errors: {form.errors}")
-                flash(trans('auth_form_errors', default='Please correct the errors in the form.', lang=lang), 'danger')
+                flash(trans('core_auth_form_errors', default='Please correct the errors in the form.', lang=lang), 'danger')
         
         return render_template('signup.html', form=form, lang=lang, referral_code=referral_code, referrer=referrer)
     except Exception as e:
@@ -191,7 +191,7 @@ def signin():
             elif form.errors:
                 logger.error(f"Signin form validation failed: {form.errors}", extra={'session_id': session_id})
                 log_tool_usage('login', None, session_id, 'submit_error')
-                flash(trans('auth_form_errors', default='Please correct the errors in the form.', lang=lang), 'danger')
+                flash(trans('core_auth_form_errors', default='Please correct the errors in the form.', lang=lang), 'danger')
     except Exception as e:
         db.session.rollback()
         logger.error(f"Error in signin: {str(e)}", extra={'session_id': session_id})
