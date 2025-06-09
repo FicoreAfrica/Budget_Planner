@@ -16,13 +16,13 @@ LEARNING_HUB_TRANSLATIONS = {
         'learning_hub_error_loading': 'Error loading content. Please try again.',
         'learning_hub_quiz_not_found': 'Quiz not found.',
         'learning_hub_quiz_completed': 'Quiz completed!',
-        'learning_hub_success_language_updated':'Language chnaged successfully!',
+        'learning_hub_success_language_updated': 'Language changed successfully!',
         'learning_hub_set_profile': 'Set up your profile.',
         'learning_hub_profile': 'Your Learning Profile',
         'learning_hub_profile_subtitle': 'Manage your personal details and learning preferences.',
         'learning_hub_profile_saved': 'Profile saved successfully!',
         'learning_hub_submit_quiz': 'Submit Quiz',
-        
+
         # Modules and Lessons
         'learning_hub_module_income_title': 'Understanding Income',
         'learning_hub_lesson_income_sources_title': 'Sources of Income',
@@ -34,7 +34,7 @@ LEARNING_HUB_TRANSLATIONS = {
         'learning_hub_lesson_quiz_intro_content': 'Instructions for taking the financial quiz; For the financial quiz, read instructions, tooltips, placeholders, and examples carefully, manage time effectively, and review basic financial concepts beforehand.',
         'learning_hub_module_savings_title': 'Savings Strategies',
         'learning_hub_lesson_savings_strategies_title': 'How to Save Effectively',
-        'learning_hub_lesson_savings_strategies_content': 'Tips and strategies for saving money;To save money, create a budget with Ficore Africa, prioritize needs over wants, automate your savings deductions, and shop strategically using discounts or bulk purchases.',
+        'learning_hub_lesson_savings_strategies_content': 'Tips and strategies for saving money; To save money, create a budget with Ficore Africa, prioritize needs over wants, automate your savings deductions, and shop strategically using discounts or bulk purchases.',
 
         # Quiz Content
         'learning_hub_quiz_income_q1': 'Which of the following is a source of income?',
@@ -103,7 +103,26 @@ LEARNING_HUB_TRANSLATIONS = {
         'learning_hub_continue_course': 'Continue your course.',
         'learning_hub_no_course_progress': 'No progress has been made on courses yet.',
         'learning_hub_my_courses': 'My Courses',
-        'learning_hub_progress': 'Course Progress'
+        'learning_hub_progress': 'Course Progress',
+
+        # New Keys for Updated Flow
+        'learning_hub_welcome_back': 'Welcome back,',
+        'learning_hub_resume_learning': 'Resume Learning',
+        'learning_hub_what_you_learn': 'What You’ll Learn',
+        'learning_hub_next_lesson': 'Next Lesson',
+        'learning_hub_lesson_completed_title': 'Course Completed!',
+        'learning_hub_congratulations': 'Congratulations!',
+        'learning_hub_lesson_completed_message': 'Congratulations on completing the lesson "{lesson_title}" in the course "{course_title}"!',
+        'learning_hub_continue_learning': 'Keep up the great work and continue your learning journey!',
+        'learning_hub_back_to_dashboard': 'Back to Dashboard',
+        'learning_hub_start_new_course': 'Start New Course',
+        'learning_hub_details': 'Details',
+        'learning_hub_unsubscribe_prompt': 'To stop receiving these emails, ',
+        'learning_hub_unsubscribe': 'unsubscribe here',
+        'learning_hub_upload_content': 'Upload Course Content',
+        'learning_hub_upload_subtitle': 'Add videos, slides, or text to your courses',
+        'learning_hub_content_uploaded': 'Content uploaded successfully',
+        'learning_hub_invalid_file': 'Invalid file type'
     },
     'ha': {
         # Course Titles & Descriptions
@@ -119,6 +138,13 @@ LEARNING_HUB_TRANSLATIONS = {
         'learning_hub_lesson_done': 'Ka gama dukkan darussa a wannan kwas.',
         'learning_hub_quiz_not_found': 'Ba a samu wannan jarabawa ba.',
         'learning_hub_quiz_completed': 'An gama jarabawa!',
+        'learning_hub_success_logout': 'An yi nasarar fitar da kai.',
+        'learning_hub_success_language_updated': 'An Canza Yare Cikin Nasara!',
+        'learning_hub_set_profile': 'Shigar da Bayananku',
+        'learning_hub_profile': 'Bayanan Martabarki na Koyo',
+        'learning_hub_profile_subtitle': 'Sarrafa bayanan sirrinki da abubuwan da kike so na koyo.',
+        'learning_hub_profile_saved': 'An adana bayanan martaba cikin nasara!',
+        'learning_hub_submit_quiz': 'Gabatar da Gwaji',
 
         # Modules and Lessons
         'learning_hub_module_income_title': 'Fahimtar Samun Kuɗi',
@@ -192,7 +218,6 @@ LEARNING_HUB_TRANSLATIONS = {
         'learning_hub_lessons_completed_label': 'An kammala darasi',
         'learning_hub_continue': 'Ci gaba',
         'learning_hub_browse_courses': 'Bincika Kwasuna',
-        'learning_hub_set_profile': 'Shigar da Bayananku',
         'learning_hub_error_loading': 'Kuskure yayin loda abun ciki. Don Allah a sake gwadawa.',
 
         # Additional Course-Related Keys
@@ -202,13 +227,26 @@ LEARNING_HUB_TRANSLATIONS = {
         'learning_hub_continue_course': 'Ci gaba da kwas ɗin ka.',
         'learning_hub_no_course_progress': 'Ba a sami ci gaba a kan kwas ɗin ba tukuna.',
         'learning_hub_my_courses': 'Kwas ɗina',
-        'learning_hub_submit_quiz': 'Gabatar da Gwaji',
         'learning_hub_progress': 'Ci gaban Kwas',
-        'learning_hub_profile': 'Bayanan Martabarki na Koyo',
-        'learning_hub_profile_subtitle': 'Sarrafa bayanan sirrinki da abubuwan da kike so na koyo.',
-        'learning_hub_profile_saved': 'An adana bayanan martaba cikin nasara!',
-        'learning_hub_success_logout': 'An yi nasarar fitar da kai.',
-        'learning_hub_success_language_updated':'An Canza Yare Cikin Nasara!'       
+
+        # New Keys for Updated Flow
+        'learning_hub_welcome_back': 'Barka da dawowa,',
+        'learning_hub_resume_learning': 'Ci gaba da Koyo',
+        'learning_hub_what_you_learn': 'Abin da Za Ku Koya',
+        'learning_hub_next_lesson': 'Darasi na Gaba',
+        'learning_hub_lesson_completed_title': 'An Kammala Kwas!',
+        'learning_hub_congratulations': 'Taya murna!',
+        'learning_hub_lesson_completed_message': 'Taya murna da kammala darasin "{lesson_title}" a cikin kwas "{course_title}"!',
+        'learning_hub_continue_learning': 'Ci gaba da aiki mai kyau kuma ka ci gaba da tafiyar koyonka!',
+        'learning_hub_back_to_dashboard': 'Komawa Dashboard',
+        'learning_hub_start_new_course': 'Fara Sabon Kwas',
+        'learning_hub_details': 'Bayanai',
+        'learning_hub_unsubscribe_prompt': 'Don dakatar da karɓar waɗannan imel, ',
+        'learning_hub_unsubscribe': 'cire rajista a nan',
+        'learning_hub_upload_content': 'Loda Abubuwan Kwas',
+        'learning_hub_upload_subtitle': 'Ƙara bidiyo, nunin faifai, ko rubutu zuwa kwasa-kwasan ku',
+        'learning_hub_content_uploaded': 'An loda abun ciki cikin nasara',
+        'learning_hub_invalid_file': 'Nau’in fayil mara inganci'
     }
 }
 
