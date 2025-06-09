@@ -1,6 +1,7 @@
 import os
 import sys
 import logging
+import uuid
 from datetime import datetime, timedelta
 from flask import Flask, jsonify, render_template, request, session, redirect, url_for, flash, send_from_directory, has_request_context, g, current_app, make_response
 from flask_wtf.csrf import CSRFError, generate_csrf
@@ -10,8 +11,8 @@ from extensions import db, login_manager, session as flask_session, csrf
 from blueprints.auth import auth_bp
 from translations import trans
 from scheduler_setup import init_scheduler
-from models import Course, FinancialHealth, Budget, Bill, NetWorth, EmergencyFund, LearningProgress, QuizResult, User, Feedback, ToolUsage, log_tool_usage
-from logging.handlers import RotatingFileHandler
+from models import Course, FinancialHealth, Budget, Bill, NetWorth, EmergencyFund, LearningProgress, QuizResult, User, Feedback, ToolUsage
+import json
 from functools import wraps
 from uuid import uuid4
 from alembic import command
@@ -63,11 +64,7 @@ def setup_logging(app):
     log_dir = os.path.join(os.path.dirname(__file__), 'data')
     os.makedirs(log_dir, exist_ok=True)
     try:
-        file_handler = RotatingFileHandler(
-            os.path.join(log_dir, 'storage.log'),
-            maxBytes=1024*1024,  # 1MB
-            backupCount=5
-        )
+        file_handler = logging.FileHandler(os.path.join(log_dir, 'storage.log'))
         file_handler.setLevel(logging.DEBUG)
         file_handler.setFormatter(formatter)
         root_logger.addHandler(file_handler)
@@ -189,8 +186,9 @@ def create_app():
     # Apply migrations and initialize database
     with app.app_context():
         apply_migrations(app)  # Run migrations before creating tables
+        db.create_all()
         initialize_courses_data(app)
-        logger.info("Database tables initialized and courses initialized")
+        logger.info("Database tables created and courses initialized")
 
         # Check and create admin user
         admin_email = os.environ.get('ADMIN_EMAIL')
@@ -199,7 +197,7 @@ def create_app():
             admin_user = User.query.filter_by(email=admin_email).first()
             if not admin_user:
                 admin_user = User(
-                    username=f'admin_{uuid4()}',  # Unique full UUID
+                    username='admin_' + str(uuid.uuid4())[:8],  # Unique username
                     email=admin_email,
                     password_hash=generate_password_hash(admin_password),
                     is_admin=True,
@@ -278,7 +276,7 @@ def create_app():
     def setup_session_and_language():
         try:
             if 'sid' not in session:
-                session['sid'] = str(uuid4())
+                session['sid'] = str(uuid.uuid4())
                 logger.info(f"New session ID generated: {session['sid']}")
             if 'lang' not in session:
                 session['lang'] = request.accept_languages.best_match(['en', 'ha'], 'en')
@@ -309,6 +307,15 @@ def create_app():
             'current_user': current_user if has_request_context() else None,
             'csrf_token': generate_csrf
         }
+
+    def ensure_session_id(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if 'sid' not in session:
+                session['sid'] = str(uuid4())
+                logger.info(f"New session ID generated: {session['sid']}")
+            return f(*args, **kwargs)
+        return decorated_function
 
     @app.route('/')
     def index():
@@ -362,6 +369,7 @@ def create_app():
         return send_from_directory(os.path.join(app.root_path, 'static', 'img'), 'favicon-32x32.png', mimetype='image/png')
 
     @app.route('/general_dashboard')
+    @ensure_session_id
     def general_dashboard():
         lang = session.get('lang', 'en')
         logger.info("Serving general dashboard")
@@ -448,6 +456,21 @@ def create_app():
             }
             return render_template('general_dashboard.html', data=default_data, t=translate, lang=lang), 500
 
+    @app.route('/logout')
+    def logout():
+        lang = session.get('lang', 'en')
+        logger.info("Logging out user")
+        try:
+            session_lang = session.get('lang', 'en')
+            session.clear()
+            session['lang'] = session_lang
+            flash(translate('learning_hub_success_logout', default='Successfully logged out', lang=lang), 'success')
+            return redirect(url_for('index'))
+        except Exception as e:
+            logger.error(f"Error in logout: {str(e)}", exc_info=True)
+            flash(translate('global_error_message', default='An error occurred', lang=lang), 'danger')
+            return redirect(url_for('index'))
+
     @app.route('/about')
     def about():
         lang = session.get('lang', 'en')
@@ -497,6 +520,7 @@ def create_app():
         return response
 
     @app.route('/feedback', methods=['GET', 'POST'])
+    @ensure_session_id
     def feedback():
         lang = session.get('lang', 'en')
         logger.info("Handling feedback request")
@@ -539,23 +563,19 @@ def create_app():
     logger.info("App creation completed")
     return app
 
-# Updated log_tool_usage to match models.py signature
-def log_tool_usage(tool_name, user_id=None, session_id=None, action=None, details=None):
+def log_tool_usage(tool_name):
     try:
-        if user_id is None and current_user.is_authenticated:
+        if current_user.is_authenticated:
             user_id = current_user.id
-        session_id = session_id or session.get('sid', 'unknown')
-        usage = ToolUsage(
-            tool_name=tool_name,
-            user_id=user_id,
-            session_id=session_id,
-            action=action or 'unknown'
-        )
-        db.session.add(usage)
+        else:
+            user_id = None
+        session_id = session.get('sid', 'unknown')
+        tool_usage = ToolUsage(user_id=user_id, session_id=session_id, tool_name=tool_name)
+        db.session.add(tool_usage)
         db.session.commit()
-        logger.info(f"Logged tool usage: {tool_name} for session {session_id}", extra={'details': details})
+        logger.info(f"Logged tool usage: {tool_name} for session {session_id}")
     except Exception as e:
-        logger.error(f"Error logging tool usage: {str(e)}", extra={'tool_name': tool_name, 'session_id': session_id, 'details': details})
+        logger.error(f"Error logging tool usage: {str(e)}")
         db.session.rollback()
 
 # Create the Flask app instance for Gunicorn
