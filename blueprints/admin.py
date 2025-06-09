@@ -32,26 +32,26 @@ def overview():
     
     try:
         logger.info("Starting database session with no_autoflush")
-        with db.session.no_autoflush() as read_session:
+        with db.session.no_autoflush():
             logger.info("Inside no_autoflush context")
             
             # User Stats
             logger.info("Querying total users")
-            total_users = read_session.query(User).count()
+            total_users = db.session.query(User).count()
             logger.info("Queried total_users: %d", total_users)
             
             last_day = datetime.utcnow() - timedelta(days=1)
             logger.info("Querying new users in last 24 hours, since: %s", last_day)
-            new_users_last_24h = read_session.query(User).filter(User.created_at >= last_day).count()
+            new_users_last_24h = db.session.query(User).filter(User.created_at >= last_day).count()
             logger.info("Queried new_users_last_24h: %d", new_users_last_24h)
             
             # Referral Stats
             logger.info("Querying total referrals")
-            total_referrals = read_session.query(User).filter(User.referred_by_id.isnot(None)).count()
+            total_referrals = db.session.query(User).filter(User.referred_by_id.isnot(None)).count()
             logger.info("Queried total_referrals: %d", total_referrals)
             
             logger.info("Querying new referrals in last 24 hours")
-            new_referrals_last_24h = read_session.query(User).filter(
+            new_referrals_last_24h = db.session.query(User).filter(
                 User.referred_by_id.isnot(None),
                 User.created_at >= last_day
             ).count()
@@ -63,11 +63,11 @@ def overview():
             
             # Tool Usage Stats
             logger.info("Querying total tool usage")
-            tool_usage_total = read_session.query(ToolUsage).count()
+            tool_usage_total = db.session.query(ToolUsage).count()
             logger.info("Queried tool_usage_total: %d", tool_usage_total)
             
             logger.info("Querying tool usage by tool")
-            usage_by_tool = read_session.query(ToolUsage.tool_name, func.count(ToolUsage.id)).group_by(ToolUsage.tool_name).all()
+            usage_by_tool = db.session.query(ToolUsage.tool_name, func.count(ToolUsage.id)).group_by(ToolUsage.tool_name).all()
             logger.info("Queried usage_by_tool: %s", usage_by_tool)
             top_tools = sorted(usage_by_tool, key=lambda x: x[1], reverse=True)[:3]
             logger.info("Top tools: %s", top_tools)
@@ -77,7 +77,7 @@ def overview():
             action_breakdown = {}
             for tool, _ in top_tools:
                 logger.info("Querying actions for tool: %s", tool)
-                actions = read_session.query(ToolUsage.action, func.count(ToolUsage.id))\
+                actions = db.session.query(ToolUsage.action, func.count(ToolUsage.id))\
                     .filter(ToolUsage.tool_name == tool)\
                     .group_by(ToolUsage.action)\
                     .limit(5).all()
@@ -86,7 +86,7 @@ def overview():
             
             # Engagement Metrics
             logger.info("Querying multi-tool users")
-            multi_tool_users = read_session.query(ToolUsage.user_id, func.count(func.distinct(ToolUsage.tool_name)))\
+            multi_tool_users = db.session.query(ToolUsage.user_id, func.count(func.distinct(ToolUsage.tool_name)))\
                 .filter(ToolUsage.tool_name.in_(VALID_TOOLS[3:]))\
                 .group_by(ToolUsage.user_id)\
                 .having(func.count(func.distinct(ToolUsage.tool_name)) > 1)\
@@ -94,7 +94,7 @@ def overview():
             logger.info("Queried multi_tool_users: %d", multi_tool_users)
             
             logger.info("Querying total sessions")
-            total_sessions = read_session.query(func.count(func.distinct(ToolUsage.session_id)))\
+            total_sessions = db.session.query(func.count(func.distinct(ToolUsage.session_id)))\
                 .filter(ToolUsage.tool_name.in_(VALID_TOOLS[3:])).scalar()
             logger.info("Queried total_sessions: %d", total_sessions)
             
@@ -103,32 +103,32 @@ def overview():
             
             # Anonymous to registered conversion
             logger.info("Querying anonymous sessions")
-            anon_sessions = read_session.query(ToolUsage.session_id)\
+            anon_sessions = db.session.query(ToolUsage.session_id)\
                 .filter(ToolUsage.user_id.is_(None), ToolUsage.tool_name.in_(VALID_TOOLS[3:]))\
                 .distinct().subquery()
             logger.info("Queried anonymous sessions")
             
             logger.info("Querying converted sessions")
-            converted_sessions = read_session.query(ToolUsage.session_id)\
+            converted_sessions = db.session.query(ToolUsage.session_id)\
                 .filter(ToolUsage.tool_name == 'register', ToolUsage.session_id.in_(anon_sessions))\
                 .distinct().count()
             logger.info("Queried converted_sessions: %d", converted_sessions)
             
-            anon_total = read_session.query(anon_sessions).count()
+            anon_total = db.session.query(anon_sessions).count()
             logger.info("Queried anon_total: %d", anon_total)
             conversion_rate = (converted_sessions / anon_total * 100) if anon_total else 0.0
             logger.info("Conversion rate: %.2f%%", conversion_rate)
             
             # Feedback
             logger.info("Querying average feedback rating")
-            avg_feedback = read_session.query(func.avg(Feedback.rating)).scalar() or 0.0
+            avg_feedback = db.session.query(func.avg(Feedback.rating)).scalar() or 0.0
             logger.info("Queried avg_feedback: %.2f", avg_feedback)
             
             # Data for charts (last 30 days)
             end_date = datetime.utcnow()
             start_date = end_date - timedelta(days=30)
             logger.info("Querying daily usage for charts, from %s to %s", start_date, end_date)
-            daily_usage = read_session.query(
+            daily_usage = db.session.query(
                 func.date(ToolUsage.created_at).label('date'),
                 ToolUsage.tool_name,
                 func.count(ToolUsage.id).label('count')
@@ -140,7 +140,7 @@ def overview():
             logger.info("Queried daily_usage: %s", daily_usage)
             
             logger.info("Querying daily referrals for charts")
-            daily_referrals = read_session.query(
+            daily_referrals = db.session.query(
                 func.date(User.created_at).label('date'),
                 func.count(User.id).label('count')
             )\
@@ -263,8 +263,8 @@ def tool_usage():
         action = request.args.get('action')
 
         # Use read-only session for data retrieval
-        with db.session.no_autoflush() as read_session:
-            query = read_session.query(ToolUsage)
+        with db.session.no_autoflush():
+            query = db.session.query(ToolUsage)
             if tool_name and tool_name in VALID_TOOLS[3:]:
                 query = query.filter_by(tool_name=tool_name)
             if action:
@@ -283,7 +283,7 @@ def tool_usage():
             usage_logs = query.order_by(ToolUsage.created_at.desc()).limit(100).all()
 
             # Available actions for the selected tool
-            available_actions = read_session.query(ToolUsage.action)\
+            available_actions = db.session.query(ToolUsage.action)\
                 .filter(ToolUsage.tool_name == tool_name if tool_name else True)\
                 .distinct().all()
             available_actions = [a[0] for a in available_actions]
@@ -303,7 +303,7 @@ def tool_usage():
                     total_count = daily_query.count()
                     chart_data['total_counts'].append(total_count)
                     if tool_name:
-                        action_counts = read_session.query(ToolUsage.action, func.count(ToolUsage.id))\
+                        action_counts = db.session.query(ToolUsage.action, func.count(ToolUsage.id))\
                             .filter(
                                 ToolUsage.tool_name == tool_name,
                                 func.date(ToolUsage.created_at) == current_date.date()
@@ -319,7 +319,7 @@ def tool_usage():
                 # Default to last 30 days
                 end_date = datetime.utcnow()
                 start_date = end_date - timedelta(days=30)
-                daily_usage = read_session.query(
+                daily_usage = db.session.query(
                     func.date(ToolUsage.created_at).label('date'),
                     ToolUsage.action,
                     func.count(ToolUsage.id).label('count')
@@ -420,8 +420,8 @@ def export_csv():
         action = request.args.get('action')
 
         # Use read-only session for data get
-        with db.session.no_autoflush() as read_session:
-            query = read_session.query(ToolUsage)
+        with db.session.no_autoflush():
+            query = db.session.query(ToolUsage)
             if tool_name and tool_name in VALID_TOOLS[3:]:
                 query = query.filter_by(tool_name=tool_name)
             if action:
