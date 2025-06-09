@@ -165,6 +165,8 @@ def create_app():
     flask_session.init_app(app)
     csrf.init_app(app)
 
+    logger.info("App initialized, starting configuration")  # Early log
+
     # Configure database
     db_dir = os.path.join(os.path.dirname(__file__), 'data')
     try:
@@ -339,6 +341,11 @@ def create_app():
                 logger.info(f"New session ID generated: {session['sid']}")
             return f(*args, **kwargs)
         return decorated_function
+
+    @app.route('/test')
+    def test():
+        logger.info("Test route accessed")
+        return "Test successful", 200
 
     @app.route('/')
     def index():
