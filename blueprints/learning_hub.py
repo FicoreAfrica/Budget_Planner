@@ -194,11 +194,14 @@ class ContentUploadForm(FlaskForm):
 def get_progress():
     """Retrieve learning progress from database."""
     try:
-        filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
+        filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session.get('sid', str(uuid.uuid4()))}
         progress_records = LearningProgress.query.filter_by(**filter_kwargs).all()
         progress = {}
         for record in progress_records:
-            progress[record.course_id] = record.to_dict()
+            try:
+                progress[record.course_id] = record.to_dict()
+            except Exception as e:
+                current_app.logger.error(f"Error parsing progress record for course {record.course_id}: {str(e)}")
         return progress
     except Exception as e:
         current_app.logger.error(f"Error retrieving progress from database: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
@@ -431,7 +434,7 @@ def lesson(course_id, lesson_id):
                                     "first_name": profile['first_name'],
                                     "course_title": trans(course['title_key'], lang=lang),
                                     "lesson_title": trans(lesson['title_key'], lang=lang),
-                                    "completed_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                                    "completed_at": datetime(2025, 6, 9, 8, 40).strftime('%Y-%m-%d %H:%M:%S'),
                                     "cta_url": url_for('learning_hub.course_overview', course_id=course_id, _external=True),
                                     "unsubscribe_url": url_for('learning_hub.unsubscribe', email=profile['email'], _external=True)
                                 },
@@ -540,16 +543,25 @@ def dashboard():
             action='dashboard_view'
         )
         for course_id, course in courses_data.items():
-            cp = progress.get(course_id, {})
-            lessons_total = sum(len(m.get('lessons', [])) for m in course['modules'])
+            cp = progress.get(course_id, {'lessons_completed': [], 'current_lesson': None})
+            lessons_total = sum(len(m.get('lessons', [])) for m in course.get('modules', []))
             completed = len(cp.get('lessons_completed', []))
             percent = int((completed / lessons_total) * 100) if lessons_total > 0 else 0
-            progress_summary.append({'course': course, 'completed': completed, 'total': lessons_total, 'percent': percent})
-        current_app.logger.info(f"Rendering dashboard page, Path: {request.path}", extra={'session_id': session.get('sid', 'no-session-id')})
+            current_lesson_id = cp.get('current_lesson')
+            if not current_lesson_id and lessons_total > 0:
+                current_lesson_id = course['modules'][0]['lessons'][0]['id'] if course['modules'] and course['modules'][0]['lessons'] else None
+            progress_summary.append({
+                'course': course,
+                'completed': completed,
+                'total': lessons_total,
+                'percent': percent,
+                'current_lesson': current_lesson_id
+            })
+        current_app.logger.info(f"Rendering dashboard page, Path: {request.path}, Progress Summary: {len(progress_summary)} courses", extra={'session_id': session.get('sid', 'no-session-id')})
         return render_template('LEARNINGHUB/learning_hub_dashboard.html', progress_summary=progress_summary, trans=trans, lang=lang)
     except Exception as e:
-        current_app.logger.error(f"Error rendering dashboard, Path: {request.path}: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
-        flash(trans("learning_hub_error_loading", default="Error loading dashboard"), "danger")
+        current_app.logger.error(f"Error rendering dashboard, Path: {request.path}: {str(e)}", exc_info=True, extra={'session_id': session.get('sid', 'no-session-id')})
+        flash(trans("learning_hub_error_loading", default="Error loading dashboard. Please try again."), "danger")
         return render_template('LEARNINGHUB/learning_hub_dashboard.html', progress_summary=[], trans=trans, lang=lang), 500
 
 @learning_hub_bp.route('/unsubscribe/<email>')
@@ -614,7 +626,7 @@ def upload_content():
                     content_type=content_type,
                     content_path=f"uploads/{filename}",
                     uploaded_by=current_user.id if current_user.is_authenticated else None,
-                    upload_date=datetime.now()
+                    upload_date=datetime(2025, 6, 9, 8, 40)
                 )
                 db.session.add(content_metadata)
                 db.session.commit()
