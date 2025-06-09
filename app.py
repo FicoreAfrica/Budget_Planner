@@ -61,12 +61,14 @@ def setup_logging(app):
     stdout_handler = logging.StreamHandler(sys.stdout)
     stdout_handler.setLevel(logging.DEBUG)
     stdout_handler.setFormatter(formatter)
+    stdout_handler.flush = lambda: sys.stdout.flush()  # Force flush
     root_logger.addHandler(stdout_handler)
 
     # Handler for stderr (only errors)
     stderr_handler = logging.StreamHandler(sys.stderr)
     stderr_handler.setLevel(logging.ERROR)
     stderr_handler.setFormatter(formatter)
+    stderr_handler.flush = lambda: sys.stderr.flush()  # Force flush
     root_logger.addHandler(stderr_handler)
 
     # Optional: File handler (won't be accessible on Render free tier)
