@@ -106,13 +106,12 @@ def signup():
     form = SignupForm(lang=lang, formdata=request.form if request.method == 'POST' else None)
     referral_code = request.args.get('ref')
     referrer = None
-    session_id = session.get('sid', str(uuid.uuid4()))
-    session['sid'] = session_id
+    session_id = session.get('sid')  # Use existing session_id
     
     # Log signup page view
     log_tool_usage('register', None, session_id, 'view_page')
 
-    if referral_code:
+    if referral_code and referral_code.strip():
         try:
             # Validate referral_code as a UUID
             uuid.UUID(referral_code)
@@ -167,8 +166,7 @@ def signin():
     
     lang = session.get('lang', 'en')
     form = SigninForm(lang=lang, formdata=request.form if request.method == 'POST' else None)
-    session_id = session.get('sid', str(uuid.uuid4()))
-    session['sid'] = session_id
+    session_id = session.get('sid')  # Use existing session_id
     
     # Log signin page view
     log_tool_usage('login', None, session_id, 'view_page')
@@ -206,7 +204,7 @@ def logout():
     lang = session.get('lang', 'en')
     username = current_user.username
     user_id = current_user.id
-    session_id = session.get('sid', str(uuid.uuid4()))
+    session_id = session.get('sid')  # Use existing session_id
     
     # Log logout action
     log_tool_usage('logout', user_id, session_id, 'submit')
@@ -221,7 +219,7 @@ def logout():
 def profile():
     lang = session.get('lang', 'en')
     password_form = ChangePasswordForm(lang=lang, formdata=request.form if request.method == 'POST' else None)
-    session_id = session.get('sid', str(uuid.uuid4()))
+    session_id = session.get('sid')  # Use existing session_id
     
     try:
         if request.method == 'POST' and password_form.validate_on_submit():
@@ -245,7 +243,7 @@ def profile():
 
 @auth_bp.route('/debug/auth')
 def debug_auth():
-    session_id = session.get('sid', str(uuid.uuid4()))
+    session_id = session.get('sid')  # Use existing session_id
     try:
         return jsonify({
             'is_authenticated': current_user.is_authenticated,
