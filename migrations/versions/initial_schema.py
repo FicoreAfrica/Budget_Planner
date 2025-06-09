@@ -7,6 +7,7 @@ Create Date: 2025-06-08 13:51:00
 
 from alembic import op
 import sqlalchemy as sa
+import uuid
 
 revision = 'initial_schema'
 down_revision = None
@@ -24,7 +25,7 @@ def upgrade():
         sa.Column('is_admin', sa.Boolean(), nullable=False, server_default='false'),
         sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
         sa.Column('lang', sa.String(length=10), nullable=True, server_default='en'),
-        sa.Column('referral_code', sa.String(length=36), nullable=False, server_default=sa.text("gen_random_uuid()")),
+        sa.Column('referral_code', sa.String(length=36), nullable=False),  # Default set in application logic
         sa.Column('referred_by_id', sa.Integer(), nullable=True),
         sa.ForeignKeyConstraint(['referred_by_id'], ['users.id'], ondelete='SET NULL'),
         sa.PrimaryKeyConstraint('id'),
@@ -67,9 +68,9 @@ def upgrade():
     # FinancialHealth table
     op.create_table(
         'financial_health',
-        sa.Column('id', sa.String(length=36), nullable=False),
+        sa.Column('id', sa.String(length=36), nullable=False, server_default=str(uuid.uuid4())),
         sa.Column('user_id', sa.Integer(), nullable=True),
-        sa.Column('session_id', sa.String(length=36), nullable=False),
+        sa.Column('session_id', sa.String(length=36), nullable=False, server_default=str(uuid.uuid4())),
         sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
         sa.Column('first_name', sa.String(length=50), nullable=True),
         sa.Column('email', sa.String(length=120), nullable=True),
@@ -96,9 +97,9 @@ def upgrade():
     # Budget table
     op.create_table(
         'budget',
-        sa.Column('id', sa.String(length=36), nullable=False),
+        sa.Column('id', sa.String(length=36), nullable=False, server_default=str(uuid.uuid4())),
         sa.Column('user_id', sa.Integer(), nullable=True),
-        sa.Column('session_id', sa.String(length=36), nullable=False),
+        sa.Column('session_id', sa.String(length=36), nullable=False, server_default=str(uuid.uuid4())),
         sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
         sa.Column('user_email', sa.String(length=120), nullable=True),
         sa.Column('income', sa.Float(), nullable=False, server_default='0.0'),
@@ -121,9 +122,9 @@ def upgrade():
     # Bills table
     op.create_table(
         'bills',
-        sa.Column('id', sa.String(length=36), nullable=False),
+        sa.Column('id', sa.String(length=36), nullable=False, server_default=str(uuid.uuid4())),
         sa.Column('user_id', sa.Integer(), nullable=True),
-        sa.Column('session_id', sa.String(length=36), nullable=False),
+        sa.Column('session_id', sa.String(length=36), nullable=False, server_default=str(uuid.uuid4())),
         sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
         sa.Column('user_email', sa.String(length=120), nullable=True),
         sa.Column('first_name', sa.String(length=50), nullable=True),
@@ -144,9 +145,9 @@ def upgrade():
     # NetWorth table
     op.create_table(
         'net_worth',
-        sa.Column('id', sa.String(length=36), nullable=False),
+        sa.Column('id', sa.String(length=36), nullable=False, server_default=str(uuid.uuid4())),
         sa.Column('user_id', sa.Integer(), nullable=True),
-        sa.Column('session_id', sa.String(length=36), nullable=False),
+        sa.Column('session_id', sa.String(length=36), nullable=False, server_default=str(uuid.uuid4())),
         sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
         sa.Column('first_name', sa.String(length=50), nullable=True),
         sa.Column('email', sa.String(length=120), nullable=True),
@@ -168,9 +169,9 @@ def upgrade():
     # EmergencyFund table
     op.create_table(
         'emergency_fund',
-        sa.Column('id', sa.String(length=36), nullable=False),
+        sa.Column('id', sa.String(length=36), nullable=False, server_default=str(uuid.uuid4())),
         sa.Column('user_id', sa.Integer(), nullable=True),
-        sa.Column('session_id', sa.String(length=36), nullable=False),
+        sa.Column('session_id', sa.String(length=36), nullable=False, server_default=str(uuid.uuid4())),
         sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
         sa.Column('first_name', sa.String(length=50), nullable=True),
         sa.Column('email', sa.String(length=120), nullable=True),
@@ -199,7 +200,7 @@ def upgrade():
         'learning_progress',
         sa.Column('id', sa.Integer(), nullable=False),
         sa.Column('user_id', sa.Integer(), nullable=True),
-        sa.Column('session_id', sa.String(length=36), nullable=False),
+        sa.Column('session_id', sa.String(length=36), nullable=False, server_default=str(uuid.uuid4())),
         sa.Column('course_id', sa.String(length=50), nullable=False),
         sa.Column('lessons_completed', sa.Text(), nullable=False, server_default='[]'),
         sa.Column('quiz_scores', sa.Text(), nullable=False, server_default='{}'),
@@ -215,9 +216,9 @@ def upgrade():
     # QuizResults table
     op.create_table(
         'quiz_results',
-        sa.Column('id', sa.String(length=36), nullable=False),
+        sa.Column('id', sa.String(length=36), nullable=False, server_default=str(uuid.uuid4())),
         sa.Column('user_id', sa.Integer(), nullable=True),
-        sa.Column('session_id', sa.String(length=36), nullable=False),
+        sa.Column('session_id', sa.String(length=36), nullable=False, server_default=str(uuid.uuid4())),
         sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
         sa.Column('first_name', sa.String(length=50), nullable=True),
         sa.Column('email', sa.String(length=120), nullable=True),
@@ -238,7 +239,7 @@ def upgrade():
         'feedback',
         sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
         sa.Column('user_id', sa.Integer(), nullable=True),
-        sa.Column('session_id', sa.String(length=36), nullable=False),
+        sa.Column('session_id', sa.String(length=36), nullable=False, server_default=str(uuid.uuid4())),
         sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
         sa.Column('tool_name', sa.String(length=50), nullable=False),
         sa.Column('rating', sa.Integer(), nullable=False),
@@ -252,10 +253,10 @@ def upgrade():
     # ToolUsage table
     op.create_table(
         'tool_usage',
-        sa.Column('id', sa.String(length=36), nullable=False),
+        sa.Column('id', sa.String(length=36), nullable=False, server_default=str(uuid.uuid4())),
         sa.Column('tool_name', sa.String(length=50), nullable=False),
         sa.Column('user_id', sa.Integer(), nullable=True),
-        sa.Column('session_id', sa.String(length=36), nullable=False),
+        sa.Column('session_id', sa.String(length=36), nullable=False, server_default=str(uuid.uuid4())),
         sa.Column('action', sa.String(length=100), nullable=False),
         sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
         sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
