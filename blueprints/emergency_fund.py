@@ -147,7 +147,7 @@ def step1():
                 for field, errors in form.errors.items():
                     for error in errors:
                         flash(f"{field}: {error}", 'danger')
-        return render_template('emergency_fund_step1.html', form=form, step_num=1, trans=trans, lang=lang)
+        return render_template('EMERGENCYFUND/emergency_fund_step1.html', form=form, step_num=1, trans=trans, lang=lang)
     except Exception as e:
         current_app.logger.error(f"Error in step1: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
         flash(trans('an_unexpected_error_occurred', default='An unexpected error occurred.', lang=lang), 'danger')
@@ -192,7 +192,7 @@ def step2():
                 for field, errors in form.errors.items():
                     for error in errors:
                         flash(f"{field}: {error}", 'danger')
-        return render_template('emergency_fund_step2.html', form=form, step=2, trans=trans, lang=lang)
+        return render_template('EMERGENCYFUND/emergency_fund_step2.html', form=form, step=2, trans=trans, lang=lang)
     except Exception as e:
         current_app.logger.error(f"Error in step2: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
         flash(trans('an_unexpected_error_occurred', default='An unexpected error occurred.', lang=lang), 'danger')
@@ -238,11 +238,11 @@ def step3():
                 for field, errors in form.errors.items():
                     for error in errors:
                         flash(f"{field}: {error}", 'danger')
-        return render_template('emergency_fund_step3.html', form=form, step=3, trans=trans, lang=lang)
+        return render_template('EMERGENCYFUND/emergency_fund_step3.html', form=form, step=3, trans=trans, lang=lang)
     except Exception as e:
         current_app.logger.exception(f"Error in step3: {str(e)}")
         flash(trans('an_unexpected_error_occurred', default='An unexpected error occurred.', lang=lang), 'danger')
-        return render_template('emergency_fund_step3.html', form=form, step=3, trans=trans, lang=lang)
+        return render_template('EMERGENCYFUND/emergency_fund_step3.html', form=form, step=3, trans=trans, lang=lang)
 
 @emergency_fund_bp.route('/step4', methods=['GET', 'POST'])
 def step4():
@@ -371,11 +371,11 @@ def step4():
                 for field, errors in form.errors.items():
                     for error in errors:
                         flash(f"{field}: {error}", 'danger')
-        return render_template('emergency_fund_step4.html', form=form, step=4, trans=trans, lang=lang)
+        return render_template('EMERGENCYFUND/emergency_fund_step4.html', form=form, step=4, trans=trans, lang=lang)
     except Exception as e:
         current_app.logger.exception(f"Error in step4: {str(e)}")
         flash(trans('an_unexpected_error_occurred', default='An unexpected error occurred.'), lang=lang)
-        return render_template('emergency_fund_step4.html', form=form, step=4, trans=trans, lang=lang)
+        return render_template('EMERGENCYFUND/emergency_fund_step4.html', form=form, step=4, trans=trans, lang=lang)
 
 @emergency_fund_bp.route('/dashboard', methods=['GET'])
 def dashboard():
@@ -427,7 +427,7 @@ def dashboard():
                                                    amount=savings_possible))
 
         return render_template(
-            'emergency_fund_dashboard.html',
+            'EMERGENCYFUND/emergency_fund_dashboard.html',
             records=records,
             latest_record=latest_record,
             insights=insights,
@@ -445,7 +445,7 @@ def dashboard():
         current_app.logger.exception(f"Error in dashboard: {str(e)}")
         flash(trans('emergency_fund_load_dashboard_error', lang=lang), 'danger')
         return render_template(
-            'emergency_fund_dashboard.html',
+            'EMERGENCYFUND/emergency_fund_dashboard.html',
             records=[],
             latest_record={},
             insights=[],
