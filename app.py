@@ -57,21 +57,10 @@ def admin_required(f):
     return decorated_function
 
 def setup_logging(app):
-    # Handler for stdout (captured by Render dashboard)
-    stdout_handler = logging.StreamHandler(sys.stdout)
-    stdout_handler.setLevel(logging.DEBUG)
-    stdout_handler.setFormatter(formatter)
-    stdout_handler.flush = lambda: sys.stdout.flush()  # Force flush
-    root_logger.addHandler(stdout_handler)
-
-    # Handler for stderr (only errors)
-    stderr_handler = logging.StreamHandler(sys.stderr)
-    stderr_handler.setLevel(logging.ERROR)
-    stderr_handler.setFormatter(formatter)
-    stderr_handler.flush = lambda: sys.stderr.flush()  # Force flush
-    root_logger.addHandler(stderr_handler)
-
-    # Optional: File handler (won't be accessible on Render free tier)
+    handler = logging.StreamHandler(sys.stderr)
+    handler.setLevel(logging.DEBUG)
+    handler.setFormatter(formatter)
+    root_logger.addHandler(handler)
     log_dir = os.path.join(os.path.dirname(__file__), 'data')
     os.makedirs(log_dir, exist_ok=True)
     try:
@@ -79,7 +68,7 @@ def setup_logging(app):
         file_handler.setLevel(logging.DEBUG)
         file_handler.setFormatter(formatter)
         root_logger.addHandler(file_handler)
-        logger.info("Logging setup complete with file, stdout, and stderr handlers")
+        logger.info("Logging setup complete with file handler")
     except (PermissionError, OSError) as e:
         logger.warning(f"Failed to set up file logging: {str(e)}")
 
@@ -179,18 +168,6 @@ def create_app():
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     db.init_app(app)
 
-    # Verify database connection
-    with app.app_context():
-        try:
-            db.session.execute(db.text("SELECT 1"))
-            logger.info("Database connection successful")
-        except Exception as e:
-            logger.error(f"Database connection failed: {str(e)}", exc_info=True)
-
-    # Log critical environment variables
-    logger.info(f"FLASK_SECRET_KEY: {'set' if os.environ.get('FLASK_SECRET_KEY') else 'not set'}")
-    logger.info(f"DATABASE_URL: {'set' if os.environ.get('DATABASE_URL') else 'not set'}")
-
     # Initialize Flask-Login
     login_manager.init_app(app)
     login_manager.login_view = 'auth.signin'
@@ -256,13 +233,13 @@ def create_app():
     app.register_blueprint(auth_bp, template_folder='templates/auth')
     app.register_blueprint(admin_bp, template_folder='templates/admin')
 
-    def trans(key, lang='en', logger=logger, **kwargs):
+    def translate(key, lang='en', logger=logger, **kwargs):
         translation = trans(key, lang=lang, **kwargs)
         if translation == key and app.debug:
             logger.warning(f"Missing translation for key='{key}' in lang='{lang}'")
         return translation
 
-    app.jinja_env.filters['trans'] = lambda key, **kwargs: trans(
+    app.jinja_env.filters['trans'] = lambda key, **kwargs: translate(
         key,
         lang=kwargs.get('lang', session.get('lang', 'en')),
         logger=g.get('logger', logger) if has_request_context() else logger,
@@ -316,7 +293,7 @@ def create_app():
         lang = session.get('lang', 'en')
         def context_trans(key, **kwargs):
             used_lang = kwargs.pop('lang', lang)
-            return trans(key, lang=used_lang, logger=g.get('logger', logger), **kwargs)
+            return translate(key, lang=used_lang, logger=g.get('logger', logger), **kwargs)
         return {
             'trans': context_trans,
             'current_year': datetime.now().year,
@@ -351,7 +328,7 @@ def create_app():
         except Exception as e:
             logger.error(f"Error retrieving courses: {str(e)}", exc_info=True)
             processed_courses = SAMPLE_COURSES
-            flash(trans('learning_hub_error_message', default='An error occurred', lang=lang), 'danger')
+            flash(translate('learning_hub_error_message', default='An error occurred', lang=lang), 'danger')
         return render_template(
             'index.html',
             t=translate,
@@ -366,7 +343,7 @@ def create_app():
         new_lang = lang if lang in valid_langs else 'en'
         session['lang'] = new_lang
         logger.info(f"Language set to {new_lang}")
-        flash(trans('learning_hub_success_language_updated', default='Language updated successfully', lang=new_lang) if new_lang in valid_langs else trans('Invalid language', default='Invalid language', lang=new_lang), 'success' if new_lang in valid_langs else 'danger')
+        flash(translate('learning_hub_success_language_updated', default='Language updated successfully', lang=new_lang) if new_lang in valid_langs else translate('Invalid language', default='Invalid language', lang=new_lang), 'success' if new_lang in valid_langs else 'danger')
         return redirect(request.referrer or url_for('index'))
 
     @app.route('/acknowledge_consent', methods=['POST'])
@@ -467,7 +444,7 @@ def create_app():
             return render_template('general_dashboard.html', data=data, t=translate, lang=lang)
         except Exception as e:
             logger.error(f"Error in general_dashboard: {str(e)}", exc_info=True)
-            flash(trans('core_global_error_message', default='An error occurred', lang=lang), 'danger')
+            flash(translate('global_error_message', default='An error occurred', lang=lang), 'danger')
             default_data = {
                 'financial_health': {'score': None, 'status': None},
                 'budget': {'surplus_deficit': None, 'savings_goal': None},
@@ -487,11 +464,11 @@ def create_app():
             session_lang = session.get('lang', 'en')
             session.clear()
             session['lang'] = session_lang
-            flash(trans('learning_hub_success_logout', default='Successfully logged out', lang=lang), 'success')
+            flash(translate('learning_hub_success_logout', default='Successfully logged out', lang=lang), 'success')
             return redirect(url_for('index'))
         except Exception as e:
             logger.error(f"Error in logout: {str(e)}", exc_info=True)
-            flash(trans('core_global_error_message', default='An error occurred', lang=lang), 'danger')
+            flash(translate('global_error_message', default='An error occurred', lang=lang), 'danger')
             return redirect(url_for('index'))
 
     @app.route('/about')
@@ -536,11 +513,6 @@ def create_app():
         logger.error(f"404 error: {str(e)}")
         return jsonify({'error': '404 not found'}), 404
 
-    @app.errorhandler(Exception)
-    def handle_exception(e):
-        logger.error(f"Unhandled exception: {str(e)}", exc_info=True)
-        return "Internal Server Error", 500
-
     @app.route('/static/<path:filename>')
     def static_files(filename):
         response = send_from_directory('static', filename)
@@ -564,12 +536,12 @@ def create_app():
             rating = request.form.get('rating')
             comment = request.form.get('comment', '')
             if not tool_name or tool_name not in tool_options:
-                flash(trans('core_feedback_invalid_tool', default='Please select a valid tool', lang=lang), 'error')
+                flash(translate('core_feedback_invalid_tool', default='Please select a valid tool', lang=lang), 'error')
                 logger.error(f"Invalid feedback tool: {tool_name}")
                 return render_template('feedback.html', t=translate, lang=lang, tool_options=tool_options)
             if not rating or not rating.isdigit() or int(rating) < 1 or int(rating) > 5:
                 logger.error(f"Invalid feedback rating: {rating}")
-                flash(trans('core_feedback_invalid_rating', default='Please provide a rating between 1 and 5', lang=lang), 'error')
+                flash(translate('core_feedback_invalid_rating', default='Please provide a rating between 1 and 5', lang=lang), 'error')
                 return render_template('feedback.html', t=translate, lang=lang, tool_options=tool_options)
             feedback_entry = Feedback(
                 user_id=current_user.id if current_user.is_authenticated else None,
@@ -581,11 +553,11 @@ def create_app():
             db.session.add(feedback_entry)
             db.session.commit()
             logger.info(f"Feedback submitted: tool={tool_name}, rating={rating}, session={session['sid']}")
-            flash(trans('core_feedback_success', default='Thank you for your feedback!', lang=lang), 'success')
+            flash(translate('core_feedback_success', default='Thank you for your feedback!', lang=lang), 'success')
             return redirect(url_for('index'))
         except Exception as e:
             logger.error(f"Error processing feedback: {str(e)}")
-            flash(trans('core_global_error', default='Error occurred while submitting feedback', lang=lang), 'error')
+            flash(translate('core_global_error', default='Error occurred while submitting feedback', lang=lang), 'error')
             return render_template('feedback.html', t=translate, lang=lang, tool_options=tool_options), 500
 
     logger.info("App creation completed")
