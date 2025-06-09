@@ -178,24 +178,32 @@ def signin():
         with db.session.begin():
             if request.method == 'POST' and form.validate_on_submit():
                 user = User.query.filter_by(email=form.email.data).first()
-                if user and check_password_hash(user.password_hash, form.password.data):
+                if not user:
+                    logger.warning(f"User not found for email: {form.email.data}", extra={'session_id': session_id})
+                    log_tool_usage('login', None, session_id, 'submit_error', details="User not found")
+                    flash(trans('auth_user_not_found', default='User not found.', lang=lang), 'danger')
+                elif not user.password_hash:
+                    logger.warning(f"No password set for user: {form.email.data}", extra={'session_id': session_id})
+                    log_tool_usage('login', None, session_id, 'submit_error', details="No password set")
+                    flash(trans('auth_no_password', default='No password set for this account.', lang=lang), 'danger')
+                elif not check_password_hash(user.password_hash, form.password.data):
+                    logger.warning(f"Invalid password for email: {form.email.data}", extra={'session_id': session_id})
+                    log_tool_usage('login', None, session_id, 'submit_error', details="Invalid password")
+                    flash(trans('auth_wrong_password', default='Incorrect password.', lang=lang), 'danger')
+                else:
                     login_user(user)
                     logger.info(f"User signed in: {user.username}", extra={'session_id': session_id})
                     log_tool_usage('login', user.id, session_id, 'submit_success')
                     flash(trans('auth_signin_success', default='Signed in successfully!', lang=lang), 'success')
                     return redirect(url_for('index'))
-                else:
-                    logger.warning(f"Invalid signin attempt for email: {form.email.data}", extra={'session_id': session_id})
-                    log_tool_usage('login', None, session_id, 'submit_error')
-                    flash(trans('auth_invalid_credentials', default='Invalid email or password.', lang=lang), 'danger')
             elif form.errors:
                 logger.error(f"Signin form validation failed: {form.errors}", extra={'session_id': session_id})
-                log_tool_usage('login', None, session_id, 'submit_error')
+                log_tool_usage('login', None, session_id, 'submit_error', details=f"Validation errors: {form.errors}")
                 flash(trans('auth_form_errors', default='Please correct the errors in the form.', lang=lang), 'danger')
     except Exception as e:
         db.session.rollback()
         logger.error(f"Error in signin: {str(e)}", extra={'session_id': session_id})
-        log_tool_usage('login', None, session_id, 'error')
+        log_tool_usage('login', None, session_id, 'error', details=f"Exception: {str(e)}")
         flash(trans('auth_error', default='An error occurred. Please try again.', lang=lang), 'danger')
         return render_template('signin.html', form=form, lang=lang), 500
     
