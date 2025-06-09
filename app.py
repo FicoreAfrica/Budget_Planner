@@ -57,10 +57,19 @@ def admin_required(f):
     return decorated_function
 
 def setup_logging(app):
-    handler = logging.StreamHandler(sys.stderr)
-    handler.setLevel(logging.DEBUG)
-    handler.setFormatter(formatter)
-    root_logger.addHandler(handler)
+    # Handler for stdout (captured by Render dashboard)
+    stdout_handler = logging.StreamHandler(sys.stdout)
+    stdout_handler.setLevel(logging.DEBUG)
+    stdout_handler.setFormatter(formatter)
+    root_logger.addHandler(stdout_handler)
+
+    # Handler for stderr (only errors)
+    stderr_handler = logging.StreamHandler(sys.stderr)
+    stderr_handler.setLevel(logging.ERROR)
+    stderr_handler.setFormatter(formatter)
+    root_logger.addHandler(stderr_handler)
+
+    # Optional: File handler (won't be accessible on Render free tier)
     log_dir = os.path.join(os.path.dirname(__file__), 'data')
     os.makedirs(log_dir, exist_ok=True)
     try:
@@ -68,7 +77,7 @@ def setup_logging(app):
         file_handler.setLevel(logging.DEBUG)
         file_handler.setFormatter(formatter)
         root_logger.addHandler(file_handler)
-        logger.info("Logging setup complete with file handler")
+        logger.info("Logging setup complete with file, stdout, and stderr handlers")
     except (PermissionError, OSError) as e:
         logger.warning(f"Failed to set up file logging: {str(e)}")
 
@@ -167,6 +176,18 @@ def create_app():
         app.config['SQLALCHEMY_DATABASE_URI'] = app.config['SQLALCHEMY_DATABASE_URI'].replace('postgres://', 'postgresql://')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     db.init_app(app)
+
+    # Verify database connection
+    with app.app_context():
+        try:
+            db.session.execute(db.text("SELECT 1"))
+            logger.info("Database connection successful")
+        except Exception as e:
+            logger.error(f"Database connection failed: {str(e)}", exc_info=True)
+
+    # Log critical environment variables
+    logger.info(f"FLASK_SECRET_KEY: {'set' if os.environ.get('FLASK_SECRET_KEY') else 'not set'}")
+    logger.info(f"DATABASE_URL: {'set' if os.environ.get('DATABASE_URL') else 'not set'}")
 
     # Initialize Flask-Login
     login_manager.init_app(app)
@@ -325,17 +346,17 @@ def create_app():
             courses = current_app.config['COURSES'] or SAMPLE_COURSES
             logger.info(f"Retrieved {len(courses)} courses")
             processed_courses = courses
+            return render_template(
+                'index.html',
+                t=translate,
+                courses=processed_courses,
+                lang=lang,
+                sample_courses=SAMPLE_COURSES
+            )
         except Exception as e:
-            logger.error(f"Error retrieving courses: {str(e)}", exc_info=True)
-            processed_courses = SAMPLE_COURSES
-            flash(trans('learning_hub_error_message', default='An error occurred', lang=lang), 'danger')
-        return render_template(
-            'index.html',
-            t=translate,
-            courses=processed_courses,
-            lang=lang,
-            sample_courses=SAMPLE_COURSES
-        )
+            logger.error(f"Error in index route: {str(e)}", exc_info=True)
+            flash(trans('core_global_error_message', default='An error occurred', lang=lang), 'danger')
+            return "Internal Server Error", 500
 
     @app.route('/set_language/<lang>')
     def set_language(lang):
