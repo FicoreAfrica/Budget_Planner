@@ -4,6 +4,7 @@
 {% endblock %}
 {% block extra_head %}
 <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 {% endblock %}
 {% block content %}
 <div class="container mx-auto p-4">
@@ -11,7 +12,7 @@
         <h1 class="text-2xl font-bold">
             {{ trans('learning_hub_welcome_back') }} {{ current_user.username if current_user.is_authenticated else trans('core_user') }}
         </h1>
-        <p class="mt-2">{{ trans('learning_hub_dashboard_subtitle') }}</p>
+        <p class="mt-2">{{ trans('learning_hub_dashboard_subtitle', default='Track your learning progress') }}</p>
     </div>
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -22,21 +23,33 @@
             {% endfor %}
         {% endif %}
     {% endwith %}
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-        {% for item in progress_summary %}
-        <div class="bg-white shadow-md rounded-lg p-4">
-            <h2 class="text-lg font-semibold">{{ trans(item.course.title_key) }}</h2>
-            <p class="text-gray-600">{{ trans(item.course.desc_key) }}</p>
-            <div class="w-full bg-gray-200 rounded-full h-2.5 mt-2">
-                <div class="bg-green-600 h-2.5 rounded-full" style="width: {{ item.percent }}%"></div>
+    {% if progress_summary %}
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+            {% for item in progress_summary %}
+            <div class="bg-white shadow-md rounded-lg p-4">
+                <h2 class="text-lg font-semibold">{{ trans(item.course.title_key) }}</h2>
+                <p class="text-gray-600">{{ trans(item.course.desc_key) }}</p>
+                <div class="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+                    <div class="bg-green-600 h-2.5 rounded-full" style="width: {{ item.percent }}%"></div>
+                </div>
+                <p class="mt-2 text-sm">{{ item.completed }}/{{ item.total }} {{ trans('learning_hub_lessons_completed_label') }}</p>
+                {% if item.current_lesson %}
+                    <a href="{{ url_for('learning_hub.lesson', course_id=item.course.id, lesson_id=item.current_lesson) }}" class="mt-4 inline-block bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+                        <i class="fas fa-play"></i> {{ trans('learning_hub_resume_learning') }}
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('learning_hub.course_overview', course_id=item.course.id) }}" class="mt-4 inline-block bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+                        <i class="fas fa-play"></i> {{ trans('learning_hub_start_course') }}
+                    </a>
+                {% endif %}
             </div>
-            <p class="mt-2 text-sm">{{ item.completed }}/{{ item.total }} {{ trans('learning_hub_lessons_completed_label') }}</p>
-            <a href="{{ url_for('learning_hub.lesson', course_id=item.course.id, lesson_id=item.progress.current_lesson or item.course.modules[0].lessons[0].id) }}" class="mt-4 inline-block bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
-                <i class="fas fa-play"></i> {{ trans('learning_hub_resume_learning') }}
-            </a>
+            {% endfor %}
         </div>
-        {% endfor %}
-    </div>
+    {% else %}
+        <div class="bg-yellow-100 text-yellow-800 p-4 rounded mt-4 text-center">
+            {{ trans('learning_hub_no_progress', default='No progress yet. Start a course now!') }}
+        </div>
+    {% endif %}
     <div class="mt-6 text-center">
         <a href="{{ url_for('learning_hub.courses') }}" class="inline-block bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
             <i class="fas fa-book"></i> {{ trans('learning_hub_browse_courses') }}
