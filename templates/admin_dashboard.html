@@ -1,0 +1,301 @@
+{% extends "base.html" %}
+{% block title %}{{ trans('admin_dashboard_title', default='Admin Dashboard', lang=lang) }}{% endblock %}
+{% block content %}
+<div class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <h1 class="text-3xl font-bold mb-4">{{ trans('admin_dashboard_title', default='Admin Dashboard', lang=lang) }}</h1>
+    <p class="text-lg text-gray-600 mb-6">{{ trans('admin_dashboard_desc', default='View and analyze platform usage and engagement metrics', lang=lang) }}</p>
+
+    <!-- Navigation Tabs -->
+    <ul class="nav nav-tabs mb-6 flex border-b">
+        <li class="nav-item">
+            <a class="nav-link py-2 px-4 {{ 'font-semibold text-blue-700 border-b-2 border-blue-500' if request.endpoint == 'admin.overview' else 'text-gray-500 hover:text-gray-700' }}" href="{{ url_for('admin.overview') }}">{{ trans('admin_overview', default='Overview', lang=lang) }}</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link py-2 px-4 {{ 'font-semibold text-blue-700 border-b-2 border-blue-500' if request.endpoint == 'admin.tool_usage' else 'text-gray-500 hover:text-gray-700' }}" href="{{ url_for('admin.tool_usage') }}">{{ trans('admin_tool_usage', default='Tool Usage', lang=lang) }}</a>
+        </li>
+    </ul>
+
+    <!-- Filters -->
+    <form method="GET" action="{{ url_for('admin.tool_usage') }}" class="mb-6">
+        <div class="flex flex-wrap gap-4">
+            <div class="flex-1 md:w-1/4">
+                <label for="tool_name" class="block text-sm font-medium text-gray-700">{{ trans('admin_filter_tool', default='Tool Name', lang=lang) }}</label>
+                <select name="tool_name" id="tool_name" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    <option value="">{{ trans('admin_all_tools', default='All Tools', lang=lang) }}</option>
+                    {% for tool in valid_tools %}
+                        <option value="{{ tool }}" {{ 'selected' if tool == tool_name }}>{{ trans('tool_' + tool, default=tool.replace('_', ' ').title(), lang=lang) }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="flex-1 md:w-1/4">
+                <label for="action" class="block text-sm font-medium text-gray-700">{{ trans('admin_filter_action', default='Action', lang=lang) }}</label>
+                <select name="action" id="action" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    <option value="">{{ trans('admin_all_actions', default='All Actions', lang=lang) }}</option>
+                    {% for act in available_actions %}
+                        <option value="{{ act }}" {{ 'selected' if act == action }}>{{ act.replace('_', ' ').title() }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="flex-1 md:w-1/4">
+                <label for="start_date" class="block text-sm font-medium text-gray-700">{{ trans('admin_start_date', default='Start Date', lang=lang) }}</label>
+                <input type="date" name="start_date" id="start_date" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" value="{{ start_date or '' }}">
+            </div>
+            <div class="flex-1 md:w-1/4">
+                <label for="end_date" class="block text-sm font-medium text-gray-700">{{ trans('admin_end_date', default='End Date', lang=lang) }}</label>
+                <input type="date" name="end_date" id="end_date" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" value="{{ end_date or '' }}">
+            </div>
+            <div class="flex items-end">
+                <button type="submit" class="mt-1 w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700">{{ trans('admin_filter', default='Apply Filter', lang=lang) }}</button>
+            </div>
+        </div>
+    </form>
+
+    <!-- Overview Metrics -->
+    {% if request.endpoint == 'admin.overview' %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+        <div class="bg-white shadow-sm rounded-lg p-4">
+            <h5 class="text-lg font-semibold text-gray-800">{{ trans('admin_total_users', default='Total Users', lang=lang) }}</h5>
+            <p class="text-4xl font-bold text-gray-900 mt-2">{{ metrics.total_users }}</p>
+        </div>
+        <div class="bg-white shadow-sm rounded-lg p-4">
+            <h5 class="text-lg font-semibold text-gray-800">{{ trans('admin_new_users_24h', default='New Users (24h)', lang=lang) }}</h5>
+            <p class="text-4xl font-bold text-gray-900 mt-2">{{ metrics.new_users_last_24h }}</p>
+        </div>
+        <div class="bg-white shadow-sm rounded-lg p-4">
+            <h5 class="text-lg font-semibold text-gray-800">{{ trans('admin_total_referrals', default='Total Referrals', lang=lang) }}</h5>
+            <p class="text-4xl font-bold text-gray-900 mt-2">{{ metrics.total_referrals }}</p>
+        </div>
+        <div class="bg-white shadow-sm rounded-lg p-4">
+            <h5 class="text-lg font-semibold text-gray-800">{{ trans('admin_new_referrals_24h', default='New Referrals (24h)', lang=lang) }}</h5>
+            <p class="text-4xl font-bold text-gray-900 mt-2">{{ metrics.new_referrals_last_24h }}</p>
+        </div>
+        <div class="bg-white shadow-sm rounded-lg p-4">
+            <h5 class="text-lg font-semibold text-gray-800">{{ trans('admin_referral_conversion_rate', default='Referral Conversion (%)', lang=lang) }}</h5>
+            <p class="text-4xl font-bold text-gray-900 mt-2">{{ metrics.referral_conversion_rate }}%</p>
+        </div>
+        <div class="bg-white shadow-sm rounded-lg p-4">
+            <h5 class="text-lg font-semibold text-gray-800">{{ trans('admin_avg_feedback_rating', default='Avg Feedback Rating', lang=lang) }}</h5>
+            <p class="text-4xl font-bold text-gray-900 mt-2">{{ metrics.avg_feedback_rating }}</p>
+        </div>
+        <div class="bg-white shadow-sm rounded-lg p-4">
+            <h5 class="text-lg font-semibold text-gray-800">{{ trans('admin_multi_tool_ratio', default='Multi-Tool Users (%)', lang=lang) }}</h5>
+            <p class="text-4xl font-bold text-gray-900 mt-2">{{ metrics.multi_tool_ratio }}%</p>
+        </div>
+        <div class="bg-white shadow-sm rounded-lg p-4">
+            <h5 class="text-lg font-semibold text-gray-800">{{ trans('admin_conversion_rate', default='Anon to Registered (%)', lang=lang) }}</h5>
+            <p class="text-4xl font-bold text-gray-900 mt-2">{{ metrics.conversion_rate }}%</p>
+        </div>
+        <div class="bg-white shadow-sm rounded-lg p-4">
+            <h5 class="text-lg font-semibold text-gray-800">{{ trans('admin_tool_usage_total', default='Total Tool Usage', lang=lang) }}</h5>
+            <p class="text-4xl font-bold text-gray-900 mt-2">{{ metrics.tool_usage_total }}</p>
+        </div>
+    </div>
+
+    <!-- Top Tools and Action Breakdown -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div class="bg-white shadow-sm rounded-lg p-6">
+            <h5 class="text-lg font-semibold mb-4">{{ trans('admin_top_tools', default='Top Tools', lang=lang) }}</h5>
+            <ul class="list-disc pl-5">
+                {% for tool, count in metrics.top_tools %}
+                    <li class="mb-2">
+                        {{ trans('tool_' + tool, default=tool.replace('_', ' ').title(), lang=lang) }}: {{ count }} {{ trans('admin_uses', default='uses', lang=lang) }}
+                        <ul class="list-circle pl-6 mt-1">
+                            {% for action, action_count in metrics.action_breakdown[tool] %}
+                                <li>{{ action.replace('_', ' ').title() }}: {{ action_count }} {{ trans('admin_uses', default='uses', lang=lang) }}</li>
+                            {% endfor %}
+                        </ul>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white shadow-sm rounded-lg p-6">
+            <h5 class="text-lg font-semibold mb-4">{{ trans('admin_auth_and_referral_trends', default='Registration, Login, and Referral Trends', lang=lang) }}</h5>
+            <canvas id="authChart" class="w-full h-80"></canvas>
+        </div>
+        <div class="bg-white shadow-sm rounded-lg p-6">
+            <h5 class="text-lg font-semibold mb-4">{{ trans('admin_tool_usage_dist', default='Tool Usage Distribution', lang=lang) }}</h5>
+            <canvas id="toolChart" class="w-full h-80"></canvas>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        // Authentication and Referral Trends Chart
+        const authCtx = document.getElementById('authChart').getContext('2d');
+        new Chart(authCtx, {
+            type: 'line',
+            data: {
+                labels: {{ chart_data.labels | tojson }},
+                datasets: [
+                    {
+                        label: '{{ trans('admin_register', default='Registrations', lang=lang) }}',
+                        data: {{ chart_data.registrations | tojson }},
+                        borderColor: '#007bff',
+                        backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                        fill: false
+                    },
+                    {
+                        label: '{{ trans('admin_login', default='Logins', lang=lang) }}',
+                        data: {{ chart_data.logins | tojson }},
+                        borderColor: '#28a745',
+                        backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                        fill: false
+                    },
+                    {
+                        label: '{{ trans('admin_referrals', default='Referrals', lang=lang) }}',
+                        data: {{ chart_data.referrals | tojson }},
+                        borderColor: '#ff6f00',
+                        backgroundColor: 'rgba(255, 111, 0, 0.1)',
+                        fill: false
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, ticks: { color: '#333333' } },
+                    x: { ticks: { color: '#333333' } }
+                },
+                plugins: { legend: { labels: { color: '#333333' } } }
+            }
+        });
+
+        // Tool Usage Distribution Chart
+        const toolCtx = document.getElementById('toolChart').getContext('2d');
+        new Chart(toolCtx, {
+            type: 'bar',
+            data: {
+                labels: {{ chart_data.labels | tojson }},
+                datasets: [
+                    {% for tool, counts in chart_data.tool_usage.items %}
+                    {
+                        label: '{{ trans('tool_' + tool, default=tool.replace('_', ' ').title(), lang=lang) }}',
+                        data: {{ counts | tojson }},
+                        backgroundColor: '{{ ['#007bff', '#28a745', '#ff6f00', '#dc3545', '#6f42c1', '#fd7e14', '#17a2b8'][loop.index % 7] }}',
+                        borderColor: '{{ ['#0056b3', '#1e7e34', '#e65c00', '#c82333', '#5a32a3', '#e06c00', '#117a8b'][loop.index % 7] }}',
+                        borderWidth: 1
+                    }{% if not loop.last %},{% endif %}
+                    {% endfor %}
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, stacked: true, ticks: { color: '#333333' } },
+                    x: { stacked: true, ticks: { color: '#333333' } }
+                },
+                plugins: { legend: { labels: { color: '#333333' } } }
+            }
+        });
+    </script>
+    {% endif %}
+
+    <!-- Tool Usage Logs -->
+    {% if request.endpoint == 'admin.tool_usage' %}
+    <div class="bg-white shadow-lg rounded-lg mb-8">
+        <div class="p-6">
+            <h5 class="text-lg font-semibold mb-4">{{ trans('admin_usage_logs', default='Usage Logs', lang=lang) }}</h5>
+            <a href="{{ url_for('admin.export_csv', tool_name=tool_name or '', start_date=start_date or '', end_date=end_date or '', action=action or '') }}" 
+               class="inline-block bg-green-600 text-white hover:bg-green-700 py-2 px-4 rounded mb-3">{{ trans('admin_export_csv', default='Export CSV', lang=lang) }}</a>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-100">
+                            <th class="py-3 px-4 text-sm font-medium text-gray-700">{{ trans('admin_id', default='ID', lang=lang) }}</th>
+                            <th class="py-3 px-4 text-sm font-medium text-gray-700">{{ trans('admin_user_id', default='User ID', lang=lang) }}</th>
+                            <th class="py-3 px-4 text-sm font-medium text-gray-700">{{ trans('admin_session_id', default='Session ID', lang=lang) }}</th>
+                            <th class="py-3 px-4 text-sm font-medium text-gray-700">{{ trans('admin_tool_name', default='Tool Name', lang=lang) }}</th>
+                            <th class="py-3 px-4 text-sm font-medium text-gray-700">{{ trans('admin_action', default='Action', lang=lang) }}</th>
+                            <th class="py-3 px-4 text-sm font-medium text-gray-700">{{ trans('admin_created_at', default='Created', lang=lang) }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in metrics %}
+                            <tr class="border-t">
+                                <td class="py-2 px-4">{{ log.id }}</td>
+                                <td class="py-2 px-4">{{ log.user_id or 'anonymous' }}</td>
+                                <td class="py-2 px-4">{{ log.session_id }}</td>
+                                <td class="py-2 px-4">{{ trans('tool_' + log.tool_name, default=log.tool_name.replace('_', ' ').title(), lang=lang) }}</td>
+                                <td class="py-2 px-4">{{ log.action.replace('_', ' ').title() }}</td>
+                                <td class="py-2 px-4">{{ log.created_at|format_datetime }}</td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="6" class="py-2 px-4 text-center text-gray-500">{{ trans('admin_no_logs', default='No logs found', lang=lang) }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="bg-white shadow-lg rounded-lg mb-8">
+        <div class="p-6">
+            <h5 class="text-lg font-semibold mb-4">{{ trans('admin_usage_trend', default='Usage Trend', lang=lang) }}</h5>
+            <canvas id="usageChart" class="w-full h-80"></canvas>
+        </div>
+    </div>
+
+    <script>
+        const usageCtx = document.getElementById('usageChart').getContext('2d');
+        new Chart(usageCtx, {
+            type: 'bar',
+            data: {
+                labels: {{ chart_data.labels | tojson }},
+                datasets: [
+                    {% for action, counts in chart_data.usage_counts.items %}
+                    {
+                        label: '{{ action.replace('_', ' ').title() }}',
+                        data: {{ counts | tojson }},
+                        backgroundColor: '{{ ['#007bff', '#28a745', '#ff6f00', '#dc3545', '#6f42c1', '#fd7e14', '#17a2b8'][loop.index % 7] }}',
+                        borderColor: '{{ ['#0056b3', '#1e7e34', '#e65c00', '#c82333', '#5a32a3', '#e06c00', '#117a8b'][loop.index % 7] }}',
+                        borderWidth: 1
+                    }{% if not loop.last %},{% endif %}
+                    {% endfor %}
+                    {% if chart_data.usage_counts %}
+                    ,{
+                        label: '{{ trans('admin_total_usage', default='Total Usage', lang=lang) }}',
+                        data: {{ chart_data.total_counts | tojson }},
+                        type: 'line',
+                        borderColor: '#333333',
+                        backgroundColor: 'rgba(51, 51, 51, 0.1)',
+                        fill: false,
+                        yAxisID: 'y-total'
+                    }
+                    {% endif %}
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    'y': {
+                        beginAtZero: true,
+                        stacked: true,
+                        ticks: { color: '#333333' },
+                        title: { display: true, text: '{{ trans('admin_action_counts', default='Action Counts', lang=lang) }}', color: '#333333' }
+                    },
+                    'y-total': {
+                        beginAtZero: true,
+                        position: 'right',
+                        ticks: { color: '#333333' },
+                        title: { display: true, text: '{{ trans('admin_total_usage', default='Total Usage', lang=lang) }}', color: '#333333' },
+                        grid: { drawOnChartArea: false }
+                    },
+                    x: { ticks: { color: '#333333' } }
+                },
+                plugins: { legend: { labels: { color: '#333333' } } }
+            }
+        });
+    </script>
+    {% endif %}
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.min.js"></script>
+</div>
+{% endblock %}
