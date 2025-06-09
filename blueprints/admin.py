@@ -227,7 +227,7 @@ def overview():
         )
     except exc.SQLAlchemyError as e:
         logger.error("Database error in overview: %s", str(e), exc_info=True, extra={'session_id': session_id})
-        flash(trans('admin_error', default='A database error occurred while loading the dashboard.', lang=lang), 'danger')
+        flash(trans('core_admin_error', default='A database error occurred while loading the dashboard.', lang=lang), 'danger')
         return render_template(
             'admin_dashboard.html',
             lang=lang,
@@ -240,7 +240,7 @@ def overview():
         ), 500
     except Exception as e:
         logger.error("Unexpected error in overview: %s", str(e), exc_info=True, extra={'session_id': session_id})
-        flash(trans('admin_error', default='An error occurred while loading the dashboard.', lang=lang), 'danger')
+        flash(trans('core_admin_error', default='An error occurred while loading the dashboard.', lang=lang), 'danger')
         return render_template(
             'admin_dashboard.html',
             lang=lang,
@@ -396,7 +396,7 @@ def tool_usage():
         ), 500
     except Exception as e:
         logger.error(f"Unexpected error in tool usage analytics: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
-        flash(trans('admin_error', default='Error loading analytics.', lang=lang), 'error')
+        flash(trans('core_admin_error', default='Error loading analytics.', lang=lang), 'error')
         return render_template(
             'admin_dashboard.html',
             lang=lang,
@@ -465,11 +465,11 @@ def export_csv():
         )
     except exc.SQLAlchemyError as e:
         logger.error(f"Database error in CSV export: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
-        flash(trans('admin_export_error', default='A database error occurred while exporting CSV.', lang=lang), 'error')
+        flash(trans('core_admin_export_error', default='A database error occurred while exporting CSV.', lang=lang), 'error')
         return redirect(url_for('admin.tool_usage'))
     except Exception as e:
         logger.error(f"Unexpected error in CSV export: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
-        flash(trans('admin_export_error', default='Error exporting CSV.', lang=lang), 'error')
+        flash(trans('core_admin_export_error', default='Error exporting CSV.', lang=lang), 'error')
         return redirect(url_for('admin.tool_usage'))
     finally:
         if 'si' in locals():
