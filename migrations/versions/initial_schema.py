@@ -1,4 +1,4 @@
-"""Initial schema with all models including ToolUsage
+"""Initial schema with all models including ContentMetadata and ToolUsage
 
 Revision ID: initial_schema
 Revises: 
@@ -46,6 +46,23 @@ def upgrade():
         sa.Column('is_premium', sa.Boolean(), nullable=False, server_default='false'),
         sa.PrimaryKeyConstraint('id')
     )
+
+    # ContentMetadata table
+    op.create_table(
+        'content_metadata',
+        sa.Column('id', sa.Integer(), nullable=False),
+        sa.Column('course_id', sa.String(length=50), nullable=False),
+        sa.Column('lesson_id', sa.String(length=100), nullable=False),
+        sa.Column('content_type', sa.String(length=50), nullable=False),
+        sa.Column('content_path', sa.String(length=255), nullable=False),
+        sa.Column('uploaded_by', sa.Integer(), nullable=True),
+        sa.Column('upload_date', sa.DateTime(), nullable=False, server_default=sa.func.now()),
+        sa.ForeignKeyConstraint(['uploaded_by'], ['users.id'], ondelete='SET NULL'),
+        sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index('ix_content_metadata_course_id', 'content_metadata', ['course_id'], unique=False)
+    op.create_index('ix_content_metadata_lesson_id', 'content_metadata', ['lesson_id'], unique=False)
+    op.create_index('ix_content_metadata_uploaded_by', 'content_metadata', ['uploaded_by'], unique=False)
 
     # FinancialHealth table
     op.create_table(
@@ -277,6 +294,10 @@ def downgrade():
     op.drop_index('ix_financial_health_user_id', table_name='financial_health')
     op.drop_index('ix_financial_health_session_id', table_name='financial_health')
     op.drop_table('financial_health')
+    op.drop_index('ix_content_metadata_uploaded_by', table_name='content_metadata')
+    op.drop_index('ix_content_metadata_lesson_id', table_name='content_metadata')
+    op.drop_index('ix_content_metadata_course_id', table_name='content_metadata')
+    op.drop_table('content_metadata')
     op.drop_table('courses')
     op.drop_index('ix_users_referral_code', table_name='users')
     op.drop_table('users')
