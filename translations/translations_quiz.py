@@ -6,7 +6,6 @@ QUIZ_TRANSLATIONS = {
         'quiz_step_progress': 'Step {step_num} of {total_steps}',  # Updated to named placeholders
         'Enter Your Personal Information': 'Enter Your Personal Information',
         'badge_first_quiz_completed': 'First Quiz Completed!',
-        'quiz_return_to_home': 'Return to Home',
         'Step 3 of 3': 'Step 3 of 3',
         'quiz_not_completed': 'Quiz not completed.',
         'quiz_go_personality_quiz': 'Go to Personality Quiz',
@@ -170,7 +169,6 @@ QUIZ_TRANSLATIONS = {
         'badge_savings_star': 'Tauraron Ajiya',
         'badge_savings_star_desc': 'An gane shi saboda halayen ajiya akai-akai.',
         'badge_first_quiz': 'An Kammala Tambayoyin Farko',
-        'quiz_return_to_home': 'Koma Gida',
         'badge_first_quiz_desc': 'Ka kammala tambayoyin kuɗi na farko.',
         'An error occurred. Please try again.': 'Wani kuskure ya faru. Da fatan za a sake gwadawa.',
         'quiz_personality_quiz': 'Gwajin Hali',
