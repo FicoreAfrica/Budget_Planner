@@ -7,7 +7,6 @@ Create Date: 2025-06-08 13:51:00
 
 from alembic import op
 import sqlalchemy as sa
-import uuid
 
 revision = 'initial_schema'
 down_revision = None
@@ -25,7 +24,7 @@ def upgrade():
         sa.Column('is_admin', sa.Boolean(), nullable=False, server_default='false'),
         sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
         sa.Column('lang', sa.String(length=10), nullable=True, server_default='en'),
-        sa.Column('referral_code', sa.String(length=36), nullable=False, server_default=str(uuid.uuid4())),
+        sa.Column('referral_code', sa.String(length=36), nullable=False, server_default=sa.text("gen_random_uuid()")),
         sa.Column('referred_by_id', sa.Integer(), nullable=True),
         sa.ForeignKeyConstraint(['referred_by_id'], ['users.id'], ondelete='SET NULL'),
         sa.PrimaryKeyConstraint('id'),
@@ -195,8 +194,6 @@ def upgrade():
     )
     op.create_index('ix_learning_progress_session_id', 'learning_progress', ['session_id'], unique=False)
     op.create_index('ix_learning_progress_user_id', 'learning_progress', ['user_id'], unique=False)
-    op.create_index('ix_learning_progress_user_course', 'learning_progress', ['user_id', 'course_id'], unique=False)
-    op.create_index('ix_learning_progress_session_course', 'learning_progress', ['session_id', 'course_id'], unique=False)
 
     # QuizResults table
     op.create_table(
@@ -238,7 +235,7 @@ def upgrade():
     # ToolUsage table
     op.create_table(
         'tool_usage',
-        sa.Column('id', sa.String(length=36), nullable=False, server_default=str(uuid.uuid4())),
+        sa.Column('id', sa.String(length=36), nullable=False),
         sa.Column('tool_name', sa.String(length=50), nullable=False),
         sa.Column('user_id', sa.Integer(), nullable=True),
         sa.Column('session_id', sa.String(length=36), nullable=False),
@@ -262,10 +259,8 @@ def downgrade():
     op.drop_index('ix_quiz_results_user_id', table_name='quiz_results')
     op.drop_index('ix_quiz_results_session_id', table_name='quiz_results')
     op.drop_table('quiz_results')
-    op.drop_index('ix_learning_progress_user_course', table_name='learning_progress')
-    op.drop_index('ix_learning_progress_session_course', table_name='learning_progress')
-    op.drop_index('ix_learning_progress_user_id', 'learning_progress')
-    op.drop_index('ix_learning_progress_session_id', 'learning_progress')
+    op.drop_index('ix_learning_progress_user_id', table_name='learning_progress')
+    op.drop_index('ix_learning_progress_session_id', table_name='learning_progress')
     op.drop_table('learning_progress')
     op.drop_index('ix_emergency_fund_user_id', table_name='emergency_fund')
     op.drop_index('ix_emergency_fund_session_id', table_name='emergency_fund')
