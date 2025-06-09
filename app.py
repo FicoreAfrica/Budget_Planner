@@ -223,13 +223,13 @@ def create_app():
     from blueprints.auth import auth_bp
     from blueprints.admin import admin_bp
 
-    app.register_blueprint(financial_health_bp, template_folder='templates/financial_health')
-    app.register_blueprint(budget_bp, template_folder='templates/budget')
-    app.register_blueprint(quiz_bp, template_folder='templates/quiz')
-    app.register_blueprint(bill_bp, template_folder='templates/bill')
-    app.register_blueprint(net_worth_bp, template_folder='templates/net_worth')
-    app.register_blueprint(emergency_fund_bp, template_folder='templates/emergency_fund')
-    app.register_blueprint(learning_hub_bp, template_folder='templates/learning_hub')
+    app.register_blueprint(financial_health_bp, template_folder='templates/HEALTHSCORE')
+    app.register_blueprint(budget_bp, template_folder='templates/BUDGET')
+    app.register_blueprint(quiz_bp, template_folder='templates/QUIZ')
+    app.register_blueprint(bill_bp, template_folder='templates/BILL')
+    app.register_blueprint(net_worth_bp, template_folder='templates/NETWORTH')
+    app.register_blueprint(emergency_fund_bp, template_folder='templates/EMERGENCYFUND')
+    app.register_blueprint(learning_hub_bp, template_folder='templates/LEARNINGHUB')
     app.register_blueprint(auth_bp, template_folder='templates/auth')
     app.register_blueprint(admin_bp, template_folder='templates/admin')
 
