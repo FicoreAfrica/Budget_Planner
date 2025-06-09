@@ -224,7 +224,7 @@ def step1():
                 flash(trans('quiz_form_errors', default='Please correct the errors in the form.', lang=lang), 'danger')
         
         return render_template(
-            'quiz_step1.html',
+            'QUIZ/quiz_step1.html',
             form=form,
             course_id=course_id,
             lang=lang,
@@ -233,7 +233,7 @@ def step1():
     except Exception as e:
         logger.error(f"Error in quiz.step1: {str(e)}", extra={'session_id': session['sid']})
         flash(trans('quiz_error_personal_info', default='An error occurred. Please try again.', lang=lang), 'danger')
-        return render_template('quiz_step1.html', form=form, course_id=course_id, lang=lang, total_steps=3), 500
+        return render_template('QUIZ/quiz_step1.html', form=form, course_id=course_id, lang=lang, total_steps=3), 500
 
 @quiz_bp.route('/step2a', methods=['GET', 'POST'])
 def step2a():
@@ -293,7 +293,7 @@ def step2a():
                 getattr(form, q['id']).data = session['quiz_data'][q['id']]
         
         return render_template(
-            'quiz_step.html',
+            'QUIZ/quiz_step.html',
             form=form,
             questions=questions,
             course_id=course_id,
@@ -304,7 +304,7 @@ def step2a():
     except Exception as e:
         logger.error(f"Error in quiz.step2a: {str(e)}", extra={'session_id': session['sid']})
         flash(trans('quiz_error_questions', default='An error occurred. Please try again.', lang=lang), 'danger')
-        return render_template('quiz_step.html', form=form, questions=questions, course_id=course_id, lang=lang, step_num=2, total_steps=3), 500
+        return render_template('QUIZ/quiz_step.html', form=form, questions=questions, course_id=course_id, lang=lang, step_num=2, total_steps=3), 500
 
 @quiz_bp.route('/step2b', methods=['GET', 'POST'])
 def step2b():
@@ -428,7 +428,7 @@ def step2b():
                 getattr(form, q['id']).data = session['quiz_data'][q['id']]
         
         return render_template(
-            'quiz_step.html',
+            'QUIZ/quiz_step.html',
             form=form,
             questions=questions,
             course_id=course_id,
@@ -439,7 +439,7 @@ def step2b():
     except Exception as e:
         logger.error(f"Error in quiz.step2b: {str(e)}", extra={'session_id': session['sid']})
         flash(trans('quiz_error_questions', default='An error occurred. Please try again.', lang=lang), 'danger')
-        return render_template('quiz_step.html', form=form, questions=questions, course_id=course_id, lang=lang, step_num=3, total_steps=3), 500
+        return render_template('QUIZ/quiz_step.html', form=form, questions=questions, course_id=course_id, lang=lang, step_num=3, total_steps=3), 500
 
 @quiz_bp.route('/results', methods=['GET'])
 def results():
@@ -492,7 +492,7 @@ def results():
         logger.info(f"Displaying quiz results for session {session['sid']}", extra={'session_id': session['sid']})
         
         return render_template(
-            'quiz_results.html',
+            'QUIZ/quiz_results.html',
             latest_record=results,
             insights=results.get('insights', []),
             tips=results.get('tips', []),
