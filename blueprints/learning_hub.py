@@ -286,11 +286,11 @@ def courses():
             current_app.logger.error(f"Invalid courses_data type, Path: {request.path}, Type: {type(courses_data)}", extra={'session_id': session.get('sid', 'no-session-id')})
             raise ValueError("courses_data is not a dictionary")
         current_app.logger.info(f"Rendering courses page, Path: {request.path}", extra={'session_id': session.get('sid', 'no-session-id')})
-        return render_template('learning_hub_courses.html', courses=courses_data, progress=progress, trans=trans, lang=lang)
+        return render_template('LEARNINGHUB/learning_hub_courses.html', courses=courses_data, progress=progress, trans=trans, lang=lang)
     except Exception as e:
         current_app.logger.error(f"Error rendering courses page, Path: {request.path}: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
         flash(trans("learning_hub_error_loading", default="Error loading courses", lang=lang), "danger")
-        return render_template('learning_hub_courses.html', courses={}, progress={}, trans=trans, lang=lang), 500
+        return render_template('LEARNINGHUB/learning_hub_courses.html', courses={}, progress={}, trans=trans, lang=lang), 500
 
 @learning_hub_bp.route('/courses/<course_id>')
 def course_overview(course_id):
@@ -315,7 +315,7 @@ def course_overview(course_id):
             action='course_overview_view'
         )
         current_app.logger.info(f"Rendering course overview, Path: {request.path}, Course ID: {course_id}", extra={'session_id': session.get('sid', 'no-session-id')})
-        return render_template('learning_hub_course_overview.html', course=course, progress=course_progress, trans=trans, lang=lang)
+        return render_template('LEARNINGHUB/learning_hub_course_overview.html', course=course, progress=course_progress, trans=trans, lang=lang)
     except Exception as e:
         current_app.logger.error(f"Error rendering course overview, Path: {request.path}, Course ID: {course_id}: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
         flash(trans("learning_hub_error_loading", default="Error loading course", lang=lang), "danger")
@@ -359,11 +359,11 @@ def profile():
                 flash(trans('learning_hub_profile_saved', default='Profile saved successfully'), 'success')
                 return redirect(url_for('learning_hub.courses'))
         current_app.logger.info(f"Rendering profile page, Path: {request.path}", extra={'session_id': session.get('sid', 'no-session-id')})
-        return render_template('learning_hub_profile.html', form=form, trans=trans, lang=lang)
+        return render_template('LEARNINGHUB/learning_hub_profile.html', form=form, trans=trans, lang=lang)
     except Exception as e:
         current_app.logger.error(f"Error in profile page: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
         flash(trans("learning_hub_error_loading", default="Error loading profile"), "danger")
-        return render_template('learning_hub_profile.html', form=form, trans=trans, lang=lang), 500
+        return render_template('LEARNINGHUB/learning_hub_profile.html', form=form, trans=trans, lang=lang), 500
 
 @learning_hub_bp.route('/courses/<course_id>/lesson/<lesson_id>', methods=['GET', 'POST'])
 def lesson(course_id, lesson_id):
@@ -457,7 +457,7 @@ def lesson(course_id, lesson_id):
                     else:
                         return redirect(url_for('learning_hub.course_overview', course_id=course_id))
         current_app.logger.info(f"Rendering lesson page, Path: {request.path}, Course ID: {course_id}, Lesson ID: {lesson_id}", extra={'session_id': session.get('sid', 'no-session-id')})
-        return render_template('learning_hub_lesson.html', course=course, lesson=lesson, module=module, progress=course_progress, form=form, trans=trans, lang=lang)
+        return render_template('LEARNINGHUB/learning_hub_lesson.html', course=course, lesson=lesson, module=module, progress=course_progress, form=form, trans=trans, lang=lang)
     except Exception as e:
         current_app.logger.error(f"Error in lesson page: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
         flash(trans("learning_hub_error_loading", default="Error loading lesson"), "danger")
@@ -516,7 +516,7 @@ def quiz(course_id, quiz_id):
                 flash(f"{trans('learning_hub_quiz_completed', default='Quiz completed! Score:')} {score}/{len(quiz['questions'])}", "success")
                 return redirect(url_for('learning_hub.course_overview', course_id=course_id))
         current_app.logger.info(f"Rendering quiz page, Path: {request.path}, Course ID: {course_id}, Quiz ID: {quiz_id}", extra={'session_id': session.get('sid', 'no-session-id')})
-        return render_template('learning_hub_quiz.html', course=course, quiz=quiz, progress=course_progress, form=form, trans=trans, lang=lang)
+        return render_template('LEARNINGHUB/learning_hub_quiz.html', course=course, quiz=quiz, progress=course_progress, form=form, trans=trans, lang=lang)
     except Exception as e:
         current_app.logger.error(f"Error processing quiz {quiz_id} for course {course_id}, Path: {request.path}: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
         flash(trans("learning_hub_error_loading", "Error loading quiz"), "danger")
@@ -546,11 +546,11 @@ def dashboard():
             percent = int((completed / lessons_total) * 100) if lessons_total > 0 else 0
             progress_summary.append({'course': course, 'completed': completed, 'total': lessons_total, 'percent': percent})
         current_app.logger.info(f"Rendering dashboard page, Path: {request.path}", extra={'session_id': session.get('sid', 'no-session-id')})
-        return render_template('learning_hub_dashboard.html', progress_summary=progress_summary, trans=trans, lang=lang)
+        return render_template('LEARNINGHUB/learning_hub_dashboard.html', progress_summary=progress_summary, trans=trans, lang=lang)
     except Exception as e:
         current_app.logger.error(f"Error rendering dashboard, Path: {request.path}: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
         flash(trans("learning_hub_error_loading", default="Error loading dashboard"), "danger")
-        return render_template('learning_hub_dashboard.html', progress_summary=[], trans=trans, lang=lang), 500
+        return render_template('LEARNINGHUB/learning_hub_dashboard.html', progress_summary=[], trans=trans, lang=lang), 500
 
 @learning_hub_bp.route('/unsubscribe/<email>')
 def unsubscribe(email):
@@ -625,7 +625,7 @@ def upload_content():
             return redirect(url_for('learning_hub.courses'))
         else:
             flash(trans('learning_hub_invalid_file', default='Invalid file type'), 'danger')
-    return render_template('learning_hub_upload.html', form=form, trans=trans, lang=lang)
+    return render_template('LEARNINGHUB/learning_hub_upload.html', form=form, trans=trans, lang=lang)
 
 @learning_hub_bp.route('/static/uploads/<path:filename>')
 def serve_uploaded_file(filename):
