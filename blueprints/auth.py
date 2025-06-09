@@ -11,6 +11,7 @@ import logging
 import uuid
 from datetime import datetime
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from jinja2.exceptions import TemplateNotFound
 
 # Configure logging
 logger = logging.getLogger('ficore_app')
@@ -153,23 +154,33 @@ def signup():
                     db.session.rollback()
                     logger.error(f"Database integrity error during signup: {str(ie)}", extra={'session_id': session_id, 'username': form.username.data, 'email': form.email.data})
                     flash(trans('core_auth_db_error', default='A database error occurred. Please try again.', lang=lang), 'danger')
+                    logger.handlers[0].flush()  # Ensure log is written
                     return render_template('signup.html', form=form, lang=lang, referral_code=referral_code, referrer=referrer), 500
                 except SQLAlchemyError as sae:
                     db.session.rollback()
                     logger.error(f"SQLAlchemy error during signup: {str(sae)}", extra={'session_id': session_id, 'username': form.username.data, 'email': form.email.data})
                     flash(trans('core_auth_db_error', default='A database error occurred. Please try again.', lang=lang), 'danger')
+                    logger.handlers[0].flush()  # Ensure log is written
                     return render_template('signup.html', form=form, lang=lang, referral_code=referral_code, referrer=referrer), 500
             else:
                 logger.error(f"Signup form validation failed: {form.errors}", extra={'session_id': session_id, 'username': form.username.data, 'email': form.email.data, 'form_data': request.form.to_dict()})
                 log_tool_usage('register', None, session_id, 'submit_error', details=f"Validation errors: {form.errors}")
                 flash(trans('core_auth_form_errors', default='Please correct the errors in the form.', lang=lang), 'danger')
-        
+                logger.handlers[0].flush()  # Ensure log is written
         return render_template('signup.html', form=form, lang=lang, referral_code=referral_code, referrer=referrer)
+    except TemplateNotFound as tnf:
+        db.session.rollback()
+        logger.error(f"Template not found error in signup: {str(tnf)}", extra={'session_id': session_id})
+        log_tool_usage('register', None, session_id, 'error', details=f"Template error: {str(tnf)}")
+        flash(trans('core_auth_template_error', default='An error occurred with the page. Please try again.', lang=lang), 'danger')
+        logger.handlers[0].flush()  # Ensure log is written
+        return jsonify({'error': 'Template error'}), 500
     except Exception as e:
         db.session.rollback()
         logger.error(f"Unexpected error in signup: {str(e)}", extra={'session_id': session_id, 'username': form.username.data if form.username.data else 'unknown', 'email': form.email.data if form.email.data else 'unknown'})
         log_tool_usage('register', None, session_id, 'error', details=f"Exception: {str(e)}")
         flash(trans('core_auth_error', default='An unexpected error occurred. Please try again.', lang=lang), 'danger')
+        logger.handlers[0].flush()  # Ensure log is written
         return render_template('signup.html', form=form, lang=lang, referral_code=referral_code, referrer=referrer), 500
 
 @auth_bp.route('/signin', methods=['GET', 'POST'])
@@ -207,12 +218,14 @@ def signin():
         logger.error(f"Database error during signin: {str(sae)}", extra={'session_id': session_id, 'email': form.email.data})
         log_tool_usage('login', None, session_id, 'error')
         flash(trans('core_auth_db_error', default='A database error occurred. Please try again.', lang=lang), 'danger')
+        logger.handlers[0].flush()  # Ensure log is written
         return render_template('signin.html', form=form, lang=lang), 500
     except Exception as e:
         db.session.rollback()
         logger.error(f"Unexpected error in signin: {str(e)}", extra={'session_id': session_id, 'email': form.email.data})
         log_tool_usage('login', None, session_id, 'error')
         flash(trans('core_auth_error', default='An unexpected error occurred. Please try again.', lang=lang), 'danger')
+        logger.handlers[0].flush()  # Ensure log is written
         return render_template('signin.html', form=form, lang=lang), 500
     
     return render_template('signin.html', form=form, lang=lang)
@@ -236,6 +249,7 @@ def logout():
     except Exception as e:
         logger.error(f"Error during logout: {str(e)}", extra={'session_id': session_id, 'user_id': user_id})
         flash(trans('core_auth_error', default='An unexpected error occurred. Please try again.', lang=lang), 'danger')
+        logger.handlers[0].flush()  # Ensure log is written
         return redirect(url_for('index')), 500
 
 @auth_bp.route('/profile', methods=['GET', 'POST'])
@@ -257,11 +271,13 @@ def profile():
                 db.session.rollback()
                 logger.error(f"Database integrity error during password change: {str(ie)}", extra={'session_id': session_id})
                 flash(trans('core_auth_db_error', default='A database error occurred. Please try again.', lang=lang), 'danger')
+                logger.handlers[0].flush()  # Ensure log is written
                 return render_template('profile.html', lang=lang, referral_link=referral_link, referral_count=referral_count, referred_users=referred_users, password_form=password_form), 500
             except SQLAlchemyError as sae:
                 db.session.rollback()
                 logger.error(f"SQLAlchemy error during password change: {str(sae)}", extra={'session_id': session_id})
                 flash(trans('core_auth_db_error', default='A database error occurred. Please try again.', lang=lang), 'danger')
+                logger.handlers[0].flush()  # Ensure log is written
                 return render_template('profile.html', lang=lang, referral_link=referral_link, referral_count=referral_count, referred_users=referred_users, password_form=password_form), 500
         elif password_form.errors:
             logger.error(f"Change password form validation failed: {password_form.errors}", extra={'session_id': session_id, 'form_data': request.form.to_dict()})
@@ -275,11 +291,13 @@ def profile():
         db.session.rollback()
         logger.error(f"Database error in profile: {str(sae)}", extra={'session_id': session_id})
         flash(trans('core_auth_db_error', default='A database error occurred. Please try again.', lang=lang), 'danger')
+        logger.handlers[0].flush()  # Ensure log is written
         return render_template('profile.html', lang=lang, referral_link=referral_link, referral_count=referral_count, referred_users=referred_users, password_form=password_form), 500
     except Exception as e:
         db.session.rollback()
         logger.error(f"Unexpected error in profile: {str(e)}", extra={'session_id': session_id})
         flash(trans('core_auth_error', default='An unexpected error occurred. Please try again.', lang=lang), 'danger')
+        logger.handlers[0].flush()  # Ensure log is written
         return render_template('profile.html', lang=lang, referral_link=referral_link, referral_count=referral_count, referred_users=referred_users, password_form=password_form), 500
 
 @auth_bp.route('/debug/auth')
@@ -295,4 +313,5 @@ def debug_auth():
         })
     except Exception as e:
         logger.error(f"Error in debug_auth: {str(e)}", extra={'session_id': session_id})
+        logger.handlers[0].flush()  # Ensure log is written
         return jsonify({'error': str(e)}), 500
