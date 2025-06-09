@@ -15,7 +15,7 @@
     <div class="container mt-5">
         <h1 class="text-center mb-4">{{ trans('core_admin_dashboard') | default('Admin Dashboard') }}</h1>
         
-        {% if request.endpoint == 'admin.overview' %}
+        {% if is_overview %}
             <!-- Overview Metrics -->
             <div class="metrics-grid">
                 <div class="metric-card">
@@ -136,11 +136,10 @@
                     });
                 });
             </script>
-
         {% else %}
             <!-- Tool Usage Analytics -->
             <h2 class="mt-5">{{ trans('core_tool_usage_analytics') | default('Tool Usage Analytics') }}</h2>
-            <form class="filter-form" method="GET" action="{{ url_for('admin.tool_usage') }}">
+            <form class="filter-form" method="GET" action="{{ url_for('admin.dashboard') }}">
                 <div class="row g-3">
                     <div class="col-md-3">
                         <label for="tool_name" class="form-label">{{ trans('core_tool') | default('Tool') }}</label>
