@@ -11,12 +11,12 @@ class User(db.Model, UserMixin):
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
-    is_admin = db.Column(db.Boolean, default=False, nullable=False)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     lang = db.Column(db.String(10), default='en')
-    referral_code = db.Column(db.String(36), unique=True, nullable=False, default=lambda: str(uuid.uuid4()))
-    referred_by_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
-    referred_by = db.relationship('User', remote_side=[id], backref='referrals', uselist=False, foreign_keys=[referred_by_id])
+    referral_code = db.Column(db.String(36), unique=True, nullable=True, default=lambda: str(uuid.uuid4()))
+    is_admin = db.Column(db.Boolean, default=False, nullable=False)
+    referred_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    referrals = db.relationship('User', backref=db.backref('referrer', remote_side=[id]), foreign_keys=[referred_by_id])
 
     __table_args__ = (
         db.Index('ix_users_referral_code', 'referral_code'),
