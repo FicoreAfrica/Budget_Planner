@@ -11,10 +11,9 @@ from extensions import db, login_manager, session as flask_session, csrf
 from blueprints.auth import auth_bp
 from translations import trans
 from scheduler_setup import init_scheduler
-from models import Course, FinancialHealth, Budget, Bill, NetWorth, EmergencyFund, LearningProgress, QuizResult, User, Feedback, ToolUsage
+from models import Course, FinancialHealth, Budget, Bill, NetWorth, EmergencyFund, LearningProgress, QuizResult, User, Feedback, ToolUsage, log_tool_usage
 import json
 from functools import wraps
-from uuid import uuid4
 from alembic import command
 from alembic.config import Config
 from werkzeug.security import generate_password_hash
@@ -57,36 +56,38 @@ def admin_required(f):
     return decorated_function
 
 def setup_logging(app):
-    handler = logging.StreamHandler(sys.stderr)
-    handler.setLevel(logging.DEBUG)
-    handler.setFormatter(formatter)
-    root_logger.addHandler(handler)
-    log_dir = os.path.join(os.path.dirname(__file__), 'data')
-    os.makedirs(log_dir, exist_ok=True)
-    try:
-        file_handler = logging.FileHandler(os.path.join(log_dir, 'storage.log'))
-        file_handler.setLevel(logging.DEBUG)
-        file_handler.setFormatter(formatter)
-        root_logger.addHandler(file_handler)
-        logger.info("Logging setup complete with file handler")
-    except (PermissionError, OSError) as e:
-        logger.warning(f"Failed to set up file logging: {str(e)}")
+    # Avoid duplicate handlers
+    if not root_logger.handlers:
+        handler = logging.StreamHandler(sys.stderr)
+        handler.setLevel(logging.DEBUG)
+        handler.setFormatter(formatter)
+        root_logger.addHandler(handler)
+        log_dir = os.path.join(os.path.dirname(__file__), 'data')
+        os.makedirs(log_dir, exist_ok=True)
+        try:
+            file_handler = logging.FileHandler(os.path.join(log_dir, 'storage.log'))
+            file_handler.setLevel(logging.DEBUG)
+            file_handler.setFormatter(formatter)
+            root_logger.addHandler(file_handler)
+            logger.info("Logging setup complete with file handler")
+        except (PermissionError, OSError) as e:
+            logger.warning(f"Failed to set up file logging: {str(e)}")
 
 def setup_session(app):
     session_dir = os.path.join(os.path.dirname(__file__), 'data', 'sessions')
     try:
         os.makedirs(session_dir, exist_ok=True)
         logger.info(f"Session directory ensured at {session_dir}")
+        app.config['SESSION_FILE_DIR'] = session_dir
+        app.config['SESSION_TYPE'] = 'filesystem'
     except (PermissionError, OSError) as e:
-        logger.error(f"Failed to create session directory {session_dir}: {str(e)}. Using in-memory sessions.")
+        logger.error(f"Failed to create session directory {session_dir}: {str(e)}. Falling back to in-memory sessions.")
         app.config['SESSION_TYPE'] = 'null'
-        return
-    app.config['SESSION_FILE_DIR'] = session_dir
-    app.config['SESSION_TYPE'] = 'filesystem'
+        logger.warning("Using in-memory sessions due to directory creation failure. Consider using Redis in production.")
     app.config['SESSION_PERMANENT'] = True
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
     app.config['SESSION_USE_SIGNER'] = True
-    logger.info(f"Session configured: type={app.config['SESSION_TYPE']}, dir={session_dir}, lifetime={app.config['PERMANENT_SESSION_LIFETIME']}")
+    logger.info(f"Session configured: type={app.config['SESSION_TYPE']}, dir={session_dir if app.config['SESSION_TYPE'] == 'filesystem' else 'in-memory'}, lifetime={app.config['PERMANENT_SESSION_LIFETIME']}")
 
 def initialize_courses_data(app):
     with app.app_context():
@@ -202,7 +203,8 @@ def create_app():
                     password_hash=generate_password_hash(admin_password),
                     is_admin=True,
                     created_at=datetime.utcnow(),
-                    lang='en'
+                    lang='en',
+                    referral_code=str(uuid.uuid4())  # Add referral_code
                 )
                 db.session.add(admin_user)
                 db.session.commit()
@@ -312,7 +314,7 @@ def create_app():
         @wraps(f)
         def decorated_function(*args, **kwargs):
             if 'sid' not in session:
-                session['sid'] = str(uuid4())
+                session['sid'] = str(uuid.uuid4())
                 logger.info(f"New session ID generated: {session['sid']}")
             return f(*args, **kwargs)
         return decorated_function
