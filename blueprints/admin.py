@@ -3,7 +3,7 @@ from flask_login import login_required, current_user
 from datetime import datetime, timedelta
 from extensions import db
 from models import User, ToolUsage, Feedback
-from app import admin_required, trans
+from app import trans
 import logging
 import csv
 from io import StringIO
@@ -24,7 +24,6 @@ VALID_TOOLS = [
 
 @admin_bp.route('/', methods=['GET'])
 @login_required
-@admin_required
 def dashboard():
     """Admin dashboard with overview and tool usage analytics."""
     lang = session.get('lang', 'en')
@@ -289,7 +288,6 @@ def dashboard():
 
 @admin_bp.route('/export_csv', methods=['GET'])
 @login_required
-@admin_required
 def export_csv():
     """Export filtered tool usage logs as CSV."""
     lang = session.get('lang', 'en')
