@@ -214,7 +214,7 @@ def logout():
     
     logout_user()
     logger.info(f"User logged out: {username}", extra={'session_id': session_id})
-    flash(trans('auth_logout_success', default='Logged out successfully!', lang=lang), 'success')
+    flash(trans('core_auth_logout_success', default='Logged out successfully!', lang=lang), 'success')
     return redirect(url_for('index'))
 
 @auth_bp.route('/profile', methods=['GET', 'POST'])
