@@ -26,65 +26,109 @@ VALID_TOOLS = [
 @login_required
 @admin_required
 def overview():
-    """Admin dashboard overview page."""
+    """Admin dashboard overview page with enhanced debugging logs."""
     lang = session.get('lang', 'en') if 'lang' in session else 'en'
+    session_id = session.get('sid', 'no-session-id')
+    logger.info("Entering overview for user: %s", current_user.username, extra={'session_id': session_id})
+    
     try:
-        # Use read-only session for data retrieval
+        logger.info("Starting database session with no_autoflush")
         with db.session.no_autoflush() as read_session:
+            logger.info("Inside no_autoflush context")
+            
             # User Stats
+            logger.info("Querying total users")
             total_users = read_session.query(User).count()
+            logger.info("Queried total_users: %d", total_users)
+            
             last_day = datetime.utcnow() - timedelta(days=1)
+            logger.info("Querying new users in last 24 hours, since: %s", last_day)
             new_users_last_24h = read_session.query(User).filter(User.created_at >= last_day).count()
-
+            logger.info("Queried new_users_last_24h: %d", new_users_last_24h)
+            
             # Referral Stats
+            logger.info("Querying total referrals")
             total_referrals = read_session.query(User).filter(User.referred_by_id.isnot(None)).count()
+            logger.info("Queried total_referrals: %d", total_referrals)
+            
+            logger.info("Querying new referrals in last 24 hours")
             new_referrals_last_24h = read_session.query(User).filter(
                 User.referred_by_id.isnot(None),
                 User.created_at >= last_day
             ).count()
+            logger.info("Queried new_referrals_last_24h: %d", new_referrals_last_24h)
+            
+            logger.info("Calculating referral conversion rate")
             referral_conversion_rate = (total_referrals / total_users * 100) if total_users else 0.0
-
+            logger.info("Referral conversion rate: %.2f%%", referral_conversion_rate)
+            
             # Tool Usage Stats
+            logger.info("Querying total tool usage")
             tool_usage_total = read_session.query(ToolUsage).count()
+            logger.info("Queried tool_usage_total: %d", tool_usage_total)
+            
+            logger.info("Querying tool usage by tool")
             usage_by_tool = read_session.query(ToolUsage.tool_name, func.count(ToolUsage.id)).group_by(ToolUsage.tool_name).all()
+            logger.info("Queried usage_by_tool: %s", usage_by_tool)
             top_tools = sorted(usage_by_tool, key=lambda x: x[1], reverse=True)[:3]
-
+            logger.info("Top tools: %s", top_tools)
+            
             # Action Breakdown for Top Tools
+            logger.info("Querying action breakdown for top tools")
             action_breakdown = {}
             for tool, _ in top_tools:
+                logger.info("Querying actions for tool: %s", tool)
                 actions = read_session.query(ToolUsage.action, func.count(ToolUsage.id))\
                     .filter(ToolUsage.tool_name == tool)\
                     .group_by(ToolUsage.action)\
                     .limit(5).all()
                 action_breakdown[tool] = actions
-
+                logger.info("Actions for %s: %s", tool, actions)
+            
             # Engagement Metrics
-            # Multi-tool users
+            logger.info("Querying multi-tool users")
             multi_tool_users = read_session.query(ToolUsage.user_id, func.count(func.distinct(ToolUsage.tool_name)))\
                 .filter(ToolUsage.tool_name.in_(VALID_TOOLS[3:]))\
                 .group_by(ToolUsage.user_id)\
                 .having(func.count(func.distinct(ToolUsage.tool_name)) > 1)\
                 .count()
+            logger.info("Queried multi_tool_users: %d", multi_tool_users)
+            
+            logger.info("Querying total sessions")
             total_sessions = read_session.query(func.count(func.distinct(ToolUsage.session_id)))\
                 .filter(ToolUsage.tool_name.in_(VALID_TOOLS[3:])).scalar()
+            logger.info("Queried total_sessions: %d", total_sessions)
+            
             multi_tool_ratio = (multi_tool_users / total_sessions * 100) if total_sessions else 0.0
-
+            logger.info("Multi-tool ratio: %.2f%%", multi_tool_ratio)
+            
             # Anonymous to registered conversion
+            logger.info("Querying anonymous sessions")
             anon_sessions = read_session.query(ToolUsage.session_id)\
                 .filter(ToolUsage.user_id.is_(None), ToolUsage.tool_name.in_(VALID_TOOLS[3:]))\
                 .distinct().subquery()
+            logger.info("Queried anonymous sessions")
+            
+            logger.info("Querying converted sessions")
             converted_sessions = read_session.query(ToolUsage.session_id)\
                 .filter(ToolUsage.tool_name == 'register', ToolUsage.session_id.in_(anon_sessions))\
                 .distinct().count()
+            logger.info("Queried converted_sessions: %d", converted_sessions)
+            
             anon_total = read_session.query(anon_sessions).count()
+            logger.info("Queried anon_total: %d", anon_total)
             conversion_rate = (converted_sessions / anon_total * 100) if anon_total else 0.0
-
+            logger.info("Conversion rate: %.2f%%", conversion_rate)
+            
             # Feedback
+            logger.info("Querying average feedback rating")
             avg_feedback = read_session.query(func.avg(Feedback.rating)).scalar() or 0.0
-
+            logger.info("Queried avg_feedback: %.2f", avg_feedback)
+            
             # Data for charts (last 30 days)
             end_date = datetime.utcnow()
             start_date = end_date - timedelta(days=30)
+            logger.info("Querying daily usage for charts, from %s to %s", start_date, end_date)
             daily_usage = read_session.query(
                 func.date(ToolUsage.created_at).label('date'),
                 ToolUsage.tool_name,
@@ -94,8 +138,9 @@ def overview():
             .group_by('date', ToolUsage.tool_name)\
             .order_by('date')\
             .all()
-
-            # Referral chart data
+            logger.info("Queried daily_usage: %s", daily_usage)
+            
+            logger.info("Querying daily referrals for charts")
             daily_referrals = read_session.query(
                 func.date(User.created_at).label('date'),
                 func.count(User.id).label('count')
@@ -108,7 +153,10 @@ def overview():
             .group_by('date')\
             .order_by('date')\
             .all()
-
+            logger.info("Queried daily_referrals: %s", daily_referrals)
+            
+            # Initialize chart data
+            logger.info("Initializing chart data structure")
             chart_data = {
                 'labels': [],
                 'registrations': [],
@@ -116,7 +164,8 @@ def overview():
                 'referrals': [],
                 'tool_usage': {tool: [] for tool in VALID_TOOLS[3:]}
             }
-
+            
+            logger.info("Populating chart data for dates")
             current_date = start_date
             while current_date <= end_date:
                 chart_data['labels'].append(current_date.strftime('%Y-%m-%d'))
@@ -126,7 +175,8 @@ def overview():
                 for tool in chart_data['tool_usage']:
                     chart_data['tool_usage'][tool].append(0)
                 current_date += timedelta(days=1)
-
+            
+            logger.info("Processing daily usage data")
             for date, tool_name, count in daily_usage:
                 idx = (datetime.strptime(date, '%Y-%m-%d') - start_date).days
                 if 0 <= idx < len(chart_data['labels']):
@@ -136,12 +186,17 @@ def overview():
                         chart_data['logins'][idx] = count
                     elif tool_name in chart_data['tool_usage']:
                         chart_data['tool_usage'][tool_name][idx] = count
-
+            logger.info("Processed daily usage data")
+            
+            logger.info("Processing daily referrals data")
             for date, count in daily_referrals:
                 idx = (datetime.strptime(date, '%Y-%m-%d') - start_date).days
                 if 0 <= idx < len(chart_data['labels']):
                     chart_data['referrals'][idx] = count
-
+            logger.info("Processed daily referrals data")
+            
+            # Prepare metrics
+            logger.info("Preparing metrics dictionary")
             metrics = {
                 'total_users': total_users,
                 'new_users_last_24h': new_users_last_24h,
@@ -155,8 +210,11 @@ def overview():
                 'conversion_rate': round(conversion_rate, 2),
                 'avg_feedback_rating': round(avg_feedback, 2)
             }
-
-        logger.info(f"Admin dashboard overview accessed by {current_user.username}", extra={'session_id': session.get('sid', 'no-session-id')})
+            logger.info("Prepared metrics: %s", metrics)
+            logger.info("Prepared chart_data: %s", chart_data)
+        
+        logger.info("Exiting no_autoflush context")
+        logger.info("Rendering template")
         return render_template(
             'admin_dashboard.html',
             lang=lang,
@@ -168,7 +226,7 @@ def overview():
             end_date=None
         )
     except exc.SQLAlchemyError as e:
-        logger.error(f"Database error in admin overview: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
+        logger.error("Database error in overview: %s", str(e), exc_info=True, extra={'session_id': session_id})
         flash(trans('admin_error', default='A database error occurred while loading the dashboard.', lang=lang), 'danger')
         return render_template(
             'admin_dashboard.html',
@@ -181,7 +239,7 @@ def overview():
             end_date=None
         ), 500
     except Exception as e:
-        logger.error(f"Unexpected error in admin overview: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
+        logger.error("Unexpected error in overview: %s", str(e), exc_info=True, extra={'session_id': session_id})
         flash(trans('admin_error', default='An error occurred while loading the dashboard.', lang=lang), 'danger')
         return render_template(
             'admin_dashboard.html',
@@ -364,7 +422,7 @@ def export_csv():
         end_date_str = request.args.get('end_date')
         action = request.args.get('action')
 
-        # Use read-only session for data retrieval
+        # Use read-only session for data get
         with db.session.no_autoflush() as read_session:
             query = read_session.query(ToolUsage)
             if tool_name and tool_name in VALID_TOOLS[3:]:
