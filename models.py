@@ -43,6 +43,26 @@ class Course(db.Model):
             'is_premium': self.is_premium
         }
 
+class ContentMetadata(db.Model):
+    __tablename__ = 'content_metadata'
+    id = db.Column(db.Integer, primary_key=True)
+    course_id = db.Column(db.String(50), nullable=False)
+    lesson_id = db.Column(db.String(100), nullable=False)
+    content_type = db.Column(db.String(50), nullable=False)
+    content_path = db.Column(db.String(255), nullable=False)
+    uploaded_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    upload_date = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    user = db.relationship('User', backref='content_metadata_records')
+
+    __table_args__ = (
+        db.Index('ix_content_metadata_course_id', 'course_id'),
+        db.Index('ix_content_metadata_lesson_id', 'lesson_id'),
+        db.Index('ix_content_metadata_uploaded_by', 'uploaded_by')
+    )
+
+    def __repr__(self):
+        return f"<ContentMetadata {self.course_id}/{self.lesson_id} - {self.content_type}>"
+
 class FinancialHealth(db.Model):
     __tablename__ = 'financial_health'
     id = db.Column(db.String(36), primary_key=True)
