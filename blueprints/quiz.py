@@ -16,7 +16,7 @@ from models import QuizResult, log_tool_usage  # Added log_tool_usage import
 logger = logging.getLogger('ficore_app')
 
 # Define the quiz blueprint
-quiz_bp = Blueprint('quiz', __name__, template_folder='templates', static_folder='static', url_prefix='/quiz')
+quiz_bp = Blueprint('quiz', __name__, template_folder='templates', static_folder='static', url_prefix='/QUIZ')
 
 # Form for Step 1: Personal Information
 class QuizStep1Form(FlaskForm):
