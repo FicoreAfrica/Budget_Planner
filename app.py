@@ -3,15 +3,19 @@ import sys
 import logging
 import uuid
 from datetime import datetime, timedelta
-from flask import Flask, jsonify, render_template, request, session, redirect, url_for, flash, send_from_directory, has_request_context, g, current_app, make_response
+from flask
+from flask import Flask, jsonify, render_template, request, session, redirect, Flask, jsonify redirect, url_for, flash
+from flask import send_from_directory, has_request_context, g, current_app, make_response
 from flask_wtf.csrf import CSRFError, generate_csrf
-from flask_login import LoginManager, current_user, login_required
+from flask_login import LoginManager, LoginManager current_user
+from flask_login import login_required
 from dotenv import load_dotenv
-from extensions import db, login_manager, csrf
+from extensions import db, login_manager, session as flask_session, csrf
 from blueprints.auth import auth_bp
 from translations import trans
 from scheduler_setup import init_scheduler
 from models import Course, FinancialHealth, Budget, Bill, NetWorth, EmergencyFund, LearningProgress, QuizResult, User, Feedback, ToolUsage
+import json
 from functools import wraps
 from uuid import uuid4
 from alembic import command
@@ -28,8 +32,6 @@ root_logger.setLevel(logging.DEBUG)
 class SessionFormatter(logging.Formatter):
     def format(self, record):
         record.session_id = getattr(record, 'session_id', 'no-session-id')
-        if has_request_context():
-            record.session_id = session.get('sid', 'no-session-id')
         return super().format(record)
 
 formatter = SessionFormatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s [session: %(session_id)s]')
@@ -51,7 +53,7 @@ def admin_required(f):
     def decorated_function(*args, **kwargs):
         if not current_user.is_authenticated:
             return redirect(url_for('auth.signin', next=request.url))
-        if current_user.role != 'admin':
+        if not current_user.role == 'admin':
             flash('You do not have permission to access this page.', 'danger')
             return redirect(url_for('index'))
         return f(*args, **kwargs)
@@ -62,10 +64,19 @@ def setup_logging(app):
     handler.setLevel(logging.DEBUG)
     handler.setFormatter(formatter)
     root_logger.addHandler(handler)
-    logger.info("Logging setup complete with stream handler")
+    log_dir = os.path.join(os.path.dirname(__file__), 'data')
+    os.makedirs(log_dir, exist_ok=True)
+    try:
+        file_handler = logging.FileHandler(os.path.join(log_dir, 'storage.log'))
+        file_handler.setLevel(logging.DEBUG)
+        file_handler.setFormatter(formatter)
+        root_logger.addHandler(file_handler)
+        logger.info("Logging setup complete with file handler")
+    except (PermissionError, OSError) as e:
+        logger.warning(f"Failed to set up file logging: {str(e)}")
 
 def setup_session(app):
-    app.config['SESSION_TYPE'] = 'null'  # In-memory sessions for Render
+    app.config['SESSION_TYPE'] = 'memory'
     app.config['SESSION_PERMANENT'] = True
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
     app.config['SESSION_USE_SIGNER'] = True
@@ -75,11 +86,6 @@ def initialize_courses_data(app):
     with app.app_context():
         try:
             if Course.query.count() == 0:
-                SAMPLE_COURSES = [
-                    {'id': 'budgeting_learning_101', 'title_key': 'learning_hub_course_budgeting101_title', 'title_en': 'Budgeting Learning 101', 'title_ha': 'Tsarin Kudi 101', 'description_en': 'Learn the basics of budgeting.', 'description_ha': 'Koyon asalin tsarin kudi.', 'is_premium': False},
-                    {'id': 'financial_quiz', 'title_key': 'learning_hub_course_financial_quiz_title', 'title_en': 'Financial Quiz', 'title_ha': 'Jarabawar Kudi', 'description_en': 'Test your financial knowledge.', 'description_ha': 'Gwada ilimin ku na kudi.', 'is_premium': False},
-                    {'id': 'savings_basics', 'title_key': 'learning_hub_course_savings_basics_title', 'title_en': 'Savings Basics', 'title_ha': 'Asalin Tattara Kudi', 'description_en': 'Understand how to save effectively.', 'description_ha': 'Fahimci yadda ake tattara kudi yadda ya kamata.', 'is_premium': False}
-                ]
                 for course in SAMPLE_COURSES:
                     db_course = Course(**course)
                     db.session.add(db_course)
@@ -102,6 +108,37 @@ def apply_migrations(app):
         logger.error(f"Failed to apply migrations: {str(e)}", exc_info=True)
         raise
 
+# Constants
+SAMPLE_COURSES = [
+    {
+        'id': 'budgeting_learning_101',
+        'title_key': 'learning_hub_course_budgeting101_title',
+        'title_en': 'Budgeting Learning 101',
+        'title_ha': 'Tsarin Kudi 101',
+        'description_en': 'Learn the basics of budgeting.',
+        'description_ha': 'Koyon asalin tsarin kudi.',
+        'is_premium': False
+    },
+    {
+        'id': 'financial_quiz',
+        'title_key': 'learning_hub_course_financial_quiz_title',
+        'title_en': 'Financial Quiz',
+        'title_ha': 'Jarabawar Kudi',
+        'description_en': 'Test your financial knowledge.',
+        'description_ha': 'Gwada ilimin ku na kudi.',
+        'is_premium': False
+    },
+    {
+        'id': 'savings_basics',
+        'title_key': 'learning_hub_course_savings_basics_title',
+        'title_en': 'Savings Basics',
+        'title_ha': 'Asalin Tattara Kudi',
+        'description_en': 'Understand how to save effectively.',
+        'description_ha': 'Fahimci yadda ake tattara kudi yadda ya kamata.',
+        'is_premium': False
+    }
+]
+
 def create_app():
     app = Flask(__name__, template_folder='templates')
     app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key-please-change-me')
@@ -112,10 +149,18 @@ def create_app():
     setup_logging(app)
     setup_session(app)
     app.config['BASE_URL'] = os.environ.get('BASE_URL', 'http://localhost:5000')
+    flask_session.init_app(app)
     csrf.init_app(app)
 
     # Configure database
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///data/ficore.db')
+    db_dir = os.path.join(os.path.dirname(__file__), 'data')
+    try:
+        os.makedirs(db_dir, exist_ok=True)
+        logger.info(f"Database directory ensured at {db_dir}")
+    except (PermissionError, OSError) as e:
+        logger.critical(f"Failed to create database directory {db_dir}: {str(e)}")
+        raise
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', f'sqlite:///{os.path.join(db_dir, "ficore.db")}')
     if app.config['SQLALCHEMY_DATABASE_URI'].startswith('postgres://'):
         app.config['SQLALCHEMY_DATABASE_URI'] = app.config['SQLALCHEMY_DATABASE_URI'].replace('postgres://', 'postgresql://')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -138,7 +183,7 @@ def create_app():
 
     # Apply migrations and initialize database
     with app.app_context():
-        apply_migrations(app)
+        apply_migrations(app)  # Run migrations before creating tables
         db.create_all()
         initialize_courses_data(app)
         logger.info("Database tables created and courses initialized")
@@ -150,10 +195,11 @@ def create_app():
             admin_user = User.query.filter_by(email=admin_email).first()
             if not admin_user:
                 admin_user = User(
-                    username='admin_' + str(uuid.uuid4())[:8],
+                    username='admin_' + str(uuid.uuid4())[:8],  # Unique username
                     email=admin_email,
                     password_hash=generate_password_hash(admin_password),
-                    role='admin',
+                    is_admin=True,
+                    role='admin',  # Set role for new admin user
                     created_at=datetime.utcnow(),
                     lang='en'
                 )
@@ -237,13 +283,15 @@ def create_app():
     def setup_session_and_language():
         try:
             if 'sid' not in session:
-                session['sid'] = str(uuid4())
+                session['sid'] = str(uuid.uuid4())
                 logger.info(f"New session ID generated: {session['sid']}")
             if 'lang' not in session:
                 session['lang'] = request.accept_languages.best_match(['en', 'ha'], 'en')
                 logger.info(f"Set default language to {session['lang']}")
             g.logger = logger
             g.logger.info(f"Request started for path: {request.path}")
+            if not os.path.exists(os.path.join(os.path.dirname(__file__), 'data', 'storage.log')):
+                g.logger.warning("data/storage.log not found")
         except Exception as e:
             logger.error(f"Before request error: {str(e)}", exc_info=True)
 
@@ -252,7 +300,7 @@ def create_app():
         lang = session.get('lang', 'en')
         def context_trans(key, **kwargs):
             used_lang = kwargs.pop('lang', lang)
-            return translate(key, lang=used_lang, logger=g.get('logger', logger) if has_request_context() else logger, **kwargs)
+            return translate(key, lang=used_lang, logger=g.get('logger', logger), **kwargs)
         return {
             'trans': context_trans,
             'current_year': datetime.now().year,
@@ -338,33 +386,66 @@ def create_app():
 
             # Financial Health
             fh_records = FinancialHealth.query.filter_by(**filter_kwargs).order_by(FinancialHealth.created_at.desc()).all()
-            data['financial_health'] = {'score': fh_records[0].score, 'status': fh_records[0].status} if fh_records else {'score': None, 'status': None}
+            if not fh_records:
+                logger.warning(f"No FinancialHealth records found for filter: {filter_kwargs}")
+            data['financial_health'] = {
+                'score': fh_records[0].score,
+                'status': fh_records[0].status
+            } if fh_records else {'score': None, 'status': None}
 
             # Budget
             budget_records = Budget.query.filter_by(**filter_kwargs).order_by(Budget.created_at.desc()).all()
-            data['budget'] = {'surplus_deficit': budget_records[0].surplus_deficit, 'savings_goal': budget_records[0].savings_goal} if budget_records else {'surplus_deficit': None, 'savings_goal': None}
+            if not budget_records:
+                logger.warning(f"No Budget records found for filter: {filter_kwargs}")
+            data['budget'] = {
+                'surplus_deficit': budget_records[0].surplus_deficit,
+                'savings_goal': budget_records[0].savings_goal
+            } if budget_records else {'surplus_deficit': None, 'savings_goal': None}
 
             # Bills
             bills = Bill.query.filter_by(**filter_kwargs).all()
+            if not bills:
+                logger.warning(f"No Bill records found for filter: {filter_kwargs}")
             total_amount = sum(bill.amount for bill in bills)
             unpaid_amount = sum(bill.amount for bill in bills if bill.status.lower() != 'paid')
-            data['bills'] = {'bills': [bill.to_dict() for bill in bills], 'total_amount': total_amount, 'unpaid_amount': unpaid_amount}
+            data['bills'] = {
+                'bills': [bill.to_dict() for bill in bills],
+                'total_amount': total_amount,
+                'unpaid_amount': unpaid_amount
+            }
 
             # Net Worth
             nw_records = NetWorth.query.filter_by(**filter_kwargs).order_by(NetWorth.created_at.desc()).all()
-            data['net_worth'] = {'net_worth': nw_records[0].net_worth, 'total_assets': nw_records[0].total_assets} if nw_records else {'net_worth': None, 'total_assets': None}
+            if not nw_records:
+                logger.warning(f"No NetWorth records found for filter: {filter_kwargs}")
+            data['net_worth'] = {
+                'net_worth': nw_records[0].net_worth,
+                'total_assets': nw_records[0].total_assets
+            } if nw_records else {'net_worth': None, 'total_assets': None}
 
             # Emergency Fund
             ef_records = EmergencyFund.query.filter_by(**filter_kwargs).order_by(EmergencyFund.created_at.desc()).all()
-            data['emergency_fund'] = {'target_amount': ef_records[0].target_amount, 'savings_gap': ef_records[0].savings_gap} if ef_records else {'target_amount': None, 'savings_gap': None}
+            if not ef_records:
+                logger.warning(f"No EmergencyFund records found for filter: {filter_kwargs}")
+            data['emergency_fund'] = {
+                'target_amount': ef_records[0].target_amount,
+                'savings_gap': ef_records[0].savings_gap
+            } if ef_records else {'target_amount': None, 'savings_gap': None}
 
             # Learning Progress
             lp_records = LearningProgress.query.filter_by(**filter_kwargs).all()
+            if not lp_records:
+                logger.warning(f"No LearningProgress records found for filter: {filter_kwargs}")
             data['learning_progress'] = {lp.course_id: lp.to_dict() for lp in lp_records}
 
             # Quiz Result
             quiz_records = QuizResult.query.filter_by(**filter_kwargs).order_by(QuizResult.created_at.desc()).all()
-            data['quiz'] = {'personality': quiz_records[0].personality, 'score': quiz_records[0].score} if quiz_records else {'personality': None, 'score': None}
+            if not quiz_records:
+                logger.warning(f"No QuizResult records found for filter: {filter_kwargs}")
+            data['quiz'] = {
+                'personality': quiz_records[0].personality,
+                'score': quiz_records[0].score
+            } if quiz_records else {'personality': None, 'score': None}
 
             logger.info(f"Retrieved data for session {session['sid']}")
             return render_template('general_dashboard.html', data=data, t=translate, lang=lang)
@@ -410,6 +491,10 @@ def create_app():
         try:
             with app.app_context():
                 db.session.execute(db.text("SELECT 1"))
+            if not os.path.exists(os.path.join(os.path.dirname(__file__), 'data', 'storage.log')):
+                status["status"] = "warning"
+                status["details"] = "Log file data/storage.log not found"
+                return jsonify(status), 200
             return jsonify(status), 200
         except Exception as e:
             logger.error(f"Health check failed: {str(e)}", exc_info=True)
@@ -424,7 +509,7 @@ def create_app():
         return jsonify({'error': 'Internal server error', 'details': str(error)}), 500
 
     @app.errorhandler(CSRFError)
-    def handle_csrf_error(error):
+    def internal_error(error):
         lang = session.get('lang', 'en')
         logger.error(f"CSRF error: {str(error)}")
         return jsonify({'error': 'CSRF token invalid'}), 400
@@ -446,7 +531,10 @@ def create_app():
     def feedback():
         lang = session.get('lang', 'en')
         logger.info("Handling feedback request")
-        tool_options = ['financial_health', 'budget', 'bill', 'net_worth', 'emergency_fund', 'learning_hub', 'quiz']
+        tool_options = [
+            'financial_health', 'budget', 'bill', 'net_worth',
+            'emergency_fund', 'learning_hub', 'quiz'
+        ]
         if request.method == 'GET':
             logger.info("Rendering feedback template")
             return render_template('feedback.html', t=translate, lang=lang, tool_options=tool_options)
@@ -479,27 +567,30 @@ def create_app():
             flash(translate('core_global_error', default='Error occurred while submitting feedback', lang=lang), 'error')
             return render_template('feedback.html', t=translate, lang=lang, tool_options=tool_options), 500
 
-    def log_tool_usage(tool_name):
-        try:
-            if current_user.is_authenticated:
-                user_id = current_user.id
-            else:
-                user_id = None
-            session_id = session.get('sid', 'unknown')
-            tool_usage = ToolUsage(user_id=user_id, session_id=session_id, tool_name=tool_name)
-            db.session.add(tool_usage)
-            db.session.commit()
-            logger.info(f"Logged tool usage: {tool_name} for session {session_id}")
-        except Exception as e:
-            logger.error(f"Error logging tool usage: {str(e)}")
-            db.session.rollback()
+    logger.info("App creation completed")
+    return app
 
-# Create and expose the app globally
+def log_tool_usage(tool_name):
+    try:
+        if current_user.is_authenticated:
+            user_id = current_user.id
+        else:
+            user_id = None
+        session_id = session.get('sid', 'unknown')
+        tool_usage = ToolUsage(user_id=user_id, session_id=session_id, tool_name=tool_name)
+        db.session.add(tool_usage)
+        db.session.commit()
+        logger.info(f"Logged tool usage: {tool_name} for session {session_id}")
+    except Exception as e:
+        logger.error(f"Error logging tool usage: {str(e)}")
+        db.session.rollback()
+
+# Create the Flask app instance for Gunicorn
 app = create_app()
 
 if __name__ == "__main__":
     try:
-        app.run(debug=True, host='0.0.0.0', port=10000)
+        app.run(debug=True)
     except Exception as e:
         logger.error(f"Error running app: {str(e)}")
         raise
