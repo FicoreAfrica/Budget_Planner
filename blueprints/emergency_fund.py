@@ -16,6 +16,7 @@ emergency_fund_bp = Blueprint(
     _name_,
     template_folder='templates/EMERGENCYFUND',
     url_prefix='/EMERGENCYFUND'
+)
     
 class CommaSeparatedFloatField(FloatField):
     def process_formdata(self, valuelist):
