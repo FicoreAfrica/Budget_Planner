@@ -285,6 +285,7 @@ def create_app():
     @app.before_request
     def setup_session_and_language():
         try:
+            logger.info(f"Starting before_request for path: {request.path}")
             if 'sid' not in session:
                 session['sid'] = str(uuid.uuid4())
                 logger.info(f"New session ID generated: {session['sid']}")
@@ -292,11 +293,11 @@ def create_app():
                 session['lang'] = request.accept_languages.best_match(['en', 'ha'], 'en')
                 logger.info(f"Set default language to {session['lang']}")
             g.logger = logger
-            g.logger.info(f"Request started for path: {request.path}")
+            g.logger.info(f"Request processed for path: {request.path}")
             if not os.path.exists(os.path.join(os.path.dirname(__file__), 'data', 'storage.log')):
                 g.logger.warning("data/storage.log not found")
         except Exception as e:
-            logger.error(f"Before request error: {str(e)}", exc_info=True)
+            logger.error(f"Before request error for path {request.path}: {str(e)}", exc_info=True)
             raise
 
     @app.context_processor
@@ -335,11 +336,10 @@ def create_app():
         try:
             courses = current_app.config.get('COURSES', SAMPLE_COURSES)
             logger.info(f"Retrieved {len(courses)} courses")
-            processed_courses = courses
             return render_template(
                 'index.html',
                 t=translate,
-                courses=processed_courses,
+                courses=courses,
                 lang=lang,
                 sample_courses=SAMPLE_COURSES
             )
