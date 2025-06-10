@@ -50,7 +50,7 @@ def admin_required(f):
         if not current_user.is_authenticated:
             return redirect(url_for('auth.signin', next=request.url))
         if current_user.role != 'admin':
-            wirelesslyflash('You do not have permission to access this page.', 'danger')
+            flash('You do not have permission to access this page.', 'danger')
             return redirect(url_for('index'))
         return f(*args, **kwargs)
     return decorated_function
@@ -132,19 +132,23 @@ def create_app():
     app = Flask(__name__, template_folder='templates')
     
     # Set Flask secret key
-    app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key-please-change-me')
-    if not os.environ.get('FLASK_SECRET_KEY'):
+    app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY', 'dev-secret-key-please-change-me')
+    if not os.getenv('FLASK_SECRET_KEY'):
         logger.warning("FLASK_SECRET_KEY not set. Using fallback for development. Set it in production.")
     
     # Configure logging
     logger.info("Starting app creation")
     setup_logging(app)
     setup_session(app)
-    app.config['BASE_URL'] = os.environ.get('BASE_URL', 'http://localhost:5000')
+    app.config['BASE_URL'] = os.getenv('BASE_URL', 'http://localhost:5000')
     csrf.init_app(app)
 
     # Configure MongoDB
-    app.config['MONGO_URI'] = 'mongodb+srv://abumeemah:vkqA9Upw81zf0E96@fico.jmrga1s.mongodb.net/?retryWrites=true&w=majority&appName=FICO'
+    mongo_uri = os.getenv('MONGODB_URI')
+    if not mongo_uri:
+        logger.error("MONGODB_URI environment variable not set. Cannot connect to MongoDB.")
+        raise ValueError("MONGODB_URI environment variable is required.")
+    app.config['MONGO_URI'] = mongo_uri
     mongo = PyMongo(app)
     logger.info("MongoDB configured with Flask-PyMongo")
 
@@ -209,8 +213,8 @@ def create_app():
         logger.info("MongoDB collections initialized")
 
         # Check and create admin user
-        admin_email = os.environ.get('ADMIN_EMAIL')
-        admin_password = os.environ.get('ADMIN_PASSWORD')
+        admin_email = os.getenv('ADMIN_EMAIL')
+        admin_password = os.getenv('ADMIN_PASSWORD')
         if admin_email and admin_password:
             admin_user = get_user_by_email(mongo, admin_email)
             if not admin_user:
@@ -322,12 +326,12 @@ def create_app():
         return {
             'trans': context_trans,
             'current_year': datetime.now().year,
-            'LINKEDIN_URL': os.environ.get('LINKEDIN_URL', '#'),
-            'TWITTER_URL': os.environ.get('TWITTER_URL', '#'),
-            'FACEBOOK_URL': os.environ.get('FACEBOOK_URL', '#'),
-            'FEEDBACK_FORM_URL': os.environ.get('FEEDBACK_FORM_URL', '#'),
-            'WAITLIST_FORM_URL': os.environ.get('WAITLIST_FORM_URL', '#'),
-            'CONSULTANCY_FORM_URL': os.environ.get('CONSULTANCY_FORM_URL', '#'),
+            'LINKEDIN_URL': os.getenv('LINKEDIN_URL', '#'),
+            'TWITTER_URL': os.getenv('TWITTER_URL', '#'),
+            'FACEBOOK_URL': os.getenv('FACEBOOK_URL', '#'),
+            'FEEDBACK_FORM_URL': os.getenv('FEEDBACK_FORM_URL', '#'),
+            'WAITLIST_FORM_URL': os.getenv('WAITLIST_FORM_URL', '#'),
+            'CONSULTANCY_FORM_URL': os.getenv('CONSULTANCY_FORM_URL', '#'),
             'current_lang': lang,
             'current_user': current_user if has_request_context() else None,
             'csrf_token': generate_csrf
