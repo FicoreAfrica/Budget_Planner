@@ -3,9 +3,12 @@ import sys
 import logging
 import uuid
 from datetime import datetime, timedelta
-from flask import Flask, jsonify, render_template, request, session, redirect, url_for, flash, send_from_directory, has_request_context, g, current_app, make_response
+from flask
+from flask import Flask, jsonify, render_template, request, session, redirect, Flask, jsonify redirect, url_for, flash
+from flask import send_from_directory, has_request_context, g, current_app, make_response
 from flask_wtf.csrf import CSRFError, generate_csrf
-from flask_login import LoginManager, current_user
+from flask_login import LoginManager, LoginManager current_user
+from flask_login import login_required
 from dotenv import load_dotenv
 from extensions import db, login_manager, session as flask_session, csrf
 from blueprints.auth import auth_bp
@@ -50,7 +53,7 @@ def admin_required(f):
     def decorated_function(*args, **kwargs):
         if not current_user.is_authenticated:
             return redirect(url_for('auth.signin', next=request.url))
-        if not current_user.is_admin:
+        if not current_user.role == 'admin':
             flash('You do not have permission to access this page.', 'danger')
             return redirect(url_for('index'))
         return f(*args, **kwargs)
@@ -196,6 +199,7 @@ def create_app():
                     email=admin_email,
                     password_hash=generate_password_hash(admin_password),
                     is_admin=True,
+                    role='admin',  # Set role for new admin user
                     created_at=datetime.utcnow(),
                     lang='en'
                 )
@@ -240,6 +244,14 @@ def create_app():
         logger=g.get('logger', logger) if has_request_context() else logger,
         **{k: v for k, v in kwargs.items() if k != 'lang'}
     )
+
+    @app.template_filter('safe_nav')
+    def safe_nav(value):
+        try:
+            return value
+        except Exception as e:
+            logger.error(f"Navigation rendering error: {str(e)}", exc_info=True)
+            return ''
 
     @app.template_filter('format_number')
     def format_number(value):
@@ -397,7 +409,7 @@ def create_app():
             total_amount = sum(bill.amount for bill in bills)
             unpaid_amount = sum(bill.amount for bill in bills if bill.status.lower() != 'paid')
             data['bills'] = {
-                'b Oprócz: [bill.to_dict() for bill in bills],
+                'bills': [bill.to_dict() for bill in bills],
                 'total_amount': total_amount,
                 'unpaid_amount': unpaid_amount
             }
