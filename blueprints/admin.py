@@ -1,17 +1,15 @@
 from flask import Blueprint, render_template, request, session, redirect, url_for, flash, jsonify, Response
 from flask_login import login_required, current_user
 from datetime import datetime, timedelta
-from extensions import db
-from models import User, ToolUsage, Feedback
-from app import admin_required, trans
+from app import admin_required, trans, logger as app_logger
+from models import get_user, get_tool_usage, get_feedback, to_dict_tool_usage, to_dict_feedback
 import logging
 import csv
 from io import StringIO
-from sqlalchemy import func
+from pymongo import MongoClient
 
 # Configure logging with SessionAdapter
 logger = logging.getLogger('ficore_app.admin')  # Namespaced logger
-from app import logger as app_logger  # Import the SessionAdapter instance
 
 # Define the admin blueprint
 admin_bp = Blueprint('admin', __name__, template_folder='templates/admin', url_prefix='/admin')
@@ -30,80 +28,97 @@ def overview():
     """Admin dashboard overview page."""
     lang = session.get('lang', 'en')
     try:
+        mongo = MongoClient(current_app.config['MONGO_URI']).get_database()
+
         # User Stats
-        total_users = User.query.count()
+        total_users = mongo.users.count_documents({})
         last_day = datetime.utcnow() - timedelta(days=1)
-        new_users_last_24h = User.query.filter(User.created_at >= last_day).count()
+        new_users_last_24h = mongo.users.count_documents({'created_at': {'$gte': last_day}})
 
         # Referral Stats
-        total_referrals = User.query.filter(User.referred_by_id.isnot(None)).count()
-        new_referrals_last_24h = User.query.filter(
-            User.referred_by_id.isnot(None),
-            User.created_at >= last_day
-        ).count()
+        total_referrals = mongo.users.count_documents({'referred_by_id': {'$ne': None}})
+        new_referrals_last_24h = mongo.users.count_documents({
+            'referred_by_id': {'$ne': None},
+            'created_at': {'$gte': last_day}
+        })
         referral_conversion_rate = (total_referrals / total_users * 100) if total_users else 0.0
 
         # Tool Usage Stats
-        tool_usage_total = ToolUsage.query.count()
-        usage_by_tool = db.session.query(ToolUsage.tool_name, func.count(ToolUsage.id)).group_by(ToolUsage.tool_name).all()
-        top_tools = sorted(usage_by_tool, key=lambda x: x[1], reverse=True)[:3]
+        tool_usage_total = mongo.tool_usage.count_documents({})
+        usage_by_tool = list(mongo.tool_usage.aggregate([
+            {'$group': {'_id': '$tool_name', 'count': {'$sum': 1}}},
+            {'$project': {'tool_name': '$_id', 'count': 1, '_id': 0}}
+        ]))
+        top_tools = sorted(usage_by_tool, key=lambda x: x['count'], reverse=True)[:3]
 
         # Action Breakdown for Top Tools
         action_breakdown = {}
-        for tool, _ in top_tools:
-            actions = db.session.query(ToolUsage.action, func.count(ToolUsage.id))\
-                .filter(ToolUsage.tool_name == tool)\
-                .group_by(ToolUsage.action)\
-                .limit(5).all()
-            action_breakdown[tool] = actions
+        for tool in [t['tool_name'] for t in top_tools]:
+            actions = list(mongo.tool_usage.aggregate([
+                {'$match': {'tool_name': tool}},
+                {'$group': {'_id': '$action', 'count': {'$sum': 1}}},
+                {'$project': {'action': '$_id', 'count': 1, '_id': 0}},
+                {'$sort': {'count': -1}},
+                {'$limit': 5}
+            ]))
+            action_breakdown[tool] = [(a['action'], a['count']) for a in actions]
 
         # Engagement Metrics
-        multi_tool_users = db.session.query(ToolUsage.user_id, func.count(func.distinct(ToolUsage.tool_name)))\
-            .filter(ToolUsage.tool_name.in_(VALID_TOOLS[3:]))\
-            .group_by(ToolUsage.user_id)\
-            .having(func.count(func.distinct(ToolUsage.tool_name)) > 1)\
-            .count()
-        total_sessions = db.session.query(func.count(func.distinct(ToolUsage.session_id)))\
-            .filter(ToolUsage.tool_name.in_(VALID_TOOLS[3:])).scalar()
-        multi_tool_ratio = (multi_tool_users / total_sessions * 100) if total_sessions else 0.0
+        multi_tool_users = mongo.tool_usage.aggregate([
+            {'$match': {'tool_name': {'$in': VALID_TOOLS[3:]}}},
+            {'$group': {'_id': '$user_id', 'tools': {'$addToSet': '$tool_name'}}},
+            {'$match': {'$expr': {'$gt': [{'$size': '$tools'}, 1]}}},
+            {'$count': 'multi_tool_users'}
+        ])
+        multi_tool_users = next(multi_tool_users, {'multi_tool_users': 0})['multi_tool_users']
+        total_sessions = mongo.tool_usage.distinct('session_id', {'tool_name': {'$in': VALID_TOOLS[3:]}})
+        total_sessions_count = len(total_sessions)
+        multi_tool_ratio = (multi_tool_users / total_sessions_count * 100) if total_sessions_count else 0.0
 
-        anon_sessions = db.session.query(ToolUsage.session_id)\
-            .filter(ToolUsage.user_id.is_(None), ToolUsage.tool_name.in_(VALID_TOOLS[3:]))\
-            .distinct().subquery()
-        converted_sessions = db.session.query(ToolUsage.session_id)\
-            .filter(ToolUsage.tool_name == 'register', ToolUsage.session_id.in_(anon_sessions))\
-            .distinct().count()
-        anon_total = db.session.query(anon_sessions).count()
+        anon_sessions = mongo.tool_usage.distinct('session_id', {
+            'user_id': None,
+            'tool_name': {'$in': VALID_TOOLS[3:]}
+        })
+        converted_sessions = mongo.tool_usage.count_documents({
+            'tool_name': 'register',
+            'session_id': {'$in': anon_sessions}
+        })
+        anon_total = len(anon_sessions)
         conversion_rate = (converted_sessions / anon_total * 100) if anon_total else 0.0
 
         # Feedback
-        avg_feedback = db.session.query(func.avg(Feedback.rating)).scalar() or 0.0
+        avg_feedback = list(mongo.feedback.aggregate([
+            {'$group': {'_id': None, 'avg_rating': {'$avg': '$rating'}}},
+            {'$project': {'avg_rating': 1, '_id': 0}}
+        ]))
+        avg_feedback = avg_feedback[0]['avg_rating'] if avg_feedback else 0.0
 
         # Chart Data (last 30 days)
         end_date = datetime.utcnow()
         start_date = end_date - timedelta(days=30)
-        daily_usage = db.session.query(
-            func.date(ToolUsage.created_at).label('date'),
-            ToolUsage.tool_name,
-            func.count(ToolUsage.id).label('count')
-        )\
-        .filter(ToolUsage.created_at >= start_date, ToolUsage.created_at <= end_date)\
-        .group_by('date', ToolUsage.tool_name)\
-        .order_by('date')\
-        .all()
+        daily_usage = list(mongo.tool_usage.aggregate([
+            {'$match': {'created_at': {'$gte': start_date, '$lte': end_date}}},
+            {'$group': {
+                '_id': {
+                    'date': {'$dateToString': {'format': '%Y-%m-%d', 'date': '$created_at'}},
+                    'tool_name': '$tool_name'
+                },
+                'count': {'$sum': 1}
+            }},
+            {'$sort': {'_id.date': 1}}
+        ]))
 
-        daily_referrals = db.session.query(
-            func.date(User.created_at).label('date'),
-            func.count(User.id).label('count')
-        )\
-        .filter(
-            User.referred_by_id.isnot(None),
-            User.created_at >= start_date,
-            User.created_at <= end_date
-        )\
-        .group_by('date')\
-        .order_by('date')\
-        .all()
+        daily_referrals = list(mongo.users.aggregate([
+            {'$match': {
+                'referred_by_id': {'$ne': None},
+                'created_at': {'$gte': start_date, '$lte': end_date}
+            }},
+            {'$group': {
+                '_id': {'$dateToString': {'format': '%Y-%m-%d', 'date': '$created_at'}},
+                'count': {'$sum': 1}
+            }},
+            {'$sort': {'_id': 1}}
+        ]))
 
         chart_data = {
             'labels': [],
@@ -115,7 +130,8 @@ def overview():
 
         current_date = start_date
         while current_date <= end_date:
-            chart_data['labels'].append(current_date.strftime('%Y-%m-%d'))
+            date_str = current_date.strftime('%Y-%m-%d')
+            chart_data['labels'].append(date_str)
             chart_data['registrations'].append(0)
             chart_data['logins'].append(0)
             chart_data['referrals'].append(0)
@@ -123,9 +139,12 @@ def overview():
                 chart_data['tool_usage'][tool].append(0)
             current_date += timedelta(days=1)
 
-        for date, tool_name, count in daily_usage:
-            idx = (datetime.strptime(date, '%Y-%m-%d') - start_date).days
-            if 0 <= idx < len(chart_data['labels']):
+        for item in daily_usage:
+            date = item['_id']['date']
+            tool_name = item['_id']['tool_name']
+            count = item['count']
+            idx = chart_data['labels'].index(date) if date in chart_data['labels'] else None
+            if idx is not None:
                 if tool_name == 'register':
                     chart_data['registrations'][idx] = count
                 elif tool_name == 'login':
@@ -133,9 +152,11 @@ def overview():
                 elif tool_name in chart_data['tool_usage']:
                     chart_data['tool_usage'][tool_name][idx] = count
 
-        for date, count in daily_referrals:
-            idx = (datetime.strptime(date, '%Y-%m-%d') - start_date).days
-            if 0 <= idx < len(chart_data['labels']):
+        for item in daily_referrals:
+            date = item['_id']
+            count = item['count']
+            idx = chart_data['labels'].index(date) if date in chart_data['labels'] else None
+            if idx is not None:
                 chart_data['referrals'][idx] = count
 
         metrics = {
@@ -145,7 +166,7 @@ def overview():
             'new_referrals_last_24h': new_referrals_last_24h,
             'referral_conversion_rate': round(referral_conversion_rate, 2),
             'tool_usage_total': tool_usage_total,
-            'top_tools': top_tools,
+            'top_tools': [(t['tool_name'], t['count']) for t in top_tools],
             'action_breakdown': action_breakdown,
             'multi_tool_ratio': round(multi_tool_ratio, 2),
             'conversion_rate': round(conversion_rate, 2),
@@ -175,34 +196,36 @@ def tool_usage():
     """Detailed tool usage analytics with filters."""
     lang = session.get('lang', 'en')
     try:
+        mongo = MongoClient(current_app.config['MONGO_URI']).get_database()
         tool_name = request.args.get('tool_name')
         start_date_str = request.args.get('start_date')
         end_date_str = request.args.get('end_date')
         action = request.args.get('action')
 
-        query = ToolUsage.query
+        filters = {}
         if tool_name and tool_name in VALID_TOOLS[3:]:
-            query = query.filter_by(tool_name=tool_name)
+            filters['tool_name'] = tool_name
         if action:
-            query = query.filter_by(action=action)
+            filters['action'] = action
         if start_date_str:
             start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
-            query = query.filter(ToolUsage.created_at >= start_date)
+            filters['created_at'] = filters.get('created_at', {})
+            filters['created_at']['$gte'] = start_date
         else:
             start_date = datetime.utcnow() - timedelta(days=30)
         if end_date_str:
             end_date = datetime.strptime(end_date_str, '%Y-%m-%d') + timedelta(days=1)
-            query = query.filter(ToolUsage.created_at < end_date)
+            filters['created_at'] = filters.get('created_at', {})
+            filters['created_at']['$lt'] = end_date
         else:
             end_date = datetime.utcnow()
 
-        usage_logs = query.order_by(ToolUsage.created_at.desc()).limit(100).all()
+        usage_logs = list(mongo.tool_usage.find(filters, {'_id': 0}).sort('created_at', -1).limit(100))
+        usage_logs = [to_dict_tool_usage(log) for log in usage_logs]
 
         # Available actions for the selected tool
-        available_actions = db.session.query(ToolUsage.action)\
-            .filter(ToolUsage.tool_name == tool_name if tool_name else True)\
-            .distinct().all()
-        available_actions = [a[0] for a in available_actions if a[0] is not None]
+        available_actions = mongo.tool_usage.distinct('action', {'tool_name': tool_name} if tool_name else {})
+        available_actions = [a for a in available_actions if a]
 
         # Chart data
         chart_data = {
@@ -214,21 +237,32 @@ def tool_usage():
         while current_date < end_date:
             date_str = current_date.strftime('%Y-%m-%d')
             chart_data['labels'].append(date_str)
-            daily_query = query.filter(func.date(ToolUsage.created_at) == current_date.date())
-            total_count = daily_query.count()
+            daily_filters = filters.copy()
+            daily_filters['created_at'] = {
+                '$gte': current_date,
+                '$lt': current_date + timedelta(days=1)
+            }
+            total_count = mongo.tool_usage.count_documents(daily_filters)
             chart_data['total_counts'].append(total_count)
             if tool_name:
-                action_counts = db.session.query(ToolUsage.action, func.count(ToolUsage.id))\
-                    .filter(
-                        ToolUsage.tool_name == tool_name,
-                        func.date(ToolUsage.created_at) == current_date.date()
-                    )\
-                    .group_by(ToolUsage.action).all()
-                for act, count in action_counts:
-                    if act and act not in chart_data['usage_counts']:
-                        chart_data['usage_counts'][act] = [0] * len(chart_data['labels'])
-                    if act:
-                        chart_data['usage_counts'][act][-1] = count
+                action_counts = list(mongo.tool_usage.aggregate([
+                    {'$match': {
+                        'tool_name': tool_name,
+                        'created_at': {
+                            '$gte': current_date,
+                            '$lt': current_date + timedelta(days=1)
+                        }
+                    }},
+                    {'$group': {'_id': '$action', 'count': {'$sum': 1}}},
+                    {'$project': {'action': '$_id', 'count': 1, '_id': 0}}
+                ]))
+                for act in action_counts:
+                    action = act['action']
+                    count = act['count']
+                    if action and action not in chart_data['usage_counts']:
+                        chart_data['usage_counts'][action] = [0] * len(chart_data['labels'])
+                    if action:
+                        chart_data['usage_counts'][action][-1] = count
             current_date += timedelta(days=1)
 
         logger.info(f"Tool usage analytics accessed by {current_user.username}, tool={tool_name}, action={action}, start={start_date_str}, end={end_date_str}")
@@ -254,38 +288,42 @@ def tool_usage():
 @admin_required
 def export_csv():
     """Export filtered tool usage logs as CSV."""
-    lang = session.get('lang', 'en')  # Define lang
+    lang = session.get('lang', 'en')
     try:
+        mongo = MongoClient(current_app.config['MONGO_URI']).get_database()
         tool_name = request.args.get('tool_name')
         start_date_str = request.args.get('start_date')
         end_date_str = request.args.get('end_date')
         action = request.args.get('action')
 
-        query = ToolUsage.query
+        filters = {}
         if tool_name and tool_name in VALID_TOOLS[3:]:
-            query = query.filter_by(tool_name=tool_name)
+            filters['tool_name'] = tool_name
         if action:
-            query = query.filter_by(action=action)
+            filters['action'] = action
         if start_date_str:
             start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
-            query = query.filter(ToolUsage.created_at >= start_date)
+            filters['created_at'] = filters.get('created_at', {})
+            filters['created_at']['$gte'] = start_date
         if end_date_str:
             end_date = datetime.strptime(end_date_str, '%Y-%m-%d') + timedelta(days=1)
-            query = query.filter(ToolUsage.created_at < end_date)
+            filters['created_at'] = filters.get('created_at', {})
+            filters['created_at']['$lt'] = end_date
 
-        usage_logs = query.all()
+        usage_logs = list(mongo.tool_usage.find(filters, {'_id': 0}))
+        usage_logs = [to_dict_tool_usage(log) for log in usage_logs]
 
         si = StringIO()
         cw = csv.writer(si)
         cw.writerow(['ID', 'User ID', 'Session ID', 'Tool Name', 'Action', 'Created At'])
         for log in usage_logs:
             cw.writerow([
-                log.id,
-                log.user_id or 'anonymous',
-                log.session_id,
-                log.tool_name,
-                log.action or 'N/A',
-                log.created_at.isoformat() if log.created_at else 'N/A'
+                log['id'],
+                log['user_id'] or 'anonymous',
+                log['session_id'],
+                log['tool_name'],
+                log['action'] or 'N/A',
+                log['created_at'] or 'N/A'
             ])
 
         output = si.getvalue()
