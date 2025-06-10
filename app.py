@@ -44,17 +44,17 @@ class SessionAdapter(logging.LoggerAdapter):
 
 logger = SessionAdapter(root_logger, {})
 
-# # Define admin_required decorator
-# def admin_required(f):
-#     @wraps(f)
-#     def decorated_function(*args, **kwargs):
-#         if not current_user.is_authenticated:
-#             return redirect(url_for('auth.signin', next=request.url))
-#         if current_user.role != 'admin':
-#             flash('You do not have permission to access this page.', 'danger')
-#             return redirect(url_for('index'))
-#         return f(*args, **kwargs)
-#     return decorated_function
+# Define admin_required decorator
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated:
+            return redirect(url_for('auth.signin', next=request.url))
+        if current_user.role != 'admin':
+            flash('You do not have permission to access this page.', 'danger')
+            return redirect(url_for('index'))
+        return f(*args, **kwargs)
+    return decorated_function
 
 def setup_logging(app):
     # Configure StreamHandler for custom logger
@@ -215,28 +215,28 @@ def create_app():
         initialize_courses_data(app)
         logger.info("Database tables created and courses initialized")
 
-        # # Check and create admin user
-        # admin_email = os.environ.get('ADMIN_EMAIL')
-        # admin_password = os.environ.get('ADMIN_PASSWORD')
-        # if admin_email and admin_password:
-        #     admin_user = User.query.filter_by(email=admin_email).first()
-        #     if not admin_user:
-        #         admin_user = User(
-        #             username='admin_' + str(uuid.uuid4())[:8],
-        #             email=admin_email,
-        #             password_hash=generate_password_hash(admin_password),
-        #             is_admin=True,
-        #             role='admin',
-        #             created_at=datetime.utcnow(),
-        #             lang='en'
-        #         )
-        #         db.session.add(admin_user)
-        #         db.session.commit()
-        #         logger.info(f"Admin user created with email: {admin_email}")
-        #     else:
-        #         logger.info(f"Admin user already exists with email: {admin_email}")
-        # else:
-        #     logger.warning("ADMIN_EMAIL or ADMIN_PASSWORD not set in environment variables.")
+        # Check and create admin user
+        admin_email = os.environ.get('ADMIN_EMAIL')
+        admin_password = os.environ.get('ADMIN_PASSWORD')
+        if admin_email and admin_password:
+            admin_user = User.query.filter_by(email=admin_email).first()
+            if not admin_user:
+                admin_user = User(
+                    username='admin_' + str(uuid.uuid4())[:8],
+                    email=admin_email,
+                    password_hash=generate_password_hash(admin_password),
+                    is_admin=True,
+                    role='admin',
+                    created_at=datetime.utcnow(),
+                    lang='en'
+                )
+                db.session.add(admin_user)
+                db.session.commit()
+                logger.info(f"Admin user created with email: {admin_email}")
+            else:
+                logger.info(f"Admin user already exists with email: {admin_email}")
+        else:
+            logger.warning("ADMIN_EMAIL or ADMIN_PASSWORD not set in environment variables.")
 
     # Register blueprints
     from blueprints.financial_health import financial_health_bp
@@ -247,7 +247,7 @@ def create_app():
     from blueprints.emergency_fund import emergency_fund_bp
     from blueprints.learning_hub import learning_hub_bp
     from blueprints.auth import auth_bp
-    # from blueprints.admin import admin_bp
+    from blueprints.admin import admin_bp
 
     app.register_blueprint(financial_health_bp, template_folder='templates/HEALTHSCORE')
     app.register_blueprint(budget_bp, template_folder='templates/BUDGET')
@@ -257,7 +257,7 @@ def create_app():
     app.register_blueprint(emergency_fund_bp, template_folder='templates/EMERGENCYFUND')
     app.register_blueprint(learning_hub_bp, template_folder='templates/LEARNINGHUB')
     app.register_blueprint(auth_bp, template_folder='templates/auth')
-    # app.register_blueprint(admin_bp, template_folder='templates/admin')
+    app.register_blueprint(admin_bp, template_folder='templates/admin')
 
     def translate(key, lang='en', logger=logger, **kwargs):
         translation = trans(key, lang=lang, **kwargs)
