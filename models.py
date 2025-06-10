@@ -18,7 +18,7 @@ def create_user(mongo, user_data):
         'referral_code': user_data.get('referral_code', str(uuid.uuid4())),
         'is_admin': user_data.get('is_admin', False),
         'role': user_data.get('role', 'user'),
-        'referred_by_id': user_data.get('referred_by_id'),
+        'referred_by_id': user_data.get('referred_by_id')
     }
     mongo.db.users.insert_one(user)
     return user
@@ -27,17 +27,27 @@ def get_user(mongo, user_id):
     """Retrieve a user by ID."""
     user = mongo.db.users.find_one({'id': int(user_id)}, {'_id': 0})
     if user:
-        User = namedtuple('User', user.keys())
+        User = namedtuple('User', user.keys(), defaults=(None,) * len(user))
         return User(**user)
     return None
 
 def get_user_by_email(mongo, email):
     """Retrieve a user by email."""
-    return mongo.db.users.find_one({'email': email}, {'_id': 0})
+    user = mongo.db.users.find_one({'email': email}, {'_id': 0})
+    if user:
+        User = namedtuple('User', user.keys(), defaults=(None,) * len(user))
+        return User(**user)
+    return None
 
 def update_user(mongo, user_id, updates):
     """Update user fields."""
     mongo.db.users.update_one({'id': int(user_id)}, {'$set': updates})
+
+def get_referrals(mongo, user_id):
+    """Retrieve users referred by the given user ID."""
+    referrals = mongo.db.users.find({'referred_by_id': int(user_id)}, {'_id': 0})
+    User = namedtuple('User', ['id', 'username', 'email', 'created_at', 'lang', 'referral_code', 'is_admin', 'role', 'referred_by_id'], defaults=(None,) * 9)
+    return [User(**r) for r in referrals]
 
 # Course helper functions
 def create_course(mongo, course_data):
@@ -123,7 +133,7 @@ def create_financial_health(mongo, fh_data):
 
 def get_financial_health(mongo, filters):
     """Retrieve financial health records by filters."""
-    return list(mongo.db.financial_health.find(filters, {'_id': 0}))
+    return list(mongo.db.financial_health.find(filters, {'_id': 0}).sort('created_at', -1))
 
 def to_dict_financial_health(fh):
     """Convert financial health document to dict."""
@@ -181,7 +191,7 @@ def create_budget(mongo, budget_data):
 
 def get_budgets(mongo, filters):
     """Retrieve budget records by filters."""
-    return list(mongo.db.budgets.find(filters, {'_id': 0}))
+    return list(mongo.db.budgets.find(filters, {'_id': 0}).sort('created_at', -1))
 
 def to_dict_budget(budget):
     """Convert budget document to dict."""
@@ -274,7 +284,7 @@ def create_net_worth(mongo, nw_data):
 
 def get_net_worth(mongo, filters):
     """Retrieve net worth records by filters."""
-    return list(mongo.db.net_worth.find(filters, {'_id': 0}))
+    return list(mongo.db.net_worth.find(filters, {'_id': 0}).sort('created_at', -1))
 
 def to_dict_net_worth(nw):
     """Convert net worth document to dict."""
@@ -331,7 +341,7 @@ def create_emergency_fund(mongo, ef_data):
 
 def get_emergency_funds(mongo, filters):
     """Retrieve emergency fund records by filters."""
-    return list(mongo.db.emergency_funds.find(filters, {'_id': 0}))
+    return list(mongo.db.emergency_funds.find(filters, {'_id': 0}).sort('created_at', -1))
 
 def to_dict_emergency_fund(ef):
     """Convert emergency fund document to dict."""
@@ -423,7 +433,7 @@ def create_quiz_result(mongo, qr_data):
 
 def get_quiz_results(mongo, filters):
     """Retrieve quiz result records by filters."""
-    return list(mongo.db.quiz_results.find(filters, {'_id': 0}))
+    return list(mongo.db.quiz_results.find(filters, {'_id': 0}).sort('created_at', -1))
 
 def to_dict_quiz_result(qr):
     """Convert quiz result document to dict."""
@@ -494,7 +504,7 @@ def create_tool_usage(mongo, tool_usage_data):
         'created_at': tool_usage_data.get('created_at', datetime.utcnow())
     }
     mongo.db.tool_usage.insert_one(tool_usage)
-    return tool_usage
+    return的历史
 
 def get_tool_usage(mongo, filters):
     """Retrieve tool usage records by filters."""
@@ -524,15 +534,12 @@ def log_tool_usage(mongo, tool_name, user_id=None, session_id=None, action=None,
         details (dict): Additional details for logging
     """
     try:
-        tool_usage = {
-            'id': str(uuid.uuid4()),
+        create_tool_usage(mongo, {
             'tool_name': tool_name,
             'user_id': user_id,
             'session_id': session_id or session.get('sid', 'unknown'),
-            'action': action or 'unknown',
-            'created_at': datetime.utcnow()
-        }
-        mongo.db.tool_usage.insert_one(tool_usage)
+            'action': action or 'unknown'
+        })
         current_app.logger.info(f"Logged tool usage: {tool_name} for session {session_id}", extra={'details': details})
     except Exception as e:
         current_app.logger.error(f"Failed to log tool usage: {str(e)}", extra={'tool_name': tool_name, 'session_id': session_id, 'details': details})
