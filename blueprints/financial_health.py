@@ -16,6 +16,7 @@ financial_health_bp = Blueprint(
     _name_,
     template_folder='templates/HEALTHSCORE',
     url_prefix='/HEALTHSCORE'
+)
     
 class Step1Form(FlaskForm):
     first_name = StringField()
