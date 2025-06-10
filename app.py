@@ -12,6 +12,7 @@ from extensions import login_manager, session as flask_session, csrf
 from blueprints.auth import auth_bp
 from translations import trans
 from scheduler_setup import init_scheduler
+from models import create_user, get_user_by_email, log_tool_usage
 import json
 from functools import wraps
 from uuid import uuid4
@@ -49,7 +50,7 @@ def admin_required(f):
         if not current_user.is_authenticated:
             return redirect(url_for('auth.signin', next=request.url))
         if current_user.role != 'admin':
-            flash('You do not have permission to access this page.', 'danger')
+            wirelesslyflash('You do not have permission to access this page.', 'danger')
             return redirect(url_for('index'))
         return f(*args, **kwargs)
     return decorated_function
@@ -147,6 +148,38 @@ def create_app():
     mongo = PyMongo(app)
     logger.info("MongoDB configured with Flask-PyMongo")
 
+    # Create MongoDB indexes
+    try:
+        mongo.db.users.create_index('email', unique=True)
+        mongo.db.users.create_index('referral_code', unique=True)
+        mongo.db.courses.create_index('id', unique=True)
+        mongo.db.content_metadata.create_index([('course_id', 1), ('lesson_id', 1)])
+        mongo.db.financial_health.create_index('session_id')
+        mongo.db.financial_health.create_index('user_id')
+        mongo.db.budgets.create_index('session_id')
+        mongo.db.budgets.create_index('user_id')
+        mongo.db.bills.create_index('session_id')
+        mongo.db.bills.create_index('user_id')
+        mongo.db.net_worth.create_index('session_id')
+        mongo.db.net_worth.create_index('user_id')
+        mongo.db.emergency_funds.create_index('session_id')
+        mongo.db.emergency_funds.create_index('user_id')
+        mongo.db.learning_progress.create_index([('user_id', 1), ('course_id', 1)], unique=True)
+        mongo.db.learning_progress.create_index([('session_id', 1), ('course_id', 1)], unique=True)
+        mongo.db.learning_progress.create_index('session_id')
+        mongo.db.learning_progress.create_index('user_id')
+        mongo.db.quiz_results.create_index('session_id')
+        mongo.db.quiz_results.create_index('user_id')
+        mongo.db.feedback.create_index('session_id')
+        mongo.db.feedback.create_index('user_id')
+        mongo.db.tool_usage.create_index('session_id')
+        mongo.db.tool_usage.create_index('user_id')
+        mongo.db.tool_usage.create_index('tool_name')
+        logger.info("MongoDB indexes created")
+    except Exception as e:
+        logger.error(f"Failed to create MongoDB indexes: {str(e)}", exc_info=True)
+        raise
+
     # Initialize Flask-Login
     login_manager.init_app(app)
     login_manager.login_view = 'auth.signin'
@@ -154,11 +187,10 @@ def create_app():
     @login_manager.user_loader
     def load_user(user_id):
         try:
-            user = mongo.db.users.find_one({'id': int(user_id)}, {'_id': 0})
+            from models import get_user
+            user = get_user(mongo, user_id)
             if user:
-                from collections import namedtuple
-                User = namedtuple('User', user.keys())
-                return User(**user)
+                return user
             return None
         except Exception as e:
             logger.error(f"Error loading user {user_id}: {str(e)}")
@@ -180,10 +212,9 @@ def create_app():
         admin_email = os.environ.get('ADMIN_EMAIL')
         admin_password = os.environ.get('ADMIN_PASSWORD')
         if admin_email and admin_password:
-            admin_user = mongo.db.users.find_one({'email': admin_email}, {'_id': 0})
+            admin_user = get_user_by_email(mongo, admin_email)
             if not admin_user:
-                admin_user = {
-                    'id': int(uuid.uuid4().int & (1<<31)-1),  # Generate 31-bit positive integer ID
+                admin_user = create_user(mongo, {
                     'username': 'admin_' + str(uuid.uuid4())[:8],
                     'email': admin_email,
                     'password_hash': generate_password_hash(admin_password),
@@ -191,8 +222,7 @@ def create_app():
                     'role': 'admin',
                     'created_at': datetime.utcnow(),
                     'lang': 'en'
-                }
-                mongo.db.users.insert_one(admin_user)
+                })
                 logger.info(f"Admin user created with email: {admin_email}")
             else:
                 logger.info(f"Admin user already exists with email: {admin_email}")
@@ -370,37 +400,44 @@ def create_app():
         logger.info("Serving general dashboard")
         data = {}
         try:
+            from models import get_financial_health, get_budgets, get_bills, get_net_worth, get_emergency_funds, get_learning_progress, get_quiz_results, to_dict_financial_health, to_dict_budget, to_dict_bill, to_dict_net_worth, to_dict_emergency_fund, to_dict_learning_progress, to_dict_quiz_result
             filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
 
             # Financial Health
-            fh_records = list(mongo.db.financial_health.find(filter_kwargs).sort('created_at', -1))
-            data['financial_health'] = {'score': fh_records[0]['score'] if fh_records else None, 'status': fh_records[0]['status'] if fh_records else None}
+            fh_records = get_financial_health(mongo, filter_kwargs)
+            fh_records = [to_dict_financial_health(fh) for fh in fh_records]
+            data['financial_health'] = fh_records[0] if fh_records else {'score': None, 'status': None}
 
             # Budget
-            budget_records = list(mongo.db.budgets.find(filter_kwargs).sort('created_at', -1))
-            data['budget'] = {'surplus_deficit': budget_records[0]['surplus_deficit'] if budget_records else None, 'savings_goal': budget_records[0]['savings_goal'] if budget_records else None}
+            budget_records = get_budgets(mongo, filter_kwargs)
+            budget_records = [to_dict_budget(b) for b in budget_records]
+            data['budget'] = budget_records[0] if budget_records else {'surplus_deficit': None, 'savings_goal': None}
 
             # Bills
-            bills = list(mongo.db.bills.find(filter_kwargs))
+            bills = get_bills(mongo, filter_kwargs)
+            bills = [to_dict_bill(b) for b in bills]
             total_amount = sum(bill['amount'] for bill in bills) if bills else 0
             unpaid_amount = sum(bill['amount'] for bill in bills if bill['status'].lower() != 'paid') if bills else 0
-            data['bills'] = {'bills': bills if bills else [], 'total_amount': total_amount, 'unpaid_amount': unpaid_amount}
+            data['bills'] = {'bills': bills, 'total_amount': total_amount, 'unpaid_amount': unpaid_amount}
 
             # Net Worth
-            nw_records = list(mongo.db.net_worth.find(filter_kwargs).sort('created_at', -1))
-            data['net_worth'] = {'net_worth': nw_records[0]['net_worth'] if nw_records else None, 'total_assets': nw_records[0]['total_assets'] if nw_records else None}
+            nw_records = get_net_worth(mongo, filter_kwargs)
+            nw_records = [to_dict_net_worth(nw) for nw in nw_records]
+            data['net_worth'] = nw_records[0] if nw_records else {'net_worth': None, 'total_assets': None}
 
             # Emergency Fund
-            ef_records = list(mongo.db.emergency_funds.find(filter_kwargs).sort('created_at', -1))
-            data['emergency_fund'] = {'target_amount': ef_records[0]['target_amount'] if ef_records else None, 'savings_gap': ef_records[0]['savings_gap'] if ef_records else None}
+            ef_records = get_emergency_funds(mongo, filter_kwargs)
+            ef_records = [to_dict_emergency_fund(ef) for ef in ef_records]
+            data['emergency_fund'] = ef_records[0] if ef_records else {'target_amount': None, 'savings_gap': None}
 
             # Learning Progress
-            lp_records = list(mongo.db.learning_progress.find(filter_kwargs))
-            data['learning_progress'] = {lp['course_id']: lp for lp in lp_records} if lp_records else {}
+            lp_records = get_learning_progress(mongo, filter_kwargs)
+            data['learning_progress'] = {lp['course_id']: to_dict_learning_progress(lp) for lp in lp_records} if lp_records else {}
 
             # Quiz Result
-            quiz_records = list(mongo.db.quiz_results.find(filter_kwargs).sort('created_at', -1))
-            data['quiz'] = {'personality': quiz_records[0]['personality'] if quiz_records else None, 'score': quiz_records[0]['score'] if quiz_records else None}
+            quiz_records = get_quiz_results(mongo, filter_kwargs)
+            quiz_records = [to_dict_quiz_result(qr) for qr in quiz_records]
+            data['quiz'] = quiz_records[0] if quiz_records else {'personality': None, 'score': None}
 
             logger.info(f"Retrieved data for session {session['sid']}")
             return render_template('general_dashboard.html', data=data, t=translate, lang=lang)
@@ -487,6 +524,7 @@ def create_app():
             logger.info("Rendering feedback template")
             return render_template('feedback.html', t=translate, lang=lang, tool_options=tool_options)
         try:
+            from models import create_feedback
             tool_name = request.form.get('tool_name')
             rating = request.form.get('rating')
             comment = request.form.get('comment', '')
@@ -498,15 +536,13 @@ def create_app():
                 logger.error(f"Invalid feedback rating: {rating}")
                 flash(translate('core_feedback_invalid_rating', default='Please provide a rating between 1 and 5', lang=lang), 'error')
                 return render_template('feedback.html', t=translate, lang=lang, tool_options=tool_options)
-            feedback_entry = {
+            feedback_entry = create_feedback(mongo, {
                 'user_id': current_user.id if current_user.is_authenticated else None,
                 'session_id': session['sid'],
                 'tool_name': tool_name,
                 'rating': int(rating),
-                'comment': comment.strip() or None,
-                'created_at': datetime.utcnow()
-            }
-            mongo.db.feedback.insert_one(feedback_entry)
+                'comment': comment.strip() or None
+            })
             logger.info(f"Feedback submitted: tool={tool_name}, rating={rating}, session={session['sid']}")
             flash(translate('core_feedback_success', default='Thank you for your feedback!', lang=lang), 'success')
             return redirect(url_for('index'))
@@ -514,19 +550,6 @@ def create_app():
             logger.error(f"Error processing feedback: {str(e)}")
             flash(translate('core_global_error', default='Error occurred while submitting feedback', lang=lang), 'error')
             return render_template('feedback.html', t=translate, lang=lang, tool_options=tool_options), 500
-
-    def log_tool_usage(tool_name):
-        try:
-            tool_usage = {
-                'user_id': current_user.id if current_user.is_authenticated else None,
-                'session_id': session.get('sid', 'unknown'),
-                'tool_name': tool_name,
-                'created_at': datetime.utcnow()
-            }
-            mongo.db.tool_usage.insert_one(tool_usage)
-            logger.info(f"Logged tool usage: {tool_name} for session {session.get('sid', 'unknown')}")
-        except Exception as e:
-            logger.error(f"Error logging tool usage: {str(e)}")
 
     logger.info("App creation completed")
     return app, mongo
