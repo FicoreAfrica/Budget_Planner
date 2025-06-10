@@ -10,6 +10,7 @@ from models import User, log_tool_usage
 import logging
 import uuid
 from datetime import datetime
+import os
 
 # Configure logging
 logger = logging.getLogger('ficore_app')
@@ -133,19 +134,21 @@ def signup():
     try:
         if request.method == 'POST':
             if form.validate_on_submit():
-                is_admin = form.email.data == 'abumeemah@gmail.com'  # Assign admin status
+                is_admin = form.email.data == os.environ.get('ADMIN_EMAIL', 'abumeemah@gmail.com')
+                role = 'admin' if is_admin else 'user'
                 user = User(
                     username=form.username.data,
                     email=form.email.data,
                     password_hash=generate_password_hash(form.password.data),
                     is_admin=is_admin,
+                    role=role,
                     referred_by_id=referrer.id if referrer else None,
                     created_at=datetime.utcnow(),
                     lang=lang
                 )
                 db.session.add(user)
                 db.session.commit()
-                logger.info(f"User signed up: {user.username} with referral code: {referral_code or 'none'}, is_admin: {is_admin}", extra={'session_id': session_id})
+                logger.info(f"User signed up: {user.username} with referral code: {referral_code or 'none'}, role: {role}, is_admin: {is_admin}", extra={'session_id': session_id})
                 log_tool_usage('register', user.id, session_id, 'submit_success')
                 flash(trans('auth_signup_success', default='Account created successfully! Please sign in.', lang=lang), 'success')
                 return redirect(url_for('auth.signin'))
@@ -250,7 +253,8 @@ def debug_auth():
     try:
         return jsonify({
             'is_authenticated': current_user.is_authenticated,
-            'is_admin': current_user.is_admin if current_user.is_authenticated else False,
+            'is_admin': current_user.is_admin,
+            'role': current_user.role if current_user.is_authenticated else None,
             'email': current_user.email if current_user.is_authenticated else None,
             'username': current_user.username if current_user.is_authenticated else None,
             'session_id': session_id
