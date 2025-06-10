@@ -15,6 +15,7 @@ class User(db.Model, UserMixin):
     lang = db.Column(db.String(10), default='en')
     referral_code = db.Column(db.String(36), unique=True, nullable=True, default=lambda: str(uuid.uuid4()))
     is_admin = db.Column(db.Boolean, default=False, nullable=False)
+    role = db.Column(db.String(20), default='user', nullable=False)
     referred_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     referrals = db.relationship('User', backref=db.backref('referrer', remote_side=[id]), foreign_keys=[referred_by_id])
 
