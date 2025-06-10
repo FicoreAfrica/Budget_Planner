@@ -13,7 +13,7 @@ from models import FinancialHealth, log_tool_usage
 
 financial_health_bp = Blueprint(
     'financial_health',
-    _name_,
+    __name__,
     template_folder='templates/HEALTHSCORE',
     url_prefix='/HEALTHSCORE'
 )
