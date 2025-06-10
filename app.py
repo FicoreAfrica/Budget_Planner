@@ -73,30 +73,25 @@ def setup_logging(app):
         logger.warning(f"Failed to set up file logging: {str(e)}")
 
 def setup_session(app):
-    session_dir = os.path.join(os.path.dirname(__file__), 'data', 'sessions')
-    try:
-        os.makedirs(session_dir, exist_ok=True)
-        logger.info(f"Session directory ensured at {session_dir}")
-    except (PermissionError, OSError) as e:
-        logger.error(f"Failed to create session directory {session_dir}: {str(e)}. Using in-memory sessions.")
-        app.config['SESSION_TYPE'] = 'null'
-        return
-    app.config['SESSION_FILE_DIR'] = session_dir
-    app.config['SESSION_TYPE'] = 'filesystem'
+    app.config['SESSION_TYPE'] = 'memory'
     app.config['SESSION_PERMANENT'] = True
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
     app.config['SESSION_USE_SIGNER'] = True
-    logger.info(f"Session configured: type={app.config['SESSION_TYPE']}, dir={session_dir}, lifetime={app.config['PERMANENT_SESSION_LIFETIME']}")
+    logger.info(f"Session configured: type={app.config['SESSION_TYPE']}, lifetime={app.config['PERMANENT_SESSION_LIFETIME']}")
 
 def initialize_courses_data(app):
     with app.app_context():
-        if Course.query.count() == 0:
-            for course in SAMPLE_COURSES:
-                db_course = Course(**course)
-                db.session.add(db_course)
-            db.session.commit()
-            logger.info("Initialized courses in database")
-        app.config['COURSES'] = [course.to_dict() for course in Course.query.all()]
+        try:
+            if Course.query.count() == 0:
+                for course in SAMPLE_COURSES:
+                    db_course = Course(**course)
+                    db.session.add(db_course)
+                db.session.commit()
+                logger.info("Initialized courses in database")
+            app.config['COURSES'] = [course.to_dict() for course in Course.query.all()]
+        except Exception as e:
+            logger.error(f"Failed to initialize courses: {str(e)}", exc_info=True)
+            db.session.rollback()
 
 def apply_migrations(app):
     alembic_cfg = Config(os.path.join(os.path.dirname(__file__), 'alembic.ini'))
@@ -366,7 +361,7 @@ def create_app():
     @app.route('/favicon.ico')
     def favicon():
         logger.info("Serving favicon.ico")
-        return send_from_directory(os.path.join(app.root_path, 'static', 'img'), 'favicon-32x32.png', mimetype='image/png')
+        return send_from_directory(os.path.join(app.root_path, 'static', 'data'), 'favicon-32x32.png', mimetype='image/png')
 
     @app.route('/general_dashboard')
     @ensure_session_id
@@ -402,7 +397,7 @@ def create_app():
             total_amount = sum(bill.amount for bill in bills)
             unpaid_amount = sum(bill.amount for bill in bills if bill.status.lower() != 'paid')
             data['bills'] = {
-                'bills': [bill.to_dict() for bill in bills],
+                'b Oprócz: [bill.to_dict() for bill in bills],
                 'total_amount': total_amount,
                 'unpaid_amount': unpaid_amount
             }
@@ -498,13 +493,13 @@ def create_app():
     @app.errorhandler(500)
     def internal_error(error):
         lang = session.get('lang', 'en')
-        logger.error(f"Server error: {str(error)}")
-        return jsonify({'error': str(error)}), 500
+        logger.error(f"Server error: {str(error)}", exc_info=True)
+        return jsonify({'error': 'Internal server error', 'details': str(error)}), 500
 
     @app.errorhandler(CSRFError)
-    def handle_csrf(e):
+    def internal_error(error):
         lang = session.get('lang', 'en')
-        logger.error(f"CSRF error: {str(e)}")
+        logger.error(f"CSRF error: {str(error)}")
         return jsonify({'error': 'CSRF token invalid'}), 400
 
     @app.errorhandler(404)
