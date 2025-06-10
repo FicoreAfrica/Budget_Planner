@@ -11,7 +11,7 @@ from mailersend_email import send_email, EMAIL_CONFIG
 from translations import trans
 from models import FinancialHealth, log_tool_usage
 
-financial_health_bp = Blueprint('financial_health', __name__, url_prefix='/financial_health')
+financial_health_bp = Blueprint('financial_health', __name__, url_prefix='/HEALTHSCORE')
 
 class Step1Form(FlaskForm):
     first_name = StringField()
