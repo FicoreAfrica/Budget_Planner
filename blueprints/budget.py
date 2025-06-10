@@ -13,7 +13,7 @@ from models import Budget, log_tool_usage
 
 budget_bp = Blueprint(
     'budget',
-    _name_,
+    __name__,
     template_folder='templates/BUDGET',
     url_prefix='/BUDGET'
 )
@@ -43,7 +43,7 @@ class Step1Form(FlaskForm):
     def validate_email(self, field):
         """Custom email validation to handle empty strings."""
         if field.data:
-            email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+            email_pattern = r'^[a-zA-Z0.9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
             if not re.match(email_pattern, field.data):
                 current_app.logger.warning(f"Invalid email format for session {session.get('sid', 'no-session-id')}: {field.data}")
                 raise ValidationError(trans('budget_email_invalid', session.get('lang', 'en')) or 'Invalid email address')
@@ -179,11 +179,11 @@ def step1():
             action='step1_view'
         )
         current_app.logger.info(f"Rendering step1 form for session {session['sid']}")
-        return render_template('BUDGET/budget_step1.html', form=form, trans=trans, lang=lang)
+        return render_template('budget_step1.html', form=form, trans=trans, lang=lang)
     except Exception as e:
         current_app.logger.exception(f"Unexpected error in budget.step1 for session {session['sid']}: {str(e)}")
         flash(trans("budget_error_personal_info") or "Error processing personal information", "danger")
-        return render_template('BUDGET/budget_step1.html', form=form, trans=trans, lang=lang)
+        return render_template('budget_step1.html', form=form, trans=trans, lang=lang)
 
 @budget_bp.route('/step2', methods=['GET', 'POST'])
 def step2():
@@ -220,11 +220,11 @@ def step2():
             action='step2_view'
         )
         current_app.logger.info(f"Rendering step2 form for session {session['sid']}")
-        return render_template('BUDGET/budget_step2.html', form=form, trans=trans, lang=lang)
+        return render_template('budget_step2.html', form=form, trans=trans, lang=lang)
     except Exception as e:
         current_app.logger.exception(f"Unexpected error in budget.step2 for session {session['sid']}: {str(e)}")
         flash(trans("budget_error_income_invalid") or "Error processing income", "danger")
-        return render_template('BUDGET/budget_step2.html', form=form, trans=trans, lang=lang)
+        return render_template('budget_step2.html', form=form, trans=trans, lang=lang)
 
 @budget_bp.route('/step3', methods=['GET', 'POST'])
 def step3():
@@ -261,11 +261,11 @@ def step3():
             action='step3_view'
         )
         current_app.logger.info(f"Rendering step3 form for session {session['sid']}")
-        return render_template('BUDGET/budget_step3.html', form=form, trans=trans, lang=lang)
+        return render_template('budget_step3.html', form=form, trans=trans, lang=lang)
     except Exception as e:
         current_app.logger.exception(f"Unexpected error in budget.step3 for session {session['sid']}: {str(e)}")
         flash(trans("budget_error_expenses_invalid") or "Error processing expenses", "danger")
-        return render_template('BUDGET/budget_step3.html', form=form, trans=trans, lang=lang)
+        return render_template('budget_step3.html', form=form, trans=trans, lang=lang)
 
 @budget_bp.route('/step4', methods=['GET', 'POST'])
 def step4():
@@ -340,7 +340,7 @@ def step4():
                     db.session.rollback()
                     current_app.logger.error(f"Failed to save budget to database for session {session['sid']}: {str(e)}")
                     flash(trans("budget_storage_error") or "Failed to save budget data", "danger")
-                    return render_template('BUDGET/budget_step4.html', form=form, trans=trans, lang=lang)
+                    return render_template('budget_step4.html', form=form, trans=trans, lang=lang)
 
                 email = step1_data.get('email')
                 send_email_flag = step1_data.get('send_email', False)
@@ -389,7 +389,7 @@ def step4():
             else:
                 current_app.logger.warning(f"Form validation failed for step4, session {session['sid']}: {form.errors}")
                 flash(trans("budget_form_validation_error") or "Please correct the errors in the form", "danger")
-                return render_template('BUDGET/budget_step4.html', form=form, trans=trans, lang=lang)
+                return render_template('budget_step4.html', form=form, trans=trans, lang=lang)
 
         log_tool_usage(
             tool_name='budget',
@@ -398,12 +398,12 @@ def step4():
             action='step4_view'
         )
         current_app.logger.info(f"Rendering step4 form for session {session['sid']}")
-        return render_template('BUDGET/budget_step4.html', form=form, trans=trans, lang=lang)
+        return render_template('budget_step4.html', form=form, trans=trans, lang=lang)
 
     except Exception as e:
         current_app.logger.exception(f"Unexpected error in budget.step4 for session {session['sid']}: {str(e)}")
         flash(trans("budget_budget_process_error") or "An unexpected error occurred", "danger")
-        return render_template('BUDGET/budget_step4.html', form=form, trans=trans, lang=lang)
+        return render_template('budget_step4.html', form=form, trans=trans, lang=lang)
 
 @budget_bp.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
@@ -499,7 +499,7 @@ def dashboard():
 
         current_app.logger.info(f"Rendering dashboard for session {session['sid']}: {len(budgets_dict)} budgets found")
         return render_template(
-            'BUDGET/budget_dashboard.html',
+            'budget_dashboard.html',
             budgets=budgets_dict,
             latest_budget=latest_budget,
             categories=categories,
@@ -512,7 +512,7 @@ def dashboard():
         current_app.logger.exception(f"Unexpected error in budget.dashboard for session {session['sid']}: {str(e)}")
         flash(trans("budget_dashboard_load_error") or "Error loading dashboard", "danger")
         return render_template(
-            'BUDGET/budget_dashboard.html',
+            'budget_dashboard.html',
             budgets={},
             latest_budget={
                 'income': 0.0,
