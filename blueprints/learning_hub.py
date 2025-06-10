@@ -19,6 +19,7 @@ learning_hub_bp = Blueprint(
     _name_,
     template_folder='templates/LEARNINGHUB',
     url_prefix='/LEARNINGHUB'
+)
     
 # Initialize CSRF protection
 csrf = CSRFProtect()
