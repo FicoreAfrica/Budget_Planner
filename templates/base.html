@@ -49,6 +49,7 @@
     </div>
 
     <!-- Navigation Bar -->
+    {% set nav_content %}
     <nav class="navbar navbar-expand-lg">
         <div class="container-fluid">
             <a class="navbar-brand" href="{{ url_for('index') }}">
@@ -105,6 +106,8 @@
             </div>
         </div>
     </nav>
+    {% endset %}
+    {{ nav_content | safe_nav | safe }}
 
     <!-- Main Content -->
     <div class="content">
