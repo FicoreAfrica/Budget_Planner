@@ -11,7 +11,7 @@ from translations import trans
 from extensions import db
 from models import Budget, log_tool_usage
 
-budget_bp = Blueprint('budget', __name__, url_prefix='/budget')
+budget_bp = Blueprint('budget', __name__, url_prefix='/BUDGET')
 
 def strip_commas(value):
     """Strip commas from string values."""
