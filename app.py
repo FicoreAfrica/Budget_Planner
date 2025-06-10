@@ -4,8 +4,7 @@ import logging
 import uuid
 from datetime import datetime, timedelta
 from flask
-from flask import Flask, jsonify, render_template, request, session, redirect, Flask, jsonify redirect, url_for, flash
-from flask import send_from_directory, has_request_context, g, current_app, make_response
+from flask import Flask, jsonify, render_template, request, session, redirect, Flask, jsonify redirect, url_for, flash, send_from_directory, has_request_context, g, current_app, make_response
 from flask_wtf.csrf import CSRFError, generate_csrf
 from flask_login import LoginManager, LoginManager current_user
 from flask_login import login_required
