@@ -13,7 +13,7 @@ import json
 
 net_worth_bp = Blueprint(
     'net_worth',
-    _name_,
+    __name__,
     template_folder='templates/NETWORTH',
     url_prefix='/NETWORTH'
 )
