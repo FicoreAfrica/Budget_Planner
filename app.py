@@ -232,8 +232,8 @@ def create_app():
     app.register_blueprint(net_worth_bp, template_folder='templates/NETWORTH')
     app.register_blueprint(emergency_fund_bp, template_folder='templates/EMERGENCYFUND')
     app.register_blueprint(learning_hub_bp, template_folder='templates/LEARNINGHUB')
-    app.register_blueprint(auth_bp, template_folder='templates/')
-    app.register_blueprint(admin_bp, template_folder='templates/')
+    app.register_blueprint(auth_bp, template_folder='templates/auth')
+    app.register_blueprint(admin_bp, template_folder='templates/admin')
 
     def translate(key, lang='en', logger=logger, **kwargs):
         translation = trans(key, lang=lang, **kwargs)
