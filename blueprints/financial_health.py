@@ -141,7 +141,7 @@ def step1():
                 if not form.validate_on_submit():
                     current_app.logger.error(f"Form validation failed: {form.errors}")
                     flash(trans("financial_health_form_errors", lang=lang), "danger")
-                    return render_template('HEALTHSCORE/health_score_step1.html', form=form, trans=trans, lang=lang)
+                    return render_template('health_score_step1.html', form=form, trans=trans, lang=lang)
 
                 form_data = form.data.copy()
                 if form_data.get('email') and not isinstance(form_data['email'], str):
@@ -177,12 +177,12 @@ def step1():
             session_id=session['sid'],
             action='step1_view'
         )  # Moved outside transaction
-        return render_template('HEALTHSCORE/health_score_step1.html', form=form, trans=trans, lang=lang)
+        return render_template('health_score_step1.html', form=form, trans=trans, lang=lang)
     except Exception as e:
         db.session.rollback()
         current_app.logger.exception(f"Error in step1: {str(e)}")
         flash(f"{trans('financial_health_error_personal_info', lang=lang)} - {str(e)}", "danger")
-        return render_template('HEALTHSCORE/health_score_step1.html', form=form, trans=trans, lang=lang), 500
+        return render_template('health_score_step1.html', form=form, trans=trans, lang=lang), 500
 
 @financial_health_bp.route('/step2', methods=['GET', 'POST'])
 def step2():
@@ -208,7 +208,7 @@ def step2():
                 if not form.validate_on_submit():
                     current_app.logger.error(f"Form validation failed: {form.errors}")
                     flash(trans("financial_health_form_errors", lang=lang), "danger")
-                    return render_template('HEALTHSCORE/health_score_step2.html', form=form, trans=trans, lang=lang)
+                    return render_template('health_score_step2.html', form=form, trans=trans, lang=lang)
 
                 # Update existing record
                 filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
@@ -240,12 +240,12 @@ def step2():
             session_id=session['sid'],
             action='step2_view'
         )  # Moved outside transaction
-        return render_template('HEALTHSCORE/health_score_step2.html', form=form, trans=trans, lang=lang)
+        return render_template('health_score_step2.html', form=form, trans=trans, lang=lang)
     except Exception as e:
         db.session.rollback()
         current_app.logger.exception(f"Error in step2: {str(e)}")
         flash(trans("financial_health_error_income_expenses", lang=lang), "danger")
-        return render_template('HEALTHSCORE/health_score_step2.html', form=form, trans=trans, lang=lang), 500
+        return render_template('health_score_step2.html', form=form, trans=trans, lang=lang), 500
 
 @financial_health_bp.route('/step3', methods=['GET', 'POST'])
 def step3():
@@ -271,7 +271,7 @@ def step3():
                 if not form.validate_on_submit():
                     current_app.logger.error(f"Form validation failed: {form.errors}")
                     flash(trans("financial_health_form_errors", lang=lang), "danger")
-                    return render_template('HEALTHSCORE/health_score_step3.html', form=form, trans=trans, lang=lang)
+                    return render_template('health_score_step3.html', form=form, trans=trans, lang=lang)
 
                 step1_data = session.get('health_step1', {})
                 step2_data = session.get('health_step2', {})
@@ -283,7 +283,7 @@ def step3():
                 if income <= 0:
                     current_app.logger.error("Income is zero or negative, cannot calculate financial health metrics")
                     flash(trans("financial_health_income_zero_error", lang=lang), "danger")
-                    return render_template('HEALTHSCORE/health_score_step3.html', form=form, trans=trans, lang=lang), 500
+                    return render_template('health_score_step3.html', form=form, trans=trans, lang=lang), 500
 
                 debt_to_income = (debt / income * 100) if income > 0 else 0
                 savings_rate = ((income - expenses) / income * 100) if income > 0 else 0
@@ -394,12 +394,12 @@ def step3():
             session_id=session['sid'],
             action='step3_view'
         )  # Moved outside transaction
-        return render_template('HEALTHSCORE/health_score_step3.html', form=form, trans=trans, lang=lang)
+        return render_template('health_score_step3.html', form=form, trans=trans, lang=lang)
     except Exception as e:
         db.session.rollback()
         current_app.logger.exception(f"Error in step3: {str(e)}")
         flash(trans("financial_health_unexpected_error", lang=lang), "danger")
-        return render_template('HEALTHSCORE/health_score_step3.html', form=form, trans=trans, lang=lang), 500
+        return render_template('health_score_step3.html', form=form, trans=trans, lang=lang), 500
 
 @financial_health_bp.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
@@ -468,7 +468,7 @@ def dashboard():
             insights.append(trans("financial_health_insight_no_data", lang=lang))
 
         return render_template(
-            'HEALTHSCORE/health_score_dashboard.html',
+            'health_score_dashboard.html',
             records=records,
             latest_record=latest_record,
             insights=insights,
@@ -483,7 +483,7 @@ def dashboard():
         current_app.logger.exception(f"Critical error in dashboard: {str(e)}")
         flash(trans("financial_health_dashboard_load_error", lang=lang), "danger")
         return render_template(
-            'HEALTHSCORE/health_score_dashboard.html',
+            'health_score_dashboard.html',
             records=[],
             latest_record={},
             insights=[trans("financial_health_insight_no_data", lang=lang)],
