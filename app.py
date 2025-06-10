@@ -57,21 +57,24 @@ def admin_required(f):
     return decorated_function
 
 def setup_logging(app):
+    # Configure StreamHandler for custom logger
     handler = logging.StreamHandler(sys.stderr)
     handler.setLevel(logging.DEBUG)
     handler.setFormatter(formatter)
+    root_logger.handlers = []  # Clear any existing handlers
     root_logger.addHandler(handler)
-    log_dir = os.path.join(os.path.dirname(__file__), 'data')
-    try:
-        os.makedirs(log_dir, exist_ok=True)
-        logger.info(f"Database directory ensured at {log_dir}")
-        file_handler = logging.FileHandler(os.path.join(log_dir, 'storage.log'))
-        file_handler.setLevel(logging.DEBUG)
-        file_handler.setFormatter(formatter)
-        root_logger.addHandler(file_handler)
-        logger.info("Logging setup complete with file handler")
-    except (PermissionError, OSError) as e:
-        logger.error(f"Failed to set up file logging: {str(e)}", exc_info=True)
+    
+    # Configure Flask's built-in loggers (werkzeug and flask)
+    flask_logger = logging.getLogger('flask')
+    werkzeug_logger = logging.getLogger('werkzeug')
+    flask_logger.handlers = []  # Clear existing handlers
+    werkzeug_logger.handlers = []  # Clear existing handlers
+    flask_logger.addHandler(handler)
+    werkzeug_logger.addHandler(handler)
+    flask_logger.setLevel(logging.DEBUG)
+    werkzeug_logger.setLevel(logging.DEBUG)
+    
+    logger.info("Logging setup complete with StreamHandler for ficore_app, flask, and werkzeug")
 
 def setup_session(app):
     try:
@@ -145,10 +148,13 @@ SAMPLE_COURSES = [
 
 def create_app():
     app = Flask(__name__, template_folder='templates')
+    
+    # Set Flask secret key
     app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key-please-change-me')
     if not os.environ.get('FLASK_SECRET_KEY'):
         logger.warning("FLASK_SECRET_KEY not set. Using fallback for development. Set it in production.")
-
+    
+    # Configure logging right after app creation
     logger.info("Starting app creation")
     setup_logging(app)
     setup_session(app)
@@ -163,9 +169,27 @@ def create_app():
     except (PermissionError, OSError) as e:
         logger.critical(f"Failed to create database directory {db_dir}: {str(e)}")
         raise
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', f'sqlite:///{os.path.join(db_dir, "ficore.db")}')
-    if app.config['SQLALCHEMY_DATABASE_URI'].startswith('postgres://'):
-        app.config['SQLALCHEMY_DATABASE_URI'] = app.config['SQLALCHEMY_DATABASE_URI'].replace('postgres://', 'postgresql://')
+
+    # Explicit database configuration
+    if os.environ.get('FLASK_ENV') == 'production':
+        # In production, we REQUIRE Postgres
+        postgres_url = os.environ.get('DATABASE_URL')
+        if not postgres_url:
+            logger.critical("DATABASE_URL environment variable is required in production")
+            raise RuntimeError("DATABASE_URL environment variable is required in production")
+        
+        # Handle Heroku-style Postgres URLs
+        if postgres_url.startswith('postgres://'):
+            postgres_url = postgres_url.replace('postgres://', 'postgresql://')
+        
+        app.config['SQLALCHEMY_DATABASE_URI'] = postgres_url
+        logger.info("Using PostgreSQL database in production mode")
+    else:
+        # In development, use SQLite with a clear path
+        sqlite_path = os.path.join('/tmp', 'ficore.db')  # Explicit /tmp location
+        app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{sqlite_path}'
+        logger.info(f"Using SQLite database at {sqlite_path} for development")
+
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     db.init_app(app)
 
@@ -294,8 +318,6 @@ def create_app():
                 logger.info(f"Set default language to {session['lang']}")
             g.logger = logger
             g.logger.info(f"Request processed for path: {request.path}")
-            if not os.path.exists(os.path.join(os.path.dirname(__file__), 'data', 'storage.log')):
-                g.logger.warning("data/storage.log not found")
         except Exception as e:
             logger.error(f"Before request error for path {request.path}: {str(e)}", exc_info=True)
             raise
@@ -462,10 +484,6 @@ def create_app():
         try:
             with app.app_context():
                 db.session.execute(db.text("SELECT 1"))
-            if not os.path.exists(os.path.join(os.path.dirname(__file__), 'data', 'storage.log')):
-                status["status"] = "warning"
-                status["details"] = "Log file data/storage.log not found"
-                return jsonify(status), 200
             return jsonify(status), 200
         except Exception as e:
             logger.error(f"Health check failed: {str(e)}", exc_info=True)
