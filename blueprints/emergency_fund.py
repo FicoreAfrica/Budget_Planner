@@ -11,7 +11,7 @@ from translations import trans
 from extensions import db
 from models import EmergencyFund, Budget, log_tool_usage
 
-emergency_fund_bp = Blueprint('emergency_fund', __name__, url_prefix='/emergency_fund')
+emergency_fund_bp = Blueprint('emergency_fund', __name__, url_prefix='/EMERGENCYFUND')
 
 class CommaSeparatedFloatField(FloatField):
     def process_formdata(self, valuelist):
