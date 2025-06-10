@@ -18,7 +18,7 @@ logger = logging.getLogger('ficore_app')
 # Define the quiz blueprint
 quiz_bp = Blueprint(
     'quiz',
-    _name_,
+    __name__,
     template_folder='templates/QUIZ',
     static_folder='static',
     url_prefix='/QUIZ'
