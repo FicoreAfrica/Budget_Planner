@@ -1,460 +1,522 @@
-from extensions import db
-from flask_login import UserMixin
 import uuid
 from datetime import datetime, date
 import json
 from flask import current_app, session
+from flask_login import UserMixin
+from collections import namedtuple
 
-class User(db.Model, UserMixin):
-    __tablename__ = 'users'
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    password_hash = db.Column(db.String(256), nullable=False)
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    lang = db.Column(db.String(10), default='en')
-    referral_code = db.Column(db.String(36), unique=True, nullable=True, default=lambda: str(uuid.uuid4()))
-    is_admin = db.Column(db.Boolean, default=False, nullable=False)
-    role = db.Column(db.String(20), default='user', nullable=False)
-    referred_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
-    referrals = db.relationship('User', backref=db.backref('referrer', remote_side=[id]), foreign_keys=[referred_by_id])
+# User helper functions
+def create_user(mongo, user_data):
+    """Create a new user in the users collection."""
+    user = {
+        'id': user_data.get('id', int(uuid.uuid4().int & (1<<31)-1)),  # 31-bit positive integer ID
+        'username': user_data['username'],
+        'email': user_data['email'],
+        'password_hash': user_data['password_hash'],
+        'created_at': user_data.get('created_at', datetime.utcnow()),
+        'lang': user_data.get('lang', 'en'),
+        'referral_code': user_data.get('referral_code', str(uuid.uuid4())),
+        'is_admin': user_data.get('is_admin', False),
+        'role': user_data.get('role', 'user'),
+        'referred_by_id': user_data.get('referred_by_id'),
+    }
+    mongo.db.users.insert_one(user)
+    return user
 
-    __table_args__ = (
-        db.Index('ix_users_referral_code', 'referral_code'),
-    )
+def get_user(mongo, user_id):
+    """Retrieve a user by ID."""
+    user = mongo.db.users.find_one({'id': int(user_id)}, {'_id': 0})
+    if user:
+        User = namedtuple('User', user.keys())
+        return User(**user)
+    return None
 
-class Course(db.Model):
-    __tablename__ = 'courses'
-    id = db.Column(db.String(50), primary_key=True)
-    title_key = db.Column(db.String(100), nullable=False)
-    title_en = db.Column(db.String(100), nullable=False)
-    title_ha = db.Column(db.String(100), nullable=False)
-    description_en = db.Column(db.Text, nullable=False)
-    description_ha = db.Column(db.Text, nullable=False)
-    is_premium = db.Column(db.Boolean, default=False, nullable=False)
+def get_user_by_email(mongo, email):
+    """Retrieve a user by email."""
+    return mongo.db.users.find_one({'email': email}, {'_id': 0})
 
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'title_key': self.title_key,
-            'title_en': self.title_en,
-            'title_ha': self.title_ha,
-            'description_en': self.description_en,
-            'description_ha': self.description_ha,
-            'is_premium': self.is_premium
-        }
+def update_user(mongo, user_id, updates):
+    """Update user fields."""
+    mongo.db.users.update_one({'id': int(user_id)}, {'$set': updates})
 
-class ContentMetadata(db.Model):
-    __tablename__ = 'content_metadata'
-    id = db.Column(db.Integer, primary_key=True)
-    course_id = db.Column(db.String(50), nullable=False)
-    lesson_id = db.Column(db.String(100), nullable=False)
-    content_type = db.Column(db.String(50), nullable=False)
-    content_path = db.Column(db.String(255), nullable=False)
-    uploaded_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
-    upload_date = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    user = db.relationship('User', backref='content_metadata_records')
+# Course helper functions
+def create_course(mongo, course_data):
+    """Create a new course in the courses collection."""
+    course = {
+        'id': course_data['id'],
+        'title_key': course_data['title_key'],
+        'title_en': course_data['title_en'],
+        'title_ha': course_data['title_ha'],
+        'description_en': course_data['description_en'],
+        'description_ha': course_data['description_ha'],
+        'is_premium': course_data.get('is_premium', False)
+    }
+    mongo.db.courses.insert_one(course)
+    return course
 
-    __table_args__ = (
-        db.Index('ix_content_metadata_course_id', 'course_id'),
-        db.Index('ix_content_metadata_lesson_id', 'lesson_id'),
-        db.Index('ix_content_metadata_uploaded_by', 'uploaded_by')
-    )
+def get_course(mongo, course_id):
+    """Retrieve a course by ID."""
+    return mongo.db.courses.find_one({'id': course_id}, {'_id': 0})
 
-    def __repr__(self):
-        return f"<ContentMetadata {self.course_id}/{self.lesson_id} - {self.content_type}>"
+def get_all_courses(mongo):
+    """Retrieve all courses."""
+    return list(mongo.db.courses.find({}, {'_id': 0}))
 
-class FinancialHealth(db.Model):
-    __tablename__ = 'financial_health'
-    id = db.Column(db.String(36), primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
-    session_id = db.Column(db.String(36), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    first_name = db.Column(db.String(50), nullable=True)
-    email = db.Column(db.String(120), nullable=True)
-    user_type = db.Column(db.String(20), nullable=True)
-    send_email = db.Column(db.Boolean, default=False, nullable=False)
-    income = db.Column(db.Float, nullable=True)
-    expenses = db.Column(db.Float, nullable=True)
-    debt = db.Column(db.Float, nullable=True)
-    interest_rate = db.Column(db.Float, nullable=True)
-    debt_to_income = db.Column(db.Float, nullable=True)
-    savings_rate = db.Column(db.Float, nullable=True)
-    interest_burden = db.Column(db.Float, nullable=True)
-    score = db.Column(db.Float, nullable=True)
-    status = db.Column(db.String(50), nullable=True)
-    status_key = db.Column(db.String(50), nullable=True)
-    badges = db.Column(db.Text, nullable=True)
-    step = db.Column(db.Integer, nullable=True)
-    user = db.relationship('User', backref='financial_health_records')
+def to_dict_course(course):
+    """Convert course document to dict."""
+    return {
+        'id': course['id'],
+        'title_key': course['title_key'],
+        'title_en': course['title_en'],
+        'title_ha': course['title_ha'],
+        'description_en': course['description_en'],
+        'description_ha': course['description_ha'],
+        'is_premium': course['is_premium']
+    }
 
-    __table_args__ = (
-        db.Index('ix_financial_health_session_id', 'session_id'),
-        db.Index('ix_financial_health_user_id', 'user_id')
-    )
+# ContentMetadata helper functions
+def create_content_metadata(mongo, metadata):
+    """Create content metadata."""
+    metadata_doc = {
+        'id': int(uuid.uuid4().int & (1<<31)-1),
+        'course_id': metadata['course_id'],
+        'lesson_id': metadata['lesson_id'],
+        'content_type': metadata['content_type'],
+        'content_path': metadata['content_path'],
+        'uploaded_by': metadata.get('uploaded_by'),
+        'upload_date': metadata.get('upload_date', datetime.utcnow())
+    }
+    mongo.db.content_metadata.insert_one(metadata_doc)
+    return metadata_doc
 
-    def to_dict(self):
-        try:
-            badges = json.loads(self.badges) if self.badges and self.badges.strip() else []
-        except json.JSONDecodeError:
-            current_app.logger.error(f"Invalid JSON in badges for FinancialHealth ID {self.id}")
-            badges = []
-        return {
-            'id': self.id,
-            'user_id': self.user_id,
-            'session_id': self.session_id,
-            'created_at': self.created_at.isoformat() + "Z",
-            'first_name': self.first_name,
-            'email': self.email,
-            'user_type': self.user_type,
-            'send_email': self.send_email,
-            'income': self.income,
-            'expenses': self.expenses,
-            'debt': self.debt,
-            'interest_rate': self.interest_rate,
-            'debt_to_income': self.debt_to_income,
-            'savings_rate': self.savings_rate,
-            'interest_burden': self.interest_burden,
-            'score': self.score,
-            'status': self.status,
-            'status_key': self.status_key,
-            'badges': badges,
-            'step': self.step
-        }
+def get_content_metadata(mongo, metadata_id):
+    """Retrieve content metadata by ID."""
+    return mongo.db.content_metadata.find_one({'id': metadata_id}, {'_id': 0})
 
-class Budget(db.Model):
-    __tablename__ = 'budget'
-    id = db.Column(db.String(36), primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
-    session_id = db.Column(db.String(36), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    user_email = db.Column(db.String(120), nullable=True)
-    income = db.Column(db.Float, nullable=False, default=0.0)
-    fixed_expenses = db.Column(db.Float, nullable=False, default=0.0)
-    variable_expenses = db.Column(db.Float, nullable=False, default=0.0)
-    savings_goal = db.Column(db.Float, nullable=False, default=0.0)
-    surplus_deficit = db.Column(db.Float, nullable=True)
-    housing = db.Column(db.Float, nullable=False, default=0.0)
-    food = db.Column(db.Float, nullable=False, default=0.0)
-    transport = db.Column(db.Float, nullable=False, default=0.0)
-    dependents = db.Column(db.Float, nullable=False, default=0.0)
-    miscellaneous = db.Column(db.Float, nullable=False, default=0.0)
-    others = db.Column(db.Float, nullable=False, default=0.0)
-    user = db.relationship('User', backref='budgets')
+# FinancialHealth helper functions
+def create_financial_health(mongo, fh_data):
+    """Create a financial health record."""
+    fh = {
+        'id': str(uuid.uuid4()),
+        'user_id': fh_data.get('user_id'),
+        'session_id': fh_data['session_id'],
+        'created_at': fh_data.get('created_at', datetime.utcnow()),
+        'first_name': fh_data.get('first_name'),
+        'email': fh_data.get('email'),
+        'user_type': fh_data.get('user_type'),
+        'send_email': fh_data.get('send_email', False),
+        'income': fh_data.get('income'),
+        'expenses': fh_data.get('expenses'),
+        'debt': fh_data.get('debt'),
+        'interest_rate': fh_data.get('interest_rate'),
+        'debt_to_income': fh_data.get('debt_to_income'),
+        'savings_rate': fh_data.get('savings_rate'),
+        'interest_burden': fh_data.get('interest_burden'),
+        'score': fh_data.get('score'),
+        'status': fh_data.get('status'),
+        'status_key': fh_data.get('status_key'),
+        'badges': json.dumps(fh_data.get('badges', [])),
+        'step': fh_data.get('step')
+    }
+    mongo.db.financial_health.insert_one(fh)
+    return fh
 
-    __table_args__ = (
-        db.Index('ix_budget_session_id', 'session_id'),
-        db.Index('ix_budget_user_id', 'user_id')
-    )
+def get_financial_health(mongo, filters):
+    """Retrieve financial health records by filters."""
+    return list(mongo.db.financial_health.find(filters, {'_id': 0}))
 
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'user_id': self.user_id,
-            'session_id': self.session_id,
-            'created_at': self.created_at.isoformat() + "Z",
-            'user_email': self.user_email,
-            'income': self.income,
-            'fixed_expenses': self.fixed_expenses,
-            'variable_expenses': self.variable_expenses,
-            'savings_goal': self.savings_goal,
-            'surplus_deficit': self.surplus_deficit,
-            'housing': self.housing,
-            'food': self.food,
-            'transport': self.transport,
-            'dependents': self.dependents,
-            'miscellaneous': self.miscellaneous,
-            'others': self.others
-        }
+def to_dict_financial_health(fh):
+    """Convert financial health document to dict."""
+    try:
+        badges = json.loads(fh['badges']) if fh.get('badges') else []
+    except json.JSONDecodeError:
+        current_app.logger.error(f"Invalid JSON in badges for FinancialHealth ID {fh['id']}")
+        badges = []
+    return {
+        'id': fh['id'],
+        'user_id': fh['user_id'],
+        'session_id': fh['session_id'],
+        'created_at': fh['created_at'].isoformat() + "Z" if isinstance(fh['created_at'], datetime) else fh['created_at'],
+        'first_name': fh['first_name'],
+        'email': fh['email'],
+        'user_type': fh['user_type'],
+        'send_email': fh['send_email'],
+        'income': fh['income'],
+        'expenses': fh['expenses'],
+        'debt': fh['debt'],
+        'interest_rate': fh['interest_rate'],
+        'debt_to_income': fh['debt_to_income'],
+        'savings_rate': fh['savings_rate'],
+        'interest_burden': fh['interest_burden'],
+        'score': fh['score'],
+        'status': fh['status'],
+        'status_key': fh['status_key'],
+        'badges': badges,
+        'step': fh['step']
+    }
 
-class Bill(db.Model):
-    __tablename__ = 'bills'
-    id = db.Column(db.String(36), primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
-    session_id = db.Column(db.String(36), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    user_email = db.Column(db.String(120), nullable=True)
-    first_name = db.Column(db.String(50), nullable=True)
-    bill_name = db.Column(db.String(100), nullable=False)
-    amount = db.Column(db.Float, nullable=False)
-    due_date = db.Column(db.Date, nullable=False)
-    frequency = db.Column(db.String(20), nullable=False)
-    category = db.Column(db.String(50), nullable=False)
-    status = db.Column(db.String(20), nullable=False)
-    send_email = db.Column(db.Boolean, nullable=False, default=False)
-    reminder_days = db.Column(db.Integer, nullable=True)
-    user = db.relationship('User', backref='bills')
+# Budget helper functions
+def create_budget(mongo, budget_data):
+    """Create a budget record."""
+    budget = {
+        'id': str(uuid.uuid4()),
+        'user_id': budget_data.get('user_id'),
+        'session_id': budget_data['session_id'],
+        'created_at': budget_data.get('created_at', datetime.utcnow()),
+        'user_email': budget_data.get('user_email'),
+        'income': budget_data.get('income', 0.0),
+        'fixed_expenses': budget_data.get('fixed_expenses', 0.0),
+        'variable_expenses': budget_data.get('variable_expenses', 0.0),
+        'savings_goal': budget_data.get('savings_goal', 0.0),
+        'surplus_deficit': budget_data.get('surplus_deficit'),
+        'housing': budget_data.get('housing', 0.0),
+        'food': budget_data.get('food', 0.0),
+        'transport': budget_data.get('transport', 0.0),
+        'dependents': budget_data.get('dependents', 0.0),
+        'miscellaneous': budget_data.get('miscellaneous', 0.0),
+        'others': budget_data.get('others', 0.0)
+    }
+    mongo.db.budgets.insert_one(budget)
+    return budget
 
-    __table_args__ = (
-        db.Index('ix_bills_session_id', 'session_id'),
-        db.Index('ix_bills_user_id', 'user_id')
-    )
+def get_budgets(mongo, filters):
+    """Retrieve budget records by filters."""
+    return list(mongo.db.budgets.find(filters, {'_id': 0}))
 
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'user_id': self.user_id,
-            'session_id': self.session_id,
-            'created_at': self.created_at.isoformat() + "Z",
-            'user_email': self.user_email,
-            'first_name': self.first_name,
-            'bill_name': self.bill_name,
-            'amount': self.amount,
-            'due_date': self.due_date.strftime('%Y-%m-%d') if self.due_date else None,
-            'frequency': self.frequency,
-            'category': self.category,
-            'status': self.status,
-            'send_email': self.send_email,
-            'reminder_days': self.reminder_days
-        }
+def to_dict_budget(budget):
+    """Convert budget document to dict."""
+    return {
+        'id': budget['id'],
+        'user_id': budget['user_id'],
+        'session_id': budget['session_id'],
+        'created_at': budget['created_at'].isoformat() + "Z" if isinstance(budget['created_at'], datetime) else budget['created_at'],
+        'user_email': budget['user_email'],
+        'income': budget['income'],
+        'fixed_expenses': budget['fixed_expenses'],
+        'variable_expenses': budget['variable_expenses'],
+        'savings_goal': budget['savings_goal'],
+        'surplus_deficit': budget['surplus_deficit'],
+        'housing': budget['housing'],
+        'food': budget['food'],
+        'transport': budget['transport'],
+        'dependents': budget['dependents'],
+        'miscellaneous': budget['miscellaneous'],
+        'others': budget['others']
+    }
 
-class NetWorth(db.Model):
-    __tablename__ = 'net_worth'
-    id = db.Column(db.String(36), primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
-    session_id = db.Column(db.String(36), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    first_name = db.Column(db.String(50), nullable=True)
-    email = db.Column(db.String(120), nullable=True)
-    send_email = db.Column(db.Boolean, default=False, nullable=False)
-    cash_savings = db.Column(db.Float, nullable=True)
-    investments = db.Column(db.Float, nullable=True)
-    property = db.Column(db.Float, nullable=True)
-    loans = db.Column(db.Float, nullable=True)
-    total_assets = db.Column(db.Float, nullable=True)
-    total_liabilities = db.Column(db.Float, nullable=True)
-    net_worth = db.Column(db.Float, nullable=True)
-    badges = db.Column(db.Text, nullable=True)
-    user = db.relationship('User', backref='net_worth_records')
+# Bill helper functions
+def create_bill(mongo, bill_data):
+    """Create a bill record."""
+    bill = {
+        'id': str(uuid.uuid4()),
+        'user_id': bill_data.get('user_id'),
+        'session_id': bill_data['session_id'],
+        'created_at': bill_data.get('created_at', datetime.utcnow()),
+        'user_email': bill_data.get('user_email'),
+        'first_name': bill_data.get('first_name'),
+        'bill_name': bill_data['bill_name'],
+        'amount': bill_data['amount'],
+        'due_date': bill_data['due_date'].strftime('%Y-%m-%d') if isinstance(bill_data['due_date'], date) else bill_data['due_date'],
+        'frequency': bill_data['frequency'],
+        'category': bill_data['category'],
+        'status': bill_data['status'],
+        'send_email': bill_data.get('send_email', False),
+        'reminder_days': bill_data.get('reminder_days')
+    }
+    mongo.db.bills.insert_one(bill)
+    return bill
 
-    __table_args__ = (
-        db.Index('ix_net_worth_session_id', 'session_id'),
-        db.Index('ix_net_worth_user_id', 'user_id')
-    )
+def get_bills(mongo, filters):
+    """Retrieve bill records by filters."""
+    return list(mongo.db.bills.find(filters, {'_id': 0}))
 
-    def to_dict(self):
-        try:
-            badges = json.loads(self.badges) if self.badges and self.badges.strip() else []
-        except json.JSONDecodeError:
-            current_app.logger.error(f"Invalid JSON in badges for NetWorth ID {self.id}")
-            badges = []
-        return {
-            'id': self.id,
-            'user_id': self.user_id,
-            'session_id': self.session_id,
-            'created_at': self.created_at.isoformat() + "Z",
-            'first_name': self.first_name,
-            'email': self.email,
-            'send_email': self.send_email,
-            'cash_savings': self.cash_savings,
-            'investments': self.investments,
-            'property': self.property,
-            'loans': self.loans,
-            'total_assets': self.total_assets,
-            'total_liabilities': self.total_liabilities,
-            'net_worth': self.net_worth,
-            'badges': badges
-        }
+def to_dict_bill(bill):
+    """Convert bill document to dict."""
+    return {
+        'id': bill['id'],
+        'user_id': bill['user_id'],
+        'session_id': bill['session_id'],
+        'created_at': bill['created_at'].isoformat() + "Z" if isinstance(bill['created_at'], datetime) else bill['created_at'],
+        'user_email': bill['user_email'],
+        'first_name': bill['first_name'],
+        'bill_name': bill['bill_name'],
+        'amount': bill['amount'],
+        'due_date': bill['due_date'],
+        'frequency': bill['frequency'],
+        'category': bill['category'],
+        'status': bill['status'],
+        'send_email': bill['send_email'],
+        'reminder_days': bill['reminder_days']
+    }
 
-class EmergencyFund(db.Model):
-    __tablename__ = 'emergency_fund'
-    id = db.Column(db.String(36), primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
-    session_id = db.Column(db.String(36), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    first_name = db.Column(db.String(50), nullable=True)
-    email = db.Column(db.String(120), nullable=True)
-    email_opt_in = db.Column(db.Boolean, default=False, nullable=False)
-    lang = db.Column(db.String(10), nullable=True)
-    monthly_expenses = db.Column(db.Float, nullable=True)
-    monthly_income = db.Column(db.Float, nullable=True)
-    current_savings = db.Column(db.Float, nullable=True)
-    risk_tolerance_level = db.Column(db.String(20), nullable=True)
-    dependents = db.Column(db.Integer, nullable=True)
-    timeline = db.Column(db.Integer, nullable=True)
-    recommended_months = db.Column(db.Integer, nullable=True)
-    target_amount = db.Column(db.Float, nullable=True)
-    savings_gap = db.Column(db.Float, nullable=True)
-    monthly_savings = db.Column(db.Float, nullable=True)
-    percent_of_income = db.Column(db.Float, nullable=True)
-    badges = db.Column(db.Text, nullable=True)
-    user = db.relationship('User', backref='emergency_funds')
+# NetWorth helper functions
+def create_net_worth(mongo, nw_data):
+    """Create a net worth record."""
+    nw = {
+        'id': str(uuid.uuid4()),
+        'user_id': nw_data.get('user_id'),
+        'session_id': nw_data['session_id'],
+        'created_at': nw_data.get('created_at', datetime.utcnow()),
+        'first_name': nw_data.get('first_name'),
+        'email': nw_data.get('email'),
+        'send_email': nw_data.get('send_email', False),
+        'cash_savings': nw_data.get('cash_savings'),
+        'investments': nw_data.get('investments'),
+        'property': nw_data.get('property'),
+        'loans': nw_data.get('loans'),
+        'total_assets': nw_data.get('total_assets'),
+        'total_liabilities': nw_data.get('total_liabilities'),
+        'net_worth': nw_data.get('net_worth'),
+        'badges': json.dumps(nw_data.get('badges', []))
+    }
+    mongo.db.net_worth.insert_one(nw)
+    return nw
 
-    __table_args__ = (
-        db.Index('ix_emergency_fund_session_id', 'session_id'),
-        db.Index('ix_emergency_fund_user_id', 'user_id')
-    )
+def get_net_worth(mongo, filters):
+    """Retrieve net worth records by filters."""
+    return list(mongo.db.net_worth.find(filters, {'_id': 0}))
 
-    def to_dict(self):
-        try:
-            badges = json.loads(self.badges) if self.badges and self.badges.strip() else []
-        except json.JSONDecodeError:
-            current_app.logger.error(f"Invalid JSON in badges for EmergencyFund ID {self.id}")
-            badges = []
-        return {
-            'id': self.id,
-            'user_id': self.user_id,
-            'session_id': self.session_id,
-            'created_at': self.created_at.isoformat() + "Z",
-            'first_name': self.first_name,
-            'email': self.email,
-            'email_opt_in': self.email_opt_in,
-            'lang': self.lang,
-            'monthly_expenses': self.monthly_expenses,
-            'monthly_income': self.monthly_income,
-            'current_savings': self.current_savings,
-            'risk_tolerance_level': self.risk_tolerance_level,
-            'dependents': self.dependents,
-            'timeline': self.timeline,
-            'recommended_months': self.recommended_months,
-            'target_amount': self.target_amount,
-            'savings_gap': self.savings_gap,
-            'monthly_savings': self.monthly_savings,
-            'percent_of_income': self.percent_of_income,
-            'badges': badges
-        }
+def to_dict_net_worth(nw):
+    """Convert net worth document to dict."""
+    try:
+        badges = json.loads(nw['badges']) if nw.get('badges') else []
+    except json.JSONDecodeError:
+        current_app.logger.error(f"Invalid JSON in badges for NetWorth ID {nw['id']}")
+        badges = []
+    return {
+        'id': nw['id'],
+        'user_id': nw['user_id'],
+        'session_id': nw['session_id'],
+        'created_at': nw['created_at'].isoformat() + "Z" if isinstance(nw['created_at'], datetime) else nw['created_at'],
+        'first_name': nw['first_name'],
+        'email': nw['email'],
+        'send_email': nw['send_email'],
+        'cash_savings': nw['cash_savings'],
+        'investments': nw['investments'],
+        'property': nw['property'],
+        'loans': nw['loans'],
+        'total_assets': nw['total_assets'],
+        'total_liabilities': nw['total_liabilities'],
+        'net_worth': nw['net_worth'],
+        'badges': badges
+    }
 
-class LearningProgress(db.Model):
-    __tablename__ = 'learning_progress'
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
-    session_id = db.Column(db.String(36), nullable=False)
-    course_id = db.Column(db.String(50), nullable=False)
-    lessons_completed = db.Column(db.Text, default='[]', nullable=False)
-    quiz_scores = db.Column(db.Text, default='{}', nullable=False)
-    current_lesson = db.Column(db.String(50), nullable=True)
-    user = db.relationship('User', backref='learning_progress_records')
+# EmergencyFund helper functions
+def create_emergency_fund(mongo, ef_data):
+    """Create an emergency fund record."""
+    ef = {
+        'id': str(uuid.uuid4()),
+        'user_id': ef_data.get('user_id'),
+        'session_id': ef_data['session_id'],
+        'created_at': ef_data.get('created_at', datetime.utcnow()),
+        'first_name': ef_data.get('first_name'),
+        'email': ef_data.get('email'),
+        'email_opt_in': ef_data.get('email_opt_in', False),
+        'lang': ef_data.get('lang'),
+        'monthly_expenses': ef_data.get('monthly_expenses'),
+        'monthly_income': ef_data.get('monthly_income'),
+        'current_savings': ef_data.get('current_savings'),
+        'risk_tolerance_level': ef_data.get('risk_tolerance_level'),
+        'dependents': ef_data.get('dependents'),
+        'timeline': ef_data.get('timeline'),
+        'recommended_months': ef_data.get('recommended_months'),
+        'target_amount': ef_data.get('target_amount'),
+        'savings_gap': ef_data.get('savings_gap'),
+        'monthly_savings': ef_data.get('monthly_savings'),
+        'percent_of_income': ef_data.get('percent_of_income'),
+        'badges': json.dumps(ef_data.get('badges', []))
+    }
+    mongo.db.emergency_funds.insert_one(ef)
+    return ef
 
-    __table_args__ = (
-        db.UniqueConstraint('user_id', 'course_id', name='uix_user_course_id'),
-        db.UniqueConstraint('session_id', 'course_id', name='uix_session_course_id'),
-        db.Index('ix_learning_progress_session_id', 'session_id'),
-        db.Index('ix_learning_progress_user_id', 'user_id'),
-    )
+def get_emergency_funds(mongo, filters):
+    """Retrieve emergency fund records by filters."""
+    return list(mongo.db.emergency_funds.find(filters, {'_id': 0}))
 
-    def to_dict(self):
-        try:
-            lessons_completed = json.loads(self.lessons_completed)
-            quiz_scores = json.loads(self.quiz_scores)
-        except json.JSONDecodeError:
-            current_app.logger.error(f"Invalid JSON in LearningProgress ID {self.id}")
-            lessons_completed = []
-            quiz_scores = {}
-        return {
-            'id': self.id,
-            'user_id': self.user_id,
-            'session_id': self.session_id,
-            'course_id': self.course_id,
-            'lessons_completed': lessons_completed,
-            'quiz_scores': quiz_scores,
-            'current_lesson': self.current_lesson
-        }
+def to_dict_emergency_fund(ef):
+    """Convert emergency fund document to dict."""
+    try:
+        badges = json.loads(ef['badges']) if ef.get('badges') else []
+    except json.JSONDecodeError:
+        current_app.logger.error(f"Invalid JSON in badges for EmergencyFund ID {ef['id']}")
+        badges = []
+    return {
+        'id': ef['id'],
+        'user_id': ef['user_id'],
+        'session_id': ef['session_id'],
+        'created_at': ef['created_at'].isoformat() + "Z" if isinstance(ef['created_at'], datetime) else ef['created_at'],
+        'first_name': ef['first_name'],
+        'email': ef['email'],
+        'email_opt_in': ef['email_opt_in'],
+        'lang': ef['lang'],
+        'monthly_expenses': ef['monthly_expenses'],
+        'monthly_income': ef['monthly_income'],
+        'current_savings': ef['current_savings'],
+        'risk_tolerance_level': ef['risk_tolerance_level'],
+        'dependents': ef['dependents'],
+        'timeline': ef['timeline'],
+        'recommended_months': ef['recommended_months'],
+        'target_amount': ef['target_amount'],
+        'savings_gap': ef['savings_gap'],
+        'monthly_savings': ef['monthly_savings'],
+        'percent_of_income': ef['percent_of_income'],
+        'badges': badges
+    }
 
-class QuizResult(db.Model):
-    __tablename__ = 'quiz_results'
-    id = db.Column(db.String(36), primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
-    session_id = db.Column(db.String(36), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    first_name = db.Column(db.String(50), nullable=True)
-    email = db.Column(db.String(120), nullable=True)
-    send_email = db.Column(db.Boolean, default=False, nullable=False)
-    personality = db.Column(db.String(50), nullable=True)
-    score = db.Column(db.Integer, nullable=True)
-    badges = db.Column(db.Text, nullable=True)
-    insights = db.Column(db.Text, nullable=True)
-    tips = db.Column(db.Text, nullable=True)
-    user = db.relationship('User', backref='quiz_results')
+# LearningProgress helper functions
+def create_learning_progress(mongo, lp_data):
+    """Create a learning progress record."""
+    lp = {
+        'id': int(uuid.uuid4().int & (1<<31)-1),
+        'user_id': lp_data.get('user_id'),
+        'session_id': lp_data['session_id'],
+        'course_id': lp_data['course_id'],
+        'lessons_completed': json.dumps(lp_data.get('lessons_completed', [])),
+        'quiz_scores': json.dumps(lp_data.get('quiz_scores', {})),
+        'current_lesson': lp_data.get('current_lesson')
+    }
+    mongo.db.learning_progress.insert_one(lp)
+    return lp
 
-    def to_dict(self):
-        try:
-            badges = json.loads(self.badges) if self.badges and self.badges.strip() else []
-            insights = json.loads(self.insights) if self.insights and self.insights.strip() else []
-            tips = json.loads(self.tips) if self.tips and self.tips.strip() else []
-        except json.JSONDecodeError:
-            current_app.logger.error(f"Invalid JSON in QuizResult ID {self.id}")
-            badges = []
-            insights = []
-            tips = []
-        return {
-            'id': self.id,
-            'user_id': self.user_id,
-            'session_id': self.session_id,
-            'created_at': self.created_at.isoformat() + "Z",
-            'first_name': self.first_name,
-            'email': self.email,
-            'send_email': self.send_email,
-            'personality': self.personality,
-            'score': self.score,
-            'badges': badges,
-            'insights': insights,
-            'tips': tips
-        }
+def get_learning_progress(mongo, filters):
+    """Retrieve learning progress records by filters."""
+    return list(mongo.db.learning_progress.find(filters, {'_id': 0}))
 
-class Feedback(db.Model):
-    __tablename__ = 'feedback'
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
-    session_id = db.Column(db.String(36), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    tool_name = db.Column(db.String(50), nullable=False)
-    rating = db.Column(db.Integer, nullable=False)
-    comment = db.Column(db.Text, nullable=True)
-    user = db.relationship('User', backref='feedback_records')
+def to_dict_learning_progress(lp):
+    """Convert learning progress document to dict."""
+    try:
+        lessons_completed = json.loads(lp['lessons_completed']) if lp.get('lessons_completed') else []
+        quiz_scores = json.loads(lp['quiz_scores']) if lp.get('quiz_scores') else {}
+    except json.JSONDecodeError:
+        current_app.logger.error(f"Invalid JSON in LearningProgress ID {lp['id']}")
+        lessons_completed = []
+        quiz_scores = {}
+    return {
+        'id': lp['id'],
+        'user_id': lp['user_id'],
+        'session_id': lp['session_id'],
+        'course_id': lp['course_id'],
+        'lessons_completed': lessons_completed,
+        'quiz_scores': quiz_scores,
+        'current_lesson': lp['current_lesson']
+    }
 
-    __table_args__ = (
-        db.Index('ix_feedback_session_id', 'session_id'),
-        db.Index('ix_feedback_user_id', 'user_id')
-    )
+# QuizResult helper functions
+def create_quiz_result(mongo, qr_data):
+    """Create a quiz result record."""
+    qr = {
+        'id': str(uuid.uuid4()),
+        'user_id': qr_data.get('user_id'),
+        'session_id': qr_data['session_id'],
+        'created_at': qr_data.get('created_at', datetime.utcnow()),
+        'first_name': qr_data.get('first_name'),
+        'email': qr_data.get('email'),
+        'send_email': qr_data.get('send_email', False),
+        'personality': qr_data.get('personality'),
+        'score': qr_data.get('score'),
+        'badges': json.dumps(qr_data.get('badges', [])),
+        'insights': json.dumps(qr_data.get('insights', [])),
+        'tips': json.dumps(qr_data.get('tips', []))
+    }
+    mongo.db.quiz_results.insert_one(qr)
+    return qr
 
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'user_id': self.user_id,
-            'session_id': self.session_id,
-            'created_at': self.created_at.isoformat() + "Z",
-            'tool_name': self.tool_name,
-            'rating': self.rating,
-            'comment': self.comment
-        }
+def get_quiz_results(mongo, filters):
+    """Retrieve quiz result records by filters."""
+    return list(mongo.db.quiz_results.find(filters, {'_id': 0}))
 
-class ToolUsage(db.Model):
-    __tablename__ = 'tool_usage'
-    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    tool_name = db.Column(db.String(50), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
-    session_id = db.Column(db.String(36), nullable=False)
-    action = db.Column(db.String(100), nullable=False)
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    user = db.relationship('User', backref='tool_usage_records')
+def to_dict_quiz_result(qr):
+    """Convert quiz result document to dict."""
+    try:
+        badges = json.loads(qr['badges']) if qr.get('badges') else []
+        insights = json.loads(qr['insights']) if qr.get('insights') else []
+        tips = json.loads(qr['tips']) if qr.get('tips') else []
+    except json.JSONDecodeError:
+        current_app.logger.error(f"Invalid JSON in QuizResult ID {qr['id']}")
+        badges = []
+        insights = []
+        tips = []
+    return {
+        'id': qr['id'],
+        'user_id': qr['user_id'],
+        'session_id': qr['session_id'],
+        'created_at': qr['created_at'].isoformat() + "Z" if isinstance(qr['created_at'], datetime) else qr['created_at'],
+        'first_name': qr['first_name'],
+        'email': qr['email'],
+        'send_email': qr['send_email'],
+        'personality': qr['personality'],
+        'score': qr['score'],
+        'badges': badges,
+        'insights': insights,
+        'tips': tips
+    }
 
-    __table_args__ = (
-        db.Index('ix_tool_usage_session_id', 'session_id'),
-        db.Index('ix_tool_usage_user_id', 'user_id'),
-        db.Index('ix_tool_usage_tool_name', 'tool_name')
-    )
+# Feedback helper functions
+def create_feedback(mongo, feedback_data):
+    """Create a feedback record."""
+    feedback = {
+        'id': int(uuid.uuid4().int & (1<<31)-1),
+        'user_id': feedback_data.get('user_id'),
+        'session_id': feedback_data['session_id'],
+        'created_at': feedback_data.get('created_at', datetime.utcnow()),
+        'tool_name': feedback_data['tool_name'],
+        'rating': feedback_data['rating'],
+        'comment': feedback_data.get('comment')
+    }
+    mongo.db.feedback.insert_one(feedback)
+    return feedback
 
-    def __init__(self, tool_name, user_id, session_id, action):
-        self.tool_name = tool_name
-        self.user_id = user_id
-        self.session_id = session_id
-        self.action = action
+def get_feedback(mongo, filters):
+    """Retrieve feedback records by filters."""
+    return list(mongo.db.feedback.find(filters, {'_id': 0}))
 
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'tool_name': self.tool_name,
-            'user_id': self.user_id,
-            'session_id': self.session_id,
-            'action': self.action,
-            'created_at': self.created_at.isoformat() + 'Z' if self.created_at else None
-        }
+def to_dict_feedback(feedback):
+    """Convert feedback document to dict."""
+    return {
+        'id': feedback['id'],
+        'user_id': feedback['user_id'],
+        'session_id': feedback['session_id'],
+        'created_at': feedback['created_at'].isoformat() + "Z" if isinstance(feedback['created_at'], datetime) else feedback['created_at'],
+        'tool_name': feedback['tool_name'],
+        'rating': feedback['rating'],
+        'comment': feedback['comment']
+    }
 
-def log_tool_usage(tool_name, user_id=None, session_id=None, action=None, details=None):
+# ToolUsage helper functions
+def create_tool_usage(mongo, tool_usage_data):
+    """Create a tool usage record."""
+    tool_usage = {
+        'id': str(uuid.uuid4()),
+        'tool_name': tool_usage_data['tool_name'],
+        'user_id': tool_usage_data.get('user_id'),
+        'session_id': tool_usage_data['session_id'],
+        'action': tool_usage_data.get('action', 'unknown'),
+        'created_at': tool_usage_data.get('created_at', datetime.utcnow())
+    }
+    mongo.db.tool_usage.insert_one(tool_usage)
+    return tool_usage
+
+def get_tool_usage(mongo, filters):
+    """Retrieve tool usage records by filters."""
+    return list(mongo.db.tool_usage.find(filters, {'_id': 0}))
+
+def to_dict_tool_usage(tu):
+    """Convert tool usage document to dict."""
+    return {
+        'id': tu['id'],
+        'tool_name': tu['tool_name'],
+        'user_id': tu['user_id'],
+        'session_id': tu['session_id'],
+        'action': tu['action'],
+        'created_at': tu['created_at'].isoformat() + "Z" if isinstance(tu['created_at'], datetime) else tu['created_at']
+    }
+
+def log_tool_usage(mongo, tool_name, user_id=None, session_id=None, action=None, details=None):
     """
-    Log tool usage to the database in a separate transaction.
+    Log tool usage to the MongoDB tool_usage collection.
     
     Args:
+        mongo: PyMongo instance
         tool_name (str): Name of the tool (e.g., 'financial_health', 'budget')
         user_id (int): ID of the authenticated user (None if unauthenticated)
         session_id (str): Session ID for tracking unauthenticated users
@@ -462,18 +524,16 @@ def log_tool_usage(tool_name, user_id=None, session_id=None, action=None, detail
         details (dict): Additional details for logging
     """
     try:
-        with db.session.begin_nested():  # Use nested transaction to isolate logging
-            usage = ToolUsage(
-                tool_name=tool_name,
-                user_id=user_id,
-                session_id=session_id or session.get('sid', 'unknown'),
-                action=action or 'unknown'
-            )
-            db.session.add(usage)
-            db.session.commit()
+        tool_usage = {
+            'id': str(uuid.uuid4()),
+            'tool_name': tool_name,
+            'user_id': user_id,
+            'session_id': session_id or session.get('sid', 'unknown'),
+            'action': action or 'unknown',
+            'created_at': datetime.utcnow()
+        }
+        mongo.db.tool_usage.insert_one(tool_usage)
         current_app.logger.info(f"Logged tool usage: {tool_name} for session {session_id}", extra={'details': details})
     except Exception as e:
-        db.session.rollback()
         current_app.logger.error(f"Failed to log tool usage: {str(e)}", extra={'tool_name': tool_name, 'session_id': session_id, 'details': details})
-        # Re-raise to ensure the calling code can handle it if needed
         raise
