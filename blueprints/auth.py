@@ -10,7 +10,6 @@ from models import User, log_tool_usage
 import logging
 import uuid
 from datetime import datetime
-import traceback
 
 # Configure logging
 logger = logging.getLogger('ficore_app')
@@ -134,17 +133,19 @@ def signup():
     try:
         if request.method == 'POST':
             if form.validate_on_submit():
+                is_admin = form.email.data == 'abumeemah@gmail.com'  # Assign admin status
                 user = User(
                     username=form.username.data,
                     email=form.email.data,
                     password_hash=generate_password_hash(form.password.data),
+                    is_admin=is_admin,
                     referred_by_id=referrer.id if referrer else None,
                     created_at=datetime.utcnow(),
                     lang=lang
                 )
                 db.session.add(user)
                 db.session.commit()
-                logger.info(f"User signed up: {user.username} with referral code: {referral_code or 'none'}", extra={'session_id': session_id})
+                logger.info(f"User signed up: {user.username} with referral code: {referral_code or 'none'}, is_admin: {is_admin}", extra={'session_id': session_id})
                 log_tool_usage('register', user.id, session_id, 'submit_success')
                 flash(trans('auth_signup_success', default='Account created successfully! Please sign in.', lang=lang), 'success')
                 return redirect(url_for('auth.signin'))
@@ -155,8 +156,7 @@ def signup():
         
         return render_template('signup.html', form=form, lang=lang, referral_code=referral_code, referrer=referrer)
     except Exception as e:
-        db.session.rollback()
-        logger.error(f"Error in signup: {str(e)}\n{traceback.format_exc()}", extra={'session_id': session_id, 'username': form.username.data if form.username.data else 'unknown', 'email': form.email.data if form.email.data else 'unknown'})
+        logger.error(f"Error in signup: {str(e)}", extra={'session_id': session_id, 'username': form.username.data if form.username.data else 'unknown', 'email': form.email.data if form.email.data else 'unknown'})
         log_tool_usage('register', None, session_id, 'error', details=f"Exception: {str(e)}")
         flash(trans('auth_error', default='An error occurred. Please try again.', lang=lang), 'danger')
         return render_template('signup.html', form=form, lang=lang, referral_code=referral_code, referrer=referrer), 500
@@ -178,32 +178,24 @@ def signin():
         with db.session.begin():
             if request.method == 'POST' and form.validate_on_submit():
                 user = User.query.filter_by(email=form.email.data).first()
-                if not user:
-                    logger.warning(f"User not found for email: {form.email.data}", extra={'session_id': session_id})
-                    log_tool_usage('login', None, session_id, 'submit_error', details="User not found")
-                    flash(trans('auth_user_not_found', default='User not found.', lang=lang), 'danger')
-                elif not user.password_hash:
-                    logger.warning(f"No password set for user: {form.email.data}", extra={'session_id': session_id})
-                    log_tool_usage('login', None, session_id, 'submit_error', details="No password set")
-                    flash(trans('auth_no_password', default='No password set for this account.', lang=lang), 'danger')
-                elif not check_password_hash(user.password_hash, form.password.data):
-                    logger.warning(f"Invalid password for email: {form.email.data}", extra={'session_id': session_id})
-                    log_tool_usage('login', None, session_id, 'submit_error', details="Invalid password")
-                    flash(trans('auth_wrong_password', default='Incorrect password.', lang=lang), 'danger')
-                else:
+                if user and check_password_hash(user.password_hash, form.password.data):
                     login_user(user)
                     logger.info(f"User signed in: {user.username}", extra={'session_id': session_id})
                     log_tool_usage('login', user.id, session_id, 'submit_success')
                     flash(trans('auth_signin_success', default='Signed in successfully!', lang=lang), 'success')
                     return redirect(url_for('index'))
+                else:
+                    logger.warning(f"Invalid signin attempt for email: {form.email.data}", extra={'session_id': session_id})
+                    log_tool_usage('login', None, session_id, 'submit_error')
+                    flash(trans('auth_invalid_credentials', default='Invalid email or password.', lang=lang), 'danger')
             elif form.errors:
                 logger.error(f"Signin form validation failed: {form.errors}", extra={'session_id': session_id})
-                log_tool_usage('login', None, session_id, 'submit_error', details=f"Validation errors: {form.errors}")
+                log_tool_usage('login', None, session_id, 'submit_error')
                 flash(trans('auth_form_errors', default='Please correct the errors in the form.', lang=lang), 'danger')
     except Exception as e:
         db.session.rollback()
-        logger.error(f"Error in signin: {str(e)}\n{traceback.format_exc()}", extra={'session_id': session_id})
-        log_tool_usage('login', None, session_id, 'error', details=f"Exception: {str(e)}")
+        logger.error(f"Error in signin: {str(e)}", extra={'session_id': session_id})
+        log_tool_usage('login', None, session_id, 'error')
         flash(trans('auth_error', default='An error occurred. Please try again.', lang=lang), 'danger')
         return render_template('signin.html', form=form, lang=lang), 500
     
@@ -233,26 +225,22 @@ def profile():
     session_id = session.get('sid', str(uuid.uuid4()))
     
     try:
-        with db.session.begin():
-            if request.method == 'POST' and password_form.validate_on_submit():
-                current_user.password_hash = generate_password_hash(password_form.new_password.data)
-                db.session.commit()
-                logger.info(f"User changed password: {current_user.username}", extra={'session_id': session_id})
-                flash(trans('core_password_changed_success', default='Password changed successfully!', lang=lang), 'success')
-                return redirect(url_for('auth.profile'))
-            elif password_form.errors:
-                logger.error(f"Change password form validation failed: {password_form.errors}", extra={'session_id': session_id})
-                flash(trans('core_form_errors', default='Please correct the errors in the form.', lang=lang), 'danger')
-            
-            referral_link = url_for('auth.signup', ref=current_user.referral_code, _external=True)
-            referral_count = len(current_user.referrals) if current_user.referrals else 0
-            referred_users = current_user.referrals if current_user.referrals else []
-            logger.info(f"Profile accessed for user: {current_user.username}", extra={'session_id': session_id, 'referral_count': referral_count})
-            return render_template('profile.html', lang=lang, referral_link=referral_link, referral_count=referral_count, referred_users=referred_users, password_form=password_form)
+        if request.method == 'POST' and password_form.validate_on_submit():
+            current_user.password_hash = generate_password_hash(password_form.new_password.data)
+            db.session.commit()
+            logger.info(f"User changed password: {current_user.username}", extra={'session_id': session_id})
+            flash(trans('core_password_changed_success', default='Password changed successfully!', lang=lang), 'success')
+            return redirect(url_for('auth.profile'))
+        elif password_form.errors:
+            logger.error(f"Change password form validation failed: {password_form.errors}", extra={'session_id': session_id})
+            flash(trans('core_form_errors', default='Please correct the errors in the form.', lang=lang), 'danger')
+        
+        referral_link = url_for('auth.signup', ref=current_user.referral_code, _external=True)
+        referral_count = len(current_user.referrals)
+        referred_users = current_user.referrals
+        return render_template('profile.html', lang=lang, referral_link=referral_link, referral_count=referral_count, referred_users=referred_users, password_form=password_form)
     except Exception as e:
-        db.session.rollback()
-        logger.error(f"Error in profile: {str(e)}\n{traceback.format_exc()}", extra={'session_id': session_id})
-        log_tool_usage('profile', current_user.id, session_id, 'error', details=f"Exception: {str(e)}")
+        logger.error(f"Error in profile: {str(e)}", extra={'session_id': session_id})
         flash(trans('core_error', default='An error occurred. Please try again.', lang=lang), 'danger')
         return render_template('profile.html', lang=lang, referral_link=referral_link, referral_count=referral_count, referred_users=referred_users, password_form=password_form), 500
 
@@ -262,10 +250,11 @@ def debug_auth():
     try:
         return jsonify({
             'is_authenticated': current_user.is_authenticated,
+            'is_admin': current_user.is_admin if current_user.is_authenticated else False,
             'email': current_user.email if current_user.is_authenticated else None,
             'username': current_user.username if current_user.is_authenticated else None,
             'session_id': session_id
         })
     except Exception as e:
-        logger.error(f"Error in debug_auth: {str(e)}\n{traceback.format_exc()}", extra={'session_id': session_id})
+        logger.error(f"Error in debug_auth: {str(e)}", extra={'session_id': session_id})
         return jsonify({'error': str(e)}), 500
