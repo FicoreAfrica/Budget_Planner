@@ -62,22 +62,28 @@ def setup_logging(app):
     handler.setFormatter(formatter)
     root_logger.addHandler(handler)
     log_dir = os.path.join(os.path.dirname(__file__), 'data')
-    os.makedirs(log_dir, exist_ok=True)
     try:
+        os.makedirs(log_dir, exist_ok=True)
+        logger.info(f"Database directory ensured at {log_dir}")
         file_handler = logging.FileHandler(os.path.join(log_dir, 'storage.log'))
         file_handler.setLevel(logging.DEBUG)
         file_handler.setFormatter(formatter)
         root_logger.addHandler(file_handler)
         logger.info("Logging setup complete with file handler")
     except (PermissionError, OSError) as e:
-        logger.warning(f"Failed to set up file logging: {str(e)}")
+        logger.error(f"Failed to set up file logging: {str(e)}", exc_info=True)
 
 def setup_session(app):
-    app.config['SESSION_TYPE'] = 'memory'
-    app.config['SESSION_PERMANENT'] = True
-    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
-    app.config['SESSION_USE_SIGNER'] = True
-    logger.info(f"Session configured: type={app.config['SESSION_TYPE']}, lifetime={app.config['PERMANENT_SESSION_LIFETIME']}")
+    try:
+        app.config['SESSION_TYPE'] = 'memory'
+        app.config['SESSION_PERMANENT'] = True
+        app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
+        app.config['SESSION_USE_SIGNER'] = True
+        flask_session.init_app(app)
+        logger.info(f"Session configured: type={app.config['SESSION_TYPE']}, lifetime={app.config['PERMANENT_SESSION_LIFETIME']}")
+    except Exception as e:
+        logger.error(f"Failed to configure session: {str(e)}", exc_info=True)
+        raise
 
 def initialize_courses_data(app):
     with app.app_context():
@@ -92,6 +98,7 @@ def initialize_courses_data(app):
         except Exception as e:
             logger.error(f"Failed to initialize courses: {str(e)}", exc_info=True)
             db.session.rollback()
+            app.config['COURSES'] = SAMPLE_COURSES  # Fallback
 
 def apply_migrations(app):
     alembic_cfg = Config(os.path.join(os.path.dirname(__file__), 'alembic.ini'))
@@ -146,7 +153,6 @@ def create_app():
     setup_logging(app)
     setup_session(app)
     app.config['BASE_URL'] = os.environ.get('BASE_URL', 'http://localhost:5000')
-    flask_session.init_app(app)
     csrf.init_app(app)
 
     # Configure database
@@ -180,7 +186,7 @@ def create_app():
 
     # Apply migrations and initialize database
     with app.app_context():
-        apply_migrations(app)  # Run migrations before creating tables
+        apply_migrations(app)
         db.create_all()
         initialize_courses_data(app)
         logger.info("Database tables created and courses initialized")
@@ -192,11 +198,11 @@ def create_app():
             admin_user = User.query.filter_by(email=admin_email).first()
             if not admin_user:
                 admin_user = User(
-                    username='admin_' + str(uuid.uuid4())[:8],  # Unique username
+                    username='admin_' + str(uuid.uuid4())[:8],
                     email=admin_email,
                     password_hash=generate_password_hash(admin_password),
                     is_admin=True,
-                    role='admin',  # Set role for new admin user
+                    role='admin',
                     created_at=datetime.utcnow(),
                     lang='en'
                 )
@@ -291,6 +297,7 @@ def create_app():
                 g.logger.warning("data/storage.log not found")
         except Exception as e:
             logger.error(f"Before request error: {str(e)}", exc_info=True)
+            raise
 
     @app.context_processor
     def inject_translations():
@@ -326,20 +333,20 @@ def create_app():
         lang = session.get('lang', 'en')
         logger.info("Serving index page")
         try:
-            courses = current_app.config.get('COURSES', SAMPLE_COURSES)  # Fallback to SAMPLE_COURSES
+            courses = current_app.config.get('COURSES', SAMPLE_COURSES)
             logger.info(f"Retrieved {len(courses)} courses")
             processed_courses = courses
+            return render_template(
+                'index.html',
+                t=translate,
+                courses=processed_courses,
+                lang=lang,
+                sample_courses=SAMPLE_COURSES
+            )
         except Exception as e:
-            logger.error(f"Error retrieving courses: {str(e)}", exc_info=True)
-            processed_courses = SAMPLE_COURSES
+            logger.error(f"Error in index route: {str(e)}", exc_info=True)
             flash(translate('learning_hub_error_message', default='An error occurred', lang=lang), 'danger')
-        return render_template(
-            'index.html',
-            t=translate,
-            courses=processed_courses,
-            lang=lang,
-            sample_courses=SAMPLE_COURSES
-        )
+            return render_template('error.html', t=translate, lang=lang, error=str(e)), 500
 
     @app.route('/set_language/<lang>')
     def set_language(lang):
@@ -383,66 +390,33 @@ def create_app():
 
             # Financial Health
             fh_records = FinancialHealth.query.filter_by(**filter_kwargs).order_by(FinancialHealth.created_at.desc()).all()
-            if not fh_records:
-                logger.warning(f"No FinancialHealth records found for filter: {filter_kwargs}")
-            data['financial_health'] = {
-                'score': fh_records[0].score if fh_records else None,
-                'status': fh_records[0].status if fh_records else None
-            }
+            data['financial_health'] = {'score': fh_records[0].score if fh_records else None, 'status': fh_records[0].status if fh_records else None}
 
             # Budget
             budget_records = Budget.query.filter_by(**filter_kwargs).order_by(Budget.created_at.desc()).all()
-            if not budget_records:
-                logger.warning(f"No Budget records found for filter: {filter_kwargs}")
-            data['budget'] = {
-                'surplus_deficit': budget_records[0].surplus_deficit if budget_records else None,
-                'savings_goal': budget_records[0].savings_goal if budget_records else None
-            }
+            data['budget'] = {'surplus_deficit': budget_records[0].surplus_deficit if budget_records else None, 'savings_goal': budget_records[0].savings_goal if budget_records else None}
 
             # Bills
             bills = Bill.query.filter_by(**filter_kwargs).all()
-            if not bills:
-                logger.warning(f"No Bill records found for filter: {filter_kwargs}")
             total_amount = sum(bill.amount for bill in bills) if bills else 0
             unpaid_amount = sum(bill.amount for bill in bills if bill.status.lower() != 'paid') if bills else 0
-            data['bills'] = {
-                'bills': [bill.to_dict() for bill in bills] if bills else [],
-                'total_amount': total_amount,
-                'unpaid_amount': unpaid_amount
-            }
+            data['bills'] = {'bills': [bill.to_dict() for bill in bills] if bills else [], 'total_amount': total_amount, 'unpaid_amount': unpaid_amount}
 
             # Net Worth
             nw_records = NetWorth.query.filter_by(**filter_kwargs).order_by(NetWorth.created_at.desc()).all()
-            if not nw_records:
-                logger.warning(f"No NetWorth records found for filter: {filter_kwargs}")
-            data['net_worth'] = {
-                'net_worth': nw_records[0].net_worth if nw_records else None,
-                'total_assets': nw_records[0].total_assets if nw_records else None
-            }
+            data['net_worth'] = {'net_worth': nw_records[0].net_worth if nw_records else None, 'total_assets': nw_records[0].total_assets if nw_records else None}
 
             # Emergency Fund
             ef_records = EmergencyFund.query.filter_by(**filter_kwargs).order_by(EmergencyFund.created_at.desc()).all()
-            if not ef_records:
-                logger.warning(f"No EmergencyFund records found for filter: {filter_kwargs}")
-            data['emergency_fund'] = {
-                'target_amount': ef_records[0].target_amount if ef_records else None,
-                'savings_gap': ef_records[0].savings_gap if ef_records else None
-            }
+            data['emergency_fund'] = {'target_amount': ef_records[0].target_amount if ef_records else None, 'savings_gap': ef_records[0].savings_gap if ef_records else None}
 
             # Learning Progress
             lp_records = LearningProgress.query.filter_by(**filter_kwargs).all()
-            if not lp_records:
-                logger.warning(f"No LearningProgress records found for filter: {filter_kwargs}")
             data['learning_progress'] = {lp.course_id: lp.to_dict() for lp in lp_records} if lp_records else {}
 
             # Quiz Result
             quiz_records = QuizResult.query.filter_by(**filter_kwargs).order_by(QuizResult.created_at.desc()).all()
-            if not quiz_records:
-                logger.warning(f"No QuizResult records found for filter: {filter_kwargs}")
-            data['quiz'] = {
-                'personality': quiz_records[0].personality if quiz_records else None,
-                'score': quiz_records[0].score if quiz_records else None
-            }
+            data['quiz'] = {'personality': quiz_records[0].personality if quiz_records else None, 'score': quiz_records[0].score if quiz_records else None}
 
             logger.info(f"Retrieved data for session {session['sid']}")
             return render_template('general_dashboard.html', data=data, t=translate, lang=lang)
@@ -519,7 +493,7 @@ def create_app():
 
     @app.route('/static/<path:filename>')
     def static_files(filename):
-        return send_from_directory('static', filename)  # Removed Content-Type override
+        return send_from_directory('static', filename)
 
     @app.route('/feedback', methods=['GET', 'POST'])
     @ensure_session_id
