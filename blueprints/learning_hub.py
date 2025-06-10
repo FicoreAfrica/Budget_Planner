@@ -14,8 +14,12 @@ from extensions import db
 from models import LearningProgress, Course, log_tool_usage
 from werkzeug.utils import secure_filename
 
-learning_hub_bp = Blueprint('learning_hub', __name__)
-
+learning_hub_bp = Blueprint(
+    'learning_hub',
+    _name_,
+    template_folder='templates/LEARNINGHUB',
+    url_prefix='/LEARNINGHUB'
+    
 # Initialize CSRF protection
 csrf = CSRFProtect()
 
