@@ -10,7 +10,12 @@ from translations import trans
 from extensions import db
 from models import Bill, log_tool_usage
 
-bill_bp = Blueprint('bill', __name__, url_prefix='/BILL')
+bill_bp = Blueprint(
+    'bill',
+    _name_,
+    template_folder='templates/BILL',
+    url_prefix='/BILL'
+)
 
 def strip_commas(value):
     """Remove commas from string values for numerical fields."""
