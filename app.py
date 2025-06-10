@@ -62,7 +62,6 @@ def setup_logging(app):
     handler.setLevel(logging.DEBUG)
     handler.setFormatter(formatter)
     root_logger.addHandler(handler)
-    # Avoid filesystem logging on Render free tier; use stderr only
     logger.info("Logging setup complete with stream handler")
 
 def setup_session(app):
@@ -253,7 +252,7 @@ def create_app():
         lang = session.get('lang', 'en')
         def context_trans(key, **kwargs):
             used_lang = kwargs.pop('lang', lang)
-            return translate(key, lang=used_lang, logger=g.get('logger', logger), **kwargs)
+            return translate(key, lang=used_lang, logger=g.get('logger', logger) if has_request_context() else logger, **kwargs)
         return {
             'trans': context_trans,
             'current_year': datetime.now().year,
@@ -495,12 +494,11 @@ def create_app():
             logger.error(f"Error logging tool usage: {str(e)}")
             db.session.rollback()
 
-    logger.info("App creation completed")
-    return app
+# Create and expose the app globally
+app = create_app()
 
 if __name__ == "__main__":
     try:
-        app = create_app()
         app.run(debug=True, host='0.0.0.0', port=10000)
     except Exception as e:
         logger.error(f"Error running app: {str(e)}")
