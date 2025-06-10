@@ -9,8 +9,9 @@ import csv
 from io import StringIO
 from sqlalchemy import func
 
-# Configure logging
-logger = logging.getLogger('ficore_app.analytics')
+# Configure logging with SessionAdapter
+logger = logging.getLogger('ficore_app.admin')  # Namespaced logger
+from app import logger as app_logger  # Import the SessionAdapter instance
 
 # Define the admin blueprint
 admin_bp = Blueprint('admin', __name__, template_folder='templates/admin', url_prefix='/admin')
@@ -57,7 +58,6 @@ def overview():
             action_breakdown[tool] = actions
 
         # Engagement Metrics
-        # Multi-tool users
         multi_tool_users = db.session.query(ToolUsage.user_id, func.count(func.distinct(ToolUsage.tool_name)))\
             .filter(ToolUsage.tool_name.in_(VALID_TOOLS[3:]))\
             .group_by(ToolUsage.user_id)\
@@ -67,7 +67,6 @@ def overview():
             .filter(ToolUsage.tool_name.in_(VALID_TOOLS[3:])).scalar()
         multi_tool_ratio = (multi_tool_users / total_sessions * 100) if total_sessions else 0.0
 
-        # Anonymous to registered conversion
         anon_sessions = db.session.query(ToolUsage.session_id)\
             .filter(ToolUsage.user_id.is_(None), ToolUsage.tool_name.in_(VALID_TOOLS[3:]))\
             .distinct().subquery()
@@ -80,7 +79,7 @@ def overview():
         # Feedback
         avg_feedback = db.session.query(func.avg(Feedback.rating)).scalar() or 0.0
 
-        # Data for charts (last 30 days)
+        # Chart Data (last 30 days)
         end_date = datetime.utcnow()
         start_date = end_date - timedelta(days=30)
         daily_usage = db.session.query(
@@ -93,7 +92,6 @@ def overview():
         .order_by('date')\
         .all()
 
-        # Referral chart data
         daily_referrals = db.session.query(
             func.date(User.created_at).label('date'),
             func.count(User.id).label('count')
@@ -154,7 +152,7 @@ def overview():
             'avg_feedback_rating': round(avg_feedback, 2)
         }
 
-        logger.info(f"Admin dashboard overview accessed by {current_user.username}", extra={'session_id': session.get('sid', 'no-session-id')})
+        logger.info(f"Admin dashboard overview accessed by {current_user.username}")
         return render_template(
             'admin_dashboard.html',
             lang=lang,
@@ -166,18 +164,9 @@ def overview():
             end_date=None
         )
     except Exception as e:
-        logger.error(f"Error in admin overview: overview {str(e)}", extra={'session_id': strsession.get('sid', 'no-session-id')})
+        logger.error(f"Error in admin overview: {str(e)}")
         flash(trans('admin_error', default='An error occurred while loading the dashboard.', lang=lang), 'danger')
-        return render_template(
-            'admin_dashboard.html',
-            lang=lang,
-            metrics={},
-            chart_data={},
-            valid_tools=VALID_TOOLS[3:],
-            tool_name=None,
-            start_date=None,
-            end_date=None
-        ), 500
+        return jsonify({'error': 'Internal server error', 'details': str(e)}), 500
 
 @admin_bp.route('/tool_usage', methods=['GET', 'POST'])
 @login_required
@@ -200,12 +189,12 @@ def tool_usage():
             start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
             query = query.filter(ToolUsage.created_at >= start_date)
         else:
-            start_date = None
+            start_date = datetime.utcnow() - timedelta(days=30)
         if end_date_str:
             end_date = datetime.strptime(end_date_str, '%Y-%m-%d') + timedelta(days=1)
             query = query.filter(ToolUsage.created_at < end_date)
         else:
-            end_date = None
+            end_date = datetime.utcnow()
 
         usage_logs = query.order_by(ToolUsage.created_at.desc()).limit(100).all()
 
@@ -213,7 +202,7 @@ def tool_usage():
         available_actions = db.session.query(ToolUsage.action)\
             .filter(ToolUsage.tool_name == tool_name if tool_name else True)\
             .distinct().all()
-        available_actions = [a[0] for a in available_actions]
+        available_actions = [a[0] for a in available_actions if a[0] is not None]
 
         # Chart data
         chart_data = {
@@ -221,74 +210,28 @@ def tool_usage():
             'usage_counts': {},
             'total_counts': []
         }
-        if start_date and end_date:
-            current_date = start_date
-            while current_date < end_date:
-                date_str = current_date.strftime('%Y-%m-%d')
-                chart_data['labels'].append(date_str)
-                daily_query = query.filter(func.date(ToolUsage.created_at) == current_date.date())
-                total_count = daily_query.count()
-                chart_data['total_counts'].append(total_count)
-                if tool_name:
-                    action_counts = db.session.query(ToolUsage.action, func.count(ToolUsage.id))\
-                        .filter(
-                            ToolUsage.tool_name == tool_name,
-                            func.date(ToolUsage.created_at) == current_date.date()
-                        )\
-                        .group_by(ToolUsage.action).all()
-                    for act, count in action_counts:
-                        if act not in chart_data['usage_counts']:
-                            chart_data['usage_counts'][act] = [0] * len(chart_data['labels'])
+        current_date = start_date
+        while current_date < end_date:
+            date_str = current_date.strftime('%Y-%m-%d')
+            chart_data['labels'].append(date_str)
+            daily_query = query.filter(func.date(ToolUsage.created_at) == current_date.date())
+            total_count = daily_query.count()
+            chart_data['total_counts'].append(total_count)
+            if tool_name:
+                action_counts = db.session.query(ToolUsage.action, func.count(ToolUsage.id))\
+                    .filter(
+                        ToolUsage.tool_name == tool_name,
+                        func.date(ToolUsage.created_at) == current_date.date()
+                    )\
+                    .group_by(ToolUsage.action).all()
+                for act, count in action_counts:
+                    if act and act not in chart_data['usage_counts']:
+                        chart_data['usage_counts'][act] = [0] * len(chart_data['labels'])
+                    if act:
                         chart_data['usage_counts'][act][-1] = count
-                current_date += timedelta(days=1)
-        else:
-            # Default to last 30 days
-            end_date = datetime.utcnow()
-            start_date = end_date - timedelta(days=30)
-            daily_usage = db.session.query(
-                func.date(ToolUsage.created_at).label('date'),
-                ToolUsage.action,
-                func.count(ToolUsage.id).label('count')
-            )\
-            .filter(
-                ToolUsage.created_at >= start_date,
-                ToolUsage.created_at <= end_date,
-                ToolUsage.tool_name == (tool_name if tool_name else ToolUsage.tool_name)
-            )\
-            .group_by('date', ToolUsage.action)\
-            .order_by('date')\
-            .all()
-            current_date = start_date
-            idx = 0
-            for date, action, count in daily_usage:
-                while current_date < datetime.strptime(date, '%Y-%m-%d'):
-                    chart_data['labels'].append(current_date.strftime('%Y-%m-%d'))
-                    chart_data['total_counts'].append(0)
-                    for act in chart_data['usage_counts']:
-                        chart_data['usage_counts'][act].append(0)
-                    current_date += timedelta(days=1)
-                    idx += 1
-                if current_date.strftime('%Y-%m-%d') == date:
-                    chart_data['labels'].append(date)
-                    if idx >= len(chart_data['total_counts']):
-                        chart_data['total_counts'].append(0)
-                    if action not in chart_data['usage_counts']:
-                        chart_data['usage_counts'][action] = [0] * (idx + 1)
-                    chart_data['usage_counts'][action][idx] = count
-                    chart_data['total_counts'][idx] += count
-                    current_date += timedelta(days=1)
-                    idx += 1
-            while current_date <= end_date:
-                chart_data['labels'].append(current_date.strftime('%Y-%m-%d'))
-                chart_data['total_counts'].append(0)
-                for act in chart_data['usage_counts']:
-                    chart_data['usage_counts'][act].append(0)
-                current_date += timedelta(days=1)
+            current_date += timedelta(days=1)
 
-        logger.info(
-            f"Tool usage analytics accessed by {current_user.username}, tool={tool_name}, action={action}, start={start_date_str}, end={end_date_str}",
-            extra={'session_id': session.get('sid', 'no-session-id')}
-        )
+        logger.info(f"Tool usage analytics accessed by {current_user.username}, tool={tool_name}, action={action}, start={start_date_str}, end={end_date_str}")
         return render_template(
             'admin_dashboard.html',
             lang=lang,
@@ -302,26 +245,16 @@ def tool_usage():
             available_actions=available_actions
         )
     except Exception as e:
-        logger.error(f"Error in tool usage analytics: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
+        logger.error(f"Error in tool usage analytics: {str(e)}")
         flash(trans('admin_error', default='Error loading analytics.', lang=lang), 'error')
-        return render_template(
-            'admin_dashboard.html',
-            lang=lang,
-            metrics=[],
-            chart_data={},
-            valid_tools=VALID_TOOLS[3:],
-            tool_name=None,
-            start_date=None,
-            end_date=None,
-            action=None,
-            available_actions=[]
-        ), 500
+        return jsonify({'error': 'Internal server error', 'details': str(e)}), 500
 
 @admin_bp.route('/export_csv', methods=['GET'])
 @login_required
 @admin_required
 def export_csv():
     """Export filtered tool usage logs as CSV."""
+    lang = session.get('lang', 'en')  # Define lang
     try:
         tool_name = request.args.get('tool_name')
         start_date_str = request.args.get('start_date')
@@ -351,23 +284,20 @@ def export_csv():
                 log.user_id or 'anonymous',
                 log.session_id,
                 log.tool_name,
-                log.action,
-                log.created_at.isoformat()
+                log.action or 'N/A',
+                log.created_at.isoformat() if log.created_at else 'N/A'
             ])
 
         output = si.getvalue()
         si.close()
 
-        logger.info(
-            f"CSV export generated by {current_user.username}, tool={tool_name}, action={action}, start={start_date_str}, end={end_date_str}",
-            extra={'session_id': session.get('sid', 'no-session-id')}
-        )
+        logger.info(f"CSV export generated by {current_user.username}, tool={tool_name}, action={action}, start={start_date_str}, end={end_date_str}")
         return Response(
             output,
             mimetype='text/csv',
             headers={'Content-Disposition': 'attachment; filename=tool_usage_export.csv'}
         )
     except Exception as e:
-        logger.error(f"Error in CSV export: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
+        logger.error(f"Error in CSV export: {str(e)}")
         flash(trans('admin_export_error', default='Error exporting CSV.', lang=lang), 'error')
         return redirect(url_for('admin.tool_usage'))
