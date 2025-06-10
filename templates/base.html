@@ -41,8 +41,7 @@
               </div>
             {% endfor %}
         </div>
-      {% endif %}
-    {% endwith %}
+      {% endwith %}
 
     <!-- Header Message -->
     <div class="header-message">
@@ -81,7 +80,7 @@
                             <li><a class="dropdown-item" href="{{ url_for('index') }}" style="font-size: 0.85rem;">{{ trans('core_home') | default('Home') }}</a></li>
                             <li><a class="dropdown-item" href="{{ url_for('feedback') }}" style="font-size: 0.85rem;">{{ trans('core_feedback') | default('Feedback') }}</a></li>
                             <li><a class="dropdown-item" href="{{ url_for('general_dashboard') }}" style="font-size: 0.85rem;">{{ trans('core_general_dashboard') | default('General Dashboard') }}</a></li>
-                            {% if current_user.is_authenticated %}
+                            {% if current_user.is_authenticated and current_user.role == 'admin' %}
                             <li><a class="dropdown-item" href="{{ url_for('admin.overview') }}" style="font-size: 0.85rem;">{{ trans('core_admin_panel') | default('Admin Panel') }}</a></li>
                             {% endif %}
                         </ul>
@@ -170,6 +169,7 @@
                             select.classList.remove('is-invalid');
                         }
                     });
+                    console.log('Form validation result:', valid ? 'Valid' : 'Invalid', 'Form ID:', form.id);
                     if (!valid) {
                         e.preventDefault();
                         alert('{{ trans('core_please_complete_all_fields') | default('Please complete all required fields') }}');
