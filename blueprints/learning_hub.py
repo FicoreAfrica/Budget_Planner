@@ -16,7 +16,7 @@ from werkzeug.utils import secure_filename
 
 learning_hub_bp = Blueprint(
     'learning_hub',
-    _name_,
+    __name__,
     template_folder='templates/LEARNINGHUB',
     url_prefix='/LEARNINGHUB'
 )
