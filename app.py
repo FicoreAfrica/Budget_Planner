@@ -6,17 +6,15 @@ from datetime import datetime, timedelta
 from flask import Flask, jsonify, render_template, request, session, redirect, url_for, flash, send_from_directory, has_request_context, g, current_app, make_response
 from flask_wtf.csrf import CSRFError, generate_csrf
 from flask_login import LoginManager, current_user, login_required
+from flask_pymongo import PyMongo
 from dotenv import load_dotenv
-from extensions import db, login_manager, session as flask_session, csrf
+from extensions import login_manager, session as flask_session, csrf
 from blueprints.auth import auth_bp
 from translations import trans
 from scheduler_setup import init_scheduler
-from models import Course, FinancialHealth, Budget, Bill, NetWorth, EmergencyFund, LearningProgress, QuizResult, User, Feedback, ToolUsage
 import json
 from functools import wraps
 from uuid import uuid4
-from alembic import command
-from alembic.config import Config
 from werkzeug.security import generate_password_hash
 
 # Load environment variables
@@ -57,18 +55,16 @@ def admin_required(f):
     return decorated_function
 
 def setup_logging(app):
-    # Configure StreamHandler for custom logger
     handler = logging.StreamHandler(sys.stderr)
     handler.setLevel(logging.DEBUG)
     handler.setFormatter(formatter)
-    root_logger.handlers = []  # Clear any existing handlers
+    root_logger.handlers = []
     root_logger.addHandler(handler)
     
-    # Configure Flask's built-in loggers (werkzeug and flask)
     flask_logger = logging.getLogger('flask')
     werkzeug_logger = logging.getLogger('werkzeug')
-    flask_logger.handlers = []  # Clear existing handlers
-    werkzeug_logger.handlers = []  # Clear existing handlers
+    flask_logger.handlers = []
+    werkzeug_logger.handlers = []
     flask_logger.addHandler(handler)
     werkzeug_logger.addHandler(handler)
     flask_logger.setLevel(logging.DEBUG)
@@ -88,32 +84,17 @@ def setup_session(app):
         logger.error(f"Failed to configure session: {str(e)}", exc_info=True)
         raise
 
-def initialize_courses_data(app):
-    with app.app_context():
-        try:
-            if Course.query.count() == 0:
-                for course in SAMPLE_COURSES:
-                    db_course = Course(**course)
-                    db.session.add(db_course)
-                db.session.commit()
-                logger.info("Initialized courses in database")
-            app.config['COURSES'] = [course.to_dict() for course in Course.query.all()]
-        except Exception as e:
-            logger.error(f"Failed to initialize courses: {str(e)}", exc_info=True)
-            db.session.rollback()
-            app.config['COURSES'] = SAMPLE_COURSES  # Fallback
-
-def apply_migrations(app):
-    alembic_cfg = Config(os.path.join(os.path.dirname(__file__), 'alembic.ini'))
-    alembic_cfg.set_main_option('sqlalchemy.url', app.config['SQLALCHEMY_DATABASE_URI'])
+def initialize_courses_data(app, mongo):
     try:
-        with app.app_context():
-            logger.info("Applying database migrations")
-            command.upgrade(alembic_cfg, "head")
-            logger.info("Database migrations applied successfully")
+        courses_collection = mongo.db.courses
+        if courses_collection.count_documents({}) == 0:
+            for course in SAMPLE_COURSES:
+                courses_collection.insert_one(course)
+            logger.info("Initialized courses in MongoDB")
+        app.config['COURSES'] = list(courses_collection.find({}, {'_id': 0}))
     except Exception as e:
-        logger.error(f"Failed to apply migrations: {str(e)}", exc_info=True)
-        raise
+        logger.error(f"Failed to initialize courses: {str(e)}", exc_info=True)
+        app.config['COURSES'] = SAMPLE_COURSES  # Fallback
 
 # Constants
 SAMPLE_COURSES = [
@@ -154,44 +135,17 @@ def create_app():
     if not os.environ.get('FLASK_SECRET_KEY'):
         logger.warning("FLASK_SECRET_KEY not set. Using fallback for development. Set it in production.")
     
-    # Configure logging right after app creation
+    # Configure logging
     logger.info("Starting app creation")
     setup_logging(app)
     setup_session(app)
     app.config['BASE_URL'] = os.environ.get('BASE_URL', 'http://localhost:5000')
     csrf.init_app(app)
 
-    # Configure database
-    db_dir = os.path.join(os.path.dirname(__file__), 'data')
-    try:
-        os.makedirs(db_dir, exist_ok=True)
-        logger.info(f"Database directory ensured at {db_dir}")
-    except (PermissionError, OSError) as e:
-        logger.critical(f"Failed to create database directory {db_dir}: {str(e)}")
-        raise
-
-    # Explicit database configuration
-    if os.environ.get('FLASK_ENV') == 'production':
-        # In production, we REQUIRE Postgres
-        postgres_url = os.environ.get('DATABASE_URL')
-        if not postgres_url:
-            logger.critical("DATABASE_URL environment variable is required in production")
-            raise RuntimeError("DATABASE_URL environment variable is required in production")
-        
-        # Handle Heroku-style Postgres URLs
-        if postgres_url.startswith('postgres://'):
-            postgres_url = postgres_url.replace('postgres://', 'postgresql://')
-        
-        app.config['SQLALCHEMY_DATABASE_URI'] = postgres_url
-        logger.info("Using PostgreSQL database in production mode")
-    else:
-        # In development, use SQLite with a clear path
-        sqlite_path = os.path.join('/tmp', 'ficore.db')  # Explicit /tmp location
-        app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{sqlite_path}'
-        logger.info(f"Using SQLite database at {sqlite_path} for development")
-
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    db.init_app(app)
+    # Configure MongoDB
+    app.config['MONGO_URI'] = 'mongodb+srv://abumeemah:vkqA9Upw81zf0E96@fico.jmrga1s.mongodb.net/?retryWrites=true&w=majority&appName=FICO'
+    mongo = PyMongo(app)
+    logger.info("MongoDB configured with Flask-PyMongo")
 
     # Initialize Flask-Login
     login_manager.init_app(app)
@@ -199,7 +153,16 @@ def create_app():
 
     @login_manager.user_loader
     def load_user(user_id):
-        return User.query.get(int(user_id))
+        try:
+            user = mongo.db.users.find_one({'id': int(user_id)}, {'_id': 0})
+            if user:
+                from collections import namedtuple
+                User = namedtuple('User', user.keys())
+                return User(**user)
+            return None
+        except Exception as e:
+            logger.error(f"Error loading user {user_id}: {str(e)}")
+            return None
 
     # Initialize scheduler
     try:
@@ -208,30 +171,28 @@ def create_app():
     except Exception as e:
         logger.error(f"Failed to initialize scheduler: {str(e)}")
 
-    # Apply migrations and initialize database
+    # Initialize database
     with app.app_context():
-        apply_migrations(app)
-        db.create_all()
-        initialize_courses_data(app)
-        logger.info("Database tables created and courses initialized")
+        initialize_courses_data(app, mongo)
+        logger.info("MongoDB collections initialized")
 
         # Check and create admin user
         admin_email = os.environ.get('ADMIN_EMAIL')
         admin_password = os.environ.get('ADMIN_PASSWORD')
         if admin_email and admin_password:
-            admin_user = User.query.filter_by(email=admin_email).first()
+            admin_user = mongo.db.users.find_one({'email': admin_email}, {'_id': 0})
             if not admin_user:
-                admin_user = User(
-                    username='admin_' + str(uuid.uuid4())[:8],
-                    email=admin_email,
-                    password_hash=generate_password_hash(admin_password),
-                    is_admin=True,
-                    role='admin',
-                    created_at=datetime.utcnow(),
-                    lang='en'
-                )
-                db.session.add(admin_user)
-                db.session.commit()
+                admin_user = {
+                    'id': int(uuid.uuid4().int & (1<<31)-1),  # Generate 31-bit positive integer ID
+                    'username': 'admin_' + str(uuid.uuid4())[:8],
+                    'email': admin_email,
+                    'password_hash': generate_password_hash(admin_password),
+                    'is_admin': True,
+                    'role': 'admin',
+                    'created_at': datetime.utcnow(),
+                    'lang': 'en'
+                }
+                mongo.db.users.insert_one(admin_user)
                 logger.info(f"Admin user created with email: {admin_email}")
             else:
                 logger.info(f"Admin user already exists with email: {admin_email}")
@@ -412,34 +373,34 @@ def create_app():
             filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
 
             # Financial Health
-            fh_records = FinancialHealth.query.filter_by(**filter_kwargs).order_by(FinancialHealth.created_at.desc()).all()
-            data['financial_health'] = {'score': fh_records[0].score if fh_records else None, 'status': fh_records[0].status if fh_records else None}
+            fh_records = list(mongo.db.financial_health.find(filter_kwargs).sort('created_at', -1))
+            data['financial_health'] = {'score': fh_records[0]['score'] if fh_records else None, 'status': fh_records[0]['status'] if fh_records else None}
 
             # Budget
-            budget_records = Budget.query.filter_by(**filter_kwargs).order_by(Budget.created_at.desc()).all()
-            data['budget'] = {'surplus_deficit': budget_records[0].surplus_deficit if budget_records else None, 'savings_goal': budget_records[0].savings_goal if budget_records else None}
+            budget_records = list(mongo.db.budgets.find(filter_kwargs).sort('created_at', -1))
+            data['budget'] = {'surplus_deficit': budget_records[0]['surplus_deficit'] if budget_records else None, 'savings_goal': budget_records[0]['savings_goal'] if budget_records else None}
 
             # Bills
-            bills = Bill.query.filter_by(**filter_kwargs).all()
-            total_amount = sum(bill.amount for bill in bills) if bills else 0
-            unpaid_amount = sum(bill.amount for bill in bills if bill.status.lower() != 'paid') if bills else 0
-            data['bills'] = {'bills': [bill.to_dict() for bill in bills] if bills else [], 'total_amount': total_amount, 'unpaid_amount': unpaid_amount}
+            bills = list(mongo.db.bills.find(filter_kwargs))
+            total_amount = sum(bill['amount'] for bill in bills) if bills else 0
+            unpaid_amount = sum(bill['amount'] for bill in bills if bill['status'].lower() != 'paid') if bills else 0
+            data['bills'] = {'bills': bills if bills else [], 'total_amount': total_amount, 'unpaid_amount': unpaid_amount}
 
             # Net Worth
-            nw_records = NetWorth.query.filter_by(**filter_kwargs).order_by(NetWorth.created_at.desc()).all()
-            data['net_worth'] = {'net_worth': nw_records[0].net_worth if nw_records else None, 'total_assets': nw_records[0].total_assets if nw_records else None}
+            nw_records = list(mongo.db.net_worth.find(filter_kwargs).sort('created_at', -1))
+            data['net_worth'] = {'net_worth': nw_records[0]['net_worth'] if nw_records else None, 'total_assets': nw_records[0]['total_assets'] if nw_records else None}
 
             # Emergency Fund
-            ef_records = EmergencyFund.query.filter_by(**filter_kwargs).order_by(EmergencyFund.created_at.desc()).all()
-            data['emergency_fund'] = {'target_amount': ef_records[0].target_amount if ef_records else None, 'savings_gap': ef_records[0].savings_gap if ef_records else None}
+            ef_records = list(mongo.db.emergency_funds.find(filter_kwargs).sort('created_at', -1))
+            data['emergency_fund'] = {'target_amount': ef_records[0]['target_amount'] if ef_records else None, 'savings_gap': ef_records[0]['savings_gap'] if ef_records else None}
 
             # Learning Progress
-            lp_records = LearningProgress.query.filter_by(**filter_kwargs).all()
-            data['learning_progress'] = {lp.course_id: lp.to_dict() for lp in lp_records} if lp_records else {}
+            lp_records = list(mongo.db.learning_progress.find(filter_kwargs))
+            data['learning_progress'] = {lp['course_id']: lp for lp in lp_records} if lp_records else {}
 
             # Quiz Result
-            quiz_records = QuizResult.query.filter_by(**filter_kwargs).order_by(QuizResult.created_at.desc()).all()
-            data['quiz'] = {'personality': quiz_records[0].personality if quiz_records else None, 'score': quiz_records[0].score if quiz_records else None}
+            quiz_records = list(mongo.db.quiz_results.find(filter_kwargs).sort('created_at', -1))
+            data['quiz'] = {'personality': quiz_records[0]['personality'] if quiz_records else None, 'score': quiz_records[0]['score'] if quiz_records else None}
 
             logger.info(f"Retrieved data for session {session['sid']}")
             return render_template('general_dashboard.html', data=data, t=translate, lang=lang)
@@ -483,8 +444,7 @@ def create_app():
         logger.info("Health check")
         status = {"status": "healthy"}
         try:
-            with app.app_context():
-                db.session.execute(db.text("SELECT 1"))
+            mongo.db.command('ping')
             return jsonify(status), 200
         except Exception as e:
             logger.error(f"Health check failed: {str(e)}", exc_info=True)
@@ -538,15 +498,15 @@ def create_app():
                 logger.error(f"Invalid feedback rating: {rating}")
                 flash(translate('core_feedback_invalid_rating', default='Please provide a rating between 1 and 5', lang=lang), 'error')
                 return render_template('feedback.html', t=translate, lang=lang, tool_options=tool_options)
-            feedback_entry = Feedback(
-                user_id=current_user.id if current_user.is_authenticated else None,
-                session_id=session['sid'],
-                tool_name=tool_name,
-                rating=int(rating),
-                comment=comment.strip() or None
-            )
-            db.session.add(feedback_entry)
-            db.session.commit()
+            feedback_entry = {
+                'user_id': current_user.id if current_user.is_authenticated else None,
+                'session_id': session['sid'],
+                'tool_name': tool_name,
+                'rating': int(rating),
+                'comment': comment.strip() or None,
+                'created_at': datetime.utcnow()
+            }
+            mongo.db.feedback.insert_one(feedback_entry)
             logger.info(f"Feedback submitted: tool={tool_name}, rating={rating}, session={session['sid']}")
             flash(translate('core_feedback_success', default='Thank you for your feedback!', lang=lang), 'success')
             return redirect(url_for('index'))
@@ -555,26 +515,24 @@ def create_app():
             flash(translate('core_global_error', default='Error occurred while submitting feedback', lang=lang), 'error')
             return render_template('feedback.html', t=translate, lang=lang, tool_options=tool_options), 500
 
-    logger.info("App creation completed")
-    return app
+    def log_tool_usage(tool_name):
+        try:
+            tool_usage = {
+                'user_id': current_user.id if current_user.is_authenticated else None,
+                'session_id': session.get('sid', 'unknown'),
+                'tool_name': tool_name,
+                'created_at': datetime.utcnow()
+            }
+            mongo.db.tool_usage.insert_one(tool_usage)
+            logger.info(f"Logged tool usage: {tool_name} for session {session.get('sid', 'unknown')}")
+        except Exception as e:
+            logger.error(f"Error logging tool usage: {str(e)}")
 
-def log_tool_usage(tool_name):
-    try:
-        if current_user.is_authenticated:
-            user_id = current_user.id
-        else:
-            user_id = None
-        session_id = session.get('sid', 'unknown')
-        tool_usage = ToolUsage(user_id=user_id, session_id=session_id, tool_name=tool_name)
-        db.session.add(tool_usage)
-        db.session.commit()
-        logger.info(f"Logged tool usage: {tool_name} for session {session_id}")
-    except Exception as e:
-        logger.error(f"Error logging tool usage: {str(e)}")
-        db.session.rollback()
+    logger.info("App creation completed")
+    return app, mongo
 
 # Create the Flask app instance for Gunicorn
-app = create_app()
+app, mongo = create_app()
 
 if __name__ == "__main__":
     try:
