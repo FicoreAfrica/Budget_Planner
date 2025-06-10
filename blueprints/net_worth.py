@@ -11,7 +11,7 @@ from datetime import datetime
 import uuid
 import json
 
-net_worth_bp = Blueprint('net_worth', __name__, url_prefix='/net_worth')
+net_worth_bp = Blueprint('net_worth', __name__, url_prefix='/NETWORTH')
 
 class Step1Form(FlaskForm):
     first_name = StringField()
