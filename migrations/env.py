@@ -3,7 +3,7 @@ import os
 from sqlalchemy import engine_from_config, pool
 from alembic import context
 from app import db
-from models import User, Course, FinancialHealth, Budget, Bill, NetWorth, EmergencyFund, LearningProgress, QuizResult, Feedback, ToolUsage
+from models import User, Course, ContentMetadata, FinancialHealth, Budget, Bill, NetWorth, EmergencyFund, LearningProgress, QuizResult, Feedback, ToolUsage
 
 # Alembic Config object
 config = context.config
@@ -35,7 +35,11 @@ try:
         )
 
         with context.begin_transaction():
-            context.run_migrations()
+            try:
+                context.run_migrations()
+            except Exception as e:
+                print(f"Error running migrations: {str(e)}")
+                raise
 except Exception as e:
     print(f"Error connecting to database: {str(e)}")
     raise
