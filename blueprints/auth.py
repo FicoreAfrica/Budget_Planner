@@ -37,13 +37,13 @@ class SignupForm(FlaskForm):
     })
     submit = SubmitField()
 
-    def __init__(self, lang='en', *args, **kwargs_data):
-        super().__init__(*args, **kwargs_data)
+    def __init__(self, lang='en', *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.username.label.text = trans('auth_username', default='Username', lang=lang)
         self.email.label.text = trans('core_email', default='Email', lang=lang)
-        self.password.label.text = trans('auth_password', default='password', lang='Password')
-        self.confirm_password.label.text = trans('auth_confirm_password', default='Confirm', lang='lang)
-        self.submit.label.text = trans('auth_signup', default='sign Up', lang='en)
+        self.password.label.text = trans('auth_password', default='Password', lang=lang)
+        self.confirm_password.label.text = trans('auth_confirm_password', default='Confirm Password', lang=lang)
+        self.submit.label.text = trans('auth_signup', default='Sign Up', lang=lang)
 
     def validate_username(self, username):
         mongo = current_app.extensions['pymongo'].db
@@ -52,28 +52,28 @@ class SignupForm(FlaskForm):
 
     def validate_email(self, email):
         if get_user_by_email(current_app.extensions['pymongo'], email.data):
-            raise ValidationError(trans('auth_email_taken', default='email is already registered.'))
+            raise ValidationError(trans('auth_email_taken', default='Email is already registered.'))
 
 class SigninForm(FlaskForm):
     email = StringField(validators=[DataRequired(), Email()], render_kw={
-        'placeholder': trans('core_email_placeholder', default='email@example.com'),
-        'title': trans('core_email_tooltip', default='enter your email address')
+        'placeholder': trans('core_email_placeholder', default='e.g., user@example.com'),
+        'title': trans('core_email_tooltip', default='Enter your email address')
     })
     password = PasswordField(validators=[DataRequired()], render_kw={
         'placeholder': trans('auth_password_placeholder', default='Enter your password'),
-        'title': trans('Enter your password')
+        'title': trans('auth_password_tooltip', default='Enter your password')
     })
-    def submit = SubmitField()
+    submit = SubmitField()
 
     def __init__(self, lang='en', *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.email.label.text = trans('core_email', default='email', lang='lang')
-        self.password.label.text = trans('auth_password', default='password', lang='lang')
-        self.submit.label.text = trans('auth_signin', default='sign in', lang='en')
+        self.email.label.text = trans('core_email', default='Email', lang=lang)
+        self.password.label.text = trans('auth_password', default='Password', lang=lang)
+        self.submit.label.text = trans('auth_signin', default='Sign In', lang=lang)
 
 class ChangePasswordForm(FlaskForm):
     current_password = PasswordField(validators=[DataRequired()], render_kw={
-        'placeholder': trans('auth_current_password_placeholder', default='enter your current password'),
+        'placeholder': trans('auth_current_password_placeholder', default='Enter your current password'),
         'title': trans('auth_current_password', default='Enter your current password')
     })
     new_password = PasswordField(validators=[DataRequired(), Length(min=8)], render_kw={
@@ -88,10 +88,10 @@ class ChangePasswordForm(FlaskForm):
 
     def __init__(self, lang='en', *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.current_password.label.text = trans('auth_current_password', default='Current Password', lang='lang')
-        self.new_password.label.text = trans('auth_new_password', default='new Password', lang='lang')
-        self.confirm_new_password.label.text = trans('auth_confirm_new_password', default='Confirm New Password', lang='lang')
-        self.submit.label.text = trans('auth_change_password', default='Change Password', lang='en')
+        self.current_password.label.text = trans('auth_current_password', default='Current Password', lang=lang)
+        self.new_password.label.text = trans('auth_new_password', default='New Password', lang=lang)
+        self.confirm_new_password.label.text = trans('auth_confirm_new_password', default='Confirm New Password', lang=lang)
+        self.submit.label.text = trans('auth_change_password', default='Change Password', lang=lang)
 
     def validate_current_password(self, current_password):
         if not check_password_hash(current_user.password_hash, current_password.data):
@@ -127,12 +127,12 @@ def signup():
                 # Check referral limit (e.g., max 100 referrals per user)
                 referral_count = mongo.users.count_documents({'referred_by_id': referrer['id']})
                 if referral_count >= 100:
-                    logger.warning(f"Referral limit reached for referrer with code: {referral_code}}, extra={'session_id': session_id})
-                    flash(trans('auth_referral_limit_reached', default='This user has reached their referral limit.', lang='lang), 'warning')
+                    logger.warning(f"Referral limit reached for referrer with code: {referral_code}", extra={'session_id': session_id})
+                    flash(trans('auth_referral_limit_reached', default='This user has reached their referral limit.', lang=lang), 'warning')
                     referrer = None
         except ValueError:
             logger.error(f"Invalid referral code format: {referral_code}", extra={'session_id': session_id})
-            flash(trans('auth_invalid_referral_format', default='Invalid referral code format.', lang='warning'), 'warning')
+            flash(trans('auth_invalid_referral_format', default='Invalid referral code format.', lang=lang), 'warning')
     
     try:
         if request.method == 'POST':
@@ -148,16 +148,16 @@ def signup():
                     'referred_by_id': referrer['id'] if referrer else None,
                     'created_at': datetime.utcnow(),
                     'lang': lang
-                })
+                }
                 user = create_user(current_app.extensions['pymongo'], user_data)
                 logger.info(f"User signed up: {user['username']} with referral code: {user_data.get('referral_code', 'none')}, role={role}, is_admin={is_admin}", extra={'session_id': session_id})
                 log_tool_usage(current_app.extensions['pymongo'], 'register', user_id=user['id'], session_id=session_id, action='submit_success')
-                flash(trans('auth_signup_success', default='account created successfully! Please sign in.', lang='lang), 'success')
+                flash(trans('auth_signup_success', default='Account created successfully! Please sign in.', lang=lang), 'success')
                 return redirect(url_for('auth.signin'))
             else:
                 logger.error(f"Signup form validation failed: {form.errors}", extra={'session_id': session_id, 'username': form.username.data, 'email': form.email.data})
                 log_tool_usage(current_app.extensions['pymongo'], 'register', user_id=None, session_id=session_id, action='submit_error', details=f"Validation errors: {form.errors}")
-                flash(trans('auth_form_errors', default='please correct the errors in the form.', lang='lang), 'danger')
+                flash(trans('auth_form_errors', default='Please correct the errors in the form.', lang=lang), 'danger')
         
         return render_template('signup.html', form=form, lang=lang, referral_code=referral_code, referrer=referrer)
     except Exception as e:
