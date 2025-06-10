@@ -1,74 +1,94 @@
 from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
+from apscheduler.jobstores.mongodb import MongoDBJobStore
 from datetime import datetime, date, timedelta
 from flask import current_app, url_for, session
-from extensions import db
-from models import Bill, User
 from mailersend_email import send_email, trans, EMAIL_CONFIG
+from pymongo import MongoClient
 import atexit
 
 def update_overdue_status():
     """Update status to overdue for past-due bills."""
     with current_app.app_context():
         try:
+            mongo_client = MongoClient(current_app.config['MONGO_URI'])
+            db = mongo_client['bill_tracker']
+            bills_collection = db['bills']
             today = date.today()
-            bills = Bill.query.filter(Bill.status.in_(['pending', 'unpaid'])).all()
+            bills = bills_collection.find({'status': {'$in': ['pending', 'unpaid']}})
+            updated_count = 0
             for bill in bills:
-                if bill.due_date < today:
-                    bill.status = 'overdue'
-            db.session.commit()
-            current_app.logger.info(f"Updated {len(bills)} overdue bill statuses")
+                bill_due_date = bill['due_date']
+                if isinstance(bill_due_date, str):
+                    bill_due_date = datetime.strptime(bill_due_date, '%Y-%m-%d').date()
+                if bill_due_date < today:
+                    bills_collection.update_one(
+                        {'_id': bill['_id']},
+                        {'$set': {'status': 'overdue'}}
+                    )
+                    updated_count += 1
+            current_app.logger.info(f"Updated {updated_count} overdue bill statuses")
         except Exception as e:
             current_app.logger.exception(f"Error in update_overdue_status: {str(e)}")
-            db.session.rollback()
 
 def send_bill_reminders():
     """Send reminders for upcoming and overdue bills."""
     with current_app.app_context():
         try:
+            mongo_client = MongoClient(current_app.config['MONGO_URI'])
+            db = mongo_client['bill_tracker']
+            bills_collection = db['bills']
+            bill_reminders_collection = db['bill_reminders']
             today = date.today()
             user_bills = {}
-            bills = Bill.query.all()
+            bills = bills_collection.find()
             for bill in bills:
-                email = bill.user.email if bill.user_id and bill.user else bill.user_email
-                lang = bill.user.lang if bill.user_id and bill.user else session.get('lang', 'en')
-                if bill.send_email and email:
-                    reminder_window = today + timedelta(days=bill.reminder_days or 7)
-                    if (bill.status in ['pending', 'overdue'] or 
-                        (today <= bill.due_date <= reminder_window)):
+                email = bill['user_email']
+                lang = session.get('lang', 'en')  # Default to session lang if no user-specific lang
+                if bill.get('send_email') and email:
+                    reminder_window = today + timedelta(days=bill.get('reminder_days', 7))
+                    bill_due_date = bill['due_date']
+                    if isinstance(bill_due_date, str):
+                        bill_due_date = datetime.strptime(bill_due_date, '%Y-%m-%d').date()
+                    if (bill['status'] in ['pending', 'overdue'] or 
+                        (today <= bill_due_date <= reminder_window)):
                         if email not in user_bills:
                             user_bills[email] = {
-                                'first_name': bill.user.first_name if bill.user_id and bill.user else bill.first_name or 'User',
+                                'first_name': bill.get('first_name', 'User'),
                                 'bills': [],
                                 'lang': lang
                             }
                         user_bills[email]['bills'].append({
-                            'bill_name': bill.bill_name,
-                            'amount': bill.amount,
-                            'due_date': bill.due_date.strftime('%Y-%m-%d'),
-                            'category': trans(f"bill_category_{bill.category}", lang=lang),
-                            'status': trans(f"bill_status_{bill.status}", lang=lang)
+                            'bill_name': bill['bill_name'],
+                            'amount': bill['amount'],
+                            'due_date': bill_due_date.strftime('%Y-%m-%d'),
+                            'category': trans(f"bill_category_{bill['category']}", lang=lang),
+                            'status': trans(f"bill_status_{bill['status']}", lang=lang)
                         })
 
             for email, data in user_bills.items():
                 try:
                     config = EMAIL_CONFIG["bill_reminder"]
                     subject = trans(config["subject_key"], lang=data['lang'])
+                    reminder_data = {
+                        'email': email,
+                        'first_name': data['first_name'],
+                        'bills': data['bills'],
+                        'lang': data['lang'],
+                        'sent_at': datetime.utcnow(),
+                        'cta_url': url_for('bill.dashboard', _external=True),
+                        'unsubscribe_url': url_for('bill.unsubscribe', email=email, _external=True)
+                    }
                     send_email(
                         app=current_app,
                         logger=current_app.logger,
                         to_email=email,
                         subject=subject,
                         template_name=config["template"],
-                        data={
-                            'first_name': data['first_name'],
-                            'bills': data['bills'],
-                            'cta_url': url_for('bill.dashboard', _external=True),
-                            'unsubscribe_url': url_for('bill.unsubscribe', email=email, _external=True)
-                        },
+                        data=reminder_data,
                         lang=data['lang']
                     )
-                    current_app.logger.info(f"Sent bill reminder email to {email}")
+                    bill_reminders_collection.insert_one(reminder_data)
+                    current_app.logger.info(f"Sent bill reminder email to {email} and saved to bill_reminders")
                 except Exception as e:
                     current_app.logger.error(f"Failed to send reminder email to {email}: {str(e)}")
         except Exception as e:
@@ -78,7 +98,11 @@ def init_scheduler(app):
     """Initialize the background scheduler."""
     try:
         jobstores = {
-            'default': SQLAlchemyJobStore(url=app.config['SQLALCHEMY_DATABASE_URI'])
+            'default': MongoDBJobStore(
+                database='bill_tracker',
+                collection='scheduler_jobs',
+                client=MongoClient(app.config['MONGO_URI'])
+            )
         }
         scheduler = BackgroundScheduler(jobstores=jobstores)
         scheduler.add_job(
