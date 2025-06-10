@@ -2,27 +2,21 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 from flask_wtf import FlaskForm
 from wtforms import StringField, SelectField, BooleanField, SubmitField, RadioField
 from wtforms.validators import DataRequired, Email, Optional
-from flask_login import current_user
+from flask_login import current_user, login_required
 import uuid
 from datetime import datetime
 import json
 import logging
 from translations import trans
 from mailersend_email import send_email, EMAIL_CONFIG
-from extensions import db
-from models import QuizResult, log_tool_usage  # Added log_tool_usage import
+from extensions import mongo
+from models import log_tool_usage
 
 # Configure logging
 logger = logging.getLogger('ficore_app')
 
 # Define the quiz blueprint
-quiz_bp = Blueprint(
-    'quiz',
-    __name__,
-    template_folder='templates/QUIZ',
-    static_folder='static',
-    url_prefix='/QUIZ'
-)
+quiz_bp = Blueprint('quiz', __name__, template_folder='templates/QUIZ', url_prefix='/QUIZ')
 
 # Form for Step 1: Personal Information
 class QuizStep1Form(FlaskForm):
@@ -230,7 +224,7 @@ def step1():
                 flash(trans('quiz_form_errors', default='Please correct the errors in the form.', lang=lang), 'danger')
         
         return render_template(
-            'quiz_step1.html',
+            'QUIZ/quiz_step1.html',
             form=form,
             course_id=course_id,
             lang=lang,
@@ -239,9 +233,10 @@ def step1():
     except Exception as e:
         logger.error(f"Error in quiz.step1: {str(e)}", extra={'session_id': session['sid']})
         flash(trans('quiz_error_personal_info', default='An error occurred. Please try again.', lang=lang), 'danger')
-        return render_template('quiz_step1.html', form=form, course_id=course_id, lang=lang, total_steps=3), 500
+        return render_template('QUIZ/quiz_step1.html', form=form, course_id=course_id, lang=lang, total_steps=3), 500
 
 @quiz_bp.route('/step2a', methods=['GET', 'POST'])
+@login_required
 def step2a():
     """Handle quiz step 2a form (questions 1-5)."""
     if 'sid' not in session or 'quiz_data' not in session:
@@ -265,14 +260,14 @@ def step2a():
     try:
         log_tool_usage(
             tool_name='quiz',
-            user_id=current_user.id if current_user.is_authenticated else None,
+            user_id=current_user.id,
             session_id=session['sid'],
             action='step2a_view'
         )
         if request.method == 'POST':
             log_tool_usage(
                 tool_name='quiz',
-                user_id=current_user.id if current_user.is_authenticated else None,
+                user_id=current_user.id,
                 session_id=session['sid'],
                 action='step2a_submit'
             )
@@ -299,7 +294,7 @@ def step2a():
                 getattr(form, q['id']).data = session['quiz_data'][q['id']]
         
         return render_template(
-            'quiz_step.html',
+            'QUIZ/quiz_step.html',
             form=form,
             questions=questions,
             course_id=course_id,
@@ -310,11 +305,12 @@ def step2a():
     except Exception as e:
         logger.error(f"Error in quiz.step2a: {str(e)}", extra={'session_id': session['sid']})
         flash(trans('quiz_error_questions', default='An error occurred. Please try again.', lang=lang), 'danger')
-        return render_template('quiz_step.html', form=form, questions=questions, course_id=course_id, lang=lang, step_num=2, total_steps=3), 500
+        return render_template('QUIZ/quiz_step.html', form=form, questions=questions, course_id=course_id, lang=lang, step_num=2, total_steps=3), 500
 
 @quiz_bp.route('/step2b', methods=['GET', 'POST'])
+@login_required
 def step2b():
-    """Handle quiz step 2b form (questions 6-10) and store results in SQLite."""
+    """Handle quiz step 2b form (questions 6-10) and store results in MongoDB."""
     if 'sid' not in session or 'quiz_data' not in session:
         logger.warning(f"Session expired or missing quiz_data for session {session.get('sid', 'unknown')}", extra={'session_id': session.get('sid', 'unknown')})
         flash(trans('session_expired', default='Session expired. Please start again.', lang=session.get('lang', 'en')), 'danger')
@@ -336,14 +332,14 @@ def step2b():
     try:
         log_tool_usage(
             tool_name='quiz',
-            user_id=current_user.id if current_user.is_authenticated else None,
+            user_id=current_user.id,
             session_id=session['sid'],
             action='step2b_view'
         )
         if request.method == 'POST':
             log_tool_usage(
                 tool_name='quiz',
-                user_id=current_user.id if current_user.is_authenticated else None,
+                user_id=current_user.id,
                 session_id=session['sid'],
                 action='step2b_submit'
             )
@@ -366,29 +362,29 @@ def step2b():
                 personality = assign_personality(score, lang)
                 badges = assign_badges(score, lang)
                 
-                # Create and persist QuizResult record to SQLite
-                quiz_result = QuizResult(
-                    id=str(uuid.uuid4()),
-                    user_id=current_user.id if current_user.is_authenticated else None,
-                    session_id=session['sid'],
-                    created_at=datetime.utcnow(),
-                    first_name=session['quiz_data'].get('first_name', ''),
-                    email=session['quiz_data'].get('email', ''),
-                    send_email=session['quiz_data'].get('send_email', False),
-                    personality=personality['name'],
-                    score=score,
-                    badges=json.dumps(badges),
-                    insights=json.dumps(personality['insights']),
-                    tips=json.dumps(personality['tips'])
-                )
-                db.session.add(quiz_result)
-                db.session.commit()
-                session['quiz_result_id'] = quiz_result.id
+                # Create and persist quiz result record to MongoDB
+                quiz_result = {
+                    '_id': str(uuid.uuid4()),
+                    'user_id': current_user.id,
+                    'session_id': session['sid'],
+                    'created_at': datetime.utcnow().isoformat(),
+                    'first_name': session['quiz_data'].get('first_name', ''),
+                    'email': session['quiz_data'].get('email', ''),
+                    'send_email': session['quiz_data'].get('send_email', False),
+                    'personality': personality['name'],
+                    'score': score,
+                    'badges': badges,
+                    'insights': personality['insights'],
+                    'tips': personality['tips']
+                }
+                mongo.db.quiz_responses.insert_one(quiz_result)
+                session['quiz_result_id'] = quiz_result['_id']
                 session.modified = True
-                logger.info(f"Successfully saved quiz result {quiz_result.id} for session {session['sid']}", extra={'session_id': session['sid']})
+                logger.info(f"Successfully saved quiz result {quiz_result['_id']} for session {session['sid']}", extra={'session_id': session['sid']})
                 
                 # Prepare results for display
-                results = quiz_result.to_dict()
+                results = quiz_result.copy()
+                results['created_at'] = datetime.fromisoformat(results['created_at'])
                 
                 # Send email if user opted in
                 if session['quiz_data'].get('send_email') and session['quiz_data'].get('email'):
@@ -405,7 +401,7 @@ def step2b():
                             data={
                                 "first_name": results['first_name'],
                                 "score": results['score'],
-                                "max_score": 30,  # Based on current logic: 10 questions, max 3 points each
+                                "max_score": 30,
                                 "personality": results['personality'],
                                 "badges": results['badges'],
                                 "insights": results['insights'],
@@ -434,7 +430,7 @@ def step2b():
                 getattr(form, q['id']).data = session['quiz_data'][q['id']]
         
         return render_template(
-            'quiz_step.html',
+            'QUIZ/quiz_step.html',
             form=form,
             questions=questions,
             course_id=course_id,
@@ -445,11 +441,12 @@ def step2b():
     except Exception as e:
         logger.error(f"Error in quiz.step2b: {str(e)}", extra={'session_id': session['sid']})
         flash(trans('quiz_error_questions', default='An error occurred. Please try again.', lang=lang), 'danger')
-        return render_template('quiz_step.html', form=form, questions=questions, course_id=course_id, lang=lang, step_num=3, total_steps=3), 500
+        return render_template('QUIZ/quiz_step.html', form=form, questions=questions, course_id=course_id, lang=lang, step_num=3, total_steps=3), 500
 
 @quiz_bp.route('/results', methods=['GET'])
+@login_required
 def results():
-    """Display quiz results from SQLite."""
+    """Display quiz results from MongoDB."""
     if 'sid' not in session:
         logger.warning("No session ID found", extra={'session_id': 'unknown'})
         flash(trans('session_expired', default='Session expired. Please start again.', lang=session.get('lang', 'en')), 'danger')
@@ -461,7 +458,7 @@ def results():
     try:
         log_tool_usage(
             tool_name='quiz',
-            user_id=current_user.id if current_user.is_authenticated else None,
+            user_id=current_user.id,
             session_id=session['sid'],
             action='results_view'
         )
@@ -469,27 +466,35 @@ def results():
         results = session.get('quiz_results')
         
         if not results:
-            # Fetch from database using quiz_result_id, user_id, or session_id
-            filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
+            # Fetch from MongoDB using quiz_result_id or user_id
             if 'quiz_result_id' in session:
-                quiz_result = QuizResult.query.get(session['quiz_result_id'])
+                quiz_result = mongo.db.quiz_responses.find_one({'_id': session['quiz_result_id']})
                 if quiz_result:
-                    results = quiz_result.to_dict()
+                    results = quiz_result
             if not results:
-                # Fallback to latest result by user_id or session_id
-                quiz_result = QuizResult.query.filter_by(**filter_kwargs).order_by(QuizResult.created_at.desc()).first()
+                # Fallback to latest result by user_id
+                quiz_result = mongo.db.quiz_responses.find_one(
+                    {'user_id': current_user.id},
+                    sort=[('created_at', -1)]
+                )
                 if quiz_result:
-                    results = quiz_result.to_dict()
-            # Fallback to email if authenticated and no results found
-            if not results and current_user.is_authenticated and current_user.email:
-                quiz_result = QuizResult.query.filter_by(email=current_user.email).order_by(QuizResult.created_at.desc()).first()
+                    results = quiz_result
+            # Fallback to email
+            if not results and current_user.email:
+                quiz_result = mongo.db.quiz_responses.find_one(
+                    {'email': current_user.email},
+                    sort=[('created_at', -1)]
+                )
                 if quiz_result:
-                    results = quiz_result.to_dict()
+                    results = quiz_result
         
         if not results:
             logger.warning(f"No quiz results found for session {session['sid']}", extra={'session_id': session['sid']})
             flash(trans('quiz_no_results', default='No quiz results found. Please take the quiz again.', lang=lang), 'danger')
             return redirect(url_for('quiz.step1', course_id=course_id))
+        
+        # Convert created_at to datetime for display
+        results['created_at'] = datetime.fromisoformat(results['created_at'])
         
         # Clear session data
         session.pop('quiz_data', None)
@@ -498,15 +503,15 @@ def results():
         logger.info(f"Displaying quiz results for session {session['sid']}", extra={'session_id': session['sid']})
         
         return render_template(
-            'quiz_results.html',
+            'QUIZ/quiz_results.html',
             latest_record=results,
             insights=results.get('insights', []),
             tips=results.get('tips', []),
             course_id=course_id,
             lang=lang,
-            max_score=30  # Based on current logic: 10 questions, max 3 points each
+            max_score=30
         )
     except Exception as e:
         logger.error(f"Error in quiz.results: {str(e)}", extra={'session_id': session['sid']})
         flash(trans('quiz_error_results', default='An error occurred while loading results.', lang=lang), 'danger')
-        return redirect(url_for('quiz.step1', course_id=course_id)), 500
+        return redirect(url_for('quiz.step1', core_id=course_id)), 500

@@ -8,8 +8,9 @@ from datetime import datetime
 import uuid
 import re
 from translations import trans
-from extensions import db
-from models import Budget, log_tool_usage
+from extensions import mongo
+from bson import ObjectId
+from models import log_tool_usage
 
 budget_bp = Blueprint(
     'budget',
@@ -43,7 +44,7 @@ class Step1Form(FlaskForm):
     def validate_email(self, field):
         """Custom email validation to handle empty strings."""
         if field.data:
-            email_pattern = r'^[a-zA-Z0.9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+            email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
             if not re.match(email_pattern, field.data):
                 current_app.logger.warning(f"Invalid email format for session {session.get('sid', 'no-session-id')}: {field.data}")
                 raise ValidationError(trans('budget_email_invalid', session.get('lang', 'en')) or 'Invalid email address')
@@ -315,30 +316,30 @@ def step4():
                 savings_goal = step4_data.get('savings_goal', 0)
                 surplus_deficit = income - expenses
 
-                budget = Budget(
-                    id=str(uuid.uuid4()),
-                    user_id=current_user.id if current_user.is_authenticated else None,
-                    session_id=session['sid'],
-                    user_email=step1_data.get('email'),
-                    income=income,
-                    fixed_expenses=expenses,
-                    variable_expenses=0,
-                    savings_goal=savings_goal,
-                    surplus_deficit=surplus_deficit,
-                    housing=step3_data.get('housing', 0),
-                    food=step3_data.get('food', 0),
-                    transport=step3_data.get('transport', 0),
-                    dependents=step3_data.get('dependents', 0),
-                    miscellaneous=step3_data.get('miscellaneous', 0),
-                    others=step3_data.get('others', 0)
-                )
+                budget_data = {
+                    '_id': str(uuid.uuid4()),
+                    'user_id': current_user.id if current_user.is_authenticated else None,
+                    'session_id': session['sid'],
+                    'user_email': step1_data.get('email'),
+                    'income': income,
+                    'fixed_expenses': expenses,
+                    'variable_expenses': 0,
+                    'savings_goal': savings_goal,
+                    'surplus_deficit': surplus_deficit,
+                    'housing': step3_data.get('housing', 0),
+                    'food': step3_data.get('food', 0),
+                    'transport': step3_data.get('transport', 0),
+                    'dependents': step3_data.get('dependents', 0),
+                    'miscellaneous': step3_data.get('miscellaneous', 0),
+                    'others': step3_data.get('others', 0),
+                    'created_at': datetime.utcnow()
+                }
+
                 try:
-                    db.session.add(budget)
-                    db.session.commit()
-                    current_app.logger.info(f"Budget saved successfully to database for session {session['sid']}")
+                    mongo.db.budgets.insert_one(budget_data)
+                    current_app.logger.info(f"Budget saved successfully to MongoDB for session {session['sid']}")
                 except Exception as e:
-                    db.session.rollback()
-                    current_app.logger.error(f"Failed to save budget to database for session {session['sid']}: {str(e)}")
+                    current_app.logger.error(f"Failed to save budget to MongoDB for session {session['sid']}: {str(e)}")
                     flash(trans("budget_storage_error") or "Failed to save budget data", "danger")
                     return render_template('budget_step4.html', form=form, trans=trans, lang=lang)
 
@@ -421,16 +422,33 @@ def dashboard():
             action='dashboard_view'
         )
 
-        filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
-        budgets = Budget.query.filter_by(**filter_kwargs).order_by(Budget.created_at.desc()).all()
-        current_app.logger.info(f"Read {len(budgets)} records from budget storage [session: {session['sid']}]")
+        filter_criteria = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
+        budgets = list(mongo.db.budgets.find(filter_criteria).sort('created_at', -1))
+        current_app.logger.info(f"Read {len(budgets)} records from MongoDB budgets collection [session: {session['sid']}]")
 
         budgets_dict = {}
         latest_budget = None
         for budget in budgets:
-            budget_data = budget.to_dict()
-            budgets_dict[budget.id] = budget_data
-            if not latest_budget or budget.created_at > datetime.strptime(latest_budget['created_at'], '%Y-%m-%dT%H:%M:%S.%fZ'):
+            budget_data = {
+                'id': str(budget['_id']),
+                'user_id': budget.get('user_id'),
+                'session_id': budget.get('session_id'),
+                'user_email': budget.get('user_email'),
+                'income': budget.get('income', 0.0),
+                'fixed_expenses': budget.get('fixed_expenses', 0.0),
+                'variable_expenses': budget.get('variable_expenses', 0.0),
+                'savings_goal': budget.get('savings_goal', 0.0),
+                'surplus_deficit': budget.get('surplus_deficit', 0.0),
+                'housing': budget.get('housing', 0.0),
+                'food': budget.get('food', 0.0),
+                'transport': budget.get('transport', 0.0),
+                'dependents': budget.get('dependents', 0.0),
+                'miscellaneous': budget.get('miscellaneous', 0.0),
+                'others': budget.get('others', 0.0),
+                'created_at': budget.get('created_at').strftime('%Y-%m-%dT%H:%M:%S.%fZ') if budget.get('created_at') else ''
+            }
+            budgets_dict[budget_data['id']] = budget_data
+            if not latest_budget or budget.get('created_at') > datetime.strptime(latest_budget['created_at'], '%Y-%m-%dT%H:%M:%S.%fZ'):
                 latest_budget = budget_data
 
         if not latest_budget:
@@ -459,16 +477,13 @@ def dashboard():
                     action='delete_budget'
                 )
                 try:
-                    budget = Budget.query.filter_by(id=budget_id, **filter_kwargs).first()
-                    if budget:
-                        db.session.delete(budget)
-                        db.session.commit()
+                    result = mongo.db.budgets.delete_one({'_id': budget_id, **filter_criteria})
+                    if result.deleted_count > 0:
                         flash(trans("budget_budget_deleted_success") or "Budget deleted successfully", "success")
                         current_app.logger.info(f"Deleted budget ID {budget_id} for session {session['sid']}")
                     else:
                         flash(trans("budget_budget_not_found") or "Budget not found", "danger")
                 except Exception as e:
-                    db.session.rollback()
                     current_app.logger.error(f"Failed to delete budget ID {budget_id} for session {session['sid']}: {str(e)}")
                     flash(trans("budget_budget_delete_failed") or "Failed to delete budget", "danger")
                 return redirect(url_for('budget.dashboard'))

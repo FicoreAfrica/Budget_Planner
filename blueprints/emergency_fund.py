@@ -2,14 +2,15 @@ from flask import Blueprint, request, session, redirect, url_for, render_templat
 from flask_wtf import FlaskForm
 from wtforms import StringField, FloatField, IntegerField, SelectField, BooleanField, SubmitField
 from wtforms.validators import DataRequired, Optional, Email, NumberRange
-from flask_login import current_user
+from flask_login import current_user, login_required
 from mailersend_email import send_email, EMAIL_CONFIG
 from datetime import datetime
 import uuid
 import json
 from translations import trans
-from extensions import db
-from models import EmergencyFund, Budget, log_tool_usage
+from extensions import mongo
+from bson import ObjectId
+from models import log_tool_usage
 
 emergency_fund_bp = Blueprint(
     'emergency_fund',
@@ -110,6 +111,7 @@ class Step4Form(FlaskForm):
         self.submit.label.text = trans('emergency_fund_calculate_button', lang=lang)
 
 @emergency_fund_bp.route('/step1', methods=['GET', 'POST'])
+@login_required
 def step1():
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
@@ -117,21 +119,20 @@ def step1():
         session['modified'] = True
     lang = session.get('lang', 'en')
     form_data = session.get('emergency_fund_data', {})
-    if current_user.is_authenticated:
-        form_data['email'] = form_data.get('email', '') or current_user.email
-        form_data['first_name'] = form_data.get('first_name', '') or current_user.username
+    form_data['email'] = form_data.get('email', '') or current_user.email
+    form_data['first_name'] = form_data.get('first_name', '') or current_user.username
     form = Step1Form(data=form_data)
     try:
         log_tool_usage(
             tool_name='emergency_fund',
-            user_id=current_user.id if current_user.is_authenticated else None,
+            user_id=current_user.id,
             session_id=session['sid'],
             action='step1_view'
         )
         if request.method == 'POST':
             log_tool_usage(
                 tool_name='emergency_fund',
-                user_id=current_user.id if current_user.is_authenticated else None,
+                user_id=current_user.id,
                 session_id=session['sid'],
                 action='step1_submit'
             )
@@ -159,6 +160,7 @@ def step1():
         return render_template('error.html', template='emergency_fund_step1.html', form=form, step=1, trans=trans, lang=lang), 500
 
 @emergency_fund_bp.route('/step2', methods=['GET', 'POST'])
+@login_required
 def step2():
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
@@ -172,14 +174,14 @@ def step2():
     try:
         log_tool_usage(
             tool_name='emergency_fund',
-            user_id=current_user.id if current_user.is_authenticated else None,
+            user_id=current_user.id,
             session_id=session['sid'],
             action='step2_view'
         )
         if request.method == 'POST':
             log_tool_usage(
                 tool_name='emergency_fund',
-                user_id=current_user.id if current_user.is_authenticated else None,
+                user_id=current_user.id,
                 session_id=session['sid'],
                 action='step2_submit'
             )
@@ -204,6 +206,7 @@ def step2():
         return render_template('error.html', template='emergency_fund_step2.html', form=form, step=2, trans=trans, lang=lang), 500
 
 @emergency_fund_bp.route('/step3', methods=['GET', 'POST'])
+@login_required
 def step3():
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
@@ -217,14 +220,14 @@ def step3():
     try:
         log_tool_usage(
             tool_name='emergency_fund',
-            user_id=current_user.id if current_user.is_authenticated else None,
+            user_id=current_user.id,
             session_id=session['sid'],
             action='step3_view'
         )
         if request.method == 'POST':
             log_tool_usage(
                 tool_name='emergency_fund',
-                user_id=current_user.id if current_user.is_authenticated else None,
+                user_id=current_user.id,
                 session_id=session['sid'],
                 action='step3_submit'
             )
@@ -250,6 +253,7 @@ def step3():
         return render_template('emergency_fund_step3.html', form=form, step=3, trans=trans, lang=lang)
 
 @emergency_fund_bp.route('/step4', methods=['GET', 'POST'])
+@login_required
 def step4():
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
@@ -263,14 +267,14 @@ def step4():
     try:
         log_tool_usage(
             tool_name='emergency_fund',
-            user_id=current_user.id if current_user.is_authenticated else None,
+            user_id=current_user.id,
             session_id=session['sid'],
             action='step4_view'
         )
         if request.method == 'POST':
             log_tool_usage(
                 tool_name='emergency_fund',
-                user_id=current_user.id if current_user.is_authenticated else None,
+                user_id=current_user.id,
                 session_id=session['sid'],
                 action='step4_submit'
             )
@@ -304,30 +308,30 @@ def step4():
                 if step3_data['current_savings'] >= target_amount:
                     badges.append('Fund Master')
 
-                emergency_fund = EmergencyFund(
-                    id=str(uuid.uuid4()),
-                    user_id=current_user.id if current_user.is_authenticated else None,
-                    session_id=session['sid'],
-                    first_name=step1_data.get('first_name'),
-                    email=step1_data.get('email'),
-                    email_opt_in=step1_data.get('email_opt_in'),
-                    lang=lang,
-                    monthly_expenses=step2_data.get('monthly_expenses'),
-                    monthly_income=step2_data.get('monthly_income'),
-                    current_savings=step3_data.get('current_savings', 0),
-                    risk_tolerance_level=step3_data.get('risk_tolerance_level'),
-                    dependents=step3_data.get('dependents', 0),
-                    timeline=months,
-                    recommended_months=recommended_months,
-                    target_amount=target_amount,
-                    savings_gap=gap,
-                    monthly_savings=monthly_savings,
-                    percent_of_income=percent_of_income,
-                    badges=json.dumps(badges)
-                )
-                db.session.add(emergency_fund)
-                db.session.commit()
-                current_app.logger.info(f"Emergency fund record saved to database with ID {emergency_fund.id}")
+                emergency_fund = {
+                    '_id': str(uuid.uuid4()),
+                    'user_id': str(current_user.id),
+                    'session_id': session['sid'],
+                    'first_name': step1_data.get('first_name'),
+                    'email': step1_data.get('email'),
+                    'email_opt_in': step1_data.get('email_opt_in'),
+                    'lang': lang,
+                    'monthly_expenses': step2_data.get('monthly_expenses'),
+                    'monthly_income': step2_data.get('monthly_income'),
+                    'current_savings': step3_data.get('current_savings', 0),
+                    'risk_tolerance_level': step3_data.get('risk_tolerance_level'),
+                    'dependents': step3_data.get('dependents', 0),
+                    'timeline': months,
+                    'recommended_months': recommended_months,
+                    'target_amount': target_amount,
+                    'savings_gap': gap,
+                    'monthly_savings': monthly_savings,
+                    'percent_of_income': percent_of_income,
+                    'badges': badges,
+                    'created_at': datetime.utcnow()
+                }
+                mongo.db.emergency_funds.insert_one(emergency_fund)
+                current_app.logger.info(f"Emergency fund record saved to MongoDB with ID {emergency_fund['_id']}")
 
                 if step1_data['email_opt_in'] and step1_data['email']:
                     try:
@@ -355,7 +359,7 @@ def step4():
                                 'monthly_savings': monthly_savings,
                                 'percent_of_income': percent_of_income,
                                 'badges': badges,
-                                'created_at': emergency_fund.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                                'created_at': emergency_fund['created_at'].strftime('%Y-%m-%d %H:%M:%S'),
                                 'cta_url': url_for('emergency_fund.dashboard', _external=True),
                                 'unsubscribe_url': url_for('emergency_fund.unsubscribe', email=step1_data['email'], _external=True)
                             },
@@ -383,6 +387,7 @@ def step4():
         return render_template('emergency_fund_step4.html', form=form, step=4, trans=trans, lang=lang)
 
 @emergency_fund_bp.route('/dashboard', methods=['GET'])
+@login_required
 def dashboard():
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
@@ -392,19 +397,20 @@ def dashboard():
     try:
         log_tool_usage(
             tool_name='emergency_fund',
-            user_id=current_user.id if current_user.is_authenticated else None,
+            user_id=current_user.id,
             session_id=session['sid'],
             action='dashboard_view'
         )
-        filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
-        user_data = EmergencyFund.query.filter_by(**filter_kwargs).order_by(EmergencyFund.created_at.desc()).all()
-        current_app.logger.info(f"Retrieved {len(user_data)} records from database for session {session['sid']}")
+        user_data = mongo.db.emergency_funds.find({'user_id': str(current_user.id)}).sort('created_at', -1)
+        user_data = list(user_data)
+        current_app.logger.info(f"Retrieved {len(user_data)} records from MongoDB for user {current_user.id}")
 
-        if not user_data and current_user.is_authenticated and current_user.email:
-            user_data = EmergencyFund.query.filter_by(email=current_user.email).order_by(EmergencyFund.created_at.desc()).all()
+        if not user_data and current_user.email:
+            user_data = mongo.db.emergency_funds.find({'email': current_user.email}).sort('created_at', -1)
+            user_data = list(user_data)
             current_app.logger.info(f"Retrieved {len(user_data)} records for email {current_user.email}")
 
-        records = [(record.id, record.to_dict()) for record in user_data]
+        records = [(record['_id'], record) for record in user_data]
         latest_record = records[-1][1] if records else {}
 
         insights = []
@@ -422,11 +428,12 @@ def dashboard():
                         recommended_months=latest_record.get('recommended_months', 0)))
 
         cross_tool_insights = []
-        budget_data = Budget.query.filter_by(**filter_kwargs).order_by(Budget.created_at.desc()).all()
+        budget_data = mongo.db.budgets.find({'user_id': str(current_user.id)}).sort('created_at', -1)
+        budget_data = list(budget_data)
         if budget_data and latest_record and latest_record.get('savings_gap', 0) > 0:
             latest_budget = budget_data[0]
-            if latest_budget.income and latest_budget.fixed_expenses:
-                savings_possible = latest_budget.income - latest_budget.fixed_expenses
+            if latest_budget.get('income') and latest_budget.get('fixed_expenses'):
+                savings_possible = latest_budget['income'] - latest_budget['fixed_expenses']
                 if savings_possible > 0:
                     cross_tool_insights.append(trans('emergency_fund_cross_tool_savings_possible', lang=lang,
                                                    amount=savings_possible))
@@ -466,20 +473,20 @@ def dashboard():
         )
 
 @emergency_fund_bp.route('/unsubscribe/<email>')
+@login_required
 def unsubscribe(email):
     try:
         lang = session.get('lang', 'en')
         log_tool_usage(
             tool_name='emergency_fund',
-            user_id=current_user.id if current_user.is_authenticated else None,
+            user_id=current_user.id,
             session_id=session['sid'],
             action='unsubscribe'
         )
-        filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
-        records = EmergencyFund.query.filter_by(email=email, **filter_kwargs).all()
-        for record in records:
-            record.email_opt_in = False
-        db.session.commit()
+        mongo.db.emergency_funds.update_many(
+            {'email': email, 'user_id': str(current_user.id)},
+            {'$set': {'email_opt_in': False}}
+        )
         flash(trans("emergency_fund_unsubscribed_success", lang=lang), "success")
     except Exception as e:
         current_app.logger.exception(f"Error in emergency_fund.unsubscribe: {str(e)}")
@@ -487,17 +494,18 @@ def unsubscribe(email):
     return redirect(url_for('index'))
 
 @emergency_fund_bp.route('/debug/storage', methods=['GET'])
+@login_required
 def debug_storage():
     try:
         log_tool_usage(
             tool_name='emergency_fund',
-            user_id=current_user.id if current_user.is_authenticated else None,
+            user_id=current_user.id,
             session_id=session['sid'],
             action='debug_storage_view'
         )
-        filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
-        records = EmergencyFund.query.filter_by(**filter_kwargs).all()
-        record_dicts = [record.to_dict() for record in records]
+        records = mongo.db.emergency_funds.find({'user_id': str(current_user.id)})
+        records = list(records)
+        record_dicts = [dict(record) for record in records]
         response = {
             "records": record_dicts,
             "count": len(records),

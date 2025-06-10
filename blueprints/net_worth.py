@@ -2,14 +2,13 @@ from flask import Blueprint, request, session, redirect, url_for, render_templat
 from flask_wtf import FlaskForm
 from wtforms import StringField, FloatField, BooleanField, SubmitField
 from wtforms.validators import DataRequired, NumberRange, Optional, Email, ValidationError
-from flask_login import current_user
+from flask_login import current_user, login_required
 from translations import trans
-from extensions import db
-from models import NetWorth, log_tool_usage
 from mailersend_email import send_email, EMAIL_CONFIG
 from datetime import datetime
 import uuid
 import json
+from extensions import mongo
 
 net_worth_bp = Blueprint(
     'net_worth',
@@ -110,7 +109,18 @@ class Step3Form(FlaskForm):
                 current_app.logger.error(f"Invalid loans input: {field.data}", extra={'session_id': session.get('sid', 'unknown')})
                 raise ValidationError(trans('net_worth_loans_invalid', lang=session.get('lang', 'en')))
 
+def log_tool_usage(tool_name, action):
+    """Log tool usage to MongoDB."""
+    mongo.db.tool_usage.insert_one({
+        'tool_name': tool_name,
+        'user_id': str(current_user.id) if current_user.is_authenticated else None,
+        'session_id': session.get('sid', str(uuid.uuid4())),
+        'action': action,
+        'timestamp': datetime.utcnow()
+    })
+
 @net_worth_bp.route('/step1', methods=['GET', 'POST'])
+@login_required
 def step1():
     """Handle net worth step 1 form (personal info)."""
     if 'sid' not in session:
@@ -119,18 +129,12 @@ def step1():
         session.modified = True
     lang = session.get('lang', 'en')
     form_data = session.get('networth_step1_data', {})
-    if current_user.is_authenticated:
-        form_data['email'] = form_data.get('email', current_user.email)
-        form_data['first_name'] = form_data.get('first_name', current_user.username)
+    form_data['email'] = form_data.get('email', current_user.email)
+    form_data['first_name'] = form_data.get('first_name', current_user.username)
     form = Step1Form(data=form_data)
     try:
         if request.method == 'POST':
-            log_tool_usage(
-                tool_name='net_worth',
-                user_id=current_user.id if current_user.is_authenticated else None,
-                session_id=session['sid'],
-                action='step1_submit'
-            )
+            log_tool_usage(tool_name='net_worth', action='step1_submit')
             if form.validate_on_submit():
                 form_data = form.data.copy()
                 session['networth_step1_data'] = form_data
@@ -140,19 +144,15 @@ def step1():
             else:
                 current_app.logger.warning(f"Form validation failed: {form.errors}")
                 flash(trans("net_worth_form_validation_error", lang=lang), "danger")
-        log_tool_usage(
-            tool_name='net_worth',
-            user_id=current_user.id if current_user.is_authenticated else None,
-            session_id=session['sid'],
-            action='step1_view'
-        )
-        return render_template('net_worth_step1.html', form=form, trans=trans, lang=lang)
+        log_tool_usage(tool_name='net_worth', action='step1_view')
+        return render_template('NETWORTH/net_worth_step1.html', form=form, trans=trans, lang=lang)
     except Exception as e:
         current_app.logger.error(f"Error in net_worth.step1: {str(e)}", extra={'session_id': session.get('sid', 'unknown')})
         flash(trans("net_worth_error_personal_info", lang=lang), "danger")
-        return render_template('net_worth_step1.html', form=form, trans=trans, lang=lang), 500
+        return render_template('NETWORTH/net_worth_step1.html', form=form, trans=trans, lang=lang), 500
 
 @net_worth_bp.route('/step2', methods=['GET', 'POST'])
+@login_required
 def step2():
     """Handle net worth step 2 form (assets)."""
     if 'sid' not in session:
@@ -166,12 +166,7 @@ def step2():
     form = Step2Form()
     try:
         if request.method == 'POST':
-            log_tool_usage(
-                tool_name='net_worth',
-                user_id=current_user.id if current_user.is_authenticated else None,
-                session_id=session['sid'],
-                action='step2_submit'
-            )
+            log_tool_usage(tool_name='net_worth', action='step2_submit')
             if form.validate_on_submit():
                 form_data = {
                     'cash_savings': float(form.cash_savings.data),
@@ -186,21 +181,17 @@ def step2():
             else:
                 current_app.logger.warning(f"Form validation failed: {form.errors}")
                 flash(trans("net_worth_form_validation_error", lang=lang), "danger")
-        log_tool_usage(
-            tool_name='net_worth',
-            user_id=current_user.id if current_user.is_authenticated else None,
-            session_id=session['sid'],
-            action='step2_view'
-        )
-        return render_template('net_worth_step2.html', form=form, trans=trans, lang=lang)
+        log_tool_usage(tool_name='net_worth', action='step2_view')
+        return render_template('NETWORTH/net_worth_step2.html', form=form, trans=trans, lang=lang)
     except Exception as e:
         current_app.logger.error(f"Error in net_worth.step2: {str(e)}", extra={'session_id': session.get('sid', 'unknown')})
         flash(trans("net_worth_error_assets", lang=lang), "danger")
-        return render_template('net_worth_step2.html', form=form, trans=trans, lang=lang), 500
+        return render_template('NETWORTH/net_worth_step2.html', form=form, trans=trans, lang=lang), 500
 
 @net_worth_bp.route('/step3', methods=['GET', 'POST'])
+@login_required
 def step3():
-    """Calculate net worth and persist to database."""
+    """Calculate net worth and persist to MongoDB."""
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
         session.permanent = True
@@ -212,12 +203,7 @@ def step3():
     form = Step3Form()
     try:
         if request.method == 'POST':
-            log_tool_usage(
-                tool_name='net_worth',
-                user_id=current_user.id if current_user.is_authenticated else None,
-                session_id=session['sid'],
-                action='step3_submit'
-            )
+            log_tool_usage(tool_name='net_worth', action='step3_submit')
             if form.validate_on_submit():
                 step1_data = session.get('networth_step1_data', {})
                 step2_data = session.get('networth_step2_data', {})
@@ -246,29 +232,28 @@ def step3():
                 if property >= total_assets * 0.5:
                     badges.append('net_worth_badge_property_mogul')
 
-                # Create and persist NetWorth record
-                net_worth_record = NetWorth(
-                    id=str(uuid.uuid4()),
-                    user_id=current_user.id if current_user.is_authenticated else None,
-                    session_id=session['sid'],
-                    first_name=step1_data.get('first_name', ''),
-                    email=step1_data.get('email', ''),
-                    send_email=step1_data.get('send_email', False),
-                    cash_savings=cash_savings,
-                    investments=investments,
-                    property=property,
-                    loans=loans,
-                    total_assets=total_assets,
-                    total_liabilities=total_liabilities,
-                    net_worth=net_worth,
-                    badges=json.dumps(badges),
-                    created_at=datetime.utcnow()
-                )
-                db.session.add(net_worth_record)
-                db.session.commit()
-                session['networth_record_id'] = net_worth_record.id
+                # Save to MongoDB
+                net_worth_record = {
+                    '_id': str(uuid.uuid4()),
+                    'user_id': str(current_user.id),
+                    'session_id': session['sid'],
+                    'first_name': step1_data.get('first_name', ''),
+                    'email': step1_data.get('email', ''),
+                    'send_email': step1_data.get('send_email', False),
+                    'cash_savings': cash_savings,
+                    'investments': investments,
+                    'property': property,
+                    'loans': loans,
+                    'total_assets': total_assets,
+                    'total_liabilities': total_liabilities,
+                    'net_worth': net_worth,
+                    'badges': badges,
+                    'created_at': datetime.utcnow()
+                }
+                mongo.db.net_worth_data.insert_one(net_worth_record)
+                session['networth_record_id'] = net_worth_record['_id']
                 session.modified = True
-                current_app.logger.info(f"Successfully saved record {net_worth_record.id} for session {session['sid']}")
+                current_app.logger.info(f"Successfully saved record {net_worth_record['_id']} for session {session['sid']}")
 
                 email = step1_data.get('email')
                 send_email_flag = step1_data.get('send_email', False)
@@ -284,16 +269,16 @@ def step3():
                             subject=subject,
                             template_name=template,
                             data={
-                                "first_name": net_worth_record.first_name,
-                                "cash_savings": net_worth_record.cash_savings,
-                                "investments": net_worth_record.investments,
-                                "property": net_worth_record.property,
-                                "loans": net_worth_record.loans,
-                                "total_assets": net_worth_record.total_assets,
-                                "total_liabilities": net_worth_record.total_liabilities,
-                                "net_worth": net_worth_record.net_worth,
-                                "badges": json.loads(net_worth_record.badges),
-                                "created_at": net_worth_record.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                                "first_name": net_worth_record['first_name'],
+                                "cash_savings": net_worth_record['cash_savings'],
+                                "investments": net_worth_record['investments'],
+                                "property": net_worth_record['property'],
+                                "loans": net_worth_record['loans'],
+                                "total_assets": net_worth_record['total_assets'],
+                                "total_liabilities": net_worth_record['total_liabilities'],
+                                "net_worth": net_worth_record['net_worth'],
+                                "badges": net_worth_record['badges'],
+                                "created_at": net_worth_record['created_at'].strftime('%Y-%m-%d %H:%M:%S'),
                                 "cta_url": url_for('net_worth.dashboard', _external=True),
                                 "unsubscribe_url": url_for('net_worth.unsubscribe', email=email, _external=True)
                             },
@@ -308,48 +293,38 @@ def step3():
             else:
                 current_app.logger.warning(f"Form validation failed: {form.errors}")
                 flash(trans("net_worth_form_validation_error", lang=lang), "danger")
-        log_tool_usage(
-            tool_name='net_worth',
-            user_id=current_user.id if current_user.is_authenticated else None,
-            session_id=session['sid'],
-            action='step3_view'
-        )
-        return render_template('net_worth_step3.html', form=form, trans=trans, lang=lang)
+        log_tool_usage(tool_name='net_worth', action='step3_view')
+        return render_template('NETWORTH/net_worth_step3.html', form=form, trans=trans, lang=lang)
     except Exception as e:
         current_app.logger.error(f"Error in net_worth.step3: {str(e)}", extra={'session_id': session.get('sid', 'unknown')})
         flash(trans("net_worth_calculation_error", lang=lang), "danger")
-        return render_template('net_worth_step3.html', form=form, trans=trans, lang=lang), 500
+        return render_template('NETWORTH/net_worth_step3.html', form=form, trans=trans, lang=lang), 500
 
 @net_worth_bp.route('/dashboard', methods=['GET', 'POST'])
+@login_required
 def dashboard():
-    """Display net worth dashboard using database data."""
+    """Display net worth dashboard using MongoDB data."""
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
         session.permanent = True
         session.modified = True
     lang = session.get('lang', 'en')
     try:
-        log_tool_usage(
-            tool_name='net_worth',
-            user_id=current_user.id if current_user.is_authenticated else None,
-            session_id=session['sid'],
-            action='dashboard_view'
-        )
-        # Fetch records by user_id or session_id
-        filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
-        user_records = NetWorth.query.filter_by(**filter_kwargs).order_by(NetWorth.created_at.desc()).all()
-        user_data = [(record.id, record.to_dict()) for record in user_records]
+        log_tool_usage(tool_name='net_worth', action='dashboard_view')
+        # Fetch records by user_id
+        user_records = mongo.db.net_worth_data.find({'user_id': str(current_user.id)}).sort('created_at', -1)
+        user_data = [(record['_id'], record) for record in user_records]
 
-        # Fallback to email if no records found for authenticated user
-        if not user_data and current_user.is_authenticated and current_user.email:
-            user_records = NetWorth.query.filter_by(email=current_user.email).order_by(NetWorth.created_at.desc()).all()
-            user_data = [(record.id, record.to_dict()) for record in user_records]
+        # Fallback to email
+        if not user_data and current_user.email:
+            user_records = mongo.db.net_worth_data.find({'email': current_user.email}).sort('created_at', -1)
+            user_data = [(record['_id'], record) for record in user_records]
 
         # Fallback to record ID
         if not user_data and 'networth_record_id' in session:
-            record = NetWorth.query.get(session['networth_record_id'])
+            record = mongo.db.net_worth_data.find_one({'_id': session['networth_record_id']})
             if record:
-                user_data = [(record.id, record.to_dict())]
+                user_data = [(record['_id'], record)]
 
         # Reconstruct from session data if no records found
         if not user_data:
@@ -379,10 +354,10 @@ def dashboard():
                     badges.append('net_worth_badge_property_mogul')
 
                 latest_record = {
-                    'id': session['sid'],
-                    'user_id': current_user.id if current_user.is_authenticated else None,
+                    '_id': session['sid'],
+                    'user_id': str(current_user.id),
                     'session_id': session['sid'],
-                    'created_at': datetime.utcnow().isoformat() + "Z",
+                    'created_at': datetime.utcnow(),
                     'first_name': step1_data.get('first_name', ''),
                     'email': step1_data.get('email', ''),
                     'send_email': step1_data.get('send_email', False),
@@ -427,7 +402,7 @@ def dashboard():
 
         current_app.logger.info(f"Dashboard rendering with {len(records)} records for session {session['sid']}")
         return render_template(
-            'net_worth_dashboard.html',
+            'NETWORTH/net_worth_dashboard.html',
             records=records,
             latest_record=latest_record,
             insights=insights,
@@ -439,7 +414,7 @@ def dashboard():
         current_app.logger.error(f"Error in net_worth.dashboard: {str(e)}", extra={'session_id': session.get('sid', 'unknown')})
         flash(trans("net_worth_dashboard_load_error", lang=lang), "danger")
         return render_template(
-            'net_worth_dashboard.html',
+            'NETWORTH/net_worth_dashboard.html',
             records=[],
             latest_record={},
             insights=[],
@@ -454,28 +429,20 @@ def dashboard():
         ), 500
 
 @net_worth_bp.route('/unsubscribe/<email>')
+@login_required
 def unsubscribe(email):
-    """Unsubscribe user from net worth emails using database."""
+    """Unsubscribe user from net worth emails using MongoDB."""
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
         session.permanent = True
     lang = session.get('lang', 'en')
     try:
-        log_tool_usage(
-            tool_name='net_worth',
-            user_id=current_user.id if current_user.is_authenticated else None,
-            session_id=session['sid'],
-            action='unsubscribe'
+        log_tool_usage(tool_name='net_worth', action='unsubscribe')
+        result = mongo.db.net_worth_data.update_many(
+            {'email': email, 'user_id': str(current_user.id)},
+            {'$set': {'send_email': False}}
         )
-        filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
-        records = NetWorth.query.filter_by(email=email, **filter_kwargs).all()
-        updated = False
-        for record in records:
-            if record.send_email:
-                record.send_email = False
-                updated = True
-        if updated:
-            db.session.commit()
+        if result.modified_count > 0:
             flash(trans("net_worth_unsubscribed_success", lang=lang), "success")
         else:
             flash(trans("net_worth_unsubscribe_failed", lang=lang), "danger")

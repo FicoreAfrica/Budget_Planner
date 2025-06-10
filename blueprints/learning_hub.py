@@ -3,16 +3,16 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, BooleanField, SubmitField, HiddenField, FileField
 from wtforms.validators import DataRequired, Email, Optional
 from flask_wtf.csrf import CSRFProtect, CSRFError
-from flask_login import current_user
+from flask_login import current_user, login_required
 from datetime import datetime
 from mailersend_email import send_email, EMAIL_CONFIG
 import uuid
 import json
 import os
 from translations import trans
-from extensions import db
-from models import LearningProgress, Course, log_tool_usage
+from extensions import mongo
 from werkzeug.utils import secure_filename
+import pymongo
 
 learning_hub_bp = Blueprint(
     'learning_hub',
@@ -20,7 +20,7 @@ learning_hub_bp = Blueprint(
     template_folder='templates/LEARNINGHUB',
     url_prefix='/LEARNINGHUB'
 )
-    
+
 # Initialize CSRF protection
 csrf = CSRFProtect()
 
@@ -197,66 +197,68 @@ class ContentUploadForm(FlaskForm):
         self.submit.label.text = trans('learning_hub_upload', lang=lang)
 
 def get_progress():
-    """Retrieve learning progress from database."""
+    """Retrieve learning progress from MongoDB."""
     try:
         filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session.get('sid', str(uuid.uuid4()))}
-        progress_records = LearningProgress.query.filter_by(**filter_kwargs).all()
+        progress_records = mongo.db.learning_materials.find(filter_kwargs)
         progress = {}
         for record in progress_records:
             try:
-                progress[record.course_id] = record.to_dict()
+                progress[record['course_id']] = {
+                    'lessons_completed': record.get('lessons_completed', []),
+                    'quiz_scores': record.get('quiz_scores', {}),
+                    'current_lesson': record.get('current_lesson')
+                }
             except Exception as e:
-                current_app.logger.error(f"Error parsing progress record for course {record.course_id}: {str(e)}")
+                current_app.logger.error(f"Error parsing progress record for course {record['course_id']}: {str(e)}")
         return progress
     except Exception as e:
-        current_app.logger.error(f"Error retrieving progress from database: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
+        current_app.logger.error(f"Error retrieving progress from MongoDB: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
         return {}
 
 def save_course_progress(course_id, course_progress):
-    """Save course progress to database."""
+    """Save course progress to MongoDB."""
     try:
         filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
         filter_kwargs['course_id'] = course_id
-        progress = LearningProgress.query.filter_by(**filter_kwargs).first()
-        if not progress:
-            progress = LearningProgress(
-                user_id=current_user.id if current_user.is_authenticated else None,
-                session_id=session['sid'],
-                course_id=course_id
-            )
-        progress.lessons_completed = json.dumps(course_progress.get('lessons_completed', []))
-        progress.quiz_scores = json.dumps(course_progress.get('quiz_scores', {}))
-        progress.current_lesson = course_progress.get('current_lesson')
-        db.session.add(progress)
-        db.session.commit()
+        update_data = {
+            '$set': {
+                'user_id': current_user.id if current_user.is_authenticated else None,
+                'session_id': session['sid'],
+                'course_id': course_id,
+                'lessons_completed': course_progress.get('lessons_completed', []),
+                'quiz_scores': course_progress.get('quiz_scores', {}),
+                'current_lesson': course_progress.get('current_lesson')
+            }
+        }
+        mongo.db.learning_materials.update_one(filter_kwargs, update_data, upsert=True)
     except Exception as e:
-        db.session.rollback()
-        current_app.logger.error(f"Error saving progress to database: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
+        current_app.logger.error(f"Error saving progress to MongoDB: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
 
 def init_storage(app):
     """Initialize storage with app context and logger."""
     with app.app_context():
         current_app.logger.info("Initializing courses storage.", extra={'session_id': 'no-request-context'})
         try:
-            courses = Course.query.all()
-            if not courses:
-                current_app.logger.info("Courses table is empty. Initializing with default courses.", extra={'session_id': 'no-request-context'})
+            existing_courses = mongo.db.learning_materials.find({'type': 'course'})
+            if not existing_courses.count():
+                current_app.logger.info("Courses collection is empty. Initializing with default courses.", extra={'session_id': 'no-request-context'})
                 default_courses = [
-                    Course(
-                        id=course['id'],
-                        title_key=course['title_key'],
-                        title_en=course['title_en'],
-                        title_ha=course['title_ha'],
-                        description_en=course['description_en'],
-                        description_ha=course['description_ha'],
-                        is_premium=False
-                    ) for course in courses_data.values()
+                    {
+                        'type': 'course',
+                        'id': course['id'],
+                        'title_key': course['title_key'],
+                        'title_en': course['title_en'],
+                        'title_ha': course['title_ha'],
+                        'description_en': course['description_en'],
+                        'description_ha': course['description_ha'],
+                        'is_premium': False
+                    } for course in courses_data.values()
                 ]
-                db.session.bulk_save_objects(default_courses)
-                db.session.commit()
-                current_app.logger.info(f"Initialized courses table with {len(default_courses)} default courses", extra={'session_id': 'no-request-context'})
+                if default_courses:
+                    mongo.db.learning_materials.insert_many(default_courses)
+                    current_app.logger.info(f"Initialized courses collection with {len(default_courses)} default courses", extra={'session_id': 'no-request-context'})
         except Exception as e:
-            db.session.rollback()
             current_app.logger.error(f"Error initializing courses: {str(e)}", extra={'session_id': 'no-request-context'})
             raise
 
@@ -284,21 +286,15 @@ def courses():
     lang = session.get('lang', 'en')
     progress = get_progress()
     try:
-        log_tool_usage(
-            tool_name='learning_hub',
-            user_id=current_user.id if current_user.is_authenticated else None,
-            session_id=session['sid'],
-            action='courses_view'
-        )
         if not isinstance(courses_data, dict):
             current_app.logger.error(f"Invalid courses_data type, Path: {request.path}, Type: {type(courses_data)}", extra={'session_id': session.get('sid', 'no-session-id')})
             raise ValueError("courses_data is not a dictionary")
         current_app.logger.info(f"Rendering courses page, Path: {request.path}", extra={'session_id': session.get('sid', 'no-session-id')})
-        return render_template('learning_hub_courses.html', courses=courses_data, progress=progress, trans=trans, lang=lang)
+        return render_template('LEARNINGHUB/learning_hub_courses.html', courses=courses_data, progress=progress, trans=trans, lang=lang)
     except Exception as e:
         current_app.logger.error(f"Error rendering courses page, Path: {request.path}: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
         flash(trans("learning_hub_error_loading", default="Error loading courses", lang=lang), "danger")
-        return render_template('learning_hub_courses.html', courses={}, progress={}, trans=trans, lang=lang), 500
+        return render_template('LEARNINGHUB/learning_hub_courses.html', courses={}, progress={}, trans=trans, lang=lang), 500
 
 @learning_hub_bp.route('/courses/<course_id>')
 def course_overview(course_id):
@@ -316,20 +312,15 @@ def course_overview(course_id):
     progress = get_progress()
     course_progress = progress.get(course_id, {})
     try:
-        log_tool_usage(
-            tool_name='learning_hub',
-            user_id=current_user.id if current_user.is_authenticated else None,
-            session_id=session['sid'],
-            action='course_overview_view'
-        )
         current_app.logger.info(f"Rendering course overview, Path: {request.path}, Course ID: {course_id}", extra={'session_id': session.get('sid', 'no-session-id')})
-        return render_template('learning_hub_course_overview.html', course=course, progress=course_progress, trans=trans, lang=lang)
+        return render_template('LEARNINGHUB/learning_hub_course_overview.html', course=course, progress=course_progress, trans=trans, lang=lang)
     except Exception as e:
         current_app.logger.error(f"Error rendering course overview, Path: {request.path}, Course ID: {course_id}: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
         flash(trans("learning_hub_error_loading", default="Error loading course", lang=lang), "danger")
         return redirect(url_for('learning_hub.courses'))
 
 @learning_hub_bp.route('/profile', methods=['GET', 'POST'])
+@login_required
 def profile():
     """Handle user profile form for first name and email."""
     if 'sid' not in session:
@@ -343,19 +334,7 @@ def profile():
         form_data['first_name'] = form_data.get('first_name', current_user.username)
     form = LearningHubProfileForm(data=form_data)
     try:
-        log_tool_usage(
-            tool_name='learning_hub',
-            user_id=current_user.id if current_user.is_authenticated else None,
-            session_id=session['sid'],
-            action='profile_view'
-        )
         if request.method == 'POST':
-            log_tool_usage(
-                tool_name='learning_hub',
-                user_id=current_user.id if current_user.is_authenticated else None,
-                session_id=session['sid'],
-                action='profile_submit'
-            )
             if form.validate_on_submit():
                 session['learning_hub_profile'] = {
                     'first_name': form.first_name.data,
@@ -367,13 +346,14 @@ def profile():
                 flash(trans('learning_hub_profile_saved', default='Profile saved successfully'), 'success')
                 return redirect(url_for('learning_hub.courses'))
         current_app.logger.info(f"Rendering profile page, Path: {request.path}", extra={'session_id': session.get('sid', 'no-session-id')})
-        return render_template('learning_hub_profile.html', form=form, trans=trans, lang=lang)
+        return render_template('LEARNINGHUB/learning_hub_profile.html', form=form, trans=trans, lang=lang)
     except Exception as e:
         current_app.logger.error(f"Error in profile page: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
         flash(trans("learning_hub_error_loading", default="Error loading profile"), "danger")
-        return render_template('learning_hub_profile.html', form=form, trans=trans, lang=lang), 500
+        return render_template('LEARNINGHUB/learning_hub_profile.html', form=form, trans=trans, lang=lang), 500
 
 @learning_hub_bp.route('/courses/<course_id>/lesson/<lesson_id>', methods=['GET', 'POST'])
+@login_required
 def lesson(course_id, lesson_id):
     """Display or process a lesson with email notification and CSRF protection."""
     if 'sid' not in session:
@@ -402,19 +382,7 @@ def lesson(course_id, lesson_id):
         course_progress = progress[course_id]
 
     try:
-        log_tool_usage(
-            tool_name='learning_hub',
-            user_id=current_user.id if current_user.is_authenticated else None,
-            session_id=session['sid'],
-            action='lesson_view'
-        )
         if request.method == 'POST':
-            log_tool_usage(
-                tool_name='learning_hub',
-                user_id=current_user.id if current_user.is_authenticated else None,
-                session_id=session['sid'],
-                action='lesson_submit'
-            )
             if form.validate_on_submit():
                 if form.lesson_id.data == lesson_id and lesson_id not in course_progress['lessons_completed']:
                     course_progress['lessons_completed'].append(lesson_id)
@@ -465,13 +433,14 @@ def lesson(course_id, lesson_id):
                     else:
                         return redirect(url_for('learning_hub.course_overview', course_id=course_id))
         current_app.logger.info(f"Rendering lesson page, Path: {request.path}, Course ID: {course_id}, Lesson ID: {lesson_id}", extra={'session_id': session.get('sid', 'no-session-id')})
-        return render_template('learning_hub_lesson.html', course=course, lesson=lesson, module=module, progress=course_progress, form=form, trans=trans, lang=lang)
+        return render_template('LEARNINGHUB/learning_hub_lesson.html', course=course, lesson=lesson, module=module, progress=course_progress, form=form, trans=trans, lang=lang)
     except Exception as e:
         current_app.logger.error(f"Error in lesson page: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
         flash(trans("learning_hub_error_loading", default="Error loading lesson"), "danger")
         return redirect(url_for('learning_hub.course_overview', course_id=course_id)), 500
 
 @learning_hub_bp.route('/courses/<course_id>/quiz/<quiz_id>', methods=['GET', 'POST'])
+@login_required
 def quiz(course_id, quiz_id):
     """Display or process a quiz with CSRF protection."""
     if 'sid' not in session:
@@ -499,19 +468,7 @@ def quiz(course_id, quiz_id):
     form = QuizForm()
 
     try:
-        log_tool_usage(
-            tool_name='learning_hub',
-            user_id=current_user.id if current_user.is_authenticated else None,
-            session_id=session['sid'],
-            action='quiz_view'
-        )
         if request.method == 'POST':
-            log_tool_usage(
-                tool_name='learning_hub',
-                user_id=current_user.id if current_user.is_authenticated else None,
-                session_id=session['sid'],
-                action='quiz_submit'
-            )
             if form.validate_on_submit():
                 answers = request.form.to_dict()
                 score = 0
@@ -524,13 +481,14 @@ def quiz(course_id, quiz_id):
                 flash(f"{trans('learning_hub_quiz_completed', default='Quiz completed! Score:')} {score}/{len(quiz['questions'])}", "success")
                 return redirect(url_for('learning_hub.course_overview', course_id=course_id))
         current_app.logger.info(f"Rendering quiz page, Path: {request.path}, Course ID: {course_id}, Quiz ID: {quiz_id}", extra={'session_id': session.get('sid', 'no-session-id')})
-        return render_template('learning_hub_quiz.html', course=course, quiz=quiz, progress=course_progress, form=form, trans=trans, lang=lang)
+        return render_template('LEARNINGHUB/learning_hub_quiz.html', course=course, quiz=quiz, progress=course_progress, form=form, trans=trans, lang=lang)
     except Exception as e:
         current_app.logger.error(f"Error processing quiz {quiz_id} for course {course_id}, Path: {request.path}: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
         flash(trans("learning_hub_error_loading", "Error loading quiz"), "danger")
         return redirect(url_for('learning_hub.course_overview', course_id=course_id))
 
 @learning_hub_bp.route('/dashboard')
+@login_required
 def dashboard():
     """Display learning hub dashboard."""
     if 'sid' not in session:
@@ -541,12 +499,6 @@ def dashboard():
     progress = get_progress()
     progress_summary = []
     try:
-        log_tool_usage(
-            tool_name='learning_hub',
-            user_id=current_user.id if current_user.is_authenticated else None,
-            session_id=session['sid'],
-            action='dashboard_view'
-        )
         for course_id, course in courses_data.items():
             cp = progress.get(course_id, {'lessons_completed': [], 'current_lesson': None})
             lessons_total = sum(len(m.get('lessons', [])) for m in course.get('modules', []))
@@ -563,23 +515,17 @@ def dashboard():
                 'current_lesson': current_lesson_id
             })
         current_app.logger.info(f"Rendering dashboard page, Path: {request.path}, Progress Summary: {len(progress_summary)} courses", extra={'session_id': session.get('sid', 'no-session-id')})
-        return render_template('learning_hub_dashboard.html', progress_summary=progress_summary, trans=trans, lang=lang)
+        return render_template('LEARNINGHUB/learning_hub_dashboard.html', progress_summary=progress_summary, trans=trans, lang=lang)
     except Exception as e:
         current_app.logger.error(f"Error rendering dashboard, Path: {request.path}: {str(e)}", exc_info=True, extra={'session_id': session.get('sid', 'no-session-id')})
         flash(trans("learning_hub_error_loading", default="Error loading dashboard. Please try again."), "danger")
-        return render_template('learning_hub_dashboard.html', progress_summary=[], trans=trans, lang=lang), 500
+        return render_template('LEARNINGHUB/learning_hub_dashboard.html', progress_summary=[], trans=trans, lang=lang), 500
 
 @learning_hub_bp.route('/unsubscribe/<email>')
 def unsubscribe(email):
     """Unsubscribe user from learning hub emails."""
     try:
         lang = session.get('lang', 'en')
-        log_tool_usage(
-            tool_name='learning_hub',
-            user_id=current_user.id if current_user.is_authenticated else None,
-            session_id=session['sid'],
-            action='unsubscribe'
-        )
         profile = session.get('learning_hub_profile', {})
         if profile.get('email') == email and profile.get('send_email', False):
             profile['send_email'] = False
@@ -597,6 +543,7 @@ def unsubscribe(email):
         return redirect(url_for('index'))
 
 @learning_hub_bp.route('/upload_content', methods=['GET', 'POST'])
+@login_required
 def upload_content():
     """Handle course content upload."""
     if 'sid' not in session:
@@ -614,7 +561,7 @@ def upload_content():
             filename = secure_filename(file.filename)
             file_path = os.path.join(current_app.config.get('UPLOAD_FOLDER', UPLOAD_FOLDER), filename)
             file.save(file_path)
-            # Update courses_data or database
+            # Update courses_data
             course = course_lookup(course_id)
             if course:
                 for module in course['modules']:
@@ -623,37 +570,30 @@ def upload_content():
                             lesson['content_type'] = content_type
                             lesson['content_path'] = f"uploads/{filename}"
                             break
-            # Optionally, store metadata in a new database table
+            # Store metadata in MongoDB
             try:
-                content_metadata = ContentMetadata(
-                    course_id=course_id,
-                    lesson_id=lesson_id,
-                    content_type=content_type,
-                    content_path=f"uploads/{filename}",
-                    uploaded_by=current_user.id if current_user.is_authenticated else None,
-                    upload_date=datetime(2025, 6, 9, 8, 40)
-                )
-                db.session.add(content_metadata)
-                db.session.commit()
+                content_metadata = {
+                    'type': 'content_metadata',
+                    'course_id': course_id,
+                    'lesson_id': lesson_id,
+                    'content_type': content_type,
+                    'content_path': f"uploads/{filename}",
+                    'uploaded_by': current_user.id if current_user.is_authenticated else None,
+                    'upload_date': datetime(2025, 6, 9, 8, 40)
+                }
+                mongo.db.learning_materials.insert_one(content_metadata)
             except Exception as e:
-                db.session.rollback()
                 current_app.logger.error(f"Error saving content metadata: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
             flash(trans('learning_hub_content_uploaded', default='Content uploaded successfully'), 'success')
             return redirect(url_for('learning_hub.courses'))
         else:
             flash(trans('learning_hub_invalid_file', default='Invalid file type'), 'danger')
-    return render_template('learning_hub_upload.html', form=form, trans=trans, lang=lang)
+    return render_template('LEARNINGHUB/learning_hub_upload.html', form=form, trans=trans, lang=lang)
 
 @learning_hub_bp.route('/static/uploads/<path:filename>')
 def serve_uploaded_file(filename):
     """Serve uploaded files securely."""
     try:
-        log_tool_usage(
-            tool_name='learning_hub',
-            user_id=current_user.id if current_user.is_authenticated else None,
-            session_id=session['sid'],
-            action='serve_uploaded_file'
-        )
         response = send_from_directory(current_app.config.get('UPLOAD_FOLDER', UPLOAD_FOLDER), filename)
         response.headers['Cache-Control'] = 'public, max-age=31536000'
         return response
@@ -674,12 +614,6 @@ def handle_not_found(e):
 def static_files(filename):
     """Serve static files with cache control."""
     try:
-        log_tool_usage(
-            tool_name='learning_hub',
-            user_id=current_user.id if current_user.is_authenticated else None,
-            session_id=session['sid'],
-            action='static_files_view'
-        )
         response = send_from_directory('static', filename)
         response.headers['Cache-Control'] = 'public, max-age=31536000'
         return response
@@ -692,4 +626,4 @@ def handle_csrf_error(e):
     """Handle CSRF errors with user-friendly message."""
     current_app.logger.error(f"CSRF error on {request.path}: {e.description}, Session: {session.get('sid', 'no-session-id')}, Form Data: {request.form}")
     flash(trans("learning_hub_csrf_error", default="Form submission failed due to a missing security token. Please refresh and try again.", lang=session.get('lang', 'en')), "danger")
-    return render_template('400.html', message=trans("learning_hub_csrf_error", default="Form submission failed due to a missing security token. Please refresh and try again.", lang=session.get('lang', 'en'))), 400
+    return render_template('LEARNINGHUB/400.html', message=trans("learning_hub_csrf_error", default="Form submission failed due to a missing security token. Please refresh and try again.", lang=session.get('lang', 'en'))), 400
