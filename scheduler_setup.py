@@ -1,9 +1,41 @@
 from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.jobstores.mongodb import MongoDBJobStore
+from apscheduler.jobstores.memory import MemoryJobStore
 from datetime import datetime, date, timedelta
-from flask import current_app
+from flask import current_app, url_for
 from mailersend_email import send_email, trans, EMAIL_CONFIG
+import time
+import psutil
+import os
 
+def log_job_metrics(job_name):
+    """Log duration and memory usage for a job."""
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            start_time = time.time()
+            process = psutil.Process(os.getpid())
+            start_memory = process.memory_info().rss / 1024 / 1024  # MB
+            try:
+                result = func(*args, **kwargs)
+                duration = time.time() - start_time
+                end_memory = process.memory_info().rss / 1024 / 1024  # MB
+                current_app.logger.info(
+                    f"Job '{job_name}' completed: duration={duration:.2f}s, "
+                    f"memory_start={start_memory:.2f}MB, memory_end={end_memory:.2f}MB"
+                )
+                return result
+            except Exception as e:
+                duration = time.time() - start_time
+                end_memory = process.memory_info().rss / 1024 / 1024
+                current_app.logger.error(
+                    f"Job '{job_name}' failed: error={str(e)}, duration={duration:.2f}s, "
+                    f"memory_start={start_memory:.2f}MB, memory_end={end_memory:.2f}MB",
+                    exc_info=True
+                )
+                raise
+        return wrapper
+    return decorator
+
+@log_job_metrics('update_overdue_status')
 def update_overdue_status():
     """Update status to overdue for past-due bills."""
     with current_app.app_context():
@@ -27,9 +59,11 @@ def update_overdue_status():
             current_app.logger.info(f"Updated {updated_count} overdue bill statuses")
         except Exception as e:
             current_app.logger.exception(f"Error in update_overdue_status: {str(e)}")
+            raise
 
+@log_job_metrics('send_bill_reminders')
 def send_bill_reminders():
-    """Send reminders for upcoming and overdue bills."""
+    """Send reminders for upcoming and overdue bills in batches."""
     with current_app.app_context():
         try:
             mongo = current_app.extensions['mongo']
@@ -39,7 +73,10 @@ def send_bill_reminders():
             users_collection = db.users
             today = date.today()
             user_bills = {}
-            bills = bills_collection.find()
+            max_emails_per_run = 10  # Limit to 10 emails per job execution
+            email_count = 0
+
+            bills = bills_collection.find().limit(100)  # Process up to 100 bills per run
             for bill in bills:
                 email = bill['user_email']
                 user = users_collection.find_one({'email': email}, {'lang': 1})
@@ -66,6 +103,9 @@ def send_bill_reminders():
                         })
 
             for email, data in user_bills.items():
+                if email_count >= max_emails_per_run:
+                    current_app.logger.info(f"Reached max emails ({max_emails_per_run}), stopping")
+                    break
                 try:
                     config = EMAIL_CONFIG["bill_reminder"]
                     subject = trans(config["subject_key"], lang=data['lang'])
@@ -89,21 +129,36 @@ def send_bill_reminders():
                     )
                     bill_reminders_collection.insert_one(reminder_data)
                     current_app.logger.info(f"Sent bill reminder email to {email} and saved to bill_reminders")
+                    email_count += 1
                 except Exception as e:
                     current_app.logger.error(f"Failed to send reminder email to {email}: {str(e)}")
+            current_app.logger.info(f"Sent {email_count} bill reminder emails")
         except Exception as e:
             current_app.logger.error(f"Error in send_bill_reminders: {str(e)}", exc_info=True)
+            raise
+
+@log_job_metrics('cleanup_sessions')
+def cleanup_sessions():
+    """Remove expired sessions from the sessions collection."""
+    with current_app.app_context():
+        try:
+            mongo = current_app.extensions['mongo']
+            db = mongo.db
+            sessions_collection = db.sessions
+            result = sessions_collection.delete_many({
+                'expiration': {'$lt': datetime.utcnow()}
+            })
+            current_app.logger.info(f"Deleted {result.deleted_count} expired sessions")
+        except Exception as e:
+            current_app.logger.error(f"Error in cleanup_sessions: {str(e)}", exc_info=True)
+            raise
 
 def init_scheduler(app, mongo):
     """Initialize the background scheduler."""
     with app.app_context():
         try:
             jobstores = {
-                'mongodb': MongoDBJobStore(
-                    database=mongo.db.name,
-                    collection='scheduler_jobs',
-                    client=mongo.cx
-                )
+                'default': MemoryJobStore()
             }
             scheduler = BackgroundScheduler(jobstores=jobstores)
             scheduler.add_job(
@@ -122,9 +177,17 @@ def init_scheduler(app, mongo):
                 name='Send bill reminders daily',
                 replace_existing=True
             )
+            scheduler.add_job(
+                func=cleanup_sessions,
+                trigger='interval',
+                days=1,
+                id='cleanup_sessions',
+                name='Clean up expired sessions daily',
+                replace_existing=True
+            )
             scheduler.start()
             app.config['SCHEDULER'] = scheduler
-            app.logger.info("Bill reminder and overdue status scheduler started successfully")
+            app.logger.info("Bill reminder, overdue status, and session cleanup scheduler started successfully")
             return scheduler
         except Exception as e:
             app.logger.error(f"Failed to initialize scheduler: {str(e)}", exc_info=True)
