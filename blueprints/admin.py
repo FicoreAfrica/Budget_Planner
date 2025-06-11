@@ -6,6 +6,7 @@ from models import get_user, get_tool_usage, get_feedback, to_dict_tool_usage, t
 import logging
 import csv
 from io import StringIO
+from extensions import mongo  # Import mongo from extensions
 
 # Configure logging with SessionAdapter
 logger = logging.getLogger('ficore_app.admin')  # Namespaced logger
