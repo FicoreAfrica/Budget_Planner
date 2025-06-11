@@ -3,7 +3,7 @@ import sys
 import logging
 import uuid
 from datetime import datetime, timedelta
-from flask import Flask, jsonify, render_template, request, session, redirect, url_for, flash, make_response, has_request_context, g, send_from_directory
+from flask import Flask, jsonify, render_template, request, redirect, url_for, flash, make_response, has_request_context, g, send_from_directory
 from flask_wtf.csrf import CSRFError
 from flask_login import LoginManager, current_user
 from dotenv import load_dotenv
@@ -25,7 +25,7 @@ load_dotenv()
 
 # Set up logging
 root_logger = logging.getLogger('ficore_app')
-root_logger.setLevel(logging.DEBUG)
+root_logger.setLevel(logging.INFO)
 
 class SessionFormatter(logging.Formatter):
     def format(self, record):
@@ -37,9 +37,9 @@ formatter = SessionFormatter('%(asctime)s - %(name)s - %(levelname)s - %(message
 class SessionAdapter(logging.LoggerAdapter):
     def process(self, msg, kwargs):
         kwargs['extra'] = kwargs.get('extra', {})
-        session_id = kwargs['extra'].get('session_id', 'no-session-id')
+        session_id = kwargs.get('extra', {}).get('session_id', 'no-session-id')
         if has_request_context():
-            session_id = session.get('sid', 'no-session-id')
+            session_id = flask_session.get('sid', 'no-session-id')
         kwargs['extra']['session_id'] = session_id
         return msg, kwargs
 
@@ -59,7 +59,7 @@ def admin_required(f):
 
 def setup_logging(app):
     handler = logging.StreamHandler(sys.stderr)
-    handler.setLevel(logging.DEBUG)
+    handler.setLevel(logging.INFO)
     handler.setFormatter(formatter)
     root_logger.handlers = []
     root_logger.addHandler(handler)
@@ -70,14 +70,15 @@ def setup_logging(app):
     werkzeug_logger.handlers = []
     flask_logger.addHandler(handler)
     werkzeug_logger.addHandler(handler)
-    flask_logger.setLevel(logging.DEBUG)
-    werkzeug_logger.setLevel(logging.DEBUG)
+    flask_logger.setLevel(logging.INFO)
+    werkzeug_logger.setLevel(logging.INFO)
     
     logger.info("Logging setup complete with StreamHandler for ficore_app, flask, and werkzeug")
 
-def setup_session(app):
+def setup_session(app, mongo):
     try:
-        app.config['SESSION_TYPE'] = 'memory'
+        app.config['SESSION_TYPE'] = 'mongodb'
+        app.config['SESSION_MONGODB'] = mongo
         app.config['SESSION_PERMANENT'] = True
         app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
         app.config['SESSION_USE_SIGNER'] = True
@@ -87,38 +88,33 @@ def setup_session(app):
         logger.error(f"Failed to configure session: {str(e)}", exc_info=True)
         raise
 
-def check_mongodb_connection(mongo):
+def check_mongodb_connection(mongo, app):
     """
-    Robust MongoDB connection checker for Flask-PyMongo.
+    Simplified MongoDB connection checker for Flask-PyMongo.
     
     Args:
         mongo: Flask-PyMongo instance
+        app: Flask application instance
         
     Returns:
         bool: True if connected, False otherwise
     """
     try:
-        # Check if mongo object exists
-        if not mongo:
+        if mongo is None:
             logger.error("MongoDB instance is None")
             return False
             
-        # Check if client attribute exists
-        if not hasattr(mongo, 'cx'):
-            logger.error("MongoDB client attribute 'cx' not found")
-            return False
+        # Ensure client is initialized
+        if not hasattr(mongo, 'cx') or mongo.cx is None:
+            logger.warning("MongoDB client attribute 'cx' missing or None, initializing")
+            mongo.init_app(app, tlsCAFile=certifi.where(), connectTimeoutMS=30000, serverSelectionTimeoutMS=30000, maxPoolSize=50)
             
-        # Check if client is not None
-        if mongo.cx is None:
-            logger.error("MongoDB client is None")
-            return False
-            
-        # Test actual connection with ping
+        # Test connection
         mongo.cx.admin.command('ping')
         logger.info("MongoDB connection verified with ping")
         return True
         
-    except (AttributeError, NotImplementedError, Exception) as e:
+    except (AttributeError, InvalidOperation, ConnectionFailure) as e:
         logger.error(f"MongoDB connection check failed: {str(e)}", exc_info=True)
         return False
 
@@ -127,27 +123,23 @@ def initialize_database(app):
     max_retries = 3
     for attempt in range(max_retries):
         try:
-            # Check MongoDB connection
-            if not check_mongodb_connection(mongo):
-                logger.warning(f"Attempt {attempt + 1}/{max_retries} - MongoDB connection not ready, reinitializing...")
-                mongo.init_app(app, tlsCAFile=certifi.where(), connectTimeoutMS=30000, serverSelectionTimeoutMS=30000)
-                # Verify reinitialization
-                if not check_mongodb_connection(mongo):
-                    logger.error(f"Attempt {attempt + 1}/{max_retries} - MongoDB reinitialization failed")
-                    if attempt == max_retries - 1:
-                        raise RuntimeError("Max retries reached: MongoDB connection not established")
-                    continue
-            
-            # Connection is verified, proceed with initialization
-            logger.info(f"Attempt {attempt + 1}/{max_retries} - MongoDB connection established")
-            break
+            if check_mongodb_connection(mongo, app):
+                logger.info(f"Attempt {attempt + 1}/{max_retries} - MongoDB connection established")
+                break
+            else:
+                logger.warning(f"Attempt {attempt + 1}/{max_retries} - MongoDB connection not ready")
+                if attempt == max_retries - 1:
+                    logger.error("Max retries reached: MongoDB connection not established")
+                    raise RuntimeError("MongoDB connection failed after max retries")
         except Exception as e:
             logger.error(f"Failed to initialize database (attempt {attempt + 1}/{max_retries}): {str(e)}", exc_info=True)
             if attempt == max_retries - 1:
                 raise
-            continue
 
     try:
+        # Log database state
+        logger.info(f"MongoDB database: {mongo.db.name if hasattr(mongo, 'db') else 'None'}")
+        
         # Create MongoDB indexes
         mongo.db.users.create_index('email', unique=True)
         mongo.db.users.create_index('referral_code', unique=True)
@@ -184,7 +176,7 @@ def initialize_database(app):
             logger.info("Initialized courses in MongoDB")
         app.config['COURSES'] = list(courses_collection.find({}, {'_id': 0}))
     except Exception as e:
-        logger.error(f"Failed to initialize database: {str(e)}", exc_info=True)
+        logger.error(f"Failed to initialize database indexes/courses: {str(e)}", exc_info=True)
         raise
 
 # Constants
@@ -221,39 +213,38 @@ SAMPLE_COURSES = [
 def create_app():
     app = Flask(__name__, template_folder='templates')
     
-    # Set Flask secret key before session setup
-    app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key-please-change-me')
-    if not os.environ.get('FLASK_SECRET_KEY'):
-        logger.warning("FLASK_SECRET_KEY not set. Using fallback for development. Set it in production.")
+    # Validate and set Flask secret key
+    secret_key = os.environ.get('FLASK_SECRET_KEY')
+    if not secret_key:
+        logger.error("FLASK_SECRET_KEY not set in environment variables")
+        raise RuntimeError("FLASK_SECRET_KEY is required")
+    app.config['SECRET_KEY'] = secret_key
+    logger.info("FLASK_SECRET_KEY configured successfully")
     
     # Configure logging
     logger.info("Starting app creation")
     setup_logging(app)
-    init_email_config(app, logger)  # Validate email config at startup
-    setup_session(app)
-    app.config['BASE_URL'] = os.environ.get('BASE_URL', 'http://localhost:5000')
-    csrf.init_app(app)
-
+    
     # Configure MongoDB
     app.config['MONGO_URI'] = os.environ.get('MONGODB_URI')
     if not app.config['MONGO_URI']:
         logger.error("MONGODB_URI environment variable not set")
-        raise RuntimeError("MONGODB_URI environment variable is required")
+        raise RuntimeError("MONGODB_URI is required")
     
-    # Log obfuscated MongoDB URI for debugging
+    # Log obfuscated MongoDB URI
     uri = app.config['MONGO_URI']
     obfuscated_uri = f"{uri[:10]}...{uri[-10:]}" if len(uri) > 20 else "too_short"
     logger.info(f"MongoDB URI configured: {obfuscated_uri}")
-
+    
     # Initialize MongoDB
     try:
-        mongo.init_app(app, tlsCAFile=certifi.where(), connectTimeoutMS=30000, serverSelectionTimeoutMS=30000)
+        mongo.init_app(app, tlsCAFile=certifi.where(), connectTimeoutMS=30000, serverSelectionTimeoutMS=30000, maxPoolSize=50)
         logger.info("MongoDB configured with Flask-PyMongo and certifi")
         db_name = app.config['MONGO_URI'].split('/')[-1].split('?')[0]
         logger.info(f"Attempting to connect to database: {db_name}")
-        if not check_mongodb_connection(mongo):
+        if not check_mongodb_connection(mongo, app):
             logger.error(f"MongoDB initial connection failed for database: {db_name}")
-            raise RuntimeError(f"MongoDB initial connection failed for database: {db_name}")
+            raise RuntimeError(f"MongoDB initial connection failed")
         logger.info(f"MongoDB connection established successfully to database: {db_name}")
     except (ConnectionFailure, ConfigurationError) as e:
         logger.error(f"Failed to connect to MongoDB: {str(e)}", exc_info=True)
@@ -261,8 +252,14 @@ def create_app():
     except Exception as e:
         logger.error(f"Unexpected error during MongoDB initialization: {str(e)}", exc_info=True)
         raise RuntimeError(f"MongoDB initialization failed: {str(e)}")
-
-    # Initialize database and admin user within a single app context
+    
+    # Initialize email and session
+    init_email_config(app, logger)
+    setup_session(app, mongo)
+    app.config['BASE_URL'] = os.environ.get('BASE_URL', 'http://localhost:5000')
+    csrf.init_app(app)
+    
+    # Initialize database and admin user
     with app.app_context():
         initialize_database(app)
         logger.info("MongoDB collections initialized")
@@ -289,29 +286,27 @@ def create_app():
         else:
             logger.warning("ADMIN_EMAIL or ADMIN_PASSWORD not set in environment variables.")
 
-    # Initialize scheduler after database initialization
+    # Initialize scheduler
     try:
         init_scheduler(app, mongo)
         logger.info("Scheduler initialized successfully")
     except Exception as e:
         logger.error(f"Failed to initialize scheduler: {str(e)}", exc_info=True)
-        # Continue without scheduler to avoid blocking app startup
 
-    # Register teardown_appcontext hook to shutdown scheduler safely
+    # Register teardown_appcontext hook
     @app.teardown_appcontext
     def shutdown_scheduler(exception=None):
         scheduler = app.config.get('SCHEDULER')
         if scheduler and scheduler.running:
             try:
-                scheduler.shutdown(wait=False)  # Use wait=False to avoid blocking
+                scheduler.shutdown(wait=False)
                 logger.info("Scheduler shut down successfully")
             except Exception as e:
                 logger.error(f"Error shutting down scheduler: {str(e)}", exc_info=True)
-        # Explicitly avoid closing MongoClient here
-        if check_mongodb_connection(mongo):
+        if check_mongodb_connection(mongo, app):
             logger.info("MongoClient remains open during teardown")
 
-    # Register blueprints (after MongoDB initialization)
+    # Register blueprints
     from blueprints.financial_health import financial_health_bp
     from blueprints.budget import budget_bp
     from blueprints.quiz import quiz_bp
@@ -336,12 +331,12 @@ def create_app():
         translation = trans(key, lang=lang, **kwargs)
         if translation == key:
             logger.warning(f"Missing translation for key='{key}' in lang='{lang}'")
-            return key  # Fallback to key to avoid blank text
+            return key
         return translation
 
     app.jinja_env.filters['trans'] = lambda key, **kwargs: translate(
         key,
-        lang=kwargs.get('lang', session.get('lang', 'en')),
+        lang=kwargs.get('lang', flask_session.get('lang', 'en')),
         logger=g.get('logger', logger),
         **{k: v for k, v in kwargs.items() if k != 'lang'}
     )
@@ -384,12 +379,12 @@ def create_app():
     def setup_session_and_language():
         try:
             logger.info(f"Starting before_request for path: {request.path}")
-            if 'sid' not in session:
-                session['sid'] = str(uuid.uuid4())
-                logger.info(f"New session ID generated: {session['sid']}")
-            if 'lang' not in session:
-                session['lang'] = request.accept_languages.best_match(['en', 'ha'], 'en')
-                logger.info(f"Set default language to {session['lang']}")
+            if 'sid' not in flask_session:
+                flask_session['sid'] = str(uuid.uuid4())
+                logger.info(f"New session ID generated: {flask_session['sid']}")
+            if 'lang' not in flask_session:
+                flask_session['lang'] = request.accept_languages.best_match(['en', 'ha'], 'en')
+                logger.info(f"Set default language to {flask_session['lang']}")
             g.logger = logger
             g.logger.info(f"Request processed for path: {request.path}")
         except Exception as e:
@@ -398,7 +393,7 @@ def create_app():
 
     @app.context_processor
     def inject_translations():
-        lang = session.get('lang', 'en')
+        lang = flask_session.get('lang', 'en')
         def context_trans(key, **kwargs):
             used_lang = kwargs.pop('lang', lang)
             return translate(key, lang=used_lang, logger=g.get('logger', logger) if has_request_context() else logger, **kwargs)
@@ -409,7 +404,7 @@ def create_app():
             'TWITTER_URL': os.environ.get('TWITTER_URL', '#'),
             'FACEBOOK_URL': os.environ.get('FACEBOOK_URL', '#'),
             'FEEDBACK_FORM_URL': os.environ.get('FEEDBACK_FORM_URL', '#'),
-            'WAIT_URL': os.environ.get('WAIT_URL', '#'),
+            'WAITLIST_FORM_URL': os.environ.get('WAITLIST_FORM_URL', '#'),
             'CONSULTANCY_FORM_URL': os.environ.get('CONSULTANCY_FORM_URL', '#'),
             'current_lang': lang,
             'current_user': current_user if has_request_context() else None,
@@ -419,15 +414,15 @@ def create_app():
     def ensure_session_id(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
-            if 'sid' not in session:
-                session['sid'] = str(uuid4())
-                logger.info(f"New session ID generated: {session['sid']}")
+            if 'sid' not in flask_session:
+                flask_session['sid'] = str(uuid4())
+                logger.info(f"New session ID generated: {flask_session['sid']}")
             return f(*args, **kwargs)
         return decorated_function
 
     @app.route('/')
     def index():
-        lang = session.get('lang', 'en')
+        lang = flask_session.get('lang', 'en')
         logger.info("Serving index page")
         try:
             courses = app.config.get('COURSES', SAMPLE_COURSES)
@@ -448,7 +443,7 @@ def create_app():
     def set_language(lang):
         valid_langs = ['en', 'ha']
         new_lang = lang if lang in valid_langs else 'en'
-        session['lang'] = new_lang
+        flask_session['lang'] = new_lang
         logger.info(f"Language set to {new_lang}")
         flash(translate('learning_hub_success_language_updated', default='Language updated successfully', lang=new_lang) if new_lang in valid_langs else translate('Invalid language', default='Invalid language', lang=new_lang), 'success' if new_lang in valid_langs else 'danger')
         return redirect(request.referrer or url_for('index'))
@@ -458,13 +453,13 @@ def create_app():
         if request.method != 'POST':
             logger.warning(f"Invalid method {request.method} for consent acknowledgement")
             return '', 400
-        session['consent_acknowledged'] = {
+        flask_session['consent_acknowledged'] = {
             'status': True,
             'timestamp': datetime.utcnow().isoformat(),
             'ip': request.remote_addr,
             'user_agent': request.headers.get('User-Agent')
         }
-        logger.info(f"Consent acknowledged for session {session['sid']} from IP {request.remote_addr}")
+        logger.info(f"Consent acknowledged for session {flask_session['sid']} from IP {request.remote_addr}")
         response = make_response('')
         response.headers['Content-Type'] = None
         response.headers['Cache-Control'] = 'no-store'
@@ -474,12 +469,12 @@ def create_app():
     @app.route('/general_dashboard')
     @ensure_session_id
     def general_dashboard():
-        lang = session.get('lang', 'en')
+        lang = flask_session.get('lang', 'en')
         logger.info("Serving general_dashboard")
         data = {}
         try:
             from models import get_financial_health, get_budgets, get_bills, get_net_worth, get_emergency_funds, get_learning_progress, get_quiz_results, to_dict_financial_health, to_dict_budget, to_dict_bill, to_dict_net_worth, to_dict_emergency_fund, to_dict_learning_progress, to_dict_quiz_result
-            filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
+            filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': flask_session['sid']}
 
             # Financial Health
             fh_records = get_financial_health(mongo, filter_kwargs)
@@ -517,7 +512,7 @@ def create_app():
             quiz_records = [to_dict_quiz_result(qr) for qr in quiz_records]
             data['quiz'] = quiz_records[0] if quiz_records else {'personality': None, 'score': None}
 
-            logger.info(f"Retrieved data for session {session['sid']}")
+            logger.info(f"Retrieved data for session {flask_session['sid']}")
             return render_template('general_dashboard.html', data=data, t=translate, lang=lang)
         except Exception as e:
             logger.error(f"Error in general_dashboard: {str(e)}", exc_info=True)
@@ -527,7 +522,7 @@ def create_app():
                 'budget': {'surplus_deficit': None, 'savings_goal': None},
                 'bills': {'bills': [], 'total_amount': 0, 'unpaid_amount': 0},
                 'net_worth': {'net_worth': None, 'total_assets': None},
-                'emergency_fund': {'target_amount': None, 'savings_gap': None},
+                'emergency_fund': { 'target_amount': None, 'savings_gap': None},
                 'learning_progress': {},
                 'quiz': {'personality': None, 'score': None}
             }
@@ -535,12 +530,12 @@ def create_app():
 
     @app.route('/logout')
     def logout():
-        lang = session.get('lang', 'en')
+        lang = flask_session.get('lang', 'en')
         logger.info("Logging out user")
         try:
-            session_lang = session.get('lang', 'en')
-            session.clear()
-            session['lang'] = session_lang
+            session_lang = flask_session.get('lang', 'en')
+            flask_session.clear()
+            flask_session['lang'] = session_lang
             flash(translate('learning_hub_success_logout', default='Successfully logged out', lang=lang), 'success')
             return redirect(url_for('index'))
         except Exception as e:
@@ -550,7 +545,7 @@ def create_app():
 
     @app.route('/about')
     def about():
-        lang = session.get('lang', 'en')
+        lang = flask_session.get('lang', 'en')
         logger.info("Serving about page")
         return render_template('about.html', t=translate, lang=lang)
 
@@ -569,19 +564,19 @@ def create_app():
 
     @app.errorhandler(500)
     def handle_internal_error(error):
-        lang = session.get('lang', 'en') if 'lang' in session else 'en'
+        lang = flask_session.get('lang', 'en') if 'lang' in flask_session else 'en'
         logger.error(f"Server error: {str(error)}", exc_info=True)
         return jsonify({'error': 'Internal server error', 'details': str(error)}), 500
 
     @app.errorhandler(CSRFError)
     def handle_csrf_error(error):
-        lang = session.get('lang', 'en') if 'lang' in session else 'en'
+        lang = flask_session.get('lang', 'en') if 'lang' in flask_session else 'en'
         logger.error(f"CSRF error: {str(error)}")
         return jsonify({'error': 'CSRF token invalid'}), 400
 
     @app.errorhandler(404)
     def page_not_found(e):
-        lang = session.get('lang', 'en') if 'lang' in session else 'en'
+        lang = flask_session.get('lang', 'en') if 'lang' in flask_session else 'en'
         logger.error(f"404 error: {str(e)}")
         return jsonify({'error': '404 not found'}), 404
 
@@ -592,7 +587,7 @@ def create_app():
     @app.route('/feedback', methods=['GET', 'POST'])
     @ensure_session_id
     def feedback():
-        lang = session.get('lang', 'en')
+        lang = flask_session.get('lang', 'en')
         logger.info("Handling feedback")
         tool_options = [
             'enviromental_health', 'budget', 'bill', 'net_worth',
@@ -616,12 +611,12 @@ def create_app():
                 return render_template('index.html', t=translate, lang=lang, feedback_options=tool_options)
             feedback_entry = create_feedback(mongo, {
                 'user_id': current_user.id if current_user.is_authenticated else None,
-                'session_id': session['sid'],
+                'session_id': flask_session['sid'],
                 'tool_name': tool_name,
                 'rating': int(rating),
                 'comment': comment.strip() or None
             })
-            logger.info(f"Feedback submitted: tool={tool_name}, rating={rating}, session={session['sid']}")
+            logger.info(f"Feedback submitted: tool={tool_name}, rating={rating}, session={flask_session['sid']}")
             flash(translate('success_feedback_submitted', default='Thank you for your feedback!', comment='success'))
             return redirect(url_for('index'))
         except Exception as e:
