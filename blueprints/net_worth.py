@@ -8,6 +8,7 @@ from mailersend_email import send_email, EMAIL_CONFIG
 from datetime import datetime
 import uuid
 import json
+from models import log_tool_usage  # Import log_tool_usage
 from extensions import mongo
 
 net_worth_bp = Blueprint(
