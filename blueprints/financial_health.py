@@ -9,6 +9,8 @@ import json
 from pymongo import MongoClient
 from mailersend_email import send_email, EMAIL_CONFIG
 from translations import trans
+from extensions import mongo  # Import mongo from extensions
+
 
 # Blueprint setup
 financial_health_bp = Blueprint(
