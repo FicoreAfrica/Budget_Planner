@@ -12,6 +12,7 @@ import os
 from translations import trans
 from extensions import mongo
 from werkzeug.utils import secure_filename
+from models import log_tool_usage  # Import log_tool_usage
 import pymongo
 import logging
 
