@@ -89,16 +89,22 @@ def setup_session(app):
 
 def initialize_database(app, mongo):
     """Initialize MongoDB indexes and courses data."""
-    try:
-        # Test MongoDB connection
-        mongo.db.command('ping')
-        logger.info("MongoDB connection verified with ping")
-    except InvalidOperation as e:
-        logger.error(f"MongoDB client is closed: {str(e)}", exc_info=True)
-        return  # Allow app to continue without crashing
-    except Exception as e:
-        logger.error(f"Failed to initialize database: {str(e)}", exc_info=True)
-        raise
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            # Test MongoDB connection with retry
+            mongo.db.command('ping')
+            logger.info("MongoDB connection verified with ping")
+            break
+        except InvalidOperation as e:
+            logger.warning(f"Attempt {attempt + 1}/{max_retries} - MongoDB client is closed: {str(e)}", exc_info=True)
+            if attempt == max_retries - 1:
+                logger.error(f"Max retries reached: MongoDB client remains closed: {str(e)}", exc_info=True)
+                return
+            continue
+        except Exception as e:
+            logger.error(f"Failed to initialize database (attempt {attempt + 1}/{max_retries}): {str(e)}", exc_info=True)
+            raise
 
     try:
         # Create MongoDB indexes
@@ -228,22 +234,6 @@ def create_app():
         logger.error(f"Unexpected error during MongoDB initialization: {str(e)}", exc_info=True)
         raise RuntimeError(f"MongoDB initialization failed: {str(e)}")
 
-    # Initialize Flask-Login
-    login_manager.init_app(app)
-    login_manager.login_view = 'auth.signin'
-
-    @login_manager.user_loader
-    def load_user(user_id):
-        try:
-            from models import get_user
-            user = get_user(mongo, user_id)
-            if user:
-                return user
-            return None
-        except Exception as e:
-            logger.error(f"Error loading user {user_id}: {str(e)}")
-            return None
-
     # Initialize scheduler
     try:
         init_scheduler(app, mongo)
@@ -252,7 +242,7 @@ def create_app():
         logger.error(f"Failed to initialize scheduler: {str(e)}", exc_info=True)
         # Continue without scheduler to avoid blocking app startup
 
-    # Initialize database within app context
+    # Initialize database and admin user within a single app context
     with app.app_context():
         initialize_database(app, mongo)
         logger.info("MongoDB collections initialized")
@@ -604,9 +594,6 @@ def create_app():
 
     logger.info("App creation completed")
     return app, mongo
-
-# Create the Flask app instance for Gunicorn
-app, mongo = create_app()
 
 if __name__ == "__main__":
     try:
