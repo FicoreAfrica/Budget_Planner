@@ -271,7 +271,7 @@ def initialize_database(app):
             logger.info("Initialized courses in MongoDB")
         app.config['COURSES'] = list(courses_collection.find({}, {'_id': 0}))
     except Exception as e:
-        logger.error(f"Failed to initialize database indexes/courses: {str(e)}", exc_info=True)
+        logger.error(f"Failed to initialize database indexes/courses.upload_artifact {str(e)}", exc_info=True)
         raise
 
 # Constants
@@ -379,6 +379,41 @@ def create_app():
             logger.error(f"Error loading user {user_id}: {str(e)}", exc_info=True)
             return None
     
+    # Template filters
+    @app.template_filter('safe_nav')
+    def safe_nav(value):
+        try:
+            return value
+        except Exception as e:
+            logger.error(f"Navigation rendering error: {str(e)}", exc_info=True)
+            return ''
+
+    @app.template_filter('format_number')
+    def format_number(value):
+        try:
+            if isinstance(value, (int, float)):
+                return f"{float(value):,.2f}"
+            return str(value)
+        except (ValueError, TypeError) as e:
+            logger.warning(f"Error converting number {value}: {str(e)}")
+            return str(value)
+
+    @app.template_filter('format_datetime')
+    def format_datetime(value):
+        if isinstance(value, datetime):
+            return value.strftime('%B %d, %Y, %I:%M %p')
+        return str(value)
+
+    @app.template_filter('format_currency')
+    def format_currency(value):
+        try:
+            value = float(value)
+            if value.is_integer():
+                return f"₦{int(value):,}"
+            return f"₦{value:,.2f}"
+        except (TypeError, ValueError):
+            return str(value)
+    
     init_email_config(app, logger)
     setup_session(app)
     app.config['BASE_URL'] = os.environ.get('BASE_URL', 'http://localhost:5000')
@@ -471,41 +506,6 @@ def create_app():
 
     logger.info("App creation completed")
     return app
-
-# Template filters
-@app.template_filter('safe_nav')
-def safe_nav(value):
-    try:
-        return value
-    except Exception as e:
-        logger.error(f"Navigation rendering error: {str(e)}", exc_info=True)
-        return ''
-
-@app.template_filter('format_number')
-def format_number(value):
-    try:
-        if isinstance(value, (int, float)):
-            return f"{float(value):,.2f}"
-        return str(value)
-    except (ValueError, TypeError) as e:
-        logger.warning(f"Error converting number {value}: {str(e)}")
-        return str(value)
-
-@app.template_filter('format_datetime')
-def format_datetime(value):
-    if isinstance(value, datetime):
-        return value.strftime('%B %d, %Y, %I:%M %p')
-    return str(value)
-
-@app.template_filter('format_currency')
-def format_currency(value):
-    try:
-        value = float(value)
-        if value.is_integer():
-            return f"₦{int(value):,}"
-        return f"₦{value:,.2f}"
-    except (TypeError, ValueError):
-        return str(value)
 
 @app.before_request
 def setup_session_and_language():
