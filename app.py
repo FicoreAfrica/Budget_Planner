@@ -78,12 +78,14 @@ def setup_logging(app):
 def setup_session(app, mongo):
     try:
         app.config['SESSION_TYPE'] = 'mongodb'
-        app.config['SESSION_MONGODB'] = mongo
+        app.config['SESSION_MONGODB'] = mongo.cx  # Use raw pymongo.MongoClient
+        app.config['SESSION_MONGODB_DB'] = 'ficodb'  # Database name
+        app.config['SESSION_MONGODB_COLLECT'] = 'sessions'  # Collection for sessions
         app.config['SESSION_PERMANENT'] = True
         app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
         app.config['SESSION_USE_SIGNER'] = True
         flask_session.init_app(app)
-        logger.info(f"Session configured: type={app.config['SESSION_TYPE']}, lifetime={app.config['PERMANENT_SESSION_LIFETIME']}")
+        logger.info(f"Session configured: type={app.config['SESSION_TYPE']}, db={app.config['SESSION_MONGODB_DB']}, collection={app.config['SESSION_MONGODB_COLLECT']}")
     except Exception as e:
         logger.error(f"Failed to configure session: {str(e)}", exc_info=True)
         raise
@@ -522,7 +524,7 @@ def create_app():
                 'budget': {'surplus_deficit': None, 'savings_goal': None},
                 'bills': {'bills': [], 'total_amount': 0, 'unpaid_amount': 0},
                 'net_worth': {'net_worth': None, 'total_assets': None},
-                'emergency_fund': { 'target_amount': None, 'savings_gap': None},
+                'emergency_fund': {'target_amount': None, 'savings_gap': None},
                 'learning_progress': {},
                 'quiz': {'personality': None, 'score': None}
             }
@@ -602,8 +604,8 @@ def create_app():
             rating = request.form.get('rating')
             comment = request.form.get('comment', '')
             if not tool_name or tool_name not in tool_options:
-                flash(translate('error_feedback_invalid_tool', default='Please select a valid tool', comment='error'))
                 logger.error(f"Invalid feedback: {tool_name}")
+                flash(translate('error_feedback_invalid_tool', default='Please select a valid tool', comment='error'))
                 return render_template('index.html', t=translate, lang=lang, feedback_options=tool_options)
             if not rating or not rating.isdigit() or int(rating) <= 0 or int(rating) > 5:
                 logger.error(f"Invalid rating: {rating}")
@@ -632,7 +634,7 @@ if __name__ == "__main__":
         app = create_app()
         app.run(debug=True)
     except Exception as e:
-        logger.error(f"Error running app: {str(e)}")
+        logger.error("App failed to start: {str(e)}")
         raise
 
 application = create_app()
