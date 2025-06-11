@@ -4,10 +4,10 @@ from flask_session import Session
 from flask_wtf.csrf import CSRFProtect
 import certifi
 
-MongoDB setup
+# MongoDB setup
 mongo = PyMongo()
 
-Other extensions
+# Other extensions
 login_manager = LoginManager()
 session = Session()
 csrf = CSRFProtect()
