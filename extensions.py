@@ -9,5 +9,5 @@ mongo = PyMongo()
 
 # Other extensions
 login_manager = LoginManager()
-session = Session()
+flask_session = Session()
 csrf = CSRFProtect()
