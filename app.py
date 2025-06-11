@@ -3,7 +3,7 @@ import sys
 import logging
 import uuid
 from datetime import datetime, timedelta
-from flask import Flask, jsonify, render_template, request, session, redirect, url_for, flash, make_response
+from flask import Flask, jsonify, render_template, request, session, redirect, url_for, flash, make_response, has_request_context
 from flask_wtf.csrf import CSRFError
 from flask_login import LoginManager, current_user
 from flask_pymongo import PyMongo
