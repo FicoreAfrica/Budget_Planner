@@ -87,29 +87,65 @@ def setup_session(app):
         logger.error(f"Failed to configure session: {str(e)}", exc_info=True)
         raise
 
+def check_mongodb_connection(mongo):
+    """
+    Robust MongoDB connection checker for Flask-PyMongo.
+    
+    Args:
+        mongo: Flask-PyMongo instance
+        
+    Returns:
+        bool: True if connected, False otherwise
+    """
+    try:
+        # Check if mongo object exists
+        if not mongo:
+            logger.error("MongoDB instance is None")
+            return False
+            
+        # Check if client attribute exists
+        if not hasattr(mongo, 'cx'):
+            logger.error("MongoDB client attribute 'cx' not found")
+            return False
+            
+        # Check if client is not None
+        if mongo.cx is None:
+            logger.error("MongoDB client is None")
+            return False
+            
+        # Test actual connection with ping
+        mongo.cx.admin.command('ping')
+        logger.info("MongoDB connection verified with ping")
+        return True
+        
+    except (AttributeError, NotImplementedError, Exception) as e:
+        logger.error(f"MongoDB connection check failed: {str(e)}", exc_info=True)
+        return False
+
 def initialize_database(app):
     """Initialize MongoDB indexes and courses data with robust client handling."""
     max_retries = 3
     for attempt in range(max_retries):
         try:
-            # Check if MongoClient is initialized and not closed
-            if not hasattr(mongo, 'cx') or mongo.cx is None or mongo.cx.is_closed:
-                logger.warning(f"Attempt {attempt + 1}/{max_retries} - MongoClient is None or closed, reinitializing...")
+            # Check MongoDB connection
+            if not check_mongodb_connection(mongo):
+                logger.warning(f"Attempt {attempt + 1}/{max_retries} - MongoDB connection not ready, reinitializing...")
                 mongo.init_app(app, tlsCAFile=certifi.where(), connectTimeoutMS=30000, serverSelectionTimeoutMS=30000)
+                # Verify reinitialization
+                if not check_mongodb_connection(mongo):
+                    logger.error(f"Attempt {attempt + 1}/{max_retries} - MongoDB reinitialization failed")
+                    if attempt == max_retries - 1:
+                        raise RuntimeError("Max retries reached: MongoDB connection not established")
+                    continue
             
-            # Test MongoDB connection with ping
-            mongo.db.command('ping')
-            logger.info("MongoDB connection verified with ping")
+            # Connection is verified, proceed with initialization
+            logger.info(f"Attempt {attempt + 1}/{max_retries} - MongoDB connection established")
             break
-        except InvalidOperation as e:
-            logger.warning(f"Attempt {attempt + 1}/{max_retries} - MongoDB client error: {str(e)}", exc_info=True)
-            if attempt == max_retries - 1:
-                logger.error(f"Max retries reached: MongoDB client remains closed: {str(e)}", exc_info=True)
-                raise
-            continue
         except Exception as e:
             logger.error(f"Failed to initialize database (attempt {attempt + 1}/{max_retries}): {str(e)}", exc_info=True)
-            raise
+            if attempt == max_retries - 1:
+                raise
+            continue
 
     try:
         # Create MongoDB indexes
@@ -215,10 +251,9 @@ def create_app():
         logger.info("MongoDB configured with Flask-PyMongo and certifi")
         db_name = app.config['MONGO_URI'].split('/')[-1].split('?')[0]
         logger.info(f"Attempting to connect to database: {db_name}")
-        mongo.cx.server_info()  # Verify cluster connection
-        if mongo.db is None:
-            logger.error(f"MongoDB database '{db_name}' not initialized after connection attempt")
-            raise RuntimeError(f"MongoDB database '{db_name}' not initialized")
+        if not check_mongodb_connection(mongo):
+            logger.error(f"MongoDB initial connection failed for database: {db_name}")
+            raise RuntimeError(f"MongoDB initial connection failed for database: {db_name}")
         logger.info(f"MongoDB connection established successfully to database: {db_name}")
     except (ConnectionFailure, ConfigurationError) as e:
         logger.error(f"Failed to connect to MongoDB: {str(e)}", exc_info=True)
@@ -273,7 +308,7 @@ def create_app():
             except Exception as e:
                 logger.error(f"Error shutting down scheduler: {str(e)}", exc_info=True)
         # Explicitly avoid closing MongoClient here
-        if hasattr(mongo, 'cx') and mongo.cx and not mongo.cx.is_closed:
+        if check_mongodb_connection(mongo):
             logger.info("MongoClient remains open during teardown")
 
     # Register blueprints (after MongoDB initialization)
@@ -307,7 +342,7 @@ def create_app():
     app.jinja_env.filters['trans'] = lambda key, **kwargs: translate(
         key,
         lang=kwargs.get('lang', session.get('lang', 'en')),
-        logger=g.get('logger', logger) if has_request_context() else logger,
+        logger=g.get('logger', logger),
         **{k: v for k, v in kwargs.items() if k != 'lang'}
     )
 
@@ -326,14 +361,14 @@ def create_app():
                 return f"{float(value):,.2f}"
             return str(value)
         except (ValueError, TypeError) as e:
-            logger.warning(f"Error formatting number {value}: {str(e)}")
+            logger.warning(f"Error converting number {value}: {str(e)}")
             return str(value)
 
     @app.template_filter('format_datetime')
     def format_datetime(value):
         if isinstance(value, datetime):
             return value.strftime('%B %d, %Y, %I:%M %p')
-        return value
+        return str(value)
 
     @app.template_filter('format_currency')
     def format_currency(value):
@@ -343,7 +378,7 @@ def create_app():
                 return f"₦{int(value):,}"
             return f"₦{value:,.2f}"
         except (TypeError, ValueError):
-            return value
+            return str(value)
 
     @app.before_request
     def setup_session_and_language():
@@ -557,7 +592,7 @@ def create_app():
     @app.route('/feedback', methods=['GET', 'POST'])
     @ensure_session_id
     def feedback():
-        lang = session.get('lang', '')
+        lang = session.get('lang', 'en')
         logger.info("Handling feedback")
         tool_options = [
             'enviromental_health', 'budget', 'bill', 'net_worth',
