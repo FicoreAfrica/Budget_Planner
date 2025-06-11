@@ -12,7 +12,6 @@ from extensions import mongo
 from bson import ObjectId
 from models import log_tool_usage
 
-
 budget_bp = Blueprint(
     'budget',
     __name__,
@@ -163,6 +162,7 @@ def step1():
             current_app.logger.info(f"POST request received for step1, session {session['sid']}: Raw form data: {dict(request.form)}")
             if form.validate_on_submit():
                 log_tool_usage(
+                    mongo,
                     tool_name='budget',
                     user_id=current_user.id if current_user.is_authenticated else None,
                     session_id=session['sid'],
@@ -175,6 +175,7 @@ def step1():
                 current_app.logger.warning(f"Form validation failed for step1, session {session['sid']}: {form.errors}")
                 flash(trans("budget_form_validation_error") or "Please correct the errors in the form", "danger")
         log_tool_usage(
+            mongo,
             tool_name='budget',
             user_id=current_user.id if current_user.is_authenticated else None,
             session_id=session['sid'],
@@ -204,6 +205,7 @@ def step2():
             current_app.logger.info(f"POST request received for step2, session {session['sid']}: Raw form data: {dict(request.form)}")
             if form.validate_on_submit():
                 log_tool_usage(
+                    mongo,
                     tool_name='budget',
                     user_id=current_user.id if current_user.is_authenticated else None,
                     session_id=session['sid'],
@@ -216,6 +218,7 @@ def step2():
                 current_app.logger.warning(f"Form validation failed for step2, session {session['sid']}: {form.errors}")
                 flash(trans("budget_form_validation_error") or "Please correct the errors in the form", "danger")
         log_tool_usage(
+            mongo,
             tool_name='budget',
             user_id=current_user.id if current_user.is_authenticated else None,
             session_id=session['sid'],
@@ -245,6 +248,7 @@ def step3():
             current_app.logger.info(f"POST request received for step3, session {session['sid']}: Raw form data: {dict(request.form)}")
             if form.validate_on_submit():
                 log_tool_usage(
+                    mongo,
                     tool_name='budget',
                     user_id=current_user.id if current_user.is_authenticated else None,
                     session_id=session['sid'],
@@ -257,6 +261,7 @@ def step3():
                 current_app.logger.warning(f"Form validation failed for step3, session {session['sid']}: {form.errors}")
                 flash(trans("budget_form_validation_error") or "Please correct the errors in the form", "danger")
         log_tool_usage(
+            mongo,
             tool_name='budget',
             user_id=current_user.id if current_user.is_authenticated else None,
             session_id=session['sid'],
@@ -292,6 +297,7 @@ def step4():
             current_app.logger.info(f"POST request received for step4, session {session['sid']}: Raw form data: {dict(request.form)}")
             if form.validate_on_submit():
                 log_tool_usage(
+                    mongo,
                     tool_name='budget',
                     user_id=current_user.id if current_user.is_authenticated else None,
                     session_id=session['sid'],
@@ -394,6 +400,7 @@ def step4():
                 return render_template('budget_step4.html', form=form, trans=trans, lang=lang)
 
         log_tool_usage(
+            mongo,
             tool_name='budget',
             user_id=current_user.id if current_user.is_authenticated else None,
             session_id=session['sid'],
@@ -417,6 +424,7 @@ def dashboard():
     try:
         current_app.logger.info(f"Request started for path: /budget/dashboard [session: {session['sid']}]")
         log_tool_usage(
+            mongo,
             tool_name='budget',
             user_id=current_user.id if current_user.is_authenticated else None,
             session_id=session['sid'],
@@ -472,6 +480,7 @@ def dashboard():
             budget_id = request.form.get('budget_id')
             if action == 'delete':
                 log_tool_usage(
+                    mongo,
                     tool_name='budget',
                     user_id=current_user.id if current_user.is_authenticated else None,
                     session_id=session['sid'],
