@@ -87,6 +87,8 @@ def setup_session(app):
 
 def initialize_courses_data(app, mongo):
     try:
+        if mongo.db is None:
+            raise RuntimeError("MongoDB connection not initialized")
         courses_collection = mongo.db.courses
         if courses_collection.count_documents({}) == 0:
             for course in SAMPLE_COURSES:
@@ -132,25 +134,29 @@ def create_app():
     app = Flask(__name__, template_folder='templates')
     
     # Set Flask secret key
-    app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY', 'dev-secret-key-please-change-me')
-    if not os.getenv('FLASK_SECRET_KEY'):
+    app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key-please-change-me')
+    if not os.environ.get('FLASK_SECRET_KEY'):
         logger.warning("FLASK_SECRET_KEY not set. Using fallback for development. Set it in production.")
     
     # Configure logging
     logger.info("Starting app creation")
     setup_logging(app)
     setup_session(app)
-    app.config['BASE_URL'] = os.getenv('BASE_URL', 'http://localhost:5000')
+    app.config['BASE_URL'] = os.environ.get('BASE_URL', 'http://localhost:5000')
     csrf.init_app(app)
 
     # Configure MongoDB
-    mongo_uri = os.getenv('MONGODB_URI')
-    if not mongo_uri:
-        logger.error("MONGODB_URI environment variable not set. Cannot connect to MongoDB.")
-        raise ValueError("MONGODB_URI environment variable is required.")
-    app.config['MONGO_URI'] = mongo_uri
+    app.config['MONGO_URI'] = os.environ.get('MONGODB_URI')
+    if not app.config['MONGO_URI']:
+        logger.error("MONGODB_URI environment variable not set")
+        raise RuntimeError("MONGODB_URI environment variable is required")
     mongo = PyMongo(app)
     logger.info("MongoDB configured with Flask-PyMongo")
+
+    # Verify MongoDB connection
+    if mongo.db is None:
+        logger.error("MongoDB connection failed to initialize")
+        raise RuntimeError("MongoDB connection not initialized")
 
     # Create MongoDB indexes
     try:
@@ -213,8 +219,8 @@ def create_app():
         logger.info("MongoDB collections initialized")
 
         # Check and create admin user
-        admin_email = os.getenv('ADMIN_EMAIL')
-        admin_password = os.getenv('ADMIN_PASSWORD')
+        admin_email = os.environ.get('ADMIN_EMAIL')
+        admin_password = os.environ.get('ADMIN_PASSWORD')
         if admin_email and admin_password:
             admin_user = get_user_by_email(mongo, admin_email)
             if not admin_user:
@@ -249,8 +255,8 @@ def create_app():
     app.register_blueprint(quiz_bp, template_folder='templates/QUIZ')
     app.register_blueprint(bill_bp, template_folder='templates/BILL')
     app.register_blueprint(net_worth_bp, template_folder='templates/NETWORTH')
-    app.register_blueprint(emergency_fund_bp, template_folder='templates/EMERGENCYFUND')
-    app.register_blueprint(learning_hub_bp, template_folder='templates/LEARNINGHUB')
+    app.register_blueprint(emergency_fund_bp, template_folder='templates/EMERGENCY_FUND')
+    app.register_blueprint(learning_hub_bp, template_folder='templates/LEARNING_HUB')
     app.register_blueprint(auth_bp, template_folder='templates/auth')
     app.register_blueprint(admin_bp, template_folder='templates/admin')
 
@@ -326,12 +332,12 @@ def create_app():
         return {
             'trans': context_trans,
             'current_year': datetime.now().year,
-            'LINKEDIN_URL': os.getenv('LINKEDIN_URL', '#'),
-            'TWITTER_URL': os.getenv('TWITTER_URL', '#'),
-            'FACEBOOK_URL': os.getenv('FACEBOOK_URL', '#'),
-            'FEEDBACK_FORM_URL': os.getenv('FEEDBACK_FORM_URL', '#'),
-            'WAITLIST_FORM_URL': os.getenv('WAITLIST_FORM_URL', '#'),
-            'CONSULTANCY_FORM_URL': os.getenv('CONSULTANCY_FORM_URL', '#'),
+            'LINKEDIN_URL': os.environ.get('LINKEDIN_URL', '#'),
+            'TWITTER_URL': os.environ.get('TWITTER_URL', '#'),
+            'FACEBOOK_URL': os.environ.get('FACEBOOK_URL', '#'),
+            'FEEDBACK_FORM_URL': os.environ.get('FEEDBACK_FORM_URL', '#'),
+            'WAITLIST_FORM_URL': os.environ.get('WAITLIST_FORM_URL', '#'),
+            'CONSULTANCY_FORM_URL': os.environ.get('CONSULTANCY_FORM_URL', '#'),
             'current_lang': lang,
             'current_user': current_user if has_request_context() else None,
             'csrf_token': generate_csrf
@@ -420,8 +426,8 @@ def create_app():
             # Bills
             bills = get_bills(mongo, filter_kwargs)
             bills = [to_dict_bill(b) for b in bills]
-            total_amount = sum(bill['amount'] for bill in bills) if bills else 0
-            unpaid_amount = sum(bill['amount'] for bill in bills if bill['status'].lower() != 'paid') if bills else 0
+            total_amount = sum(bill['amount'] for bill in bills if bill['amount'] is not None) if bills else 0
+            unpaid_amount = sum(bill['amount'] for bill in bills if bill['amount'] is not None and bill['status'].lower() != 'paid') if bills else 0
             data['bills'] = {'bills': bills, 'total_amount': total_amount, 'unpaid_amount': unpaid_amount}
 
             # Net Worth
@@ -552,7 +558,7 @@ def create_app():
             return redirect(url_for('index'))
         except Exception as e:
             logger.error(f"Error processing feedback: {str(e)}")
-            flash(translate('core_global_error', default='Error occurred while submitting feedback', lang=lang), 'error')
+            flash(translate('core_feedback_error', default='Error occurred while submitting feedback', lang=lang), 'error')
             return render_template('feedback.html', t=translate, lang=lang, tool_options=tool_options), 500
 
     logger.info("App creation completed")
