@@ -3,6 +3,7 @@ import sys
 import logging
 import uuid
 from datetime import datetime, timedelta
+import atexit
 from flask import Flask, jsonify, render_template, request, redirect, url_for, flash, make_response, has_request_context, g, send_from_directory, session
 from flask_wtf.csrf import CSRFProtect, generate_csrf, CSRFError
 from flask_login import LoginManager, current_user
@@ -114,7 +115,7 @@ def check_mongodb_connection(mongo_client, app):
                     connect=False,
                     tlsCAFile=certifi.where(),
                     maxPoolSize=50,
-                    socketTimeoutMS=60000,  # Increased to 60 seconds
+                    socketTimeoutMS=60000,
                     connectTimeoutMS=30000,
                     serverSelectionTimeoutMS=30000,
                     retryWrites=True
@@ -124,7 +125,9 @@ def check_mongodb_connection(mongo_client, app):
                 # Update app.config and Flask-PyMongo
                 app.config['MONGO_CLIENT'] = new_client
                 app.config['SESSION_MONGODB'] = new_client
-                mongo.init_app(app, connect=False, uri=app.config['MONGO_URI'])
+                mongo
+
+.init_app(app, connect=False, uri=app.config['MONGO_URI'])
                 return True
             except Exception as reinit_e:
                 logger.error(f"Failed to reinitialize MongoDB client: {str(reinit_e)}")
@@ -147,7 +150,7 @@ def setup_session(app):
                 connect=False,
                 tlsCAFile=certifi.where(),
                 maxPoolSize=50,
-                socketTimeoutMS=60000,  # Increased to 60 seconds
+                socketTimeoutMS=60000,
                 connectTimeoutMS=30000,
                 serverSelectionTimeoutMS=30000,
                 retryWrites=True
@@ -214,7 +217,7 @@ def initialize_database(app):
         if 'referral_code_1' not in existing_indexes:
             db.users.create_index('referral_code', unique=True)
         
-        existing_indexes = db.courses.index_information()
+       (existing_indexes = db.courses.index_information()
         if 'id_1' not in existing_indexes:
             db.courses.create_index('id', unique=True)
         
@@ -323,7 +326,7 @@ def create_app():
             connect=False,
             tlsCAFile=certifi.where(),
             maxPoolSize=50,
-            socketTimeoutMS=60000,  # Increased to 60 seconds
+            socketTimeoutMS=60000,
             connectTimeoutMS=30000,
             serverSelectionTimeoutMS=30000,
             retryWrites=True
@@ -378,24 +381,29 @@ def create_app():
             logger.warning("ADMIN_EMAIL or ADMIN_PASSWORD not set in environment variables.")
     
     try:
-        init_scheduler(app, mongo)
+        scheduler = init_scheduler(app, mongo)
+        app.config['SCHEDULER'] = scheduler
         logger.info("Scheduler initialized successfully")
+        
+        # Register scheduler shutdown on app exit
+        def shutdown_scheduler():
+            try:
+                if scheduler and scheduler.running:
+                    scheduler.shutdown(wait=False)
+                    logger.info("Scheduler shut down successfully on app exit")
+            except Exception as e:
+                logger.error(f"Error shutting down scheduler on app exit: {str(e)}", exc_info=True)
+        
+        atexit.register(shutdown_scheduler)
     except Exception as e:
         logger.error(f"Failed to initialize scheduler: {str(e)}", exc_info=True)
     
     @app.teardown_appcontext
     def teardown_appcontext(exception=None):
         """
-        Handle application context teardown without closing MongoDB connection.
+        Handle application context teardown without scheduler shutdown.
         """
-        scheduler = app.config.get('SCHEDULER')
-        if scheduler and scheduler.running:
-            try:
-                scheduler.shutdown(wait=False)
-                logger.info("Scheduler shut down successfully")
-            except Exception as e:
-                logger.error(f"Error shutting down scheduler: {str(e)}", exc_info=True)
-        logger.info("Teardown completed without closing MongoDB connection")
+        logger.info("Teardown completed without closing MongoDB connection or shutting down scheduler")
     
     # Register blueprints
     from blueprints.financial_health import financial_health_bp
@@ -520,7 +528,7 @@ def create_app():
                     logger.info(f"New session ID generated: {session['sid']}")
             except InvalidOperation as e:
                 logger.error(f"Session operation failed: {str(e)}")
-                # Fallback is handled globally in setup_session, so no need to repeat
+                # Fallback is handled globally in setup_session
             return f(*args, **kwargs)
         return decorated_function
 
