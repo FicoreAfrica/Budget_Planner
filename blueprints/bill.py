@@ -9,6 +9,8 @@ import uuid
 from translations import trans
 from pymongo import MongoClient
 from bson import ObjectId
+from extensions import mongo  # Import mongo from extensions
+
 
 bill_bp = Blueprint(
     'bill',
