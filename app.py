@@ -86,6 +86,13 @@ def setup_logging(app):
 
 def setup_session(app, mongo):
     try:
+        # Verify MongoClient is open
+        if not check_mongodb_connection(mongo, app):
+            logger.error("MongoDB client is not open, attempting to reinitialize")
+            mongo.init_app(app, connect=False, tlsCAFile=certifi.where(), maxPoolSize=100, socketTimeoutMS=30000, retryWrites=True)
+            if not check_mongodb_connection(mongo, app):
+                raise RuntimeError("MongoDB client could not be reinitialized")
+        
         app.config['SESSION_TYPE'] = 'mongodb'
         app.config['SESSION_MONGODB'] = mongo.cx
         app.config['SESSION_MONGODB_DB'] = 'ficodb'
@@ -101,7 +108,7 @@ def setup_session(app, mongo):
 
 def check_mongodb_connection(mongo, app):
     """
-    Check MongoDB connection and reinitialize only if necessary.
+    Check MongoDB connection without reinitializing unless necessary.
     
     Args:
         mongo: Flask-PyMongo instance
@@ -116,8 +123,8 @@ def check_mongodb_connection(mongo, app):
             return False
             
         if not hasattr(mongo, 'cx') or mongo.cx is None:
-            logger.warning("MongoDB client attribute 'cx' missing or None, initializing")
-            mongo.init_app(app, tlsCAFile=certifi.where(), connectTimeoutMS=30000, serverSelectionTimeoutMS=30000, maxPoolSize=50)
+            logger.warning("MongoDB client attribute 'cx' missing or None")
+            return False
             
         try:
             mongo.cx.admin.command('ping')
@@ -125,7 +132,15 @@ def check_mongodb_connection(mongo, app):
             return True
         except InvalidOperation as e:
             logger.error(f"MongoDB client is closed: {str(e)}")
-            return False
+            # Attempt to reinitialize the client
+            try:
+                mongo.init_app(app, connect=False, tlsCAFile=certifi.where(), maxPoolSize=100, socketTimeoutMS=30000, retryWrites=True)
+                mongo.cx.admin.command('ping')
+                logger.info("MongoDB client reinitialized successfully")
+                return True
+            except Exception as reinit_e:
+                logger.error(f"Failed to reinitialize MongoDB client: {str(reinit_e)}")
+                return False
     except (AttributeError, ConnectionFailure) as e:
         logger.error(f"MongoDB connection check failed: {str(e)}", exc_info=True)
         return False
@@ -143,6 +158,8 @@ def initialize_database(app):
                 if attempt == max_retries - 1:
                     logger.error("Max retries reached: MongoDB connection not established")
                     raise RuntimeError("MongoDB connection failed after max retries")
+                # Reinitialize only if necessary
+                mongo.init_app(app, connect=False, tlsCAFile=certifi.where(), maxPoolSize=100, socketTimeoutMS=30000, retryWrites=True)
         except Exception as e:
             logger.error(f"Failed to initialize database (attempt {attempt + 1}/{max_retries}): {e}", exc_info=True)
             if attempt == max_retries - 1:
@@ -273,7 +290,8 @@ def create_app():
     logger.info(f"MongoDB URI configured: {obfuscated_uri}")
     
     try:
-        mongo.init_app(app, tlsCAFile=certifi.where(), connectTimeoutMS=30000, serverSelectionTimeoutMS=30000, maxPoolSize=50)
+        # Initialize MongoDB with lazy connection and connection pooling
+        mongo.init_app(app, connect=False, tlsCAFile=certifi.where(), maxPoolSize=100, socketTimeoutMS=30000, retryWrites=True)
         logger.info("MongoDB configured with Flask-PyMongo and certifi")
         db_name = app.config['MONGO_URI'].split('/')[-1].split('?')[0]
         logger.info(f"Attempting to connect to database: {db_name}")
@@ -281,6 +299,8 @@ def create_app():
             logger.error(f"MongoDB initial connection failed for database: {db_name}")
             raise RuntimeError(f"MongoDB initial connection failed")
         logger.info(f"MongoDB connection established successfully to database: {db_name}")
+        # Log MongoClient state
+        logger.info(f"MongoClient state: connected={mongo.cx.is_mongos}, server_info={mongo.cx.server_info()}")
     except (ConnectionFailure, ConfigurationError) as e:
         logger.error(f"Failed to connect to MongoDB: {str(e)}", exc_info=True)
         raise RuntimeError(f"MongoDB connection failed: {str(e)}")
@@ -325,7 +345,11 @@ def create_app():
         logger.error(f"Failed to initialize scheduler: {str(e)}", exc_info=True)
 
     @app.teardown_appcontext
-    def shutdown_scheduler(exception=None):
+    def teardown_appcontext(exception=None):
+        """
+        Handle application context teardown without closing MongoDB connection.
+        Only shut down scheduler if necessary.
+        """
         scheduler = app.config.get('SCHEDULER')
         if scheduler and scheduler.running:
             try:
@@ -333,7 +357,7 @@ def create_app():
                 logger.info("Scheduler shut down successfully")
             except Exception as e:
                 logger.error(f"Error shutting down scheduler: {str(e)}", exc_info=True)
-        logger.info("Teardown completed without MongoDB connection check")
+        logger.info("Teardown completed without closing MongoDB connection")
 
     from blueprints.financial_health import financial_health_bp
     from blueprints.budget import budget_bp
@@ -405,6 +429,10 @@ def create_app():
 
     @app.before_request
     def setup_session_and_language():
+        # Skip session setup for static file requests
+        if request.path.startswith('/static/'):
+            logger.info(f"Skipping session setup for static file request: {request.path}")
+            return
         try:
             logger.info(f"Starting before_request for path: {request.path}")
             if 'sid' not in session:
@@ -441,21 +469,29 @@ def create_app():
             'CONSULTANCY_FORM_URL': os.environ.get('CONSULTANCY_FORM_URL', '#'),
             'current_lang': lang,
             'current_user': current_user if has_request_context() else None,
-            'csrf_token': generate_csrf  # Use the imported function directly
+            'csrf_token': generate_csrf
         }
 
     def ensure_session_id(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
-            if 'sid' not in session:
+            try:
+                if 'sid' not in session:
+                    session['sid'] = str(uuid4())
+                    logger.info(f"New session ID generated: {session['sid']}")
+            except InvalidOperation as e:
+                logger.error(f"Session operation failed due to closed MongoDB client: {str(e)}")
+                # Fallback to in-memory session
+                app.config['SESSION_TYPE'] = 'filesystem'
+                flask_session.init_app(app)
                 session['sid'] = str(uuid4())
-                logger.info(f"New session ID generated: {session['sid']}")
+                logger.info(f"Fallback to filesystem session, new session ID: {session['sid']}")
             return f(*args, **kwargs)
         return decorated_function
 
     @app.route('/')
     def index():
-        lang = session.get('lang', 'en')
+        lang = session.get('lang', 'en') if session is not None else 'en'
         logger.info("Serving index page")
         try:
             courses = app.config.get('COURSES', SAMPLE_COURSES)
@@ -476,8 +512,16 @@ def create_app():
     def set_language(lang):
         valid_langs = ['en', 'ha']
         new_lang = lang if lang in valid_langs else 'en'
-        session['lang'] = new_lang
-        logger.info(f"Language set to {new_lang}")
+        try:
+            session['lang'] = new_lang
+            logger.info(f"Language set to {new_lang}")
+        except InvalidOperation as e:
+            logger.error(f"Session operation failed due to closed MongoDB client: {str(e)}")
+            # Fallback to in-memory session
+            app.config['SESSION_TYPE'] = 'filesystem'
+            flask_session.init_app(app)
+            session['lang'] = new_lang
+            logger.info(f"Fallback to filesystem session, language set to {new_lang}")
         flash(translate('learning_hub_success_language_updated', default='Language updated successfully', lang=new_lang) if lang in valid_langs else translate('Invalid language', default='Invalid language', lang=new_lang), 'success' if lang in valid_langs else 'danger')
         return redirect(request.referrer or url_for('index'))
 
@@ -486,13 +530,26 @@ def create_app():
         if request.method != 'POST':
             logger.warning(f"Invalid method {request.method} for consent acknowledgement")
             return '', 400
-        session['consent_acknowledged'] = {
-            'status': True,
-            'timestamp': datetime.utcnow().isoformat(),
-            'ip': request.remote_addr,
-            'user_agent': request.headers.get('User-Agent')
-        }
-        logger.info(f"Consent acknowledged for session {session.get('sid', 'no-session-id')} from IP {request.remote_addr}")
+        try:
+            session['consent_acknowledged'] = {
+                'status': True,
+                'timestamp': datetime.utcnow().isoformat(),
+                'ip': request.remote_addr,
+                'user_agent': request.headers.get('User-Agent')
+            }
+            logger.info(f"Consent acknowledged for session {session.get('sid', 'no-session-id')} from IP {request.remote_addr}")
+        except InvalidOperation as e:
+            logger.error(f"Session operation failed due to closed MongoDB client: {str(e)}")
+            # Fallback to in-memory session
+            app.config['SESSION_TYPE'] = 'filesystem'
+            flask_session.init_app(app)
+            session['consent_acknowledged'] = {
+                'status': True,
+                'timestamp': datetime.utcnow().isoformat(),
+                'ip': request.remote_addr,
+                'user_agent': request.headers.get('User-Agent')
+            }
+            logger.info(f"Fallback to filesystem session, consent acknowledged for session {session.get('sid', 'no-session-id')}")
         response = make_response('')
         response.headers['Content-Type'] = None
         response.headers['Cache-Control'] = 'no-store'
@@ -502,7 +559,7 @@ def create_app():
     @app.route('/general_dashboard')
     @ensure_session_id
     def general_dashboard():
-        lang = session.get('lang', 'en')
+        lang = session.get('lang', 'en') if session is not None else 'en'
         logger.info("Serving general_dashboard")
         data = {}
         try:
@@ -556,7 +613,7 @@ def create_app():
 
     @app.route('/logout')
     def logout():
-        lang = session.get('lang', 'en')
+        lang = session.get('lang', 'en') if session is not None else 'en'
         logger.info("Logging out user")
         try:
             session_lang = session.get('lang', 'en')
@@ -571,7 +628,7 @@ def create_app():
 
     @app.route('/about')
     def about():
-        lang = session.get('lang', 'en')
+        lang = session.get('lang', 'en') if session is not None else 'en'
         logger.info("Serving about page")
         return render_template('about.html', t=translate, lang=lang)
 
@@ -590,19 +647,19 @@ def create_app():
 
     @app.errorhandler(500)
     def handle_internal_error(error):
-        lang = session.get('lang', 'en')
+        lang = session.get('lang', 'en') if session is not None else 'en'
         logger.error(f"Server error: {str(error)}", exc_info=True)
         return jsonify({'error': 'Internal server error', 'details': str(error)}), 500
 
     @app.errorhandler(CSRFError)
     def handle_csrf_error(error):
-        lang = session.get('lang', 'en')
+        lang = session.get('lang', 'en') if session is not None else 'en'
         logger.error(f"CSRF error: {str(error)}")
         return jsonify({'error': 'CSRF token invalid'}), 400
 
     @app.errorhandler(404)
     def page_not_found(e):
-        lang = session.get('lang', 'en')
+        lang = session.get('lang', 'en') if session is not None else 'en'
         logger.error(f"404 error: {str(e)}")
         return jsonify({'error': '404 not found'}), 404
 
@@ -613,7 +670,7 @@ def create_app():
     @app.route('/feedback', methods=['GET', 'POST'])
     @ensure_session_id
     def feedback():
-        lang = session.get('lang', 'en')
+        lang = session.get('lang', 'en') if session is not None else 'en'
         logger.info("Handling feedback")
         tool_options = [
             'environmental_health', 'budget', 'bill', 'net_worth',
