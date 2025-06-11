@@ -10,6 +10,7 @@ from pymongo import MongoClient
 from mailersend_email import send_email, EMAIL_CONFIG
 from translations import trans
 from extensions import mongo  # Import mongo from extensions
+from models import log_tool_usage  # Import log_tool_usage
 
 
 # Blueprint setup
