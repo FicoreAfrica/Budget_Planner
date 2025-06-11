@@ -180,6 +180,13 @@ def create_app():
     app.config['BASE_URL'] = os.environ.get('BASE_URL', 'http://localhost:5000')
     csrf.init_app(app)
 
+    # Register teardown_appcontext hook early
+    @app.teardown_appcontext
+    def shutdown_scheduler(exception=None):
+        scheduler = app.config.get('SCHEDULER')  # Updated key to match scheduler_setup.py
+        if scheduler:
+            scheduler.shutdown()
+
     # Configure MongoDB
     app.config['MONGO_URI'] = os.environ.get('MONGODB_URI')
     if not app.config['MONGO_URI']:
@@ -539,13 +546,6 @@ def create_app():
         lang = session.get('lang', 'en') if 'lang' in session else 'en'
         logger.error(f"404 error: {str(e)}")
         return jsonify({'error': '404 not found'}), 404
-        
-# Add at the end of create_app, before return
-    @app.teardown_appcontext
-    def shutdown_scheduler(exception=None):
-        scheduler = app.config.get('SCHEDULER')  # Updated key to match scheduler_setup.py
-        if scheduler:
-            scheduler.shutdown()
 
     @app.route('/static/<path:filename>')
     def static_files(filename):
