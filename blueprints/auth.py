@@ -10,6 +10,8 @@ import logging
 import uuid
 from datetime import datetime
 import os
+from extensions import mongo  # Import mongo from extensions
+
 
 # Configure logging
 logger = logging.getLogger('ficore_app')
