@@ -196,6 +196,7 @@ def step1():
     
     try:
         log_tool_usage(
+            mongo,
             tool_name='quiz',
             user_id=current_user.id if current_user.is_authenticated else None,
             session_id=session['sid'],
@@ -203,6 +204,7 @@ def step1():
         )
         if request.method == 'POST':
             log_tool_usage(
+                mongo,
                 tool_name='quiz',
                 user_id=current_user.id if current_user.is_authenticated else None,
                 session_id=session['sid'],
@@ -259,6 +261,7 @@ def step2a():
     
     try:
         log_tool_usage(
+            mongo,
             tool_name='quiz',
             user_id=current_user.id,
             session_id=session['sid'],
@@ -266,6 +269,7 @@ def step2a():
         )
         if request.method == 'POST':
             log_tool_usage(
+                mongo,
                 tool_name='quiz',
                 user_id=current_user.id,
                 session_id=session['sid'],
@@ -331,6 +335,7 @@ def step2b():
     
     try:
         log_tool_usage(
+            mongo,
             tool_name='quiz',
             user_id=current_user.id,
             session_id=session['sid'],
@@ -338,6 +343,7 @@ def step2b():
         )
         if request.method == 'POST':
             log_tool_usage(
+                mongo,
                 tool_name='quiz',
                 user_id=current_user.id,
                 session_id=session['sid'],
@@ -457,6 +463,7 @@ def results():
     
     try:
         log_tool_usage(
+            mongo,
             tool_name='quiz',
             user_id=current_user.id,
             session_id=session['sid'],
