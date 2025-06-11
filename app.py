@@ -8,7 +8,7 @@ from flask_wtf.csrf import CSRFError
 from flask_login import LoginManager, current_user
 from dotenv import load_dotenv
 import certifi
-from extensions import mongo, login_manager, session as flask_session, csrf
+from extensions import mongo, login_manager, flask_session, csrf
 from blueprints.auth import auth_bp
 from translations import trans
 from scheduler_setup import init_scheduler
