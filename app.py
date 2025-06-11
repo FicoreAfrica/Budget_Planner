@@ -3,7 +3,7 @@ import sys
 import logging
 import uuid
 from datetime import datetime, timedelta
-from flask import Flask, jsonify, render_template, request, session, redirect, url_for, flash, make_response, has_request_context
+from flask import Flask, jsonify, render_template, request, session, redirect, url_for, flash, make_response, has_request_context, g
 from flask_wtf.csrf import CSRFError
 from flask_login import LoginManager, current_user
 from flask_pymongo import PyMongo
@@ -19,6 +19,7 @@ from functools import wraps
 from uuid import uuid4
 from werkzeug.security import generate_password_hash
 from mailersend_email import init_email_config
+from pymongo.errors import ConnectionError, ConfigurationError
 
 # Load environment variables
 load_dotenv()
@@ -194,14 +195,18 @@ def create_app():
     try:
         mongo = PyMongo(app, tlsCAFile=certifi.where())
         logger.info("MongoDB configured with Flask-PyMongo and certifi")
+        # Force a connection attempt with a ping
+        mongo.cx.server_info()  # This will raise an exception if connection fails
+        if mongo.db is None:
+            logger.error("MongoDB database not initialized after connection attempt")
+            raise RuntimeError("MongoDB database not initialized")
+        logger.info("MongoDB connection established successfully")
+    except (ConnectionError, ConfigurationError) as e:
+        logger.error(f"Failed to connect to MongoDB: {str(e)}", exc_info=True)
+        raise RuntimeError(f"MongoDB connection failed: {str(e)}")
     except Exception as e:
-        logger.error(f"Failed to initialize PyMongo: {str(e)}", exc_info=True)
+        logger.error(f"Unexpected error during MongoDB initialization: {str(e)}", exc_info=True)
         raise RuntimeError(f"MongoDB initialization failed: {str(e)}")
-
-    # Verify MongoDB connection
-    if mongo.db is None:
-        logger.error("MongoDB connection not initialized")
-        raise RuntimeError("MongoDB connection not initialized")
 
     # Initialize Flask-Login
     login_manager.init_app(app)
@@ -344,7 +349,7 @@ def create_app():
         lang = session.get('lang', 'en')
         def context_trans(key, **kwargs):
             used_lang = kwargs.pop('lang', lang)
-            return translate(key, lang=used_lang, logger=g.get('logger', logger), **kwargs)
+            return translate(key, lang=used_lang, logger=g.get('logger', logger) if has_request_context() else logger, **kwargs)
         return {
             'trans': context_trans,
             'current_year': datetime.now().year,
