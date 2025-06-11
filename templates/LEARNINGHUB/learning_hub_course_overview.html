@@ -11,20 +11,37 @@
         <h1 class="text-2xl font-bold">{{ trans(course.title_key) }}</h1>
         <p class="mt-2">{{ trans(course.desc_key) }}</p>
     </div>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="bg-{{ 'green' if category == 'success' else 'red' }}-100 text-{{ 'green' if category == 'success' else 'red' }}-800 p-4 rounded mt-4">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
     <div class="bg-white shadow-md rounded-lg p-4 mt-4">
         <h2 class="text-lg font-semibold">{{ trans('learning_hub_what_you_learn') }}</h2>
         <p>{{ trans(course.desc_key) }}</p>
-        <p class="text-sm text-gray-600">Total Lessons: {{ course['modules']|sum(attribute='lessons'|length) }}</p>
-        {% if progress.lessons_completed %}
-            <p class="text-sm text-green-600">Completed: {{ progress.lessons_completed|length }}/{{ course['modules']|sum(attribute='lessons'|length) }}</p>
+        {% set total_lessons = 0 %}
+        {% for module in course['modules'] %}
+            {% if module['lessons'] %}
+                {% set total_lessons = total_lessons + module['lessons']|length %}
+            {% endif %}
+        {% endfor %}
+        <p class="text-sm text-gray-600">Total Lessons: {{ total_lessons }}</p>
+        {% if progress.get('lessons_completed') %}
+            <p class="text-sm text-green-600">Completed: {{ progress['lessons_completed']|length }}/{{ total_lessons }}</p>
+        {% else %}
+            <p class="text-sm text-gray-600">Completed: 0/{{ total_lessons }}</p>
         {% endif %}
         <div class="mt-4">
-            {% if progress.current_lesson %}
-                <a href="{{ url_for('learning_hub.lesson', course_id=course.id, lesson_id=progress.current_lesson) }}" class="inline-block bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 mr-2">
+            {% if progress.get('current_lesson') %}
+                <a href="{{ url_for('learning_hub.lesson', course_id=course['id'], lesson_id=progress['current_lesson']) }}" class="inline-block bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 mr-2">
                     <i class="fas fa-play"></i> {{ trans('learning_hub_continue_course') }}
                 </a>
-            {% else %}
-                <a href="{{ url_for('learning_hub.lesson', course_id=course.id, lesson_id=course.modules[0].lessons[0].id) }}" class="inline-block bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 mr-2">
+            {% elif course['modules'] and course['modules'][0]['lessons'] %}
+                <a href="{{ url_for('learning_hub.lesson', course_id=course['id'], lesson_id=course['modules'][0]['lessons'][0]['id']) }}" class="inline-block bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 mr-2">
                     <i class="fas fa-play"></i> {{ trans('learning_hub_start_course') }}
                 </a>
             {% endif %}
@@ -36,20 +53,20 @@
     <div class="bg-white shadow-md rounded-lg p-4 mt-4">
         <h2 class="text-lg font-semibold">{{ trans('learning_hub_modules') }}</h2>
         <ul class="list-disc pl-6">
-            {% for module in course.modules %}
+            {% for module in course['modules'] %}
             <li class="mt-2">
-                <strong>{{ trans(module.title_key) }}</strong>
+                <strong>{{ trans(module['title_key']) }}</strong>
                 <ul class="list-circle pl-6">
-                    {% for lesson in module.lessons %}
+                    {% for lesson in module['lessons'] %}
                     <li>
-                        <a href="{{ url_for('learning_hub.lesson', course_id=course.id, lesson_id=lesson.id) }}" class="text-blue-500 hover:underline">
-                            {{ trans(lesson.title_key) }}
+                        <a href="{{ url_for('learning_hub.lesson', course_id=course['id'], lesson_id=lesson['id']) }}" class="text-blue-500 hover:underline">
+                            {{ trans(lesson['title_key']) }}
                         </a>
-                        {% if progress.lessons_completed and lesson.id in progress.lessons_completed %}
+                        {% if progress.get('lessons_completed') and lesson['id'] in progress['lessons_completed'] %}
                             <span class="text-green-500"><i class="fas fa-check"></i> {{ trans('learning_hub_completed') }}</span>
                         {% endif %}
-                        {% if lesson.quiz_id %}
-                            <a href="{{ url_for('learning_hub.quiz', course_id=course.id, quiz_id=lesson.quiz_id) }}" class="text-blue-400 hover:underline">
+                        {% if lesson['quiz_id'] %}
+                            <a href="{{ url_for('learning_hub.quiz', course_id=course['id'], quiz_id=lesson['quiz_id']) }}" class="text-blue-400 hover:underline">
                                 <i class="fas fa-question-circle"></i> {{ trans('learning_hub_quiz') }}
                             </a>
                         {% endif %}
