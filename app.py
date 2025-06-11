@@ -4,11 +4,11 @@ import logging
 import uuid
 from datetime import datetime, timedelta
 from flask import Flask, jsonify, render_template, request, redirect, url_for, flash, make_response, has_request_context, g, send_from_directory, session
-from flask_wtf.csrf import CSRFError
+from flask_wtf.csrf import CSRFProtect, generate_csrf, CSRFError
 from flask_login import LoginManager, current_user
 from dotenv import load_dotenv
 import certifi
-from extensions import mongo, login_manager, flask_session, csrf
+from extensions import mongo, login_manager, flask_session
 from blueprints.auth import auth_bp
 from translations import trans
 from scheduler_setup import init_scheduler
@@ -50,6 +50,9 @@ class SessionAdapter(logging.LoggerAdapter):
         return msg, kwargs
 
 logger = SessionAdapter(root_logger, {})
+
+# Initialize CSRF protection
+csrf = CSRFProtect()
 
 # Define admin_required decorator
 def admin_required(f):
@@ -98,7 +101,7 @@ def setup_session(app, mongo):
 
 def check_mongodb_connection(mongo, app):
     """
-    Check and reinitialize MongoDB connection if necessary.
+    Check MongoDB connection and reinitialize only if necessary.
     
     Args:
         mongo: Flask-PyMongo instance
@@ -120,14 +123,10 @@ def check_mongodb_connection(mongo, app):
             mongo.cx.admin.command('ping')
             logger.info("MongoDB connection verified with ping")
             return True
-        except InvalidOperation:
-            logger.warning("MongoDB client closed, reinitializing")
-            mongo.init_app(app, tlsCAFile=certifi.where(), connectTimeoutMS=30000, serverSelectionTimeoutMS=30000, maxPoolSize=50)
-            mongo.cx.admin.command('ping')
-            logger.info("MongoDB connection re-established with ping")
-            return True
-            
-    except (AttributeError, ConnectionFailure, InvalidOperation) as e:
+        except InvalidOperation as e:
+            logger.error(f"MongoDB client is closed: {str(e)}")
+            return False
+    except (AttributeError, ConnectionFailure) as e:
         logger.error(f"MongoDB connection check failed: {str(e)}", exc_info=True)
         return False
 
@@ -154,36 +153,62 @@ def initialize_database(app):
             logger.error("MongoDB database object is not initialized")
             raise RuntimeError("MongoDB database object is not initialized")
         
+        # Verify connection before proceeding
+        try:
+            mongo.db.command('ping')
+        except InvalidOperation as e:
+            logger.error(f"MongoDB client is closed before database operations: {str(e)}")
+            raise RuntimeError("MongoDB client is closed")
+        
         db_name = mongo.db.name
         logger.info(f"MongoDB database: {db_name}")
         
-        mongo.db.users.create_index('email', unique=True)
-        mongo.db.users.create_index('referral_code', unique=True)
-        mongo.db.courses.create_index('id', unique=True)
-        mongo.db.content_metadata.create_index([('course_id', 1), ('lesson_id', 1)])
-        mongo.db.financial_health.create_index('session_id')
-        mongo.db.financial_health.create_index('user_id')
-        mongo.db.budgets.create_index('session_id')
-        mongo.db.budgets.create_index('user_id')
-        mongo.db.bills.create_index('session_id')
-        mongo.db.bills.create_index('user_id')
-        mongo.db.net_worth.create_index('session_id')
-        mongo.db.net_worth.create_index('user_id')
-        mongo.db.emergency_funds.create_index('session_id')
-        mongo.db.emergency_funds.create_index('user_id')
-        mongo.db.learning_progress.create_index([('user_id', 1), ('course_id', 1)], unique=True)
-        mongo.db.learning_progress.create_index([('session_id', 1), ('course_id', 1)], unique=True)
-        mongo.db.learning_progress.create_index('session_id')
-        mongo.db.learning_progress.create_index('user_id')
-        mongo.db.quiz_results.create_index('session_id')
-        mongo.db.quiz_results.create_index('user_id')
-        mongo.db.feedback.create_index('session_id')
-        mongo.db.feedback.create_index('user_id')
-        mongo.db.tool_usage.create_index('session_id')
-        mongo.db.tool_usage.create_index('user_id')
-        mongo.db.tool_usage.create_index('tool_name')
-        logger.info("MongoDB indexes created")
+        # Create indexes only if they don't exist
+        existing_indexes = mongo.db.users.index_information()
+        if 'email_1' not in existing_indexes:
+            mongo.db.users.create_index('email', unique=True)
+        if 'referral_code_1' not in existing_indexes:
+            mongo.db.users.create_index('referral_code', unique=True)
+        
+        existing_indexes = mongo.db.courses.index_information()
+        if 'id_1' not in existing_indexes:
+            mongo.db.courses.create_index('id', unique=True)
+        
+        existing_indexes = mongo.db.content_metadata.index_information()
+        if 'course_id_1_lesson_id_1' not in existing_indexes:
+            mongo.db.content_metadata.create_index([('course_id', 1), ('lesson_id', 1)])
+        
+        for collection in ['financial_health', 'budgets', 'bills', 'net_worth', 'emergency_funds']:
+            existing_indexes = mongo.db[collection].index_information()
+            if 'session_id_1' not in existing_indexes:
+                mongo.db[collection].create_index('session_id')
+            if 'user_id_1' not in existing_indexes:
+                mongo.db[collection].create_index('user_id')
+        
+        existing_indexes = mongo.db.learning_progress.index_information()
+        if 'user_id_1_course_id_1' not in existing_indexes:
+            mongo.db.learning_progress.create_index([('user_id', 1), ('course_id', 1)], unique=True)
+        if 'session_id_1_course_id_1' not in existing_indexes:
+            mongo.db.learning_progress.create_index([('session_id', 1), ('course_id', 1)], unique=True)
+        if 'session_id_1' not in existing_indexes:
+            mongo.db.learning_progress.create_index('session_id')
+        if 'user_id_1' not in existing_indexes:
+            mongo.db.learning_progress.create_index('user_id')
+        
+        for collection in ['quiz_results', 'feedback', 'tool_usage']:
+            existing_indexes = mongo.db[collection].index_information()
+            if 'session_id_1' not in existing_indexes:
+                mongo.db[collection].create_index('session_id')
+            if 'user_id_1' not in existing_indexes:
+                mongo.db[collection].create_index('user_id')
+        
+        existing_indexes = mongo.db.tool_usage.index_information()
+        if 'tool_name_1' not in existing_indexes:
+            mongo.db.tool_usage.create_index('tool_name')
+        
+        logger.info("MongoDB indexes created or verified")
 
+        # Initialize courses
         courses_collection = mongo.db.courses
         if courses_collection.count_documents({}) == 0:
             for course in SAMPLE_COURSES:
@@ -416,7 +441,7 @@ def create_app():
             'CONSULTANCY_FORM_URL': os.environ.get('CONSULTANCY_FORM_URL', '#'),
             'current_lang': lang,
             'current_user': current_user if has_request_context() else None,
-            'csrf_token': csrf.generate_csrf
+            'csrf_token': generate_csrf  # Use the imported function directly
         }
 
     def ensure_session_id(f):
