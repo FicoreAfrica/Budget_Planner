@@ -100,7 +100,7 @@ def initialize_database(app):
             logger.warning(f"Attempt {attempt + 1}/{max_retries} - MongoDB client is closed: {str(e)}", exc_info=True)
             if attempt == max_retries - 1:
                 logger.error(f"Max retries reached: MongoDB client remains closed: {str(e)}", exc_info=True)
-                return
+                raise
             continue
         except Exception as e:
             logger.error(f"Failed to initialize database (attempt {attempt + 1}/{max_retries}): {str(e)}", exc_info=True)
@@ -193,18 +193,7 @@ def create_app():
     app.config['BASE_URL'] = os.environ.get('BASE_URL', 'http://localhost:5000')
     csrf.init_app(app)
 
-    # Register teardown_appcontext hook early
-    @app.teardown_appcontext
-    def shutdown_scheduler(exception=None):
-        scheduler = app.config.get('SCHEDULER')
-        if scheduler and scheduler.running:
-            try:
-                scheduler.shutdown()
-                logger.info("Scheduler shut down successfully")
-            except Exception as e:
-                logger.error(f"Error shutting down scheduler: {str(e)}", exc_info=True)
-
-    # Configure MongoDB
+    # Configure MongoDB (moved outside app_context)
     app.config['MONGO_URI'] = os.environ.get('MONGODB_URI')
     if not app.config['MONGO_URI']:
         logger.error("MONGODB_URI environment variable not set")
@@ -225,7 +214,6 @@ def create_app():
         if mongo.db is None:
             logger.error(f"MongoDB database '{db_name}' not initialized after connection attempt")
             raise RuntimeError(f"MongoDB database '{db_name}' not initialized")
-        mongo.db.command('ping')  # Verify database access
         logger.info(f"MongoDB connection established successfully to database: {db_name}")
     except (ConnectionFailure, ConfigurationError) as e:
         logger.error(f"Failed to connect to MongoDB: {str(e)}", exc_info=True)
@@ -233,6 +221,17 @@ def create_app():
     except Exception as e:
         logger.error(f"Unexpected error during MongoDB initialization: {str(e)}", exc_info=True)
         raise RuntimeError(f"MongoDB initialization failed: {str(e)}")
+
+    # Register teardown_appcontext hook early
+    @app.teardown_appcontext
+    def shutdown_scheduler(exception=None):
+        scheduler = app.config.get('SCHEDULER')
+        if scheduler and scheduler.running:
+            try:
+                scheduler.shutdown()
+                logger.info("Scheduler shut down successfully")
+            except Exception as e:
+                logger.error(f"Error shutting down scheduler: {str(e)}", exc_info=True)
 
     # Initialize scheduler
     try:
@@ -429,12 +428,11 @@ def create_app():
         response.headers['X-Content-Type-Options'] = 'nosniff'
         return response
 
-
     @app.route('/general_dashboard')
     @ensure_session_id
     def general_dashboard():
         lang = session.get('lang', 'en')
-        logger.info("Serving general dashboard")
+        logger.info("Serving general_dashboard")
         data = {}
         try:
             from models import get_financial_health, get_budgets, get_bills, get_net_worth, get_emergency_funds, get_learning_progress, get_quiz_results, to_dict_financial_health, to_dict_budget, to_dict_bill, to_dict_net_worth, to_dict_emergency_fund, to_dict_learning_progress, to_dict_quiz_result
