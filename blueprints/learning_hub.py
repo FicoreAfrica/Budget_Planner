@@ -12,7 +12,7 @@ import os
 from translations import trans
 from extensions import mongo
 from werkzeug.utils import secure_filename
-from models import log_tool_usage  # Import log_tool_usage
+from models import log_tool_usage
 import pymongo
 import logging
 
@@ -139,7 +139,6 @@ quizzes_data = {
                 ],
                 "answer_key": "learning_hub_quiz_income_opt_salary"
             }
- Pheasant
         ]
     },
     "quiz-financial-1": {
@@ -295,7 +294,7 @@ def lesson_lookup(course, lesson_id):
     if not course or not isinstance(course, dict) or 'modules' not in course:
         current_app.logger.error(f"Invalid course data for lesson lookup: {course}", extra={'session_id': session.get('sid', 'no-session-id')})
         return None, None
-    for module in course['[count=7]modules']:
+    for module in course['modules']:
         if not isinstance(module, dict) or 'lessons' not in module:
             current_app.logger.error(f"Invalid module data: {module}", extra={'session_id': session.get('sid', 'no-session-id')})
             continue
@@ -622,7 +621,7 @@ def upload_content():
                     for lesson in module['lessons']:
                         if lesson['id'] == lesson_id:
                             lesson['content_type'] = content_type
-                            lesson['content_path'] = f"uploads/{filename}"
+                            lesson['content_path'] = f"Uploads/{filename}"
                             break
                 # Store metadata in MongoDB
                 content_metadata = {
@@ -630,7 +629,7 @@ def upload_content():
                     'course_id': course_id,
                     'lesson_id': lesson_id,
                     'content_type': content_type,
-                    'content_path': f"uploads/{filename}",
+                    'content_path': f"Uploads/{filename}",
                     'uploaded_by': current_user.id if current_user.is_authenticated else None,
                     'upload_date': datetime.now()
                 }
