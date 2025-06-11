@@ -12,7 +12,6 @@ from datetime import datetime
 import os
 from extensions import mongo  # Import mongo from extensions
 
-
 # Configure logging
 logger = logging.getLogger('ficore_app')
 
@@ -48,8 +47,7 @@ class SignupForm(FlaskForm):
         self.submit.label.text = trans('auth_signup', default='Sign Up', lang=lang)
 
     def validate_username(self, username):
-        mongo = mongo.db
-        if mongo.users.find_one({'username': username.data}):
+        if mongo.db.users.find_one({'username': username.data}):
             raise ValidationError(trans('auth_username_taken', default='Username is already taken.'))
 
     def validate_email(self, email):
@@ -115,26 +113,24 @@ def signup():
     # Log signup page view
     log_tool_usage(mongo, 'register', user_id=None, session_id=session_id, action='view_page')
 
-    mongo = mongo.db
-
     if referral_code:
         try:
             # Validate referral_code as UUID
             uuid.UUID(referral_code)
-            referrer = mongo.users.find_one({'referral_code': referral_code}, {'_id': 0})
+            referrer = mongo.db.users.find_one({'referral_code': referral_code}, {'_id': 0})
             if not referrer:
                 logger.warning(f"Invalid referral code: {referral_code}", extra={'session_id': session_id})
                 flash(trans('auth_invalid_referral', default='Invalid referral code.', lang=lang), 'warning')
             else:
                 # Check referral limit (e.g., max 100 referrals per user)
-                referral_count = mongo.users.count_documents({'referred_by_id': referrer['id']})
+                referral_count = mongo.db.users.count_documents({'referred_by_id': referrer['id']})
                 if referral_count >= 100:
                     logger.warning(f"Referral limit reached for referrer with code: {referral_code}", extra={'session_id': session_id})
                     flash(trans('auth_referral_limit_reached', default='This user has reached their referral limit.', lang=lang), 'warning')
                     referrer = None
         except ValueError:
             logger.error(f"Invalid referral code format: {referral_code}", extra={'session_id': session_id})
-            flash(trans('auth_invalid_referral_format', default='Invalid referral code format., lang=lang'), 'warning')
+            flash(trans('auth_invalid_referral_format', default='Invalid referral code format.', lang=lang), 'warning')
     
     try:
         if request.method == 'POST':
