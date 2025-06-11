@@ -18,7 +18,7 @@ from functools import wraps
 from uuid import uuid4
 from werkzeug.security import generate_password_hash
 from mailersend_email import init_email_config
-from pymongo.errors import ConnectionFailure, ConfigurationError
+from pymongo.errors import ConnectionFailure, ConfigurationError, InvalidOperation
 
 # Load environment variables
 load_dotenv()
@@ -93,7 +93,14 @@ def initialize_database(app, mongo):
         # Test MongoDB connection
         mongo.db.command('ping')
         logger.info("MongoDB connection verified with ping")
+    except InvalidOperation as e:
+        logger.error(f"MongoDB client is closed: {str(e)}", exc_info=True)
+        return  # Allow app to continue without crashing
+    except Exception as e:
+        logger.error(f"Failed to initialize database: {str(e)}", exc_info=True)
+        raise
 
+    try:
         # Create MongoDB indexes
         mongo.db.users.create_index('email', unique=True)
         mongo.db.users.create_index('referral_code', unique=True)
@@ -183,9 +190,13 @@ def create_app():
     # Register teardown_appcontext hook early
     @app.teardown_appcontext
     def shutdown_scheduler(exception=None):
-        scheduler = app.config.get('SCHEDULER')  # Updated key to match scheduler_setup.py
-        if scheduler:
-            scheduler.shutdown()
+        scheduler = app.config.get('SCHEDULER')
+        if scheduler and scheduler.running:
+            try:
+                scheduler.shutdown()
+                logger.info("Scheduler shut down successfully")
+            except Exception as e:
+                logger.error(f"Error shutting down scheduler: {str(e)}", exc_info=True)
 
     # Configure MongoDB
     app.config['MONGO_URI'] = os.environ.get('MONGODB_URI')
