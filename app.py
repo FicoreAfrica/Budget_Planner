@@ -539,6 +539,13 @@ def create_app():
         lang = session.get('lang', 'en') if 'lang' in session else 'en'
         logger.error(f"404 error: {str(e)}")
         return jsonify({'error': '404 not found'}), 404
+        
+# Add at the end of create_app, before return
+    @app.teardown_appcontext
+    def shutdown_scheduler(exception=None):
+        scheduler = app.config.get('SCHEDULER')  # Updated key to match scheduler_setup.py
+        if scheduler:
+            scheduler.shutdown()
 
     @app.route('/static/<path:filename>')
     def static_files(filename):
