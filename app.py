@@ -11,7 +11,7 @@ from flask_compress import Compress
 from dotenv import load_dotenv
 import certifi
 from pymongo import MongoClient
-from extensions import pymongo
+from extensions import mongo, login_manager, flask_session
 from blueprints.auth import auth_bp
 from translations import trans
 from scheduler_setup import init_scheduler
@@ -52,7 +52,7 @@ class SessionAdapter(logging.LoggerAdapter):
         kwargs['extra']['session_id'] = session_id
         return msg, kwargs
 
-logger = SessionAdapter(root_logger.get_logger(), {})
+logger = SessionAdapter(root_logger, {})
 
 # Initialize CSRF protection
 csrf = CSRFProtect()
@@ -115,7 +115,7 @@ def check_mongodb_connection(mongo_client, app):
                     app.config['MONGO_URI'],
                     connect=False,
                     tlsCAFile=certifi.where(),
-                    maxPoolSize=20,  # Reduced to lower memory usage
+                    maxPoolSize=20,
                     socketTimeoutMS=60000,
                     connectTimeoutMS=30000,
                     serverSelectionTimeoutMS=30000,
@@ -132,7 +132,7 @@ def check_mongodb_connection(mongo_client, app):
                 logger.error(f"Failed to reinitialize MongoDB client: {str(reinit_e)}")
                 return False
     except (AttributeError, ConnectionFailure) as e:
-        logger.error(f"MongoDB connection check failed: {str(e)}", exc_info=True)
+        logger.error(f"MongoDB connection error: {str(e)}", exc_info=True)
         return False
 
 def setup_session(app):
@@ -148,7 +148,7 @@ def setup_session(app):
                 app.config['MONGO_URI'],
                 connect=False,
                 tlsCAFile=certifi.where(),
-                maxPoolSize=20,  # Reduced to lower memory usage
+                maxPoolSize=20,
                 socketTimeoutMS=60000,
                 connectTimeoutMS=30000,
                 serverSelectionTimeoutMS=30000,
@@ -338,7 +338,7 @@ def create_app():
             app.config['MONGO_URI'],
             connect=False,
             tlsCAFile=certifi.where(),
-            maxPoolSize=20,  # Reduced to lower memory usage
+            maxPoolSize=20,
             socketTimeoutMS=60000,
             connectTimeoutMS=30000,
             serverSelectionTimeoutMS=30000,
@@ -418,7 +418,7 @@ def create_app():
         def shutdown_scheduler():
             try:
                 if scheduler and scheduler.running:
-                    scheduler.shutdown(wait=True)  # Wait for jobs to complete
+                    scheduler.shutdown(wait=True)
                     logger.info("Scheduler shutdown successfully on app exit")
             except Exception as e:
                 logger.error(f"Error shutting down scheduler on app exit: {str(e)}", exc_info=True)
@@ -570,7 +570,7 @@ def index():
     lang = session.get('lang', 'en') if session is not None else 'en'
     logger.info("Serving index page")
     if request.method == 'HEAD':
-        return '', 200  # Return empty response for HEAD
+        return '', 200
     try:
         courses = app.config.get('COURSES', SAMPLE_COURSES)
         logger.info(f"Retrieved {len(courses)} courses")
@@ -728,54 +728,54 @@ def handle_csrf_error(error):
 @app.errorhandler(404)
 def page_not_found(e):
     lang = session.get('lang', 'en') if session is not None else 'en'
-    logger.error(f"404 error: {str(e)}")
+    logger.error(f"Error 404: {str(e)}")
     return jsonify({'error': '404 not found'}), 404
 
 @app.route('/static/<path:filename>')
 def static_files(filename):
     response = send_from_directory('static', filename)
-    response.headers['Cache-Control'] = 'public, max-age=31536000'  # Cache for 1 year
+    response.headers['Cache-Control'] = 'public, max-age=31536000'
     return response
 
 @app.route('/feedback', methods=['GET', 'POST'])
 @ensure_session_id
 def feedback():
-    lang = session.get('lang', 'en') if session is not None else 'en'
+    lang = session.get('lang', 'en') if session.get('lang') else 'en'
     logger.info("Handling feedback")
     tool_options = [
-        'environmental_health', 'budget', 'bill', 'net_worth',
+        'financial_health', 'budget', 'bill', 'net_worth',
         'emergency_fund', 'learning', 'quiz'
     ]
-    if request.method == 'GET':
-        logger.info("Rendering feedback template")
-        return render_template('index.html', t=translate, lang=lang, tool_options=tool_options)
-    try:
-        from models import create_feedback
-        tool_name = request.form.get('tool_name')
-        rating = request.form.get('rating')
-        comment = request.form.get('comment', '')
-        if not tool_name or tool_name not in tool_options:
-            logger.error(f"Invalid feedback tool: {tool_name}")
-            flash(translate('error_feedback_invalid_tool', default='Please select a valid tool', comment='error'), 'danger')
-            return render_template('index.html', t=translate, lang=lang, tool_options=tool_options)
-        if not rating or not rating.isdigit() or int(rating) <= 0 or int(rating) > 5:
-            logger.error(f"Invalid rating: {rating}")
-            flash(translate('error_feedback_rating_invalid', default='Please provide a rating between 1 and 5', comment='error'), 'danger')
-            return render_template('index.html', t=translate, lang=lang, tool_options=tool_options)
-        feedback_entry = create_feedback(mongo, {
-            'user_id': current_user.id if current_user.is_authenticated else None,
-            'session_id': session.get('sid', 'no-session-id'),
-            'tool_name': tool_name,
-            'rating': int(rating),
-            'comment': comment.strip() or None
-        })
-        logger.info(f"Feedback submitted: tool={tool_name}, rating={rating}, session={session.get('sid', 'no-session-id')}")
-        flash(translate('success_feedback_submitted', default='Thank you for your feedback!', comment='success'), 'success')
-        return redirect(url_for('index'))
-    except Exception as e:
-        logger.error(f"Error processing feedback: {str(e)}", exc_info=True)
-        flash(translate('error_feedback_submission', default='Error occurred while submitting feedback', comment='error'), 'danger')
-        return render_template('index.html', t=translate, lang=lang, tool_options=tool_options), 500
+    if request.method == 'POST':
+        try:
+            from models import create_feedback
+            tool_name = request.form.get('tool_name')
+            rating = request.form.get('rating')
+            comment = request.form.get('comment', '')
+            if not tool_name or tool_name not in tool_options:
+                logger.error(f"Invalid feedback tool: {tool_name}")
+                flash(translate('error_feedback_form', default='Please select a valid tool', comment='invalid-tool'), 'danger')
+                return render_template('index.html', {}, t=translate, lang=lang, tool_options=tool_options)
+            if not rating or not rating.isdigit() or int(rating) <= 0 or int(rating) > 5:
+                logger.error(f"Invalid rating: {rating}")
+                flash(translate('error_feedback_rating', default='Please provide a rating between 1 and 5', comment='invalid-rating'), 'danger')
+                return render_template('index.html', {}, t=translate, lang=lang, tool_options=tool_options)
+            feedback_entry = create_feedback(mongo, {
+                'user_id': current_user.id if current_user.is_authenticated else None,
+                'session_id': session.get('sid', 'no-session-id'),
+                'tool_name': tool_name,
+                'rating': int(rating),
+                'comment': comment.strip() or None
+            })
+            logger.info(f"Feedback submitted: tool={tool_name}, rating={rating}, session={session.get('sid', 'no-session-id')}")
+            flash(translate('success_feedback', default='Thank you for your feedback!', comment='success'), 'success')
+            return redirect(url_for('index'))
+        except Exception as e:
+            logger.error(f"Error processing feedback: {str(e)}", exc_info=True)
+            flash(translate('error_feedback', default='Error occurred during feedback submission', comment='error'), 'danger')
+            return render_template('index.html', {}, t=translate, lang=lang, tool_options=tool_options), 500
+    logger.info("Rendering feedback index template")
+    return render_template('index.html', {}, t=translate, lang=lang, tool_options=tool_options)
 
 if __name__ == "__main__":
     try:
