@@ -88,16 +88,21 @@ def setup_session(app):
         raise
 
 def initialize_database(app):
-    """Initialize MongoDB indexes and courses data."""
+    """Initialize MongoDB indexes and courses data with robust client handling."""
     max_retries = 3
     for attempt in range(max_retries):
         try:
-            # Test MongoDB connection with retry
+            # Check if MongoClient is open
+            if mongo.cx is None or mongo.cx.is_closed:
+                logger.warning(f"Attempt {attempt + 1}/{max_retries} - MongoClient is closed or not initialized, reinitializing...")
+                mongo.init_app(app, tlsCAFile=certifi.where(), connectTimeoutMS=30000, serverSelectionTimeoutMS=30000)
+            
+            # Test MongoDB connection with ping
             mongo.db.command('ping')
             logger.info("MongoDB connection verified with ping")
             break
         except InvalidOperation as e:
-            logger.warning(f"Attempt {attempt + 1}/{max_retries} - MongoDB client is closed: {str(e)}", exc_info=True)
+            logger.warning(f"Attempt {attempt + 1}/{max_retries} - MongoDB client error: {str(e)}", exc_info=True)
             if attempt == max_retries - 1:
                 logger.error(f"Max retries reached: MongoDB client remains closed: {str(e)}", exc_info=True)
                 raise
@@ -193,7 +198,7 @@ def create_app():
     app.config['BASE_URL'] = os.environ.get('BASE_URL', 'http://localhost:5000')
     csrf.init_app(app)
 
-    # Configure MongoDB (moved outside app_context)
+    # Configure MongoDB
     app.config['MONGO_URI'] = os.environ.get('MONGODB_URI')
     if not app.config['MONGO_URI']:
         logger.error("MONGODB_URI environment variable not set")
@@ -222,25 +227,6 @@ def create_app():
         logger.error(f"Unexpected error during MongoDB initialization: {str(e)}", exc_info=True)
         raise RuntimeError(f"MongoDB initialization failed: {str(e)}")
 
-    # Register teardown_appcontext hook early
-    @app.teardown_appcontext
-    def shutdown_scheduler(exception=None):
-        scheduler = app.config.get('SCHEDULER')
-        if scheduler and scheduler.running:
-            try:
-                scheduler.shutdown()
-                logger.info("Scheduler shut down successfully")
-            except Exception as e:
-                logger.error(f"Error shutting down scheduler: {str(e)}", exc_info=True)
-
-    # Initialize scheduler
-    try:
-        init_scheduler(app, mongo)
-        logger.info("Scheduler initialized successfully")
-    except Exception as e:
-        logger.error(f"Failed to initialize scheduler: {str(e)}", exc_info=True)
-        # Continue without scheduler to avoid blocking app startup
-
     # Initialize database and admin user within a single app context
     with app.app_context():
         initialize_database(app)
@@ -267,6 +253,28 @@ def create_app():
                 logger.info(f"Admin user already exists with email: {admin_email}")
         else:
             logger.warning("ADMIN_EMAIL or ADMIN_PASSWORD not set in environment variables.")
+
+    # Initialize scheduler after database initialization
+    try:
+        init_scheduler(app, mongo)
+        logger.info("Scheduler initialized successfully")
+    except Exception as e:
+        logger.error(f"Failed to initialize scheduler: {str(e)}", exc_info=True)
+        # Continue without scheduler to avoid blocking app startup
+
+    # Register teardown_appcontext hook to shutdown scheduler safely
+    @app.teardown_appcontext
+    def shutdown_scheduler(exception=None):
+        scheduler = app.config.get('SCHEDULER')
+        if scheduler and scheduler.running:
+            try:
+                scheduler.shutdown(wait=False)  # Use wait=False to avoid blocking
+                logger.info("Scheduler shut down successfully")
+            except Exception as e:
+                logger.error(f"Error shutting down scheduler: {str(e)}", exc_info=True)
+        # Explicitly avoid closing MongoClient here
+        if mongo.cx and not mongo.cx.is_closed:
+            logger.info("MongoClient remains open during teardown")
 
     # Register blueprints (after MongoDB initialization)
     from blueprints.financial_health import financial_health_bp
@@ -591,8 +599,10 @@ def create_app():
 
 if __name__ == "__main__":
     try:
+        app = create_app()
         app.run(debug=True)
     except Exception as e:
         logger.error(f"Error running app: {str(e)}")
         raise
+
 application = create_app()
