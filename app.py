@@ -19,7 +19,7 @@ from functools import wraps
 from uuid import uuid4
 from werkzeug.security import generate_password_hash
 from mailersend_email import init_email_config
-from pymongo.errors import ConnectionError, ConfigurationError
+from pymongo.errors import ConnectionFailure, ConfigurationError
 
 # Load environment variables
 load_dotenv()
