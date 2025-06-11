@@ -48,12 +48,12 @@ class SignupForm(FlaskForm):
         self.submit.label.text = trans('auth_signup', default='Sign Up', lang=lang)
 
     def validate_username(self, username):
-        mongo = current_app.extensions['mongo'].db
+        mongo = mongo.db
         if mongo.users.find_one({'username': username.data}):
             raise ValidationError(trans('auth_username_taken', default='Username is already taken.'))
 
     def validate_email(self, email):
-        if get_user_by_email(current_app.extensions['mongo'], email.data):
+        if get_user_by_email(mongo, email.data):
             raise ValidationError(trans('auth_email_taken', default='Email is already registered.'))
 
 class SigninForm(FlaskForm):
@@ -113,9 +113,9 @@ def signup():
     session['sid'] = session_id
     
     # Log signup page view
-    log_tool_usage(current_app.extensions['mongo'], 'register', user_id=None, session_id=session_id, action='view_page')
+    log_tool_usage(mongo, 'register', user_id=None, session_id=session_id, action='view_page')
 
-    mongo = current_app.extensions['mongo'].db
+    mongo = mongo.db
 
     if referral_code:
         try:
@@ -151,20 +151,20 @@ def signup():
                     'created_at': datetime.utcnow(),
                     'lang': lang
                 }
-                user = create_user(current_app.extensions['mongo'], user_data)
+                user = create_user(mongo, user_data)
                 logger.info(f"User signed up: {user['username']} with referral code: {user_data.get('referral_code', 'none')}, role={role}, is_admin={is_admin}", extra={'session_id': session_id})
-                log_tool_usage(current_app.extensions['mongo'], 'register', user_id=user['id'], session_id=session_id, action='submit_success')
+                log_tool_usage(mongo, 'register', user_id=user['id'], session_id=session_id, action='submit_success')
                 flash(trans('auth_signup_success', default='Account created successfully! Please sign in.', lang=lang), 'success')
                 return redirect(url_for('auth.signin'))
             else:
                 logger.error(f"Signup form validation failed: {form.errors}", extra={'session_id': session_id, 'username': form.username.data, 'email': form.email.data})
-                log_tool_usage(current_app.extensions['mongo'], 'register', user_id=None, session_id=session_id, action='submit_error', details=f"Validation errors: {form.errors}")
+                log_tool_usage(mongo, 'register', user_id=None, session_id=session_id, action='submit_error', details=f"Validation errors: {form.errors}")
                 flash(trans('auth_form_errors', default='Please correct the errors in the form.', lang=lang), 'danger')
         
         return render_template('signup.html', form=form, lang=lang, referral_code=referral_code, referrer=referrer)
     except Exception as e:
         logger.error(f"Error in signup: {str(e)}", extra={'session_id': session_id, 'username': form.username.data if form.username.data else 'unknown', 'email': form.email.data if form.email.data else 'unknown'})
-        log_tool_usage(current_app.extensions['mongo'], 'register', user_id=None, session_id=session_id, action='error', details=f"Exception: {str(e)}")
+        log_tool_usage(mongo, 'register', user_id=None, session_id=session_id, action='error', details=f"Exception: {str(e)}")
         flash(trans('auth_error', default='An error occurred. Please try again.', lang=lang), 'danger')
         return render_template('signup.html', form=form, lang=lang, referral_code=referral_code, referrer=referrer), 500
 
@@ -179,30 +179,30 @@ def signin():
     session['sid'] = session_id
     
     # Log signin page view
-    log_tool_usage(current_app.extensions['mongo'], 'login', user_id=None, session_id=session_id, action='view_page')
+    log_tool_usage(mongo, 'login', user_id=None, session_id=session_id, action='view_page')
 
     try:
         if request.method == 'POST' and form.validate_on_submit():
-            user = get_user_by_email(current_app.extensions['mongo'], form.email.data)
+            user = get_user_by_email(mongo, form.email.data)
             if user and check_password_hash(user.password_hash, form.password.data):
                 login_user(user)
                 logger.info(f"User signed in: {user.username}", extra={'session_id': session_id})
-                log_tool_usage(current_app.extensions['mongo'], 'login', user_id=user.id, session_id=session_id, action='submit_success')
+                log_tool_usage(mongo, 'login', user_id=user.id, session_id=session_id, action='submit_success')
                 flash(trans('auth_signin_success', default='Signed in successfully!', lang=lang), 'success')
                 return redirect(url_for('index'))
             else:
                 logger.warning(f"Invalid signin attempt for email: {form.email.data}", extra={'session_id': session_id})
-                log_tool_usage(current_app.extensions['mongo'], 'login', user_id=None, session_id=session_id, action='submit_error')
+                log_tool_usage(mongo, 'login', user_id=None, session_id=session_id, action='submit_error')
                 flash(trans('auth_invalid_credentials', default='Invalid email or password.', lang=lang), 'danger')
         elif form.errors:
             logger.error(f"Signin form validation failed: {form.errors}", extra={'session_id': session_id})
-            log_tool_usage(current_app.extensions['mongo'], 'login', user_id=None, session_id=session_id, action='submit_error')
+            log_tool_usage(mongo, 'login', user_id=None, session_id=session_id, action='submit_error')
             flash(trans('auth_form_errors', default='Please correct the errors in the form.', lang=lang), 'danger')
     
         return render_template('signin.html', form=form, lang=lang)
     except Exception as e:
         logger.error(f"Error in signin: {str(e)}", extra={'session_id': session_id})
-        log_tool_usage(current_app.extensions['mongo'], 'login', user_id=None, session_id=session_id, action='error')
+        log_tool_usage(mongo, 'login', user_id=None, session_id=session_id, action='error')
         flash(trans('auth_error', default='An error occurred. Please try again.', lang=lang), 'danger')
         return render_template('signin.html', form=form, lang=lang), 500
 
@@ -215,7 +215,7 @@ def logout():
     session_id = session.get('sid', str(uuid.uuid4()))
     
     # Log logout action
-    log_tool_usage(current_app.extensions['mongo'], 'logout', user_id=user_id, session_id=session_id, action='submit')
+    log_tool_usage(mongo, 'logout', user_id=user_id, session_id=session_id, action='submit')
     
     logout_user()
     logger.info(f"User logged out: {username}", extra={'session_id': session_id})
@@ -231,7 +231,7 @@ def profile():
     
     try:
         if request.method == 'POST' and password_form.validate_on_submit():
-            update_user(current_app.extensions['mongo'], current_user.id, {
+            update_user(mongo, current_user.id, {
                 'password_hash': generate_password_hash(password_form.new_password.data)
             })
             logger.info(f"User changed password: {current_user.username}", extra={'session_id': session_id})
@@ -242,7 +242,7 @@ def profile():
             flash(trans('core_form_errors', default='Please correct the errors in the form.', lang=lang), 'danger')
         
         referral_link = url_for('auth.signup', ref=current_user.referral_code, _external=True)
-        referred_users = get_referrals(current_app.extensions['mongo'], current_user.id)
+        referred_users = get_referrals(mongo, current_user.id)
         referral_count = len(referred_users)
         return render_template('profile.html', lang=lang, referral_link=referral_link, referral_count=referral_count, referred_users=referred_users, password_form=password_form)
     except Exception as e:
