@@ -9,6 +9,7 @@ import uuid
 from translations import trans
 from pymongo.errors import DuplicateKeyError
 from extensions import mongo  # Use mongo from extensions
+from models import log_tool_usage  # Import log_tool_usage
 
 bill_bp = Blueprint(
     'bill',
