@@ -3,12 +3,12 @@ from apscheduler.jobstores.mongodb import MongoDBJobStore
 from datetime import datetime, date, timedelta
 from flask import current_app
 from mailersend_email import send_email, trans, EMAIL_CONFIG
-import atexit
 
-def update_overdue_status(mongo):
+def update_overdue_status():
     """Update status to overdue for past-due bills."""
     with current_app.app_context():
         try:
+            mongo = current_app.extensions['mongo']
             db = mongo.db
             bills_collection = db.bills
             today = date.today()
@@ -28,10 +28,11 @@ def update_overdue_status(mongo):
         except Exception as e:
             current_app.logger.exception(f"Error in update_overdue_status: {str(e)}")
 
-def send_bill_reminders(mongo):
+def send_bill_reminders():
     """Send reminders for upcoming and overdue bills."""
     with current_app.app_context():
         try:
+            mongo = current_app.extensions['mongo']
             db = mongo.db
             bills_collection = db.bills
             bill_reminders_collection = db.bill_reminders
@@ -106,7 +107,7 @@ def init_scheduler(app, mongo):
             }
             scheduler = BackgroundScheduler(jobstores=jobstores)
             scheduler.add_job(
-                func=lambda: update_overdue_status(mongo),
+                func=update_overdue_status,
                 trigger='interval',
                 days=1,
                 id='overdue_status',
@@ -114,7 +115,7 @@ def init_scheduler(app, mongo):
                 replace_existing=True
             )
             scheduler.add_job(
-                func=lambda: send_bill_reminders(mongo),
+                func=send_bill_reminders,
                 trigger='interval',
                 days=1,
                 id='bill_reminders',
@@ -124,10 +125,6 @@ def init_scheduler(app, mongo):
             scheduler.start()
             app.config['SCHEDULER'] = scheduler
             app.logger.info("Bill reminder and overdue status scheduler started successfully")
-            # Register shutdown to ensure clean exit
-            def shutdown_scheduler():
-                scheduler.shutdown()
-            atexit.register(shutdown_scheduler)
             return scheduler
         except Exception as e:
             app.logger.error(f"Failed to initialize scheduler: {str(e)}", exc_info=True)
