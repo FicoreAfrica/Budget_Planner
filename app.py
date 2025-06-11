@@ -87,7 +87,7 @@ def setup_session(app):
         logger.error(f"Failed to configure session: {str(e)}", exc_info=True)
         raise
 
-def initialize_database(app, mongo):
+def initialize_database(app):
     """Initialize MongoDB indexes and courses data."""
     max_retries = 3
     for attempt in range(max_retries):
@@ -244,7 +244,7 @@ def create_app():
 
     # Initialize database and admin user within a single app context
     with app.app_context():
-        initialize_database(app, mongo)
+        initialize_database(app)
         logger.info("MongoDB collections initialized")
 
         # Check and create admin user
@@ -388,7 +388,7 @@ def create_app():
         lang = session.get('lang', 'en')
         logger.info("Serving index page")
         try:
-            courses = current_app.config.get('COURSES', SAMPLE_COURSES)
+            courses = app.config.get('COURSES', SAMPLE_COURSES)
             logger.info(f"Retrieved {len(courses)} courses")
             return render_template(
                 'index.html',
@@ -593,7 +593,7 @@ def create_app():
             return render_template('index.html', t=translate, lang=lang, feedback_options=tool_options), 500
 
     logger.info("App creation completed")
-    return app, mongo
+    return app
 
 if __name__ == "__main__":
     try:
