@@ -7,6 +7,7 @@ import atexit
 from flask import Flask, jsonify, render_template, request, redirect, url_for, flash, make_response, has_request_context, g, send_from_directory, session
 from flask_wtf.csrf import CSRFProtect, generate_csrf, CSRFError
 from flask_login import LoginManager, current_user
+from flask_compress import Compress
 from dotenv import load_dotenv
 import certifi
 from pymongo import MongoClient
@@ -14,7 +15,7 @@ from extensions import mongo, login_manager, flask_session
 from blueprints.auth import auth_bp
 from translations import trans
 from scheduler_setup import init_scheduler
-from models import create_user, get_user_by_email, log_tool_usage
+from models import create_user, get_user_by_email
 import json
 from functools import wraps
 from uuid import uuid4
@@ -211,51 +212,45 @@ def initialize_database(app):
         # Create indexes only if they don't exist
         existing_indexes = db.users.index_information()
         if 'email_1' not in existing_indexes:
-            db.users.create_index('email')
+            db.users.create_index('email', unique=True)
         if 'referral_code_1' not in existing_indexes:
-            db.users.create_index('email')
+            db.users.create_index('referral_code', unique=True)
         
         existing_indexes = db.courses.index_information()
         if 'id_1' not in existing_indexes:
-            db.courses.create_index('id')
+            db.courses.create_index('id', unique=True)
         
         existing_indexes = db.content_metadata.index_information()
         if 'course_id_1_lesson_id_1' not in existing_indexes:
-            db.content_metadata.create_index([('course_id', 1), ('lesson_id', 1)])
+            db.content_metadata.create_index([('course_id', 1), ('lesson_id', 1)], unique=True)
         
-        for collection in ['financial_health', 'bills', 'net_worth', 'emergency_funds']:
+        for collection in ['financial_health', 'budgets', 'bills', 'net_worth', 'emergency_funds']:
             existing_indexes = db[collection].index_information()
             if 'session_id_1' not in existing_indexes:
                 db[collection].create_index('session_id')
             if 'user_id_1' not in existing_indexes:
                 db[collection].create_index('user_id')
         
-        existing_indexes = db.budgets.index_information()
-        if 'session_id_1' not in existing_indexes:
-            db.budgets.create_index('session_id')
-        if 'user_id_1' not in existing_indexes:
-            db.budgets.create_index('user_id')
-        
         existing_indexes = db.learning_progress.index_information()
         if 'user_id_1_course_id_1' not in existing_indexes:
-            db.learning_progress.create_index([('user_id', 1), ('course_id', 1)])
+            db.learning_progress.create_index([('user_id', 1), ('course_id', 1)], unique=True)
         if 'session_id_1_course_id_1' not in existing_indexes:
-            db.learning_progress.create_index([('session_id', 1), ('course_id', 1)])
+            db.learning_progress.create_index([('session_id', 1), ('course_id', 1)], unique=True)
         if 'session_id_1' not in existing_indexes:
             db.learning_progress.create_index('session_id')
         if 'user_id_1' not in existing_indexes:
             db.learning_progress.create_index('user_id')
         
-        for collection in ['quiz_results', 'feedback', 'tool_usage_ms']:
-            existing_indexes = db.learning.index_information()
+        for collection in ['quiz_results', 'feedback', 'tool_usage']:
+            existing_indexes = db[collection].index_information()
             if 'session_id_1' not in existing_indexes:
-                db.learning.create_index('session_id')
+                db[collection].create_index('session_id')
             if 'user_id_1' not in existing_indexes:
-                db.error.create_index('user_id')
+                db[collection].create_index('user_id')
         
-        existing_logs = db.log.index_information()
-        if 'tool_logs_1' not in existing_logs:
-            db.logs.create_index('tool_logs')
+        existing_indexes = db.tool_usage.index_information()
+        if 'tool_name_1' not in existing_indexes:
+            db.tool_usage.create_index('tool_name')
         
         # Add indexes for bills collection used by scheduler
         existing_indexes = db.bills.index_information()
@@ -266,17 +261,17 @@ def initialize_database(app):
         if 'due_date_1' not in existing_indexes:
             db.bills.create_index('due_date')
         
-        logger.info("MongoDB created or verified successfully")
+        logger.info("MongoDB indexes created or verified")
 
         # Initialize courses
         courses_collection = db.courses
-        if courses_collection.count() == 0:
-            for course in COURSES:
+        if courses_collection.count_documents({}) == 0:
+            for course in SAMPLE_COURSES:
                 courses_collection.insert_one(course)
             logger.info("Initialized courses in MongoDB")
-        app.config['COURSES'] = list(courses_collection.find({}, {'_id': ''}))
+        app.config['COURSES'] = list(courses_collection.find({}, {'_id': 0}))
     except Exception as e:
-        logger.error(f"Failed to initialize database indexes/courses/: {str(e)}")
+        logger.error(f"Failed to initialize database indexes/courses: {str(e)}", exc_info=True)
         raise
 
 # Constants
@@ -323,10 +318,15 @@ def create_app():
     logger.info("Starting app creation")
     setup_logging(app)
     
+    # Initialize Flask-Compress
+    compress = Compress()
+    compress.init_app(app)
+    logger.info("Flask-Compress initialized successfully")
+    
     app.config['MONGO_URI'] = os.environ.get('MONGODB_URI')
     if not app.config['MONGO_URI']:
         logger.error("MONGODB_URI environment variable not set")
-        raise RuntimeError("MongoDB_URI is required")
+        raise RuntimeError("MONGODB_URI is required")
     
     uri = app.config['MONGO_URI']
     obfuscated_uri = f"{uri[:10]}...{uri[-10:]}" if len(uri) > 20 else "too_short"
@@ -469,13 +469,14 @@ def create_app():
         **{k: v for k, v in kwargs.items() if k != 'lang'}
     )
 
+# Template filters
 @app.template_filter('safe_nav')
-    def safe_nav(value):
-        try:
-            return value
-        except Exception as e:
-            logger.error(f"Navigation rendering error: {str(e)}", exc_info=True)
-            return ''
+def safe_nav(value):
+    try:
+        return value
+    except Exception as e:
+        logger.error(f"Navigation rendering error: {str(e)}", exc_info=True)
+        return ''
 
 @app.template_filter('format_number')
 def format_number(value):
@@ -544,7 +545,7 @@ def inject_translations():
         'WAITLIST_FORM_URL': os.environ.get('WAITLIST_FORM_URL', '#'),
         'CONSULTANCY_FORM_URL': os.environ.get('CONSULTANCY_FORM_URL', '#'),
         'current_lang': lang,
-        'current_user': current_user
+        'current_user': current_user if has_request_context() else None,
         'csrf_token': generate_csrf
     }
 
@@ -628,7 +629,7 @@ def general_dashboard():
         filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session.get('sid', 'no-session-id')}
 
         fh_records = get_financial_health(mongo, filter_kwargs)
-        fh_records = [to_dict_fh(fh) for fh in fh_records]
+        fh_records = [to_dict_financial_health(fh) for fh in fh_records]
         data['financial_health'] = fh_records[0] if fh_records else {'score': None, 'status': None}
 
         budget_records = get_budgets(mongo, filter_kwargs)
@@ -636,13 +637,13 @@ def general_dashboard():
         data['budget'] = budget_records[0] if budget_records else {'surplus_deficit': None, 'savings_goal': None}
 
         bills = get_bills(mongo, filter_kwargs)
-        bills = [to_dict_bill(b) for bill in bills]
+        bills = [to_dict_bill(b) for b in bills]
         total_amount = sum(bill['amount'] for bill in bills if bill['amount'] is not None) if bills else 0
         unpaid_amount = sum(bill['amount'] for bill in bills if bill['amount'] is not None and bill['status'].lower() != 'paid') if bills else 0
         data['bills'] = {'bills': bills, 'total_amount': total_amount, 'unpaid_amount': unpaid_amount}
 
         nw_records = get_net_worth(mongo, filter_kwargs)
-        nw_records = [to_dict_net_worth(nw) for nw in nwn_records]
+        nw_records = [to_dict_net_worth(nw) for nw in nw_records]
         data['net_worth'] = nw_records[0] if nw_records else {'net_worth': None, 'total_assets': None}
 
         ef_records = get_emergency_funds(mongo, filter_kwargs)
@@ -653,7 +654,7 @@ def general_dashboard():
         data['learning_progress'] = {lp['course_id']: to_dict_learning_progress(lp) for lp in lp_records} if lp_records else {}
 
         quiz_records = get_quiz_results(mongo, filter_kwargs)
-        quiz_records = [to_dict_quiz_result(qr) for qr in qr_records]
+        quiz_records = [to_dict_quiz_result(qr) for qr in quiz_records]
         data['quiz'] = quiz_records[0] if quiz_records else {'personality': None, 'score': None}
 
         logger.info(f"Retrieved data for session {session.get('sid', 'no-session-id')}")
@@ -666,7 +667,7 @@ def general_dashboard():
             'budget': {'surplus_deficit': None, 'savings_goal': None},
             'bills': {'bills': [], 'total_amount': 0, 'unpaid_amount': 0},
             'net_worth': {'net_worth': None, 'total_assets': None},
-            'emergency_fund': {'target_amount': None}, 'savings_gap': None},
+            'emergency_fund': {'target_amount': None, 'savings_gap': None},
             'learning_progress': {},
             'quiz': {'personality': None, 'score': None}
         }
@@ -706,7 +707,7 @@ def health():
     except Exception as e:
         logger.error(f"Health check failed: {str(e)}", exc_info=True)
         status["status"] = "unhealthy"
-        status["error"] = str(e)
+        status["details"] = str(e)
         return jsonify(status), 500
 
 @app.errorhandler(500)
@@ -717,7 +718,7 @@ def handle_internal_error(error):
 
 @app.errorhandler(CSRFError)
 def handle_csrf_error(error):
-    lang = session.get('lang', 'en')
+    lang = session.get('lang', 'en') if session is not None else 'en'
     logger.error(f"CSRF error: {str(error)}")
     return jsonify({'error': 'CSRF token invalid'}), 400
 
@@ -744,7 +745,7 @@ def feedback():
     ]
     if request.method == 'GET':
         logger.info("Rendering feedback template")
-        return render_template('index.html', t=translate, lang=lang, feedback_options=tool_options)
+        return render_template('index.html', t=translate, lang=lang, tool_options=tool_options)
     try:
         from models import create_feedback
         tool_name = request.form.get('tool_name')
@@ -776,4 +777,12 @@ def feedback():
 logger.info("App creation completed")
 return app
 
-if __name__
+if __name__ == "__main__":
+    try:
+        app = create_app()
+        app.run(debug=True)
+    except Exception as e:
+        logger.error(f"Error running app: {str(e)}")
+        raise
+
+application = create_app()
