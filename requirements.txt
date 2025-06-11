@@ -24,3 +24,4 @@ flask_pymongo==2.3.0
 certifi==2024.8.30
 flask-pymongo==2.3.0
 pymongo==4.6.3
+psutil==6.0.0
