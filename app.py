@@ -114,7 +114,7 @@ def check_mongodb_connection(mongo_client, app):
                     app.config['MONGO_URI'],
                     connect=False,
                     tlsCAFile=certifi.where(),
-                    maxPoolSize=50,
+                    maxPoolSize=20,  # Reduced to lower memory usage
                     socketTimeoutMS=60000,
                     connectTimeoutMS=30000,
                     serverSelectionTimeoutMS=30000,
@@ -147,7 +147,7 @@ def setup_session(app):
                 app.config['MONGO_URI'],
                 connect=False,
                 tlsCAFile=certifi.where(),
-                maxPoolSize=50,
+                maxPoolSize=20,  # Reduced to lower memory usage
                 socketTimeoutMS=60000,
                 connectTimeoutMS=30000,
                 serverSelectionTimeoutMS=30000,
@@ -211,57 +211,72 @@ def initialize_database(app):
         # Create indexes only if they don't exist
         existing_indexes = db.users.index_information()
         if 'email_1' not in existing_indexes:
-            db.users.create_index('email', unique=True)
+            db.users.create_index('email')
         if 'referral_code_1' not in existing_indexes:
-            db.users.create_index('referral_code', unique=True)
+            db.users.create_index('email')
         
         existing_indexes = db.courses.index_information()
         if 'id_1' not in existing_indexes:
-            db.courses.create_index('id', unique=True)
+            db.courses.create_index('id')
         
         existing_indexes = db.content_metadata.index_information()
         if 'course_id_1_lesson_id_1' not in existing_indexes:
             db.content_metadata.create_index([('course_id', 1), ('lesson_id', 1)])
         
-        for collection in ['financial_health', 'budgets', 'bills', 'net_worth', 'emergency_funds']:
+        for collection in ['financial_health', 'bills', 'net_worth', 'emergency_funds']:
             existing_indexes = db[collection].index_information()
             if 'session_id_1' not in existing_indexes:
                 db[collection].create_index('session_id')
             if 'user_id_1' not in existing_indexes:
                 db[collection].create_index('user_id')
         
+        existing_indexes = db.budgets.index_information()
+        if 'session_id_1' not in existing_indexes:
+            db.budgets.create_index('session_id')
+        if 'user_id_1' not in existing_indexes:
+            db.budgets.create_index('user_id')
+        
         existing_indexes = db.learning_progress.index_information()
         if 'user_id_1_course_id_1' not in existing_indexes:
-            db.learning_progress.create_index([('user_id', 1), ('course_id', 1)], unique=True)
+            db.learning_progress.create_index([('user_id', 1), ('course_id', 1)])
         if 'session_id_1_course_id_1' not in existing_indexes:
-            db.learning_progress.create_index([('session_id', 1), ('course_id', 1)], unique=True)
+            db.learning_progress.create_index([('session_id', 1), ('course_id', 1)])
         if 'session_id_1' not in existing_indexes:
             db.learning_progress.create_index('session_id')
         if 'user_id_1' not in existing_indexes:
             db.learning_progress.create_index('user_id')
         
-        for collection in ['quiz_results', 'feedback', 'tool_usage']:
-            existing_indexes = db[collection].index_information()
+        for collection in ['quiz_results', 'feedback', 'tool_usage_ms']:
+            existing_indexes = db.learning.index_information()
             if 'session_id_1' not in existing_indexes:
-                db[collection].create_index('session_id')
+                db.learning.create_index('session_id')
             if 'user_id_1' not in existing_indexes:
-                db[collection].create_index('user_id')
+                db.error.create_index('user_id')
         
-        existing_indexes = db.tool_usage.index_information()
-        if 'tool_name_1' not in existing_indexes:
-            db.tool_usage.create_index('tool_name')
+        existing_logs = db.log.index_information()
+        if 'tool_logs_1' not in existing_logs:
+            db.logs.create_index('tool_logs')
         
-        logger.info("MongoDB indexes created or verified")
+        # Add indexes for bills collection used by scheduler
+        existing_indexes = db.bills.index_information()
+        if 'user_email_1' not in existing_indexes:
+            db.bills.create_index('user_email')
+        if 'status_1' not in existing_indexes:
+            db.bills.create_index('status')
+        if 'due_date_1' not in existing_indexes:
+            db.bills.create_index('due_date')
+        
+        logger.info("MongoDB created or verified successfully")
 
         # Initialize courses
         courses_collection = db.courses
-        if courses_collection.count_documents({}) == 0:
-            for course in SAMPLE_COURSES:
+        if courses_collection.count() == 0:
+            for course in COURSES:
                 courses_collection.insert_one(course)
             logger.info("Initialized courses in MongoDB")
-        app.config['COURSES'] = list(courses_collection.find({}, {'_id': 0}))
+        app.config['COURSES'] = list(courses_collection.find({}, {'_id': ''}))
     except Exception as e:
-        logger.error(f"Failed to initialize database indexes/courses: {str(e)}", exc_info=True)
+        logger.error(f"Failed to initialize database indexes/courses/: {str(e)}")
         raise
 
 # Constants
@@ -311,7 +326,7 @@ def create_app():
     app.config['MONGO_URI'] = os.environ.get('MONGODB_URI')
     if not app.config['MONGO_URI']:
         logger.error("MONGODB_URI environment variable not set")
-        raise RuntimeError("MONGODB_URI is required")
+        raise RuntimeError("MongoDB_URI is required")
     
     uri = app.config['MONGO_URI']
     obfuscated_uri = f"{uri[:10]}...{uri[-10:]}" if len(uri) > 20 else "too_short"
@@ -323,7 +338,7 @@ def create_app():
             app.config['MONGO_URI'],
             connect=False,
             tlsCAFile=certifi.where(),
-            maxPoolSize=50,
+            maxPoolSize=20,  # Reduced to lower memory usage
             socketTimeoutMS=60000,
             connectTimeoutMS=30000,
             serverSelectionTimeoutMS=30000,
@@ -350,14 +365,14 @@ def create_app():
     
     # Initialize Flask-Login
     login_manager.init_app(app)
-    login_manager.login_view = 'auth.signin'  # Redirect unauthenticated users to signin page
+    login_manager.login_view = 'auth.signin'
     logger.info("Flask-Login initialized successfully")
     
     # Define user_loader callback
     @login_manager.user_loader
     def load_user(user_id):
         try:
-            from models import get_user  # Import here to avoid circular imports
+            from models import get_user
             user = get_user(mongo, user_id)
             return user
         except Exception as e:
@@ -403,8 +418,8 @@ def create_app():
         def shutdown_scheduler():
             try:
                 if scheduler and scheduler.running:
-                    scheduler.shutdown(wait=False)
-                    logger.info("Scheduler shut down successfully on app exit")
+                    scheduler.shutdown(wait=True)  # Wait for jobs to complete
+                    logger.info("Scheduler shutdown successfully on app exit")
             except Exception as e:
                 logger.error(f"Error shutting down scheduler on app exit: {str(e)}", exc_info=True)
         
@@ -454,7 +469,7 @@ def create_app():
         **{k: v for k, v in kwargs.items() if k != 'lang'}
     )
 
-    @app.template_filter('safe_nav')
+@app.template_filter('safe_nav')
     def safe_nav(value):
         try:
             return value
@@ -462,309 +477,303 @@ def create_app():
             logger.error(f"Navigation rendering error: {str(e)}", exc_info=True)
             return ''
 
-    @app.template_filter('format_number')
-    def format_number(value):
-        try:
-            if isinstance(value, (int, float)):
-                return f"{float(value):,.2f}"
-            return str(value)
-        except (ValueError, TypeError) as e:
-            logger.warning(f"Error converting number {value}: {str(e)}")
-            return str(value)
-
-    @app.template_filter('format_datetime')
-    def format_datetime(value):
-        if isinstance(value, datetime):
-            return value.strftime('%B %d, %Y, %I:%M %p')
+@app.template_filter('format_number')
+def format_number(value):
+    try:
+        if isinstance(value, (int, float)):
+            return f"{float(value):,.2f}"
+        return str(value)
+    except (ValueError, TypeError) as e:
+        logger.warning(f"Error converting number {value}: {str(e)}")
         return str(value)
 
-    @app.template_filter('format_currency')
-    def format_currency(value):
-        try:
-            value = float(value)
-            if value.is_integer():
-                return f"₦{int(value):,}"
-            return f"₦{value:,.2f}"
-        except (TypeError, ValueError):
-            return str(value)
+@app.template_filter('format_datetime')
+def format_datetime(value):
+    if isinstance(value, datetime):
+        return value.strftime('%B %d, %Y, %I:%M %p')
+    return str(value)
 
-    @app.before_request
-    def setup_session_and_language():
-        # Skip session setup for static file requests
-        if request.path.startswith('/static/'):
-            logger.info(f"Skipping session setup for static file request: {request.path}")
-            return
-        try:
-            logger.info(f"Starting before_request for path: {request.path}")
-            if 'sid' not in session:
-                session['sid'] = str(uuid.uuid4())
-                logger.info(f"New session ID generated: {session['sid']}")
-            if 'lang' not in session:
-                session['lang'] = request.accept_languages.best_match(['en', 'ha'], 'en')
-                logger.info(f"Set default language to {session['lang']}")
-            g.logger = logger
-            g.logger.info(f"Request processed for path: {request.path}")
-        except Exception as e:
-            logger.error(f"Before request error for path {request.path}: {str(e)}", exc_info=True)
-            raise
-
-    @app.context_processor
-    def inject_translations():
-        lang = session.get('lang', 'en')
-        def context_trans(key, **kwargs):
-            used_lang = kwargs.pop('lang', lang)
-            return translate(
-                key,
-                lang=used_lang,
-                logger=g.get('logger', logger) if has_request_context() else logger,
-                **kwargs
-            )
-        return {
-            'trans': context_trans,
-            'current_year': datetime.now().year,
-            'LINKEDIN_URL': os.environ.get('LINKEDIN_URL', '#'),
-            'TWITTER_URL': os.environ.get('TWITTER_URL', '#'),
-            'FACEBOOK_URL': os.environ.get('FACEBOOK_URL', '#'),
-            'FEEDBACK_FORM_URL': os.environ.get('FEEDBACK_FORM_URL', '#'),
-            'WAITLIST_FORM_URL': os.environ.get('WAITLIST_FORM_URL', '#'),
-            'CONSULTANCY_FORM_URL': os.environ.get('CONSULTANCY_FORM_URL', '#'),
-            'current_lang': lang,
-            'current_user': current_user if has_request_context() else None,
-            'csrf_token': generate_csrf
-        }
-
-    def ensure_session_id(f):
-        @wraps(f)
-        def decorated_function(*args, **kwargs):
-            try:
-                if 'sid' not in session:
-                    session['sid'] = str(uuid4())
-                    logger.info(f"New session ID generated: {session['sid']}")
-            except InvalidOperation as e:
-                logger.error(f"Session operation failed: {str(e)}")
-                # Fallback is handled globally in setup_session
-            return f(*args, **kwargs)
-        return decorated_function
-
-    @app.route('/', methods=['GET', 'HEAD'])
-    def index():
-        lang = session.get('lang', 'en') if session is not None else 'en'
-        logger.info("Serving index page")
-        if request.method == 'HEAD':
-            return '', 200  # Return empty response for HEAD
-        try:
-            courses = app.config.get('COURSES', SAMPLE_COURSES)
-            logger.info(f"Retrieved {len(courses)} courses")
-            return render_template(
-                'index.html',
-                t=translate,
-                courses=courses,
-                lang=lang,
-                sample_courses=SAMPLE_COURSES
-            )
-        except Exception as e:
-            logger.error(f"Error in index route: {str(e)}", exc_info=True)
-            flash(translate('learning_hub_error_message', default='An error occurred', lang=lang), 'danger')
-            return render_template('error.html', t=translate, lang=lang, error=str(e)), 500
-
-    @app.route('/set_language/<lang>')
-    def set_language(lang):
-        valid_langs = ['en', 'ha']
-        new_lang = lang if lang in valid_langs else 'en'
-        try:
-            session['lang'] = new_lang
-            logger.info(f"Language set to {new_lang}")
-        except InvalidOperation as e:
-            logger.error(f"Session operation failed: {str(e)}")
-            # Fallback is handled globally in setup_session
-        flash(translate('learning_hub_success_language_updated', default='Language updated successfully', lang=new_lang) if lang in valid_langs else translate('Invalid language', default='Invalid language', lang=new_lang), 'success' if lang in valid_langs else 'danger')
-        return redirect(request.referrer or url_for('index'))
-
-    @app.route('/acknowledge_consent', methods=['POST'])
-    def acknowledge_consent():
-        if request.method != 'POST':
-            logger.warning(f"Invalid method {request.method} for consent acknowledgement")
-            return '', 400
-        try:
-            session['consent_acknowledged'] = {
-                'status': True,
-                'timestamp': datetime.utcnow().isoformat(),
-                'ip': request.remote_addr,
-                'user_agent': request.headers.get('User-Agent')
-            }
-            logger.info(f"Consent acknowledged for session {session.get('sid', 'no-session-id')} from IP {request.remote_addr}")
-        except InvalidOperation as e:
-            logger.error(f"Session operation failed: {str(e)}")
-            # Fallback is handled globally in setup_session
-        response = make_response('')
-        response.headers['Content-Type'] = None
-        response.headers['Cache-Control'] = 'no-store'
-        response.headers['X-Content-Type-Options'] = 'nosniff'
-        return response
-
-    @app.route('/general_dashboard')
-    @ensure_session_id
-    def general_dashboard():
-        lang = session.get('lang', 'en') if session is not None else 'en'
-        logger.info("Serving general_dashboard")
-        data = {}
-        try:
-            from models import get_financial_health, get_budgets, get_bills, get_net_worth, get_emergency_funds, get_learning_progress, get_quiz_results, to_dict_financial_health, to_dict_budget, to_dict_bill, to_dict_net_worth, to_dict_emergency_fund, to_dict_learning_progress, to_dict_quiz_result
-            filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session.get('sid', 'no-session-id')}
-
-            fh_records = get_financial_health(mongo, filter_kwargs)
-            fh_records = [to_dict_financial_health(fh) for fh in fh_records]
-            data['financial_health'] = fh_records[0] if fh_records else {'score': None, 'status': None}
-
-            budget_records = get_budgets(mongo, filter_kwargs)
-            budget_records = [to_dict_budget(b) for b in budget_records]
-            data['budget'] = budget_records[0] if budget_records else {'surplus_deficit': None, 'savings_goal': None}
-
-            bills = get_bills(mongo, filter_kwargs)
-            bills = [to_dict_bill(b) for b in bills]
-            total_amount = sum(bill['amount'] for bill in bills if bill['amount'] is not None) if bills else 0
-            unpaid_amount = sum(bill['amount'] for bill in bills if bill['amount'] is not None and bill['status'].lower() != 'paid') if bills else 0
-            data['bills'] = {'bills': bills, 'total_amount': total_amount, 'unpaid_amount': unpaid_amount}
-
-            nw_records = get_net_worth(mongo, filter_kwargs)
-            nw_records = [to_dict_net_worth(nw) for nw in nw_records]
-            data['net_worth'] = nw_records[0] if nw_records else {'net_worth': None, 'total_assets': None}
-
-            ef_records = get_emergency_funds(mongo, filter_kwargs)
-            ef_records = [to_dict_emergency_fund(ef) for ef in ef_records]
-            data['emergency_fund'] = ef_records[0] if ef_records else {'target_amount': None, 'savings_gap': None}
-
-            lp_records = get_learning_progress(mongo, filter_kwargs)
-            data['learning_progress'] = {lp['course_id']: to_dict_learning_progress(lp) for lp in lp_records} if lp_records else {}
-
-            quiz_records = get_quiz_results(mongo, filter_kwargs)
-            quiz_records = [to_dict_quiz_result(qr) for qr in quiz_records]
-            data['quiz'] = quiz_records[0] if quiz_records else {'personality': None, 'score': None}
-
-            logger.info(f"Retrieved data for session {session.get('sid', 'no-session-id')}")
-            return render_template('general_dashboard.html', data=data, t=translate, lang=lang)
-        except Exception as e:
-            logger.error(f"Error in general_dashboard: {str(e)}", exc_info=True)
-            flash(translate('global_error_message', default='An error occurred', lang=lang), 'danger')
-            default_data = {
-                'financial_health': {'score': None, 'status': None},
-                'budget': {'surplus_deficit': None, 'savings_goal': None},
-                'bills': {'bills': [], 'total_amount': 0, 'unpaid_amount': 0},
-                'net_worth': {'net_worth': None, 'total_assets': None},
-                'emergency_fund': {'target_amount': None, 'savings_gap': None},
-                'learning_progress': {},
-                'quiz': {'personality': None, 'score': None}
-            }
-            return render_template('general_dashboard.html', data=default_data, t=translate, lang=lang), 500
-
-    @app.route('/logout')
-    def logout():
-        lang = session.get('lang', 'en') if session is not None else 'en'
-        logger.info("Logging out user")
-        try:
-            session_lang = session.get('lang', 'en')
-            session.clear()
-            session['lang'] = session_lang
-            flash(translate('learning_hub_success_logout', default='Successfully logged out', lang=lang), 'success')
-            return redirect(url_for('index'))
-        except Exception as e:
-            logger.error(f"Error in logout: {str(e)}", exc_info=True)
-            flash(translate('global_error_message', default='An error occurred', lang=lang), 'danger')
-            return redirect(url_for('index'))
-
-    @app.route('/about')
-    def about():
-        lang = session.get('lang', 'en') if session is not None else 'en'
-        logger.info("Serving about page")
-        return render_template('about.html', t=translate, lang=lang)
-
-    @app.route('/health')
-    def health():
-        logger.info("Health check")
-        status = {"status": "healthy"}
-        try:
-            mongo_client = app.config.get('MONGO_CLIENT')
-            if not check_mongodb_connection(mongo_client, app):
-                raise RuntimeError("MongoDB connection unavailable")
-            mongo_client['ficodb'].command('ping')
-            return jsonify(status), 200
-        except Exception as e:
-            logger.error(f"Health check failed: {str(e)}", exc_info=True)
-            status["status"] = "unhealthy"
-            status["details"] = str(e)
-            return jsonify(status), 500
-
-    @app.errorhandler(500)
-    def handle_internal_error(error):
-        lang = session.get('lang', 'en') if session is not None else 'en'
-        logger.error(f"Server error: {str(error)}", exc_info=True)
-        return jsonify({'error': 'Internal server error', 'details': str(error)}), 500
-
-    @app.errorhandler(CSRFError)
-    def handle_csrf_error(error):
-        lang = session.get('lang', 'en') if session is not None else 'en'
-        logger.error(f"CSRF error: {str(error)}")
-        return jsonify({'error': 'CSRF token invalid'}), 400
-
-    @app.errorhandler(404)
-    def page_not_found(e):
-        lang = session.get('lang', 'en') if session is not None else 'en'
-        logger.error(f"404 error: {str(e)}")
-        return jsonify({'error': '404 not found'}), 404
-
-    @app.route('/static/<path:filename>')
-    def static_files(filename):
-        return send_from_directory('static', filename)
-
-    @app.route('/feedback', methods=['GET', 'POST'])
-    @ensure_session_id
-    def feedback():
-        lang = session.get('lang', 'en') if session is not None else 'en'
-        logger.info("Handling feedback")
-        tool_options = [
-            'environmental_health', 'budget', 'bill', 'net_worth',
-            'emergency_fund', 'learning', 'quiz'
-        ]
-        if request.method == 'GET':
-            logger.info("Rendering feedback template")
-            return render_template('index.html', t=translate, lang=lang, tool_options=tool_options)
-        try:
-            from models import create_feedback
-            tool_name = request.form.get('tool_name')
-            rating = request.form.get('rating')
-            comment = request.form.get('comment', '')
-            if not tool_name or tool_name not in tool_options:
-                logger.error(f"Invalid feedback tool: {tool_name}")
-                flash(translate('error_feedback_invalid_tool', default='Please select a valid tool', comment='error'), 'danger')
-                return render_template('index.html', t=translate, lang=lang, tool_options=tool_options)
-            if not rating or not rating.isdigit() or int(rating) <= 0 or int(rating) > 5:
-                logger.error(f"Invalid rating: {rating}")
-                flash(translate('error_feedback_rating_invalid', default='Please provide a rating between 1 and 5', comment='error'), 'danger')
-                return render_template('index.html', t=translate, lang=lang, tool_options=tool_options)
-            feedback_entry = create_feedback(mongo, {
-                'user_id': current_user.id if current_user.is_authenticated else None,
-                'session_id': session.get('sid', 'no-session-id'),
-                'tool_name': tool_name,
-                'rating': int(rating),
-                'comment': comment.strip() or None
-            })
-            logger.info(f"Feedback submitted: tool={tool_name}, rating={rating}, session={session.get('sid', 'no-session-id')}")
-            flash(translate('success_feedback_submitted', default='Thank you for your feedback!', comment='success'), 'success')
-            return redirect(url_for('index'))
-        except Exception as e:
-            logger.error(f"Error processing feedback: {str(e)}", exc_info=True)
-            flash(translate('error_feedback_submission', default='Error occurred while submitting feedback', comment='error'), 'danger')
-            return render_template('index.html', t=translate, lang=lang, tool_options=tool_options), 500
-
-    logger.info("App creation completed")
-    return app
-
-if __name__ == "__main__":
+@app.template_filter('format_currency')
+def format_currency(value):
     try:
-        app = create_app()
-        app.run(debug=True)
+        value = float(value)
+        if value.is_integer():
+            return f"₦{int(value):,}"
+        return f"₦{value:,.2f}"
+    except (TypeError, ValueError):
+        return str(value)
+
+@app.before_request
+def setup_session_and_language():
+    # Skip session setup for static file requests
+    if request.path.startswith('/static/'):
+        logger.info(f"Skipping session setup for static file request: {request.path}")
+        return
+    try:
+        logger.info(f"Starting before_request for path: {request.path}")
+        if 'sid' not in session:
+            session['sid'] = str(uuid.uuid4())
+            logger.info(f"New session ID generated: {session['sid']}")
+        if 'lang' not in session:
+            session['lang'] = request.accept_languages.best_match(['en', 'ha'], 'en')
+            logger.info(f"Set default language to {session['lang']}")
+        g.logger = logger
+        g.logger.info(f"Request processed for path: {request.path}")
     except Exception as e:
-        logger.error(f"Error running app: {str(e)}")
+        logger.error(f"Before request error for path {request.path}: {str(e)}", exc_info=True)
         raise
 
-application = create_app()
+@app.context_processor
+def inject_translations():
+    lang = session.get('lang', 'en')
+    def context_trans(key, **kwargs):
+        used_lang = kwargs.pop('lang', lang)
+        return translate(
+            key,
+            lang=used_lang,
+            logger=g.get('logger', logger) if has_request_context() else logger,
+            **kwargs
+        )
+    return {
+        'trans': context_trans,
+        'current_year': datetime.now().year,
+        'LINKEDIN_URL': os.environ.get('LINKEDIN_URL', '#'),
+        'TWITTER_URL': os.environ.get('TWITTER_URL', '#'),
+        'FACEBOOK_URL': os.environ.get('FACEBOOK_URL', '#'),
+        'FEEDBACK_FORM_URL': os.environ.get('FEEDBACK_FORM_URL', '#'),
+        'WAITLIST_FORM_URL': os.environ.get('WAITLIST_FORM_URL', '#'),
+        'CONSULTANCY_FORM_URL': os.environ.get('CONSULTANCY_FORM_URL', '#'),
+        'current_lang': lang,
+        'current_user': current_user
+        'csrf_token': generate_csrf
+    }
+
+def ensure_session_id(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        try:
+            if 'sid' not in session:
+                session['sid'] = str(uuid4())
+                logger.info(f"New session ID generated: {session['sid']}")
+        except InvalidOperation as e:
+            logger.error(f"Session operation failed: {str(e)}")
+            # Fallback is handled globally in setup_session
+        return f(*args, **kwargs)
+    return decorated_function
+
+@app.route('/', methods=['GET', 'HEAD'])
+def index():
+    lang = session.get('lang', 'en') if session is not None else 'en'
+    logger.info("Serving index page")
+    if request.method == 'HEAD':
+        return '', 200  # Return empty response for HEAD
+    try:
+        courses = app.config.get('COURSES', SAMPLE_COURSES)
+        logger.info(f"Retrieved {len(courses)} courses")
+        return render_template(
+            'index.html',
+            t=translate,
+            courses=courses,
+            lang=lang,
+            sample_courses=SAMPLE_COURSES
+        )
+    except Exception as e:
+        logger.error(f"Error in index route: {str(e)}", exc_info=True)
+        flash(translate('learning_hub_error_message', default='An error occurred', lang=lang), 'danger')
+        return render_template('error.html', t=translate, lang=lang, error=str(e)), 500
+
+@app.route('/set_language/<lang>')
+def set_language(lang):
+    valid_langs = ['en', 'ha']
+    new_lang = lang if lang in valid_langs else 'en'
+    try:
+        session['lang'] = new_lang
+        logger.info(f"Language set to {new_lang}")
+    except InvalidOperation as e:
+        logger.error(f"Session operation failed: {str(e)}")
+        # Fallback is handled globally in setup_session
+    flash(translate('learning_hub_success_language_updated', default='Language updated successfully', lang=new_lang) if lang in valid_langs else translate('Invalid language', default='Invalid language', lang=new_lang), 'success' if lang in valid_langs else 'danger')
+    return redirect(request.referrer or url_for('index'))
+
+@app.route('/acknowledge_consent', methods=['POST'])
+def acknowledge_consent():
+    if request.method != 'POST':
+        logger.warning(f"Invalid method {request.method} for consent acknowledgement")
+        return '', 400
+    try:
+        session['consent_acknowledged'] = {
+            'status': True,
+            'timestamp': datetime.utcnow().isoformat(),
+            'ip': request.remote_addr,
+            'user_agent': request.headers.get('User-Agent')
+        }
+        logger.info(f"Consent acknowledged for session {session.get('sid', 'no-session-id')} from IP {request.remote_addr}")
+    except InvalidOperation as e:
+        logger.error(f"Session operation failed: {str(e)}")
+        # Fallback is handled globally in setup_session
+    response = make_response('')
+    response.headers['Content-Type'] = None
+    response.headers['Cache-Control'] = 'no-store'
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    return response
+
+@app.route('/general_dashboard')
+@ensure_session_id
+def general_dashboard():
+    lang = session.get('lang', 'en') if session is not None else 'en'
+    logger.info("Serving general_dashboard")
+    data = {}
+    try:
+        from models import get_financial_health, get_budgets, get_bills, get_net_worth, get_emergency_funds, get_learning_progress, get_quiz_results, to_dict_financial_health, to_dict_budget, to_dict_bill, to_dict_net_worth, to_dict_emergency_fund, to_dict_learning_progress, to_dict_quiz_result
+        filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session.get('sid', 'no-session-id')}
+
+        fh_records = get_financial_health(mongo, filter_kwargs)
+        fh_records = [to_dict_fh(fh) for fh in fh_records]
+        data['financial_health'] = fh_records[0] if fh_records else {'score': None, 'status': None}
+
+        budget_records = get_budgets(mongo, filter_kwargs)
+        budget_records = [to_dict_budget(b) for b in budget_records]
+        data['budget'] = budget_records[0] if budget_records else {'surplus_deficit': None, 'savings_goal': None}
+
+        bills = get_bills(mongo, filter_kwargs)
+        bills = [to_dict_bill(b) for bill in bills]
+        total_amount = sum(bill['amount'] for bill in bills if bill['amount'] is not None) if bills else 0
+        unpaid_amount = sum(bill['amount'] for bill in bills if bill['amount'] is not None and bill['status'].lower() != 'paid') if bills else 0
+        data['bills'] = {'bills': bills, 'total_amount': total_amount, 'unpaid_amount': unpaid_amount}
+
+        nw_records = get_net_worth(mongo, filter_kwargs)
+        nw_records = [to_dict_net_worth(nw) for nw in nwn_records]
+        data['net_worth'] = nw_records[0] if nw_records else {'net_worth': None, 'total_assets': None}
+
+        ef_records = get_emergency_funds(mongo, filter_kwargs)
+        ef_records = [to_dict_emergency_fund(ef) for ef in ef_records]
+        data['emergency_fund'] = ef_records[0] if ef_records else {'target_amount': None, 'savings_gap': None}
+
+        lp_records = get_learning_progress(mongo, filter_kwargs)
+        data['learning_progress'] = {lp['course_id']: to_dict_learning_progress(lp) for lp in lp_records} if lp_records else {}
+
+        quiz_records = get_quiz_results(mongo, filter_kwargs)
+        quiz_records = [to_dict_quiz_result(qr) for qr in qr_records]
+        data['quiz'] = quiz_records[0] if quiz_records else {'personality': None, 'score': None}
+
+        logger.info(f"Retrieved data for session {session.get('sid', 'no-session-id')}")
+        return render_template('general_dashboard.html', data=data, t=translate, lang=lang)
+    except Exception as e:
+        logger.error(f"Error in general_dashboard: {str(e)}", exc_info=True)
+        flash(translate('global_error_message', default='An error occurred', lang=lang), 'danger')
+        default_data = {
+            'financial_health': {'score': None, 'status': None},
+            'budget': {'surplus_deficit': None, 'savings_goal': None},
+            'bills': {'bills': [], 'total_amount': 0, 'unpaid_amount': 0},
+            'net_worth': {'net_worth': None, 'total_assets': None},
+            'emergency_fund': {'target_amount': None}, 'savings_gap': None},
+            'learning_progress': {},
+            'quiz': {'personality': None, 'score': None}
+        }
+        return render_template('general_dashboard.html', data=default_data, t=translate, lang=lang), 500
+
+@app.route('/logout')
+def logout():
+    lang = session.get('lang', 'en') if session is not None else 'en'
+    logger.info("Logging out user")
+    try:
+        session_lang = session.get('lang', 'en')
+        session.clear()
+        session['lang'] = session_lang
+        flash(translate('learning_hub_success_logout', default='Successfully logged out', lang=lang), 'success')
+        return redirect(url_for('index'))
+    except Exception as e:
+        logger.error(f"Error in logout: {str(e)}", exc_info=True)
+        flash(translate('global_error_message', default='An error occurred', lang=lang), 'danger')
+        return redirect(url_for('index'))
+
+@app.route('/about')
+def about():
+    lang = session.get('lang', 'en') if session is not None else 'en'
+    logger.info("Serving about page")
+    return render_template('about.html', t=translate, lang=lang)
+
+@app.route('/health')
+def health():
+    logger.info("Health check")
+    status = {"status": "healthy"}
+    try:
+        mongo_client = app.config.get('MONGO_CLIENT')
+        if not check_mongodb_connection(mongo_client, app):
+            raise RuntimeError("MongoDB connection unavailable")
+        mongo_client['ficodb'].command('ping')
+        return jsonify(status), 200
+    except Exception as e:
+        logger.error(f"Health check failed: {str(e)}", exc_info=True)
+        status["status"] = "unhealthy"
+        status["error"] = str(e)
+        return jsonify(status), 500
+
+@app.errorhandler(500)
+def handle_internal_error(error):
+    lang = session.get('lang', 'en') if session is not None else 'en'
+    logger.error(f"Server error: {str(error)}", exc_info=True)
+    return jsonify({'error': 'Internal server error', 'details': str(error)}), 500
+
+@app.errorhandler(CSRFError)
+def handle_csrf_error(error):
+    lang = session.get('lang', 'en')
+    logger.error(f"CSRF error: {str(error)}")
+    return jsonify({'error': 'CSRF token invalid'}), 400
+
+@app.errorhandler(404)
+def page_not_found(e):
+    lang = session.get('lang', 'en') if session is not None else 'en'
+    logger.error(f"404 error: {str(e)}")
+    return jsonify({'error': '404 not found'}), 404
+
+@app.route('/static/<path:filename>')
+def static_files(filename):
+    response = send_from_directory('static', filename)
+    response.headers['Cache-Control'] = 'public, max-age=31536000'  # Cache for 1 year
+    return response
+
+@app.route('/feedback', methods=['GET', 'POST'])
+@ensure_session_id
+def feedback():
+    lang = session.get('lang', 'en') if session is not None else 'en'
+    logger.info("Handling feedback")
+    tool_options = [
+        'environmental_health', 'budget', 'bill', 'net_worth',
+        'emergency_fund', 'learning', 'quiz'
+    ]
+    if request.method == 'GET':
+        logger.info("Rendering feedback template")
+        return render_template('index.html', t=translate, lang=lang, feedback_options=tool_options)
+    try:
+        from models import create_feedback
+        tool_name = request.form.get('tool_name')
+        rating = request.form.get('rating')
+        comment = request.form.get('comment', '')
+        if not tool_name or tool_name not in tool_options:
+            logger.error(f"Invalid feedback tool: {tool_name}")
+            flash(translate('error_feedback_invalid_tool', default='Please select a valid tool', comment='error'), 'danger')
+            return render_template('index.html', t=translate, lang=lang, tool_options=tool_options)
+        if not rating or not rating.isdigit() or int(rating) <= 0 or int(rating) > 5:
+            logger.error(f"Invalid rating: {rating}")
+            flash(translate('error_feedback_rating_invalid', default='Please provide a rating between 1 and 5', comment='error'), 'danger')
+            return render_template('index.html', t=translate, lang=lang, tool_options=tool_options)
+        feedback_entry = create_feedback(mongo, {
+            'user_id': current_user.id if current_user.is_authenticated else None,
+            'session_id': session.get('sid', 'no-session-id'),
+            'tool_name': tool_name,
+            'rating': int(rating),
+            'comment': comment.strip() or None
+        })
+        logger.info(f"Feedback submitted: tool={tool_name}, rating={rating}, session={session.get('sid', 'no-session-id')}")
+        flash(translate('success_feedback_submitted', default='Thank you for your feedback!', comment='success'), 'success')
+        return redirect(url_for('index'))
+    except Exception as e:
+        logger.error(f"Error processing feedback: {str(e)}", exc_info=True)
+        flash(translate('error_feedback_submission', default='Error occurred while submitting feedback', comment='error'), 'danger')
+        return render_template('index.html', t=translate, lang=lang, tool_options=tool_options), 500
+
+logger.info("App creation completed")
+return app
+
+if __name__
