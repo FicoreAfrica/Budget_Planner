@@ -8,6 +8,7 @@ from flask_wtf.csrf import CSRFProtect, generate_csrf, CSRFError
 from flask_login import LoginManager, current_user
 from dotenv import load_dotenv
 import certifi
+from pymongo import MongoClient
 from extensions import mongo, login_manager, flask_session
 from blueprints.auth import auth_bp
 from translations import trans
@@ -84,59 +85,46 @@ def setup_logging(app):
     
     logger.info("Logging setup complete with StreamHandler for ficore_app, flask, and werkzeug")
 
-def setup_session(app, mongo):
-    try:
-        # Verify MongoClient is open
-        if not check_mongodb_connection(mongo, app):
-            logger.error("MongoDB client is not open, attempting to reinitialize")
-            mongo.init_app(app, connect=False, tlsCAFile=certifi.where(), maxPoolSize=50, socketTimeoutMS=30000, retryWrites=True)
-            if not check_mongodb_connection(mongo, app):
-                raise RuntimeError("MongoDB client could not be reinitialized")
-        
-        app.config['SESSION_TYPE'] = 'mongodb'
-        app.config['SESSION_MONGODB'] = mongo.cx
-        app.config['SESSION_MONGODB_DB'] = 'ficodb'
-        app.config['SESSION_MONGODB_COLLECT'] = 'sessions'
-        app.config['SESSION_PERMANENT'] = True
-        app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
-        app.config['SESSION_USE_SIGNER'] = True
-        flask_session.init_app(app)
-        logger.info(f"Session configured: type={app.config['SESSION_TYPE']}, db={app.config['SESSION_MONGODB_DB']}, collection={app.config['SESSION_MONGODB_COLLECT']}")
-    except Exception as e:
-        logger.error(f"Failed to configure session: {str(e)}", exc_info=True)
-        raise
-
-def check_mongodb_connection(mongo, app):
+def check_mongodb_connection(mongo_client, app):
     """
-    Check MongoDB connection without reinitializing unless necessary.
+    Check MongoDB connection and reinitialize if necessary.
     
     Args:
-        mongo: Flask-PyMongo instance
+        mongo_client: pymongo.MongoClient instance
         app: Flask application instance
         
     Returns:
         bool: True if connected, False otherwise
     """
     try:
-        if mongo is None:
-            logger.error("MongoDB instance is None")
-            return False
-            
-        if not hasattr(mongo, 'cx') or mongo.cx is None:
-            logger.warning("MongoDB client attribute 'cx' missing or None")
+        if mongo_client is None:
+            logger.error("MongoDB client is None")
             return False
             
         try:
-            mongo.cx.admin.command('ping')
+            mongo_client.admin.command('ping')
             logger.info("MongoDB connection verified with ping")
             return True
         except InvalidOperation as e:
             logger.error(f"MongoDB client is closed: {str(e)}")
             # Attempt to reinitialize the client
             try:
-                mongo.init_app(app, connect=False, tlsCAFile=certifi.where(), maxPoolSize=50, socketTimeoutMS=30000, retryWrites=True)
-                mongo.cx.admin.command('ping')
+                new_client = MongoClient(
+                    app.config['MONGO_URI'],
+                    connect=False,
+                    tlsCAFile=certifi.where(),
+                    maxPoolSize=50,
+                    socketTimeoutMS=60000,  # Increased to 60 seconds
+                    connectTimeoutMS=30000,
+                    serverSelectionTimeoutMS=30000,
+                    retryWrites=True
+                )
+                new_client.admin.command('ping')
                 logger.info("MongoDB client reinitialized successfully")
+                # Update app.config and Flask-PyMongo
+                app.config['MONGO_CLIENT'] = new_client
+                app.config['SESSION_MONGODB'] = new_client
+                mongo.init_app(app, connect=False, uri=app.config['MONGO_URI'])
                 return True
             except Exception as reinit_e:
                 logger.error(f"Failed to reinitialize MongoDB client: {str(reinit_e)}")
@@ -145,12 +133,55 @@ def check_mongodb_connection(mongo, app):
         logger.error(f"MongoDB connection check failed: {str(e)}", exc_info=True)
         return False
 
+def setup_session(app):
+    """
+    Configure Flask session with MongoDB, with fallback to filesystem if MongoDB fails.
+    """
+    try:
+        # Verify MongoClient is open
+        mongo_client = app.config.get('MONGO_CLIENT')
+        if not check_mongodb_connection(mongo_client, app):
+            logger.error("MongoDB client is not open, attempting to reinitialize")
+            mongo_client = MongoClient(
+                app.config['MONGO_URI'],
+                connect=False,
+                tlsCAFile=certifi.where(),
+                maxPoolSize=50,
+                socketTimeoutMS=60000,  # Increased to 60 seconds
+                connectTimeoutMS=30000,
+                serverSelectionTimeoutMS=30000,
+                retryWrites=True
+            )
+            app.config['MONGO_CLIENT'] = mongo_client
+            if not check_mongodb_connection(mongo_client, app):
+                logger.error("MongoDB client could not be reinitialized, falling back to filesystem session")
+                app.config['SESSION_TYPE'] = 'filesystem'
+                flask_session.init_app(app)
+                logger.info("Session configured with filesystem fallback")
+                return
+        
+        app.config['SESSION_TYPE'] = 'mongodb'
+        app.config['SESSION_MONGODB'] = mongo_client
+        app.config['SESSION_MONGODB_DB'] = 'ficodb'
+        app.config['SESSION_MONGODB_COLLECT'] = 'sessions'
+        app.config['SESSION_PERMANENT'] = True
+        app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
+        app.config['SESSION_USE_SIGNER'] = True
+        flask_session.init_app(app)
+        logger.info(f"Session configured: type={app.config['SESSION_TYPE']}, db={app.config['SESSION_MONGODB_DB']}, collection={app.config['SESSION_MONGODB_COLLECT']}")
+    except Exception as e:
+        logger.error(f"Failed to configure session with MongoDB: {str(e)}", exc_info=True)
+        app.config['SESSION_TYPE'] = 'filesystem'
+        flask_session.init_app(app)
+        logger.info("Session configured with filesystem fallback due to MongoDB error")
+
 def initialize_database(app):
     """Initialize MongoDB indexes and courses data with robust client handling."""
     max_retries = 3
+    mongo_client = app.config.get('MONGO_CLIENT')
     for attempt in range(max_retries):
         try:
-            if check_mongodb_connection(mongo, app):
+            if check_mongodb_connection(mongo_client, app):
                 logger.info(f"Attempt {attempt + 1}/{max_retries} - MongoDB connection established")
                 break
             else:
@@ -158,75 +189,71 @@ def initialize_database(app):
                 if attempt == max_retries - 1:
                     logger.error("Max retries reached: MongoDB connection not established")
                     raise RuntimeError("MongoDB connection failed after max retries")
-                # Reinitialize only if necessary
-                mongo.init_app(app, connect=False, tlsCAFile=certifi.where(), maxPoolSize=50, socketTimeoutMS=30000, retryWrites=True)
         except Exception as e:
             logger.error(f"Failed to initialize database (attempt {attempt + 1}/{max_retries}): {e}", exc_info=True)
             if attempt == max_retries - 1:
                 raise
 
     try:
-        if not hasattr(mongo, 'db') or mongo.db is None:
-            logger.error("MongoDB database object is not initialized")
-            raise RuntimeError("MongoDB database object is not initialized")
+        # Use the MongoClient directly
+        db = mongo_client['ficodb']
         
         # Verify connection before proceeding
         try:
-            mongo.db.command('ping')
+            db.command('ping')
         except InvalidOperation as e:
             logger.error(f"MongoDB client is closed before database operations: {str(e)}")
             raise RuntimeError("MongoDB client is closed")
         
-        db_name = mongo.db.name
-        logger.info(f"MongoDB database: {db_name}")
+        logger.info(f"MongoDB database: {db.name}")
         
         # Create indexes only if they don't exist
-        existing_indexes = mongo.db.users.index_information()
+        existing_indexes = db.users.index_information()
         if 'email_1' not in existing_indexes:
-            mongo.db.users.create_index('email', unique=True)
+            db.users.create_index('email', unique=True)
         if 'referral_code_1' not in existing_indexes:
-            mongo.db.users.create_index('referral_code', unique=True)
+            db.users.create_index('referral_code', unique=True)
         
-        existing_indexes = mongo.db.courses.index_information()
+        existing_indexes = db.courses.index_information()
         if 'id_1' not in existing_indexes:
-            mongo.db.courses.create_index('id', unique=True)
+            db.courses.create_index('id', unique=True)
         
-        existing_indexes = mongo.db.content_metadata.index_information()
+        existing_indexes = db.content_metadata.index_information()
         if 'course_id_1_lesson_id_1' not in existing_indexes:
-            mongo.db.content_metadata.create_index([('course_id', 1), ('lesson_id', 1)])
+            db.content_metadata.create_index([('course_id', 1), ('lesson_id', 1)])
         
         for collection in ['financial_health', 'budgets', 'bills', 'net_worth', 'emergency_funds']:
-            existing_indexes = mongo.db[collection].index_information()
+            existing_indexes = db[collection].index_information()
             if 'session_id_1' not in existing_indexes:
-                mongo.db[collection].create_index('session_id')
+                db[collection].create_index('session_id')
             if 'user_id_1' not in existing_indexes:
-                mongo.db[collection].create_index('user_id')
+                db[collection].create_index('user_id')
         
-        existing_indexes = mongo.db.learning_progress.index_information()
+        existing_indexes = db.learning_progress.index_information()
         if 'user_id_1_course_id_1' not in existing_indexes:
-            mongo.db.learning_progress.create_index([('user_id', 1), ('course_id', 1)], unique=True)
+            db.learning_progress.create_index([('user_id', 1), ('course_id', 1)], unique=True)
         if 'session_id_1_course_id_1' not in existing_indexes:
-            mongo.db.learning_progress.create_index([('session_id', 1), ('course_id', 1)], unique=True)
+            db.learning_progress.create_index([('session_id', 1), ('course_id', 1)], unique=True)
         if 'session_id_1' not in existing_indexes:
-            mongo.db.learning_progress.create_index('session_id')
+            db.learning_progress.create_index('session_id')
         if 'user_id_1' not in existing_indexes:
-            mongo.db.learning_progress.create_index('user_id')
+            db.learning_progress.create_index('user_id')
         
         for collection in ['quiz_results', 'feedback', 'tool_usage']:
-            existing_indexes = mongo.db[collection].index_information()
+            existing_indexes = db[collection].index_information()
             if 'session_id_1' not in existing_indexes:
-                mongo.db[collection].create_index('session_id')
+                db[collection].create_index('session_id')
             if 'user_id_1' not in existing_indexes:
-                mongo.db[collection].create_index('user_id')
+                db[collection].create_index('user_id')
         
-        existing_indexes = mongo.db.tool_usage.index_information()
+        existing_indexes = db.tool_usage.index_information()
         if 'tool_name_1' not in existing_indexes:
-            mongo.db.tool_usage.create_index('tool_name')
+            db.tool_usage.create_index('tool_name')
         
         logger.info("MongoDB indexes created or verified")
 
         # Initialize courses
-        courses_collection = mongo.db.courses
+        courses_collection = db.courses
         if courses_collection.count_documents({}) == 0:
             for course in SAMPLE_COURSES:
                 courses_collection.insert_one(course)
@@ -290,33 +317,45 @@ def create_app():
     logger.info(f"MongoDB URI configured: {obfuscated_uri}")
     
     try:
-        # Initialize MongoDB with lazy connection and reduced connection pool
-        mongo.init_app(app, connect=False, tlsCAFile=certifi.where(), maxPoolSize=50, socketTimeoutMS=30000, retryWrites=True)
-        logger.info("MongoDB configured with Flask-PyMongo and certifi")
-        db_name = app.config['MONGO_URI'].split('/')[-1].split('?')[0]
-        logger.info(f"Attempting to connect to database: {db_name}")
-        if not check_mongodb_connection(mongo, app):
-            logger.error(f"MongoDB initial connection failed for database: {db_name}")
-            raise RuntimeError(f"MongoDB initial connection failed")
-        logger.info(f"MongoDB connection established successfully to database: {db_name}")
-        # Log MongoClient state
-        logger.info(f"MongoClient state: connected={mongo.cx.is_mongos}, server_info={mongo.cx.server_info()}")
+        # Initialize MongoDB client
+        mongo_client = MongoClient(
+            app.config['MONGO_URI'],
+            connect=False,
+            tlsCAFile=certifi.where(),
+            maxPoolSize=50,
+            socketTimeoutMS=60000,  # Increased to 60 seconds
+            connectTimeoutMS=30000,
+            serverSelectionTimeoutMS=30000,
+            retryWrites=True
+        )
+        app.config['MONGO_CLIENT'] = mongo_client
+        logger.info("MongoDB client created")
+        
+        # Initialize Flask-PyMongo
+        mongo.init_app(app, connect=False, uri=app.config['MONGO_URI'])
+        logger.info("MongoDB configured with Flask-PyMongo")
+        
+        if not check_mongodb_connection(mongo_client, app):
+            logger.error("MongoDB initial connection failed")
+            raise RuntimeError("MongoDB initial connection failed")
+        logger.info("MongoDB connection established successfully")
+        logger.info(f"MongoClient state: connected={mongo_client.is_mongos}, server_info={mongo_client.admin.command('ping')}")
     except (ConnectionFailure, ConfigurationError) as e:
         logger.error(f"Failed to connect to MongoDB: {str(e)}", exc_info=True)
         raise RuntimeError(f"MongoDB connection failed: {str(e)}")
     except Exception as e:
-        logger.error(f"Unexpected error during MongoDB initialization: {str(e)}", exc_info=True)
+        logger.error(f"Unexpected error during MongoDB setup: {str(e)}", exc_info=True)
         raise RuntimeError(f"MongoDB initialization failed: {str(e)}")
     
     init_email_config(app, logger)
-    setup_session(app, mongo)
+    setup_session(app)
     app.config['BASE_URL'] = os.environ.get('BASE_URL', 'http://localhost:5000')
     csrf.init_app(app)
     
     with app.app_context():
         initialize_database(app)
         logger.info("MongoDB collections initialized")
-
+        
         admin_email = os.environ.get('ADMIN_EMAIL')
         admin_password = os.environ.get('ADMIN_PASSWORD')
         if admin_email and admin_password:
@@ -337,29 +376,28 @@ def create_app():
                 logger.info(f"Admin user already exists with email: {admin_email}")
         else:
             logger.warning("ADMIN_EMAIL or ADMIN_PASSWORD not set in environment variables.")
-
+    
     try:
         init_scheduler(app, mongo)
         logger.info("Scheduler initialized successfully")
     except Exception as e:
         logger.error(f"Failed to initialize scheduler: {str(e)}", exc_info=True)
-
+    
     @app.teardown_appcontext
     def teardown_appcontext(exception=None):
         """
         Handle application context teardown without closing MongoDB connection.
-        Only shut down scheduler if necessary, with graceful handling.
         """
         scheduler = app.config.get('SCHEDULER')
         if scheduler and scheduler.running:
             try:
-                scheduler.shutdown(wait=False)  # Non-blocking shutdown
+                scheduler.shutdown(wait=False)
                 logger.info("Scheduler shut down successfully")
             except Exception as e:
                 logger.error(f"Error shutting down scheduler: {str(e)}", exc_info=True)
-                # Avoid raising exception to prevent worker crash
         logger.info("Teardown completed without closing MongoDB connection")
-
+    
+    # Register blueprints
     from blueprints.financial_health import financial_health_bp
     from blueprints.budget import budget_bp
     from blueprints.quiz import quiz_bp
@@ -369,7 +407,7 @@ def create_app():
     from blueprints.learning_hub import learning_hub_bp
     from blueprints.auth import auth_bp
     from blueprints.admin import admin_bp
-
+    
     app.register_blueprint(financial_health_bp, template_folder='templates/HEALTHSCORE')
     app.register_blueprint(budget_bp, template_folder='templates/BUDGET')
     app.register_blueprint(quiz_bp, template_folder='templates/QUIZ')
@@ -379,7 +417,7 @@ def create_app():
     app.register_blueprint(learning_hub_bp, template_folder='templates/LEARNING_HUB')
     app.register_blueprint(auth_bp, template_folder='templates/auth')
     app.register_blueprint(admin_bp, template_folder='templates/admin')
-
+    
     def translate(key, lang='en', logger=logger, **kwargs):
         translation = trans(key, lang=lang, **kwargs)
         if translation == key:
@@ -481,12 +519,8 @@ def create_app():
                     session['sid'] = str(uuid4())
                     logger.info(f"New session ID generated: {session['sid']}")
             except InvalidOperation as e:
-                logger.error(f"Session operation failed due to closed MongoDB client: {str(e)}")
-                # Fallback to in-memory session
-                app.config['SESSION_TYPE'] = 'filesystem'
-                flask_session.init_app(app)
-                session['sid'] = str(uuid4())
-                logger.info(f"Fallback to filesystem session, new session ID: {session['sid']}")
+                logger.error(f"Session operation failed: {str(e)}")
+                # Fallback is handled globally in setup_session, so no need to repeat
             return f(*args, **kwargs)
         return decorated_function
 
@@ -519,12 +553,8 @@ def create_app():
             session['lang'] = new_lang
             logger.info(f"Language set to {new_lang}")
         except InvalidOperation as e:
-            logger.error(f"Session operation failed due to closed MongoDB client: {str(e)}")
-            # Fallback to in-memory session
-            app.config['SESSION_TYPE'] = 'filesystem'
-            flask_session.init_app(app)
-            session['lang'] = new_lang
-            logger.info(f"Fallback to filesystem session, language set to {new_lang}")
+            logger.error(f"Session operation failed: {str(e)}")
+            # Fallback is handled globally in setup_session
         flash(translate('learning_hub_success_language_updated', default='Language updated successfully', lang=new_lang) if lang in valid_langs else translate('Invalid language', default='Invalid language', lang=new_lang), 'success' if lang in valid_langs else 'danger')
         return redirect(request.referrer or url_for('index'))
 
@@ -542,17 +572,8 @@ def create_app():
             }
             logger.info(f"Consent acknowledged for session {session.get('sid', 'no-session-id')} from IP {request.remote_addr}")
         except InvalidOperation as e:
-            logger.error(f"Session operation failed due to closed MongoDB client: {str(e)}")
-            # Fallback to in-memory session
-            app.config['SESSION_TYPE'] = 'filesystem'
-            flask_session.init_app(app)
-            session['consent_acknowledged'] = {
-                'status': True,
-                'timestamp': datetime.utcnow().isoformat(),
-                'ip': request.remote_addr,
-                'user_agent': request.headers.get('User-Agent')
-            }
-            logger.info(f"Fallback to filesystem session, consent acknowledged for session {session.get('sid', 'no-session-id')}")
+            logger.error(f"Session operation failed: {str(e)}")
+            # Fallback is handled globally in setup_session
         response = make_response('')
         response.headers['Content-Type'] = None
         response.headers['Cache-Control'] = 'no-store'
@@ -640,7 +661,10 @@ def create_app():
         logger.info("Health check")
         status = {"status": "healthy"}
         try:
-            mongo.db.command('ping')
+            mongo_client = app.config.get('MONGO_CLIENT')
+            if not check_mongodb_connection(mongo_client, app):
+                raise RuntimeError("MongoDB connection unavailable")
+            mongo_client['ficodb'].command('ping')
             return jsonify(status), 200
         except Exception as e:
             logger.error(f"Health check failed: {str(e)}", exc_info=True)
