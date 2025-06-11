@@ -7,10 +7,8 @@ from mailersend_email import send_email, EMAIL_CONFIG
 from datetime import datetime, date, timedelta
 import uuid
 from translations import trans
-from pymongo import MongoClient
-from bson import ObjectId
-from extensions import mongo  # Import mongo from extensions
-
+from pymongo.errors import DuplicateKeyError
+from extensions import mongo  # Use mongo from extensions
 
 bill_bp = Blueprint(
     'bill',
@@ -19,10 +17,8 @@ bill_bp = Blueprint(
     url_prefix='/BILL'
 )
 
-# MongoDB setup
-mongo_client = MongoClient(current_app.config['MONGO_URI'])
-db = mongo_client['bill_tracker']
-bills_collection = db['bills']
+# Use mongo.db.bills instead of a separate client
+bills_collection = mongo.db.bills
 
 def strip_commas(value):
     """Remove commas from string values for numerical fields."""
