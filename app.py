@@ -85,10 +85,45 @@ def setup_session(app):
         logger.error(f"Failed to configure session: {str(e)}", exc_info=True)
         raise
 
-def initialize_courses_data(app, mongo):
+def initialize_database(app, mongo):
+    """Initialize MongoDB indexes and courses data."""
     try:
         if mongo.db is None:
             raise RuntimeError("MongoDB connection not initialized")
+        
+        # Test MongoDB connection
+        mongo.db.command('ping')
+        logger.info("MongoDB connection verified with ping")
+
+        # Create MongoDB indexes
+        mongo.db.users.create_index('email', unique=True)
+        mongo.db.users.create_index('referral_code', unique=True)
+        mongo.db.courses.create_index('id', unique=True)
+        mongo.db.content_metadata.create_index([('course_id', 1), ('lesson_id', 1)])
+        mongo.db.financial_health.create_index('session_id')
+        mongo.db.financial_health.create_index('user_id')
+        mongo.db.budgets.create_index('session_id')
+        mongo.db.budgets.create_index('user_id')
+        mongo.db.bills.create_index('session_id')
+        mongo.db.bills.create_index('user_id')
+        mongo.db.net_worth.create_index('session_id')
+        mongo.db.net_worth.create_index('user_id')
+        mongo.db.emergency_funds.create_index('session_id')
+        mongo.db.emergency_funds.create_index('user_id')
+        mongo.db.learning_progress.create_index([('user_id', 1), ('course_id', 1)], unique=True)
+        mongo.db.learning_progress.create_index([('session_id', 1), ('course_id', 1)], unique=True)
+        mongo.db.learning_progress.create_index('session_id')
+        mongo.db.learning_progress.create_index('user_id')
+        mongo.db.quiz_results.create_index('session_id')
+        mongo.db.quiz_results.create_index('user_id')
+        mongo.db.feedback.create_index('session_id')
+        mongo.db.feedback.create_index('user_id')
+        mongo.db.tool_usage.create_index('session_id')
+        mongo.db.tool_usage.create_index('user_id')
+        mongo.db.tool_usage.create_index('tool_name')
+        logger.info("MongoDB indexes created")
+
+        # Initialize courses
         courses_collection = mongo.db.courses
         if courses_collection.count_documents({}) == 0:
             for course in SAMPLE_COURSES:
@@ -96,8 +131,8 @@ def initialize_courses_data(app, mongo):
             logger.info("Initialized courses in MongoDB")
         app.config['COURSES'] = list(courses_collection.find({}, {'_id': 0}))
     except Exception as e:
-        logger.error(f"Failed to initialize courses: {str(e)}", exc_info=True)
-        app.config['COURSES'] = SAMPLE_COURSES  # Fallback
+        logger.error(f"Failed to initialize database: {str(e)}", exc_info=True)
+        raise
 
 # Constants
 SAMPLE_COURSES = [
@@ -150,45 +185,14 @@ def create_app():
     if not app.config['MONGO_URI']:
         logger.error("MONGODB_URI environment variable not set")
         raise RuntimeError("MONGODB_URI environment variable is required")
+    
+    # Log obfuscated MongoDB URI for debugging
+    uri = app.config['MONGO_URI']
+    obfuscated_uri = f"{uri[:10]}...{uri[-10:]}" if len(uri) > 20 else "too_short"
+    logger.info(f"MongoDB URI configured: {obfuscated_uri}")
+
     mongo = PyMongo(app)
     logger.info("MongoDB configured with Flask-PyMongo")
-
-    # Verify MongoDB connection
-    if mongo.db is None:
-        logger.error("MongoDB connection failed to initialize")
-        raise RuntimeError("MongoDB connection not initialized")
-
-    # Create MongoDB indexes
-    try:
-        mongo.db.users.create_index('email', unique=True)
-        mongo.db.users.create_index('referral_code', unique=True)
-        mongo.db.courses.create_index('id', unique=True)
-        mongo.db.content_metadata.create_index([('course_id', 1), ('lesson_id', 1)])
-        mongo.db.financial_health.create_index('session_id')
-        mongo.db.financial_health.create_index('user_id')
-        mongo.db.budgets.create_index('session_id')
-        mongo.db.budgets.create_index('user_id')
-        mongo.db.bills.create_index('session_id')
-        mongo.db.bills.create_index('user_id')
-        mongo.db.net_worth.create_index('session_id')
-        mongo.db.net_worth.create_index('user_id')
-        mongo.db.emergency_funds.create_index('session_id')
-        mongo.db.emergency_funds.create_index('user_id')
-        mongo.db.learning_progress.create_index([('user_id', 1), ('course_id', 1)], unique=True)
-        mongo.db.learning_progress.create_index([('session_id', 1), ('course_id', 1)], unique=True)
-        mongo.db.learning_progress.create_index('session_id')
-        mongo.db.learning_progress.create_index('user_id')
-        mongo.db.quiz_results.create_index('session_id')
-        mongo.db.quiz_results.create_index('user_id')
-        mongo.db.feedback.create_index('session_id')
-        mongo.db.feedback.create_index('user_id')
-        mongo.db.tool_usage.create_index('session_id')
-        mongo.db.tool_usage.create_index('user_id')
-        mongo.db.tool_usage.create_index('tool_name')
-        logger.info("MongoDB indexes created")
-    except Exception as e:
-        logger.error(f"Failed to create MongoDB indexes: {str(e)}", exc_info=True)
-        raise
 
     # Initialize Flask-Login
     login_manager.init_app(app)
@@ -213,9 +217,9 @@ def create_app():
     except Exception as e:
         logger.error(f"Failed to initialize scheduler: {str(e)}")
 
-    # Initialize database
+    # Initialize database within app context
     with app.app_context():
-        initialize_courses_data(app, mongo)
+        initialize_database(app, mongo)
         logger.info("MongoDB collections initialized")
 
         # Check and create admin user
@@ -262,8 +266,9 @@ def create_app():
 
     def translate(key, lang='en', logger=logger, **kwargs):
         translation = trans(key, lang=lang, **kwargs)
-        if translation == key and app.debug:
+        if translation == key:
             logger.warning(f"Missing translation for key='{key}' in lang='{lang}'")
+            return key  # Fallback to key to avoid blank text
         return translation
 
     app.jinja_env.filters['trans'] = lambda key, **kwargs: translate(
