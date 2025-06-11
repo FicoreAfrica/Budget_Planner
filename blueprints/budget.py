@@ -11,7 +11,6 @@ from translations import trans
 from extensions import mongo
 from bson import ObjectId
 from models import log_tool_usage
-from extensions import mongo  # Import mongo from extensions
 
 
 budget_bp = Blueprint(
