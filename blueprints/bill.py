@@ -124,6 +124,7 @@ def form_step1():
     try:
         if request.method == 'POST' and form.validate_on_submit():
             log_tool_usage(
+                mongo,
                 tool_name='bill',
                 user_id=current_user.id if current_user.is_authenticated else None,
                 session_id=session['sid'],
@@ -150,6 +151,7 @@ def form_step1():
             current_app.logger.info(f"Step 1 session data saved: {session['bill_step1']}")
             return redirect(url_for('bill.form_step2'))
         log_tool_usage(
+            mongo,
             tool_name='bill',
             user_id=current_user.id if current_user.is_authenticated else None,
             session_id=session['sid'],
@@ -175,6 +177,7 @@ def form_step2():
     try:
         if request.method == 'POST':
             log_tool_usage(
+                mongo,
                 tool_name='bill',
                 user_id=current_user.id if current_user.is_authenticated else None,
                 session_id=session['sid'],
@@ -303,6 +306,7 @@ def form_step2():
                         flash(f"{trans(f'bill_{field}', lang=lang)}: {err_msg}", 'danger')
                 return render_template('bill_form_step2.html', form=form, trans=trans, lang=lang)
         log_tool_usage(
+            mongo,
             tool_name='bill',
             user_id=current_user.id if current_user.is_authenticated else None,
             session_id=session['sid'],
@@ -322,6 +326,7 @@ def dashboard():
     lang = session.get('lang', 'en')
 
     log_tool_usage(
+        mongo,
         tool_name='bill',
         user_id=current_user.id if current_user.is_authenticated else None,
         session_id=session['sid'],
@@ -446,6 +451,7 @@ def view_edit():
     filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
 
     log_tool_usage(
+        mongo,
         tool_name='bill',
         user_id=current_user.id if current_user.is_authenticated else None,
         session_id=session['sid'],
@@ -478,6 +484,7 @@ def view_edit():
 
             if action == 'update':
                 log_tool_usage(
+                    mongo,
                     tool_name='bill',
                     user_id=current_user.id if current_user.is_authenticated else None,
                     session_id=session['sid'],
@@ -510,6 +517,7 @@ def view_edit():
 
             elif action == 'edit':
                 log_tool_usage(
+                    mongo,
                     tool_name='bill',
                     user_id=current_user.id if current_user.is_authenticated else None,
                     session_id=session['sid'],
@@ -535,6 +543,7 @@ def view_edit():
 
             elif action == 'delete':
                 log_tool_usage(
+                    mongo,
                     tool_name='bill',
                     user_id=current_user.id if current_user.is_authenticated else None,
                     session_id=session['sid'],
@@ -551,6 +560,7 @@ def view_edit():
 
             elif action == 'toggle_status':
                 log_tool_usage(
+                    mongo,
                     tool_name='bill',
                     user_id=current_user.id if current_user.is_authenticated else None,
                     session_id=session['sid'],
@@ -599,6 +609,7 @@ def view_edit():
 @bill_bp.route('/unsubscribe/<email>')
 def unsubscribe():
     log_tool_usage(
+        mongo,
         tool_name='bill',
         user_id=current_user.id if current_user.is_authenticated else None,
         session_id=session['sid'],
