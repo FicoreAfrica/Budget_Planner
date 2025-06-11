@@ -3,7 +3,7 @@ import sys
 import logging
 import uuid
 from datetime import datetime, timedelta
-from flask import Flask, jsonify, render_template, request, redirect, url_for, flash, make_response, has_request_context, g, send_from_directory
+from flask import Flask, jsonify, render_template, request, redirect, url_for, flash, make_response, has_request_context, g, send_from_directory, session
 from flask_wtf.csrf import CSRFError
 from flask_login import LoginManager, current_user
 from dotenv import load_dotenv
@@ -37,9 +37,15 @@ formatter = SessionFormatter('%(asctime)s - %(name)s - %(levelname)s - %(message
 class SessionAdapter(logging.LoggerAdapter):
     def process(self, msg, kwargs):
         kwargs['extra'] = kwargs.get('extra', {})
-        session_id = kwargs.get('extra', {}).get('session_id', 'no-session-id')
-        if has_request_context():
-            session_id = flask_session.get('sid', 'no-session-id')
+        session_id = 'no-session-id'
+        try:
+            if has_request_context():
+                session_id = session.get('sid', 'no-session-id')
+            else:
+                session_id = 'no-request-context'
+        except Exception as e:
+            session_id = 'session-error'
+            kwargs['extra']['session_error'] = str(e)
         kwargs['extra']['session_id'] = session_id
         return msg, kwargs
 
@@ -144,7 +150,6 @@ def initialize_database(app):
                 raise
 
     try:
-        # Check if mongo.db is properly initialized
         if not hasattr(mongo, 'db') or mongo.db is None:
             logger.error("MongoDB database object is not initialized")
             raise RuntimeError("MongoDB database object is not initialized")
@@ -152,7 +157,6 @@ def initialize_database(app):
         db_name = mongo.db.name
         logger.info(f"MongoDB database: {db_name}")
         
-        # Create indexes
         mongo.db.users.create_index('email', unique=True)
         mongo.db.users.create_index('referral_code', unique=True)
         mongo.db.courses.create_index('id', unique=True)
@@ -180,7 +184,6 @@ def initialize_database(app):
         mongo.db.tool_usage.create_index('tool_name')
         logger.info("MongoDB indexes created")
 
-        # Initialize courses
         courses_collection = mongo.db.courses
         if courses_collection.count_documents({}) == 0:
             for course in SAMPLE_COURSES:
@@ -336,7 +339,7 @@ def create_app():
 
     app.jinja_env.filters['trans'] = lambda key, **kwargs: translate(
         key,
-        lang=kwargs.get('lang', flask_session.get('lang', 'en')),
+        lang=kwargs.get('lang', session.get('lang', 'en')),
         logger=g.get('logger', logger),
         **{k: v for k, v in kwargs.items() if k != 'lang'}
     )
@@ -379,12 +382,12 @@ def create_app():
     def setup_session_and_language():
         try:
             logger.info(f"Starting before_request for path: {request.path}")
-            if 'sid' not in flask_session:
-                flask_session['sid'] = str(uuid.uuid4())
-                logger.info(f"New session ID generated: {flask_session['sid']}")
-            if 'lang' not in flask_session:
-                flask_session['lang'] = request.accept_languages.best_match(['en', 'ha'], 'en')
-                logger.info(f"Set default language to {flask_session['lang']}")
+            if 'sid' not in session:
+                session['sid'] = str(uuid.uuid4())
+                logger.info(f"New session ID generated: {session['sid']}")
+            if 'lang' not in session:
+                session['lang'] = request.accept_languages.best_match(['en', 'ha'], 'en')
+                logger.info(f"Set default language to {session['lang']}")
             g.logger = logger
             g.logger.info(f"Request processed for path: {request.path}")
         except Exception as e:
@@ -393,7 +396,7 @@ def create_app():
 
     @app.context_processor
     def inject_translations():
-        lang = flask_session.get('lang', 'en')
+        lang = session.get('lang', 'en')
         def context_trans(key, **kwargs):
             used_lang = kwargs.pop('lang', lang)
             return translate(
@@ -419,15 +422,15 @@ def create_app():
     def ensure_session_id(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
-            if 'sid' not in flask_session:
-                flask_session['sid'] = str(uuid4())
-                logger.info(f"New session ID generated: {flask_session['sid']}")
+            if 'sid' not in session:
+                session['sid'] = str(uuid4())
+                logger.info(f"New session ID generated: {session['sid']}")
             return f(*args, **kwargs)
         return decorated_function
 
     @app.route('/')
     def index():
-        lang = flask_session.get('lang', 'en')
+        lang = session.get('lang', 'en')
         logger.info("Serving index page")
         try:
             courses = app.config.get('COURSES', SAMPLE_COURSES)
@@ -448,7 +451,7 @@ def create_app():
     def set_language(lang):
         valid_langs = ['en', 'ha']
         new_lang = lang if lang in valid_langs else 'en'
-        flask_session['lang'] = new_lang
+        session['lang'] = new_lang
         logger.info(f"Language set to {new_lang}")
         flash(translate('learning_hub_success_language_updated', default='Language updated successfully', lang=new_lang) if lang in valid_langs else translate('Invalid language', default='Invalid language', lang=new_lang), 'success' if lang in valid_langs else 'danger')
         return redirect(request.referrer or url_for('index'))
@@ -458,13 +461,13 @@ def create_app():
         if request.method != 'POST':
             logger.warning(f"Invalid method {request.method} for consent acknowledgement")
             return '', 400
-        flask_session['consent_acknowledged'] = {
+        session['consent_acknowledged'] = {
             'status': True,
             'timestamp': datetime.utcnow().isoformat(),
             'ip': request.remote_addr,
             'user_agent': request.headers.get('User-Agent')
         }
-        logger.info(f"Consent acknowledged for session {flask_session['sid']} from IP {request.remote_addr}")
+        logger.info(f"Consent acknowledged for session {session.get('sid', 'no-session-id')} from IP {request.remote_addr}")
         response = make_response('')
         response.headers['Content-Type'] = None
         response.headers['Cache-Control'] = 'no-store'
@@ -474,12 +477,12 @@ def create_app():
     @app.route('/general_dashboard')
     @ensure_session_id
     def general_dashboard():
-        lang = flask_session.get('lang', 'en')
+        lang = session.get('lang', 'en')
         logger.info("Serving general_dashboard")
         data = {}
         try:
             from models import get_financial_health, get_budgets, get_bills, get_net_worth, get_emergency_funds, get_learning_progress, get_quiz_results, to_dict_financial_health, to_dict_budget, to_dict_bill, to_dict_net_worth, to_dict_emergency_fund, to_dict_learning_progress, to_dict_quiz_result
-            filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': flask_session['sid']}
+            filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session.get('sid', 'no-session-id')}
 
             fh_records = get_financial_health(mongo, filter_kwargs)
             fh_records = [to_dict_financial_health(fh) for fh in fh_records]
@@ -510,7 +513,7 @@ def create_app():
             quiz_records = [to_dict_quiz_result(qr) for qr in quiz_records]
             data['quiz'] = quiz_records[0] if quiz_records else {'personality': None, 'score': None}
 
-            logger.info(f"Retrieved data for session {flask_session['sid']}")
+            logger.info(f"Retrieved data for session {session.get('sid', 'no-session-id')}")
             return render_template('general_dashboard.html', data=data, t=translate, lang=lang)
         except Exception as e:
             logger.error(f"Error in general_dashboard: {str(e)}", exc_info=True)
@@ -528,12 +531,12 @@ def create_app():
 
     @app.route('/logout')
     def logout():
-        lang = flask_session.get('lang', 'en')
+        lang = session.get('lang', 'en')
         logger.info("Logging out user")
         try:
-            session_lang = flask_session.get('lang', 'en')
-            flask_session.clear()
-            flask_session['lang'] = session_lang
+            session_lang = session.get('lang', 'en')
+            session.clear()
+            session['lang'] = session_lang
             flash(translate('learning_hub_success_logout', default='Successfully logged out', lang=lang), 'success')
             return redirect(url_for('index'))
         except Exception as e:
@@ -543,7 +546,7 @@ def create_app():
 
     @app.route('/about')
     def about():
-        lang = flask_session.get('lang', 'en')
+        lang = session.get('lang', 'en')
         logger.info("Serving about page")
         return render_template('about.html', t=translate, lang=lang)
 
@@ -562,19 +565,19 @@ def create_app():
 
     @app.errorhandler(500)
     def handle_internal_error(error):
-        lang = flask_session.get('lang', 'en') if 'lang' in flask_session else 'en'
+        lang = session.get('lang', 'en')
         logger.error(f"Server error: {str(error)}", exc_info=True)
         return jsonify({'error': 'Internal server error', 'details': str(error)}), 500
 
     @app.errorhandler(CSRFError)
     def handle_csrf_error(error):
-        lang = flask_session.get('lang', 'en') if 'lang' in flask_session else 'en'
+        lang = session.get('lang', 'en')
         logger.error(f"CSRF error: {str(error)}")
         return jsonify({'error': 'CSRF token invalid'}), 400
 
     @app.errorhandler(404)
     def page_not_found(e):
-        lang = flask_session.get('lang', 'en') if 'lang' in flask_session else 'en'
+        lang = session.get('lang', 'en')
         logger.error(f"404 error: {str(e)}")
         return jsonify({'error': '404 not found'}), 404
 
@@ -585,7 +588,7 @@ def create_app():
     @app.route('/feedback', methods=['GET', 'POST'])
     @ensure_session_id
     def feedback():
-        lang = flask_session.get('lang', 'en')
+        lang = session.get('lang', 'en')
         logger.info("Handling feedback")
         tool_options = [
             'environmental_health', 'budget', 'bill', 'net_worth',
@@ -609,12 +612,12 @@ def create_app():
                 return render_template('index.html', t=translate, lang=lang, tool_options=tool_options)
             feedback_entry = create_feedback(mongo, {
                 'user_id': current_user.id if current_user.is_authenticated else None,
-                'session_id': flask_session['sid'],
+                'session_id': session.get('sid', 'no-session-id'),
                 'tool_name': tool_name,
                 'rating': int(rating),
                 'comment': comment.strip() or None
             })
-            logger.info(f"Feedback submitted: tool={tool_name}, rating={rating}, session={flask_session['sid']}")
+            logger.info(f"Feedback submitted: tool={tool_name}, rating={rating}, session={session.get('sid', 'no-session-id')}")
             flash(translate('success_feedback_submitted', default='Thank you for your feedback!', comment='success'), 'success')
             return redirect(url_for('index'))
         except Exception as e:
