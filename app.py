@@ -6,7 +6,6 @@ from datetime import datetime, timedelta
 from flask import Flask, jsonify, render_template, request, session, redirect, url_for, flash, make_response, has_request_context, g
 from flask_wtf.csrf import CSRFError
 from flask_login import LoginManager, current_user
-from flask_pymongo import PyMongo
 from dotenv import load_dotenv
 import certifi
 from extensions import mongo, login_manager, session as flask_session, csrf
