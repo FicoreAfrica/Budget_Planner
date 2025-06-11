@@ -92,9 +92,9 @@ def initialize_database(app):
     max_retries = 3
     for attempt in range(max_retries):
         try:
-            # Check if MongoClient is open
-            if mongo.cx is None or mongo.cx.is_closed:
-                logger.warning(f"Attempt {attempt + 1}/{max_retries} - MongoClient is closed or not initialized, reinitializing...")
+            # Check if MongoClient is initialized and not closed
+            if not hasattr(mongo, 'cx') or mongo.cx is None or mongo.cx.is_closed:
+                logger.warning(f"Attempt {attempt + 1}/{max_retries} - MongoClient is None or closed, reinitializing...")
                 mongo.init_app(app, tlsCAFile=certifi.where(), connectTimeoutMS=30000, serverSelectionTimeoutMS=30000)
             
             # Test MongoDB connection with ping
@@ -273,7 +273,7 @@ def create_app():
             except Exception as e:
                 logger.error(f"Error shutting down scheduler: {str(e)}", exc_info=True)
         # Explicitly avoid closing MongoClient here
-        if mongo.cx and not mongo.cx.is_closed:
+        if hasattr(mongo, 'cx') and mongo.cx and not mongo.cx.is_closed:
             logger.info("MongoClient remains open during teardown")
 
     # Register blueprints (after MongoDB initialization)
