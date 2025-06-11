@@ -89,7 +89,7 @@ def setup_session(app, mongo):
         # Verify MongoClient is open
         if not check_mongodb_connection(mongo, app):
             logger.error("MongoDB client is not open, attempting to reinitialize")
-            mongo.init_app(app, connect=False, tlsCAFile=certifi.where(), maxPoolSize=100, socketTimeoutMS=30000, retryWrites=True)
+            mongo.init_app(app, connect=False, tlsCAFile=certifi.where(), maxPoolSize=50, socketTimeoutMS=30000, retryWrites=True)
             if not check_mongodb_connection(mongo, app):
                 raise RuntimeError("MongoDB client could not be reinitialized")
         
@@ -134,7 +134,7 @@ def check_mongodb_connection(mongo, app):
             logger.error(f"MongoDB client is closed: {str(e)}")
             # Attempt to reinitialize the client
             try:
-                mongo.init_app(app, connect=False, tlsCAFile=certifi.where(), maxPoolSize=100, socketTimeoutMS=30000, retryWrites=True)
+                mongo.init_app(app, connect=False, tlsCAFile=certifi.where(), maxPoolSize=50, socketTimeoutMS=30000, retryWrites=True)
                 mongo.cx.admin.command('ping')
                 logger.info("MongoDB client reinitialized successfully")
                 return True
@@ -159,7 +159,7 @@ def initialize_database(app):
                     logger.error("Max retries reached: MongoDB connection not established")
                     raise RuntimeError("MongoDB connection failed after max retries")
                 # Reinitialize only if necessary
-                mongo.init_app(app, connect=False, tlsCAFile=certifi.where(), maxPoolSize=100, socketTimeoutMS=30000, retryWrites=True)
+                mongo.init_app(app, connect=False, tlsCAFile=certifi.where(), maxPoolSize=50, socketTimeoutMS=30000, retryWrites=True)
         except Exception as e:
             logger.error(f"Failed to initialize database (attempt {attempt + 1}/{max_retries}): {e}", exc_info=True)
             if attempt == max_retries - 1:
@@ -290,8 +290,8 @@ def create_app():
     logger.info(f"MongoDB URI configured: {obfuscated_uri}")
     
     try:
-        # Initialize MongoDB with lazy connection and connection pooling
-        mongo.init_app(app, connect=False, tlsCAFile=certifi.where(), maxPoolSize=100, socketTimeoutMS=30000, retryWrites=True)
+        # Initialize MongoDB with lazy connection and reduced connection pool
+        mongo.init_app(app, connect=False, tlsCAFile=certifi.where(), maxPoolSize=50, socketTimeoutMS=30000, retryWrites=True)
         logger.info("MongoDB configured with Flask-PyMongo and certifi")
         db_name = app.config['MONGO_URI'].split('/')[-1].split('?')[0]
         logger.info(f"Attempting to connect to database: {db_name}")
@@ -348,15 +348,16 @@ def create_app():
     def teardown_appcontext(exception=None):
         """
         Handle application context teardown without closing MongoDB connection.
-        Only shut down scheduler if necessary.
+        Only shut down scheduler if necessary, with graceful handling.
         """
         scheduler = app.config.get('SCHEDULER')
         if scheduler and scheduler.running:
             try:
-                scheduler.shutdown(wait=False)
+                scheduler.shutdown(wait=False)  # Non-blocking shutdown
                 logger.info("Scheduler shut down successfully")
             except Exception as e:
                 logger.error(f"Error shutting down scheduler: {str(e)}", exc_info=True)
+                # Avoid raising exception to prevent worker crash
         logger.info("Teardown completed without closing MongoDB connection")
 
     from blueprints.financial_health import financial_health_bp
@@ -489,10 +490,12 @@ def create_app():
             return f(*args, **kwargs)
         return decorated_function
 
-    @app.route('/')
+    @app.route('/', methods=['GET', 'HEAD'])
     def index():
         lang = session.get('lang', 'en') if session is not None else 'en'
         logger.info("Serving index page")
+        if request.method == 'HEAD':
+            return '', 200  # Return empty response for HEAD
         try:
             courses = app.config.get('COURSES', SAMPLE_COURSES)
             logger.info(f"Retrieved {len(courses)} courses")
