@@ -1,7 +1,7 @@
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.jobstores.mongodb import MongoDBJobStore
 from datetime import datetime, date, timedelta
-from flask import current_app, url_for
+from flask import current_app
 from mailersend_email import send_email, trans, EMAIL_CONFIG
 import atexit
 
@@ -9,7 +9,7 @@ def update_overdue_status(mongo):
     """Update status to overdue for past-due bills."""
     with current_app.app_context():
         try:
-            db = mongo.db  # Use Flask-PyMongo's database
+            db = mongo.db
             bills_collection = db.bills
             today = date.today()
             bills = bills_collection.find({'status': {'$in': ['pending', 'unpaid']}})
@@ -32,7 +32,7 @@ def send_bill_reminders(mongo):
     """Send reminders for upcoming and overdue bills."""
     with current_app.app_context():
         try:
-            db = mongo.db  # Use Flask-PyMongo's database
+            db = mongo.db
             bills_collection = db.bills
             bill_reminders_collection = db.bill_reminders
             users_collection = db.users
@@ -41,7 +41,6 @@ def send_bill_reminders(mongo):
             bills = bills_collection.find()
             for bill in bills:
                 email = bill['user_email']
-                # Fetch user language from users collection
                 user = users_collection.find_one({'email': email}, {'lang': 1})
                 lang = user.get('lang', 'en') if user else 'en'
                 if bill.get('send_email') and email:
@@ -96,36 +95,40 @@ def send_bill_reminders(mongo):
 
 def init_scheduler(app, mongo):
     """Initialize the background scheduler."""
-    try:
-        jobstores = {
-            'mongodb': MongoDBJobStore(
-                database=mongo.db.name,
-                collection='scheduler_jobs',
-                client=mongo.cx  # Use Flask-PyMongo's MongoClient
+    with app.app_context():
+        try:
+            jobstores = {
+                'mongodb': MongoDBJobStore(
+                    database=mongo.db.name,
+                    collection='scheduler_jobs',
+                    client=mongo.cx
+                )
+            }
+            scheduler = BackgroundScheduler(jobstores=jobstores)
+            scheduler.add_job(
+                func=lambda: update_overdue_status(mongo),
+                trigger='interval',
+                days=1,
+                id='overdue_status',
+                name='Update overdue bill statuses daily',
+                replace_existing=True
             )
-        }
-        scheduler = BackgroundScheduler(jobstores=jobstores)
-        scheduler.add_job(
-            func=lambda: update_overdue_status(mongo),
-            trigger='interval',
-            days=1,
-            id='overdue_status',
-            name='Update overdue bill statuses daily',
-            replace_existing=True
-        )
-        scheduler.add_job(
-            func=lambda: send_bill_reminders(mongo),
-            trigger='interval',
-            days=1,
-            id='bill_reminders',
-            name='Send bill reminders daily',
-            replace_existing=True
-        )
-        scheduler.start()
-        app.config['SCHEDULER'] = scheduler
-        app.logger.info("Bill reminder and overdue status scheduler started successfully")
-        atexit.register(lambda: scheduler.shutdown())
-        return scheduler
-    except Exception as e:
-        app.logger.error(f"Failed to initialize scheduler: {str(e)}", exc_info=True)
-        raise RuntimeError(f"Scheduler initialization failed: {str(e)}")
+            scheduler.add_job(
+                func=lambda: send_bill_reminders(mongo),
+                trigger='interval',
+                days=1,
+                id='bill_reminders',
+                name='Send bill reminders daily',
+                replace_existing=True
+            )
+            scheduler.start()
+            app.config['SCHEDULER'] = scheduler
+            app.logger.info("Bill reminder and overdue status scheduler started successfully")
+            # Register shutdown to ensure clean exit
+            def shutdown_scheduler():
+                scheduler.shutdown()
+            atexit.register(shutdown_scheduler)
+            return scheduler
+        except Exception as e:
+            app.logger.error(f"Failed to initialize scheduler: {str(e)}", exc_info=True)
+            raise RuntimeError(f"Scheduler initialization failed: {str(e)}")
