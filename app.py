@@ -9,7 +9,7 @@ from flask_login import LoginManager, current_user
 from flask_pymongo import PyMongo
 from dotenv import load_dotenv
 import certifi
-from extensions import login_manager, session as flask_session, csrf
+from extensions import mongo, login_manager, session as flask_session, csrf
 from blueprints.auth import auth_bp
 from translations import trans
 from scheduler_setup import init_scheduler
@@ -192,16 +192,19 @@ def create_app():
     obfuscated_uri = f"{uri[:10]}...{uri[-10:]}" if len(uri) > 20 else "too_short"
     logger.info(f"MongoDB URI configured: {obfuscated_uri}")
 
+    # Initialize MongoDB
     try:
-        mongo = PyMongo(app, tlsCAFile=certifi.where())
+        mongo.init_app(app, tlsCAFile=certifi.where(), connectTimeoutMS=30000, serverSelectionTimeoutMS=30000)
         logger.info("MongoDB configured with Flask-PyMongo and certifi")
-        # Force a connection attempt with a ping
-        mongo.cx.server_info()  # This will raise an exception if connection fails
+        db_name = app.config['MONGO_URI'].split('/')[-1].split('?')[0]
+        logger.info(f"Attempting to connect to database: {db_name}")
+        mongo.cx.server_info()  # Verify cluster connection
         if mongo.db is None:
-            logger.error("MongoDB database not initialized after connection attempt")
-            raise RuntimeError("MongoDB database not initialized")
-        logger.info("MongoDB connection established successfully")
-    except (ConnectionError, ConfigurationError) as e:
+            logger.error(f"MongoDB database '{db_name}' not initialized after connection attempt")
+            raise RuntimeError(f"MongoDB database '{db_name}' not initialized")
+        mongo.db.command('ping')  # Verify database access
+        logger.info(f"MongoDB connection established successfully to database: {db_name}")
+    except (ConnectionFailure, ConfigurationError) as e:
         logger.error(f"Failed to connect to MongoDB: {str(e)}", exc_info=True)
         raise RuntimeError(f"MongoDB connection failed: {str(e)}")
     except Exception as e:
@@ -259,7 +262,7 @@ def create_app():
         else:
             logger.warning("ADMIN_EMAIL or ADMIN_PASSWORD not set in environment variables.")
 
-    # Register blueprints
+    # Register blueprints (after MongoDB initialization)
     from blueprints.financial_health import financial_health_bp
     from blueprints.budget import budget_bp
     from blueprints.quiz import quiz_bp
