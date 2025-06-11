@@ -1,23 +1,25 @@
+```python
 import os
 import sys
 import logging
 import uuid
 from datetime import datetime, timedelta
-from flask import Flask, jsonify, render_template, request, session, redirect, url_for, flash, send_from_directory, has_request_context, g, current_app, make_response
+from flask import Flask, jsonify, render_template, request, session, redirect, url_for, flash, make_response
 from flask_wtf.csrf import CSRFError
 from flask_login import LoginManager, current_user
 from flask_pymongo import PyMongo
 from dotenv import load_dotenv
-import certifi  # Added for SSL fix
+import certifi
 from extensions import login_manager, session as flask_session, csrf
 from blueprints.auth import auth_bp
 from translations import trans
 from scheduler_setup import init_scheduler
-from models import create_user_by_email, get_user_by_email, log_tool_usage
+from models import create_user, get_user_by_email, log_tool_usage
 import json
 from functools import wraps
 from uuid import uuid4
 from werkzeug.security import generate_password_hash
+from mailersend_email import init_email_config
 
 # Load environment variables
 load_dotenv()
@@ -174,6 +176,7 @@ def create_app():
     # Configure logging
     logger.info("Starting app creation")
     setup_logging(app)
+    init_email_config(app, logger)  # Validate email config at startup
     setup_session(app)
     app.config['BASE_URL'] = os.environ.get('BASE_URL', 'http://localhost:5000')
     csrf.init_app(app)
@@ -219,10 +222,10 @@ def create_app():
 
     # Initialize scheduler
     try:
-        init_scheduler(app)
+        init_scheduler(app, mongo)
         logger.info("Scheduler initialized successfully")
     except Exception as e:
-        logger.error(f"Failed to initialize scheduler: {str(e)}")
+        logger.error(f"Failed to initialize scheduler: {str(e)}", exc_info=True)
         # Continue without scheduler to avoid blocking app startup
 
     # Initialize database within app context
@@ -236,15 +239,16 @@ def create_app():
         if admin_email and admin_password:
             admin_user = get_user_by_email(mongo, admin_email)
             if not admin_user:
-                admin_user = create_user(mongo, {
-                    'username': 'admin_' + str(uuid.uuid4())[:8],
+                user_data = {
+                    'username': f'admin_{str(uuid.uuid4())[:8]}',
                     'email': admin_email,
                     'password_hash': generate_password_hash(admin_password),
                     'is_admin': True,
                     'role': 'admin',
                     'created_at': datetime.utcnow(),
                     'lang': 'en'
-                })
+                }
+                admin_user = create_user(mongo, user_data)
                 logger.info(f"Admin user created with email: {admin_email}")
             else:
                 logger.info(f"Admin user already exists with email: {admin_email}")
@@ -551,14 +555,14 @@ def create_app():
             tool_name = request.form.get('tool_name')
             rating = request.form.get('rating')
             comment = request.form.get('comment', '')
-            if not tool_name or not comment.form.get('tool_name') in tool_options:
+            if not tool_name or tool_name not in tool_options:
                 flash(translate('error_feedback_invalid_tool', default='Please select a valid tool', comment='error'))
                 logger.error(f"Invalid feedback: {tool_name}")
-                return render_template('index.html', t=errors, lang=lang, feedback_options=tool_options)
-            if not rating or not rating.rate or int(rating) <= 0 or int(rating) > 5:
+                return render_template('index.html', t=translate, lang=lang, feedback_options=tool_options)
+            if not rating or not rating.isdigit() or int(rating) <= 0 or int(rating) > 5:
                 logger.error(f"Invalid rating: {rating}")
                 flash(translate('error_feedback_rating_invalid', default='Please provide a rating between 1 and 5', comment='error'))
-                return render_template('index.html', t=errors, lang=lang, feedback_options=tool_options)
+                return render_template('index.html', t=translate, lang=lang, feedback_options=tool_options)
             feedback_entry = create_feedback(mongo, {
                 'user_id': current_user.id if current_user.is_authenticated else None,
                 'session_id': session['sid'],
@@ -572,7 +576,7 @@ def create_app():
         except Exception as e:
             logger.error(f"Error processing feedback: {str(e)}")
             flash(translate('error_feedback_submission', default='Error occurred while submitting feedback', comment='error'))
-            return render_template('index.html', t=errors, lang=lang, feedback_options=tool_options), 500
+            return render_template('index.html', t=translate, lang=lang, feedback_options=tool_options), 500
 
     logger.info("App creation completed")
     return app, mongo
@@ -586,3 +590,4 @@ if __name__ == "__main__":
     except Exception as e:
         logger.error(f"Error running app: {str(e)}")
         raise
+```
