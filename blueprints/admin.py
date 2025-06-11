@@ -29,7 +29,7 @@ def overview():
     lang = session.get('lang', 'en')
     session_id = session.get('sid', 'no-session-id')
     try:
-        mongo = current_app.extensions['pymongo'].db
+        mongo = current_app.extensions['mongo'].db
 
         # User Stats
         total_users = mongo.users.count_documents({})
@@ -198,7 +198,7 @@ def tool_usage():
     lang = session.get('lang', 'en')
     session_id = session.get('sid', 'no-session-id')
     try:
-        mongo = current_app.extensions['pymongo'].db
+        mongo = current_app.extensions['mongo'].db
         tool_name = request.args.get('tool_name')
         start_date_str = request.args.get('start_date')
         end_date_str = request.args.get('end_date')
@@ -293,7 +293,7 @@ def export_csv():
     lang = session.get('lang', 'en')
     session_id = session.get('sid', 'no-session-id')
     try:
-        mongo = current_app.extensions['pymongo'].db
+        mongo = current_app.extensions['mongo'].db
         tool_name = request.args.get('tool_name')
         start_date_str = request.args.get('start_date')
         end_date_str = request.args.get('end_date')
