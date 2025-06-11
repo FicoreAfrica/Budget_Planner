@@ -139,16 +139,14 @@ def initialize_database(app):
                     logger.error("Max retries reached: MongoDB connection not established")
                     raise RuntimeError("MongoDB connection failed after max retries")
         except Exception as e:
-            logger.error(f"Failed to initialize database (attempt {attempt + 1}/{max_retries}): {str(e)}", exc_info=True)
+            logger.error(f"Failed to initialize database (attempt {attempt + 1}/{max_retries}): {e}", exc_info=True)
             if attempt == max_retries - 1:
                 raise
 
     try:
-        # Log database state
         db_name = mongo.db.name if hasattr(mongo, 'db') and mongo.db else 'None'
         logger.info(f"MongoDB database: {db_name}")
         
-        # Create MongoDB indexes
         mongo.db.users.create_index('email', unique=True)
         mongo.db.users.create_index('referral_code', unique=True)
         mongo.db.courses.create_index('id', unique=True)
@@ -176,7 +174,6 @@ def initialize_database(app):
         mongo.db.tool_usage.create_index('tool_name')
         logger.info("MongoDB indexes created")
 
-        # Initialize courses
         courses_collection = mongo.db.courses
         if courses_collection.count_documents({}) == 0:
             for course in SAMPLE_COURSES:
@@ -221,7 +218,6 @@ SAMPLE_COURSES = [
 def create_app():
     app = Flask(__name__, template_folder='templates')
     
-    # Validate and set Flask secret key
     secret_key = os.environ.get('FLASK_SECRET_KEY')
     if not secret_key:
         logger.error("FLASK_SECRET_KEY not set in environment variables")
@@ -229,22 +225,18 @@ def create_app():
     app.config['SECRET_KEY'] = secret_key
     logger.info("FLASK_SECRET_KEY configured successfully")
     
-    # Configure logging
     logger.info("Starting app creation")
     setup_logging(app)
     
-    # Configure MongoDB
     app.config['MONGO_URI'] = os.environ.get('MONGODB_URI')
     if not app.config['MONGO_URI']:
         logger.error("MONGODB_URI environment variable not set")
         raise RuntimeError("MONGODB_URI is required")
     
-    # Log obfuscated MongoDB URI
     uri = app.config['MONGO_URI']
     obfuscated_uri = f"{uri[:10]}...{uri[-10:]}" if len(uri) > 20 else "too_short"
     logger.info(f"MongoDB URI configured: {obfuscated_uri}")
     
-    # Initialize MongoDB
     try:
         mongo.init_app(app, tlsCAFile=certifi.where(), connectTimeoutMS=30000, serverSelectionTimeoutMS=30000, maxPoolSize=50)
         logger.info("MongoDB configured with Flask-PyMongo and certifi")
@@ -261,18 +253,15 @@ def create_app():
         logger.error(f"Unexpected error during MongoDB initialization: {str(e)}", exc_info=True)
         raise RuntimeError(f"MongoDB initialization failed: {str(e)}")
     
-    # Initialize email and session
     init_email_config(app, logger)
     setup_session(app, mongo)
     app.config['BASE_URL'] = os.environ.get('BASE_URL', 'http://localhost:5000')
     csrf.init_app(app)
     
-    # Initialize database and admin user
     with app.app_context():
         initialize_database(app)
         logger.info("MongoDB collections initialized")
 
-        # Check and create admin user
         admin_email = os.environ.get('ADMIN_EMAIL')
         admin_password = os.environ.get('ADMIN_PASSWORD')
         if admin_email and admin_password:
@@ -294,14 +283,12 @@ def create_app():
         else:
             logger.warning("ADMIN_EMAIL or ADMIN_PASSWORD not set in environment variables.")
 
-    # Initialize scheduler
     try:
         init_scheduler(app, mongo)
         logger.info("Scheduler initialized successfully")
     except Exception as e:
         logger.error(f"Failed to initialize scheduler: {str(e)}", exc_info=True)
 
-    # Register teardown_appcontext hook
     @app.teardown_appcontext
     def shutdown_scheduler(exception=None):
         scheduler = app.config.get('SCHEDULER')
@@ -313,7 +300,6 @@ def create_app():
                 logger.error(f"Error shutting down scheduler: {str(e)}", exc_info=True)
         logger.info("Teardown completed without MongoDB connection check")
 
-    # Register blueprints
     from blueprints.financial_health import financial_health_bp
     from blueprints.budget import budget_bp
     from blueprints.quiz import quiz_bp
@@ -403,7 +389,12 @@ def create_app():
         lang = session.get('lang', 'en')
         def context_trans(key, **kwargs):
             used_lang = kwargs.pop('lang', lang)
-            return translate(key, lang=used_lang, logger=g.get('logger', logger) if has_request_context() else logger, '')
+            return translate(
+                key,
+                lang=used_lang,
+                logger=g.get('logger', logger) if has_request_context() else logger,
+                **kwargs
+            )
         return {
             'trans': context_trans,
             'current_year': datetime.now().year,
@@ -483,38 +474,31 @@ def create_app():
             from models import get_financial_health, get_budgets, get_bills, get_net_worth, get_emergency_funds, get_learning_progress, get_quiz_results, to_dict_financial_health, to_dict_budget, to_dict_bill, to_dict_net_worth, to_dict_emergency_fund, to_dict_learning_progress, to_dict_quiz_result
             filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
 
-            # Financial Health
             fh_records = get_financial_health(mongo, filter_kwargs)
             fh_records = [to_dict_financial_health(fh) for fh in fh_records]
             data['financial_health'] = fh_records[0] if fh_records else {'score': None, 'status': None}
 
-            # Budget
             budget_records = get_budgets(mongo, filter_kwargs)
             budget_records = [to_dict_budget(b) for b in budget_records]
             data['budget'] = budget_records[0] if budget_records else {'surplus_deficit': None, 'savings_goal': None}
 
-            # Bills
             bills = get_bills(mongo, filter_kwargs)
             bills = [to_dict_bill(b) for b in bills]
             total_amount = sum(bill['amount'] for bill in bills if bill['amount'] is not None) if bills else 0
             unpaid_amount = sum(bill['amount'] for bill in bills if bill['amount'] is not None and bill['status'].lower() != 'paid') if bills else 0
-            data['bills'] = {'bills': bills, 'total_amount': total_amount, 'unpaid_amount': None}
+            data['bills'] = {'bills': bills, 'total_amount': total_amount, 'unpaid_amount': unpaid_amount}
 
-            # Net Worth
             nw_records = get_net_worth(mongo, filter_kwargs)
             nw_records = [to_dict_net_worth(nw) for nw in nw_records]
             data['net_worth'] = nw_records[0] if nw_records else {'net_worth': None, 'total_assets': None}
 
-            # Emergency Fund
             ef_records = get_emergency_funds(mongo, filter_kwargs)
             ef_records = [to_dict_emergency_fund(ef) for ef in ef_records]
             data['emergency_fund'] = ef_records[0] if ef_records else {'target_amount': None, 'savings_gap': None}
 
-            # Learning Progress
             lp_records = get_learning_progress(mongo, filter_kwargs)
             data['learning_progress'] = {lp['course_id']: to_dict_learning_progress(lp) for lp in lp_records} if lp_records else {}
 
-            # Quiz Result
             quiz_records = get_quiz_results(mongo, filter_kwargs)
             quiz_records = [to_dict_quiz_result(qr) for qr in quiz_records]
             data['quiz'] = quiz_records[0] if quiz_records else {'personality': None, 'score': None}
@@ -527,8 +511,8 @@ def create_app():
             default_data = {
                 'financial_health': {'score': None, 'status': None},
                 'budget': {'surplus_deficit': None, 'savings_goal': None},
-                'bills': {'bills': [], 'total_amount': None, 'unpaid_amount': None},
-                'net_worth': {'net_worth': None, 'total_amount': None},
+                'bills': {'bills': [], 'total_amount': 0, 'unpaid_amount': 0},
+                'net_worth': {'net_worth': None, 'total_assets': None},
                 'emergency_fund': {'target_amount': None, 'savings_gap': None},
                 'learning_progress': {},
                 'quiz': {'personality': None, 'score': None}
