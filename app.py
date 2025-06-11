@@ -221,7 +221,7 @@ SAMPLE_COURSES = [
 def create_app():
     app = Flask(__name__, template_folder='templates')
     
-    # Set Flask secret key
+    # Set Flask secret key before session setup
     app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key-please-change-me')
     if not os.environ.get('FLASK_SECRET_KEY'):
         logger.warning("FLASK_SECRET_KEY not set. Using fallback for development. Set it in production.")
@@ -409,7 +409,7 @@ def create_app():
             'TWITTER_URL': os.environ.get('TWITTER_URL', '#'),
             'FACEBOOK_URL': os.environ.get('FACEBOOK_URL', '#'),
             'FEEDBACK_FORM_URL': os.environ.get('FEEDBACK_FORM_URL', '#'),
-            'WAITLIST_FORM_URL': os.environ.get('WAITLIST_FORM_URL', '#'),
+            'WAIT_URL': os.environ.get('WAIT_URL', '#'),
             'CONSULTANCY_FORM_URL': os.environ.get('CONSULTANCY_FORM_URL', '#'),
             'current_lang': lang,
             'current_user': current_user if has_request_context() else None,
