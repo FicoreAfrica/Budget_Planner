@@ -429,10 +429,6 @@ def create_app():
         response.headers['X-Content-Type-Options'] = 'nosniff'
         return response
 
-    @app.route('/favicon.ico')
-    def favicon():
-        logger.info("Serving favicon.ico")
-        return send_from_directory(os.path.join(app.root_path, 'static', 'data'), 'favicon-32x32.png', mimetype='image/png')
 
     @app.route('/general_dashboard')
     @ensure_session_id
