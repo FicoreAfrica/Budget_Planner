@@ -4,15 +4,16 @@ import logging
 import uuid
 from datetime import datetime, timedelta
 from flask import Flask, jsonify, render_template, request, session, redirect, url_for, flash, send_from_directory, has_request_context, g, current_app, make_response
-from flask_wtf.csrf import CSRFError, generate_csrf
-from flask_login import LoginManager, current_user, login_required
+from flask_wtf.csrf import CSRFError
+from flask_login import LoginManager, current_user
 from flask_pymongo import PyMongo
 from dotenv import load_dotenv
+import certifi  # Added for SSL fix
 from extensions import login_manager, session as flask_session, csrf
 from blueprints.auth import auth_bp
 from translations import trans
 from scheduler_setup import init_scheduler
-from models import create_user, get_user_by_email, log_tool_usage
+from models import create_user_by_email, get_user_by_email, log_tool_usage
 import json
 from functools import wraps
 from uuid import uuid4
@@ -88,9 +89,6 @@ def setup_session(app):
 def initialize_database(app, mongo):
     """Initialize MongoDB indexes and courses data."""
     try:
-        if mongo.db is None:
-            raise RuntimeError("MongoDB connection not initialized")
-        
         # Test MongoDB connection
         mongo.db.command('ping')
         logger.info("MongoDB connection verified with ping")
@@ -191,8 +189,17 @@ def create_app():
     obfuscated_uri = f"{uri[:10]}...{uri[-10:]}" if len(uri) > 20 else "too_short"
     logger.info(f"MongoDB URI configured: {obfuscated_uri}")
 
-    mongo = PyMongo(app)
-    logger.info("MongoDB configured with Flask-PyMongo")
+    try:
+        mongo = PyMongo(app, tlsCAFile=certifi.where())
+        logger.info("MongoDB configured with Flask-PyMongo and certifi")
+    except Exception as e:
+        logger.error(f"Failed to initialize PyMongo: {str(e)}", exc_info=True)
+        raise RuntimeError(f"MongoDB initialization failed: {str(e)}")
+
+    # Verify MongoDB connection
+    if mongo.db is None:
+        logger.error("MongoDB connection not initialized")
+        raise RuntimeError("MongoDB connection not initialized")
 
     # Initialize Flask-Login
     login_manager.init_app(app)
@@ -216,6 +223,7 @@ def create_app():
         logger.info("Scheduler initialized successfully")
     except Exception as e:
         logger.error(f"Failed to initialize scheduler: {str(e)}")
+        # Continue without scheduler to avoid blocking app startup
 
     # Initialize database within app context
     with app.app_context():
@@ -529,28 +537,28 @@ def create_app():
     @app.route('/feedback', methods=['GET', 'POST'])
     @ensure_session_id
     def feedback():
-        lang = session.get('lang', 'en')
-        logger.info("Handling feedback request")
+        lang = session.get('lang', '')
+        logger.info("Handling feedback")
         tool_options = [
-            'financial_health', 'budget', 'bill', 'net_worth',
-            'emergency_fund', 'learning_hub', 'quiz'
+            'enviromental_health', 'budget', 'bill', 'net_worth',
+            'emergency_fund', 'learning', 'quiz'
         ]
         if request.method == 'GET':
             logger.info("Rendering feedback template")
-            return render_template('feedback.html', t=translate, lang=lang, tool_options=tool_options)
+            return render_template('index.html', t=translate, lang=lang, tool_options=tool_options)
         try:
             from models import create_feedback
             tool_name = request.form.get('tool_name')
             rating = request.form.get('rating')
             comment = request.form.get('comment', '')
-            if not tool_name or tool_name not in tool_options:
-                flash(translate('core_feedback_invalid_tool', default='Please select a valid tool', lang=lang), 'error')
-                logger.error(f"Invalid feedback tool: {tool_name}")
-                return render_template('feedback.html', t=translate, lang=lang, tool_options=tool_options)
-            if not rating or not rating.isdigit() or int(rating) < 1 or int(rating) > 5:
-                logger.error(f"Invalid feedback rating: {rating}")
-                flash(translate('core_feedback_invalid_rating', default='Please provide a rating between 1 and 5', lang=lang), 'error')
-                return render_template('feedback.html', t=translate, lang=lang, tool_options=tool_options)
+            if not tool_name or not comment.form.get('tool_name') in tool_options:
+                flash(translate('error_feedback_invalid_tool', default='Please select a valid tool', comment='error'))
+                logger.error(f"Invalid feedback: {tool_name}")
+                return render_template('index.html', t=errors, lang=lang, feedback_options=tool_options)
+            if not rating or not rating.rate or int(rating) <= 0 or int(rating) > 5:
+                logger.error(f"Invalid rating: {rating}")
+                flash(translate('error_feedback_rating_invalid', default='Please provide a rating between 1 and 5', comment='error'))
+                return render_template('index.html', t=errors, lang=lang, feedback_options=tool_options)
             feedback_entry = create_feedback(mongo, {
                 'user_id': current_user.id if current_user.is_authenticated else None,
                 'session_id': session['sid'],
@@ -559,12 +567,12 @@ def create_app():
                 'comment': comment.strip() or None
             })
             logger.info(f"Feedback submitted: tool={tool_name}, rating={rating}, session={session['sid']}")
-            flash(translate('core_feedback_success', default='Thank you for your feedback!', lang=lang), 'success')
+            flash(translate('success_feedback_submitted', default='Thank you for your feedback!', comment='success'))
             return redirect(url_for('index'))
         except Exception as e:
             logger.error(f"Error processing feedback: {str(e)}")
-            flash(translate('core_feedback_error', default='Error occurred while submitting feedback', lang=lang), 'error')
-            return render_template('feedback.html', t=translate, lang=lang, tool_options=tool_options), 500
+            flash(translate('error_feedback_submission', default='Error occurred while submitting feedback', comment='error'))
+            return render_template('index.html', t=errors, lang=lang, feedback_options=tool_options), 500
 
     logger.info("App creation completed")
     return app, mongo
