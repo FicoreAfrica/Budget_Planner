@@ -125,9 +125,7 @@ def check_mongodb_connection(mongo_client, app):
                 # Update app.config and Flask-PyMongo
                 app.config['MONGO_CLIENT'] = new_client
                 app.config['SESSION_MONGODB'] = new_client
-                mongo
-
-.init_app(app, connect=False, uri=app.config['MONGO_URI'])
+                mongo.init_app(app, connect=False, uri=app.config['MONGO_URI'])
                 return True
             except Exception as reinit_e:
                 logger.error(f"Failed to reinitialize MongoDB client: {str(reinit_e)}")
@@ -217,7 +215,7 @@ def initialize_database(app):
         if 'referral_code_1' not in existing_indexes:
             db.users.create_index('referral_code', unique=True)
         
-       (existing_indexes = db.courses.index_information()
+        existing_indexes = db.courses.index_information()
         if 'id_1' not in existing_indexes:
             db.courses.create_index('id', unique=True)
         
@@ -349,6 +347,22 @@ def create_app():
     except Exception as e:
         logger.error(f"Unexpected error during MongoDB setup: {str(e)}", exc_info=True)
         raise RuntimeError(f"MongoDB initialization failed: {str(e)}")
+    
+    # Initialize Flask-Login
+    login_manager.init_app(app)
+    login_manager.login_view = 'auth.signin'  # Redirect unauthenticated users to signin page
+    logger.info("Flask-Login initialized successfully")
+    
+    # Define user_loader callback
+    @login_manager.user_loader
+    def load_user(user_id):
+        try:
+            from models import get_user  # Import here to avoid circular imports
+            user = get_user(mongo, user_id)
+            return user
+        except Exception as e:
+            logger.error(f"Error loading user {user_id}: {str(e)}", exc_info=True)
+            return None
     
     init_email_config(app, logger)
     setup_session(app)
