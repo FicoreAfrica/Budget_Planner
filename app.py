@@ -5,7 +5,7 @@ import uuid
 from datetime import datetime, timedelta
 import atexit
 from flask import Flask, jsonify, request, render_template, redirect, url_for, flash, make_response, has_request_context, g, send_from_directory, session
-from flask_wtf.csrf import CSRFProtect, CSRFError
+from flask_wtf.csrf import CSRFProtect, CSRFError, generate_csrf  # Added generate_csrf import
 from flask_login import LoginManager, current_user
 from flask_compress import Compress
 from dotenv import load_dotenv
@@ -62,7 +62,7 @@ def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not current_user.is_authenticated:
-            return redirect(url_for('auth.signin', next=request.url))
+            return redirect(url_for('auth.signin'))
         if current_user.role != 'admin':
             flash('You do not have permission to access this page.', 'danger')
             return redirect(url_for('index'))
