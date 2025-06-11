@@ -4,14 +4,14 @@ import logging
 import uuid
 from datetime import datetime, timedelta
 import atexit
-from flask import Flask, jsonify, render_template, request, redirect, url_for, flash, make_response, has_request_context, g, send_from_directory, session
-from flask_wtf.csrf import CSRFProtect, generate_csrf, CSRFError
+from flask import Flask, jsonify, request, render_template, redirect, url_for, flash, make_response, has_request_context, g, send_from_directory, session
+from flask_wtf.csrf import CSRFProtect, CSRFError
 from flask_login import LoginManager, current_user
 from flask_compress import Compress
 from dotenv import load_dotenv
 import certifi
 from pymongo import MongoClient
-from extensions import mongo, login_manager, flask_session
+from extensions import pymongo
 from blueprints.auth import auth_bp
 from translations import trans
 from scheduler_setup import init_scheduler
@@ -52,7 +52,7 @@ class SessionAdapter(logging.LoggerAdapter):
         kwargs['extra']['session_id'] = session_id
         return msg, kwargs
 
-logger = SessionAdapter(root_logger, {})
+logger = SessionAdapter(root_logger.get_logger(), {})
 
 # Initialize CSRF protection
 csrf = CSRFProtect()
@@ -469,6 +469,9 @@ def create_app():
         **{k: v for k, v in kwargs.items() if k != 'lang'}
     )
 
+    logger.info("App creation completed")
+    return app
+
 # Template filters
 @app.template_filter('safe_nav')
 def safe_nav(value):
@@ -773,9 +776,6 @@ def feedback():
         logger.error(f"Error processing feedback: {str(e)}", exc_info=True)
         flash(translate('error_feedback_submission', default='Error occurred while submitting feedback', comment='error'), 'danger')
         return render_template('index.html', t=translate, lang=lang, tool_options=tool_options), 500
-
-logger.info("App creation completed")
-return app
 
 if __name__ == "__main__":
     try:
