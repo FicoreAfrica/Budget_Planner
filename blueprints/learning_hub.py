@@ -13,6 +13,8 @@ from translations import trans
 from extensions import mongo
 from werkzeug.utils import secure_filename
 import pymongo
+from extensions import mongo  # Import mongo from extensions
+
 
 learning_hub_bp = Blueprint(
     'learning_hub',
