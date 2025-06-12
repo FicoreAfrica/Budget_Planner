@@ -392,11 +392,7 @@ def step2b():
                 
                 # Prepare results for display
                 results = quiz_result.copy()
-                try:
-                    results['created_at'] = datetime.fromisoformat(results['created_at'])
-                except (TypeError, ValueError) as e:
-                    logger.error(f"Failed to parse created_at '{results['created_at']}' in step2b: {str(e)}", extra={'session_id': session['sid']})
-                    results['created_at'] = None  # Fallback to None for template handling
+                results['created_at'] = datetime.fromisoformat(created_at)  # Convert here to ensure datetime for session and email
                 
                 # Send email if user opted in
                 if session['quiz_data'].get('send_email') and session['quiz_data'].get('email'):
@@ -477,6 +473,7 @@ def results():
         )
         # Try to fetch results from session first
         results = session.get('quiz_results')
+        result_source = 'session' if results else 'none'
         
         if not results:
             # Fetch from MongoDB using quiz_result_id or user_id
@@ -484,6 +481,7 @@ def results():
                 quiz_result = mongo.db.quiz_responses.find_one({'_id': session['quiz_result_id']})
                 if quiz_result:
                     results = quiz_result
+                    result_source = 'quiz_result_id'
             if not results:
                 # Fallback to latest result by user_id
                 quiz_result = mongo.db.quiz_responses.find_one(
@@ -492,6 +490,7 @@ def results():
                 )
                 if quiz_result:
                     results = quiz_result
+                    result_source = 'user_id'
             if not results and current_user.email:
                 # Fallback to email
                 quiz_result = mongo.db.quiz_responses.find_one(
@@ -500,19 +499,26 @@ def results():
                 )
                 if quiz_result:
                     results = quiz_result
+                    result_source = 'email'
         
         if not results:
             logger.warning(f"No quiz results found for session {session['sid']}", extra={'session_id': session['sid']})
             flash(trans('quiz_no_results', default='No quiz results found. Please take the quiz again.', lang=lang), 'danger')
             return redirect(url_for('quiz.step1', course_id=course_id))
         
-        # Convert created_at to datetime for display, with validation
-        if isinstance(results.get('created_at'), str):
+        # Log the source and created_at for debugging
+        logger.debug(f"Results fetched from {result_source}, created_at: {results.get('created_at')}, type: {type(results.get('created_at'))}", extra={'session_id': session['sid']})
+        
+        # Handle created_at conversion
+        if isinstance(results.get('created_at'), datetime):
+            # Already a datetime, no conversion needed
+            pass
+        elif isinstance(results.get('created_at'), str):
             try:
                 results['created_at'] = datetime.fromisoformat(results['created_at'])
             except (TypeError, ValueError) as e:
                 logger.error(f"Failed to parse created_at '{results['created_at']}' in results: {str(e)}", extra={'session_id': session['sid']})
-                results['created_at'] = None  # Fallback to None for template handling
+                results['created_at'] = None
         else:
             logger.error(f"Invalid created_at type: {type(results['created_at'])}, value: {results['created_at']}", extra={'session_id': session['sid']})
             results['created_at'] = None
@@ -522,7 +528,7 @@ def results():
         session.pop('quiz_results', None)
         session.pop('quiz_result_id', None)
         session.modified = True
-        logger.info(f"Displaying quiz results for session {session['sid']}", extra={'session_id': session['sid']})
+        logger.info(f"Displaying quiz results for session {session['sid']} from {result_source}, session data cleared", extra={'session_id': session['sid']})
         
         return render_template(
             'QUIZ/quiz_results.html',
