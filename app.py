@@ -180,10 +180,9 @@ def setup_session(app):
 def initialize_database(app):
     """Initialize MongoDB indexes and courses data with robust client handling."""
     max_retries = 3
-    mongo_client = app.config.get('MONGO_CLIENT')
     for attempt in range(max_retries):
         try:
-            if check_mongodb_connection(mongo_client, app):
+            if check_mongodb_connection(app.config.get('MONGO_CLIENT'), app):
                 logger.info(f"Attempt {attempt + 1}/{max_retries} - MongoDB connection established")
                 break
             else:
@@ -197,8 +196,8 @@ def initialize_database(app):
                 raise
 
     try:
-        # Use the MongoClient directly
-        db = mongo_client['ficodb']
+        # Use Flask-PyMongo's database
+        db = mongo.db
         
         # Verify connection before proceeding
         try:
@@ -347,6 +346,16 @@ def create_app():
         app.config['MONGO_CLIENT'] = mongo_client
         logger.info("MongoDB client created")
         
+        # Register MongoClient shutdown on app exit
+        @atexit.register
+        def close_mongo_client():
+            try:
+                if mongo_client is not None:
+                    mongo_client.close()
+                    logger.info("MongoDB client closed on app shutdown")
+            except Exception as e:
+                logger.error(f"Error closing MongoDB client on app shutdown: {str(e)}", exc_info=True)
+        
         # Initialize Flask-PyMongo
         mongo.init_app(app, connect=False, uri=app.config['MONGO_URI'])
         logger.info("MongoDB configured with Flask-PyMongo")
@@ -465,17 +474,10 @@ def create_app():
     @app.teardown_appcontext
     def teardown_appcontext(exception=None):
         """
-        Handle application context teardown, closing MongoDB connection if open.
+        Handle application context teardown without closing MongoDB connection.
         """
-        try:
-            mongo_client = app.config.get('MONGO_CLIENT')
-            if mongo_client is not None:
-                mongo_client.close()
-                logger.info("MongoDB connection closed during teardown")
-        except Exception as e:
-            logger.error(f"Error closing MongoDB connection during teardown: {str(e)}", exc_info=True)
-        logger.info("Teardown completed")
-
+        logger.info("Teardown completed without closing MongoDB connection")
+    
     # Register blueprints
     from blueprints.financial_health import financial_health_bp
     from blueprints.budget import budget_bp
