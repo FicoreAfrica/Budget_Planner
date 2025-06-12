@@ -125,7 +125,7 @@ def step1():
     current_app.logger.info(f"Form data: {form_data}, User: {current_user.id}, Lang: {lang}")
     form = Step1Form(data=form_data)
     current_app.logger.info(f"Form errors: {form.errors}, MongoDB: {mongo.db is not None}")
-    template_path = 'emergency_fund_step1.html'
+    template_path = 'EMERGENCYFUND/emergency_fund_step1.html'
     try:
         try:
             log_tool_usage(
@@ -165,7 +165,7 @@ def step1():
                 for field, errors in form.errors.items():
                     for error in errors:
                         flash(f"{field}: {error}", 'danger')
-        current_app.logger.info(f"Rendering template: {template_path}")
+        current_app.logger.info(f"Rendering template: {template_path}, Blueprint template folder: {emergency_fund_bp.template_folder}")
         return render_template(template_path, form=form, step_num=1, trans=trans, lang=lang)
     except Exception as e:
         current_app.logger.error(f"Error in step1 (template: {template_path}): {str(e)}", exc_info=True)
@@ -184,7 +184,7 @@ def step2():
         flash(trans('emergency_fund_missing_step1', default='Please, complete step 1 first.', lang=lang), 'danger')
         return redirect(url_for('emergency_fund.step1'))
     form = Step2Form()
-    template_path = 'emergency_fund_step2.html'
+    template_path = 'EMERGENCYFUND/emergency_fund_step2.html'
     try:
         log_tool_usage(
             mongo=mongo.db,
@@ -215,7 +215,7 @@ def step2():
                 for field, errors in form.errors.items():
                     for error in errors:
                         flash(f"{field}: {error}", 'danger')
-        current_app.logger.info(f"Rendering template: {template_path}")
+        current_app.logger.info(f"Rendering template: {template_path}, Blueprint template folder: {emergency_fund_bp.template_folder}")
         return render_template(template_path, form=form, step=2, trans=trans, lang=lang)
     except Exception as e:
         current_app.logger.error(f"Error in step2 (template: {template_path}): {str(e)}", exc_info=True)
@@ -234,7 +234,7 @@ def step3():
         flash(trans('emergency_fund_missing_step2', default='Please complete previous steps first.', lang=lang), 'danger')
         return redirect(url_for('emergency_fund.step1'))
     form = Step3Form()
-    template_path = 'emergency_fund_step3.html'
+    template_path = 'EMERGENCYFUND/emergency_fund_step3.html'
     try:
         log_tool_usage(
             mongo=mongo.db,
@@ -266,12 +266,12 @@ def step3():
                 for field, errors in form.errors.items():
                     for error in errors:
                         flash(f"{field}: {error}", 'danger')
-        current_app.logger.info(f"Rendering template: {template_path}")
+        current_app.logger.info(f"Rendering template: {template_path}, Blueprint template folder: {emergency_fund_bp.template_folder}")
         return render_template(template_path, form=form, step=3, trans=trans, lang=lang)
     except Exception as e:
         current_app.logger.error(f"Error in step3 (template: {template_path}): {str(e)}", exc_info=True)
         flash(trans('an_unexpected_error_occurred', default='An unexpected error occurred.', lang=lang), 'danger')
-        return render_template(template_path, form=form, step=3, trans=trans, lang=lang)
+        return render_template('error.html', template=template_path, form=form, step=3, trans=trans, lang=lang), 500
 
 @emergency_fund_bp.route('/step4', methods=['GET', 'POST'])
 @login_required
@@ -285,7 +285,7 @@ def step4():
         flash(trans('emergency_fund_missing_step3', default='Please complete previous steps first.', lang=lang), 'danger')
         return redirect(url_for('emergency_fund.step1'))
     form = Step4Form(lang=lang)
-    template_path = 'emergency_fund_step4.html'
+    template_path = 'EMERGENCYFUND/emergency_fund_step4.html'
     try:
         log_tool_usage(
             mongo=mongo.db,
@@ -404,12 +404,12 @@ def step4():
                 for field, errors in form.errors.items():
                     for error in errors:
                         flash(f"{field}: {error}", 'danger')
-        current_app.logger.info(f"Rendering template: {template_path}")
+        current_app.logger.info(f"Rendering template: {template_path}, Blueprint template folder: {emergency_fund_bp.template_folder}")
         return render_template(template_path, form=form, step=4, trans=trans, lang=lang)
     except Exception as e:
         current_app.logger.error(f"Error in step4 (template: {template_path}): {str(e)}", exc_info=True)
         flash(trans('an_unexpected_error_occurred', default='An unexpected error occurred.', lang=lang), 'danger')
-        return render_template(template_path, form=form, step=4, trans=trans, lang=lang)
+        return render_template('error.html', template=template_path, form=form, step=4, trans=trans, lang=lang), 500
 
 @emergency_fund_bp.route('/dashboard', methods=['GET'])
 @login_required
@@ -419,7 +419,7 @@ def dashboard():
         session['permanent'] = True
         session['modified'] = True
     lang = session.get('lang', 'en')
-    template_path = 'emergency_fund_dashboard.html'
+    template_path = 'EMERGENCYFUND/emergency_fund_dashboard.html'
     try:
         log_tool_usage(
             mongo=mongo.db,
@@ -465,7 +465,7 @@ def dashboard():
                     cross_tool_insights.append(trans('emergency_fund_cross_tool_savings_possible', lang=lang,
                                                    amount=savings_possible))
 
-        current_app.logger.info(f"Rendering template: {template_path}")
+        current_app.logger.info(f"Rendering template: {template_path}, Blueprint template folder: {emergency_fund_bp.template_folder}")
         return render_template(
             template_path,
             records=records,
@@ -485,7 +485,7 @@ def dashboard():
         current_app.logger.error(f"Error in dashboard (template: {template_path}): {str(e)}", exc_info=True)
         flash(trans('emergency_fund_load_dashboard_error', lang=lang), 'danger')
         return render_template(
-            template_path,
+            'error.html',
             records=[],
             latest_record={},
             insights=[],
@@ -498,7 +498,7 @@ def dashboard():
             ],
             trans=trans,
             lang=lang
-        )
+        ), 500
 
 @emergency_fund_bp.route('/unsubscribe/<email>')
 @login_required
