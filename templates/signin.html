@@ -35,8 +35,17 @@
                     </button>
                     <div class="invalid-feedback">{{ trans('auth_password_required', lang=lang) | default('Password is required') }}</div>
                 </div>
+                <div class="mb-3 text-end">
+                    <a href="{{ url_for('auth.forgot_password') }}">{{ trans('core_forgot_password', lang=lang) | default('Forgot Password?') }}</a>
+                </div>
                 <button type="submit" class="btn btn-primary" id="signinButton">{{ trans('auth_signin', lang=lang) | default('Sign In') }}</button>
                 <a href="{{ url_for('auth.signup') }}" class="btn btn-outline-secondary">{{ trans('auth_no_account', lang=lang) | default('No account? Sign Up') }}</a>
+                <div class="mt-3 text-center">
+                    <p>{{ trans('core_or_signin_with', lang=lang) | default('Or sign in with') }}</p>
+                    <a href="{{ url_for('auth.google_login') }}" class="btn btn-outline-primary">
+                        <i class="fab fa-google"></i> {{ trans('core_google_signin', lang=lang) | default('Sign in with Google') }}
+                    </a>
+                </div>
             </form>
         </div>
     </div>
