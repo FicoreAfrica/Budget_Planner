@@ -144,68 +144,10 @@
             </div>
         </div>
     </div>
-    <div class="bg-white shadow-lg rounded-lg mb-8">
-        <div class="p-6">
-            <h5 class="text-lg font-semibold mb-4">{{ trans('admin_usage_trend', default='Usage Trend', lang=lang) }}</h5>
-            <canvas id="usageChart" class="w-full h-80"></canvas>
-        </div>
-    </div>
 
     <script>
-        const usageCtx = document.getElementById('usageChart').getContext('2d');
-        new Chart(usageCtx, {
-            type: 'bar',
-            data: {
-                labels: {{ chart_data.labels | tojson }},
-                datasets: [
-                    {% for action, counts in chart_data.usage_counts.items %}
-                    {
-                        label: '{{ action.replace('_', ' ').title() }}',
-                        data: {{ counts | tojson }},
-                        backgroundColor: '{{ ['#007bff', '#28a745', '#ff6f00', '#dc3545', '#6f42c1', '#fd7e14', '#17a2b8'][loop.index % 7] }}',
-                        borderColor: '{{ ['#0056b3', '#1e7e34', '#e65c00', '#c82333', '#5a32a3', '#e06c00', '#117a8b'][loop.index % 7] }}',
-                        borderWidth: 1
-                    }{% if not loop.last %},{% endif %}
-                    {% endfor %}
-                    {% if chart_data.usage_counts %}
-                    ,{
-                        label: '{{ trans('admin_total_usage', default='Total Usage', lang=lang) }}',
-                        data: {{ chart_data.total_counts | tojson }},
-                        type: 'line',
-                        borderColor: '#333333',
-                        backgroundColor: 'rgba(51, 51, 51, 0.1)',
-                        fill: false,
-                        yAxisID: 'y-total'
-                    }
-                    {% endif %}
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    'y': {
-                        beginAtZero: true,
-                        stacked: true,
-                        ticks: { color: '#333333' },
-                        title: { display: true, text: '{{ trans('admin_action_counts', default='Action Counts', lang=lang) }}', color: '#333333' }
-                    },
-                    'y-total': {
-                        beginAtZero: true,
-                        position: 'right',
-                        ticks: { color: '#333333' },
-                        title: { display: true, text: '{{ trans('admin_total_usage', default='Total Usage', lang=lang) }}', color: '#333333' },
-                        grid: { drawOnChartArea: false }
-                    },
-                    x: { ticks: { color: '#333333' } }
-                },
-                plugins: { legend: { labels: { color: '#333333' } } }
-            }
-        });
+        // Chart.js is no longer needed for tool_usage
     </script>
-
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.min.js"></script>
     {% endif %}
 </div>
 {% endblock %}
