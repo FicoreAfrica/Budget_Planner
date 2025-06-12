@@ -53,7 +53,7 @@ LEARNING_HUB_TRANSLATIONS = {
 
         # Core UI Translations
         'learning_hub_why_ficore': 'Why Ficore Africa?',
-        'learning_hub_localized': 'Localized for Africa with support for Naira and regional financial contexts',
+        'learning_hub_localized': 'Localized for Africa with support for all major languages and regional financial contexts',
         'learning_hub_empowers': 'Empowers financial literacy with easy-to-use tools',
         'learning_hub_actionable': 'Provides actionable insights for better financial decisions',
         'learning_hub_all_in_one_toolkit': 'Your All-in-One Toolkit for Personal & SME Financial Health Across Africa',
