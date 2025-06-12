@@ -9,7 +9,7 @@ from mailersend_email import send_email, EMAIL_CONFIG
 import uuid
 import json
 import os
-from translations import trans
+from translations import trans as trans_orig
 from extensions import mongo
 from werkzeug.utils import secure_filename
 from models import log_tool_usage
@@ -39,6 +39,12 @@ def init_app(app):
     handler = logging.StreamHandler()
     handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
     app.logger.addHandler(handler)
+    # Ensure MongoDB connections are closed on teardown
+    @app.teardown_appcontext
+    def close_db(error):
+        if hasattr(g, 'db'):
+            g.db.client.close()
+            current_app.logger.info("MongoDB connection closed", extra={'session_id': session.get('sid', 'no-session-id')})
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -62,7 +68,7 @@ courses_data = {
                         "id": "budgeting_101-module-1-lesson-1",
                         "title_key": "learning_hub_lesson_income_sources_title",
                         "content_type": "video",
-                        "content_path": "uploads/budgeting_101_lesson1.mp4",
+                        "content_path": "Uploads/budgeting_101_lesson1.mp4",
                         "quiz_id": "quiz-1-1"
                     },
                     {
@@ -157,6 +163,15 @@ quizzes_data = {
     }
 }
 
+# Modified translation function with fallback
+def trans(key, lang='en', default=None):
+    try:
+        translation = trans_orig(key, lang=lang)
+        return translation if translation else (default or key)
+    except Exception as e:
+        current_app.logger.warning(f"Translation failed for key='{key}' in lang='{lang}': {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
+        return default or key
+
 class LearningHubProfileForm(FlaskForm):
     first_name = StringField(validators=[DataRequired()])
     email = StringField(validators=[Optional(), Email()])
@@ -207,13 +222,13 @@ def get_progress():
     """Retrieve learning progress from MongoDB with caching."""
     try:
         filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session.get('sid', str(uuid.uuid4()))}
-        progress_records = mongo.db.learning_materials.find(filter_kwargs).hint([('user_id', 1), ('session_id', 1)])
+        progress_records = mongo.db.learning_materials.find(filter_kwargs)  # Removed hint
         progress = {}
         for record in progress_records:
             try:
                 course_id = record.get('course_id')
                 if not course_id:
-                    current_app.logger.warning(f"Invalid progress record, missing course_id: {record}")
+                    current_app.logger.warning(f"Invalid progress record, missing course_id: {record}", extra={'session_id': session.get('sid', 'no-session-id')})
                     continue
                 progress[course_id] = {
                     'lessons_completed': record.get('lessons_completed', []),
@@ -225,13 +240,14 @@ def get_progress():
         return progress
     except Exception as e:
         current_app.logger.error(f"Error retrieving progress from MongoDB: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
+        flash(trans("learning_hub_error_loading", default="Error loading content. Please try again.", lang=session.get('lang', 'en')))
         return {}
 
 def save_course_progress(course_id, course_progress):
     """Save course progress to MongoDB with validation."""
     try:
         if not isinstance(course_id, str) or not isinstance(course_progress, dict):
-            current_app.logger.error(f"Invalid course_id or course_progress: course_id={course_id}, course_progress={course_progress}")
+            current_app.logger.error(f"Invalid course_id or course_progress: course_id={course_id}, course_progress={course_progress}", extra={'session_id': session.get('sid', 'no-session-id')})
             return
         filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
         filter_kwargs['course_id'] = course_id
