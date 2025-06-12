@@ -1,3 +1,12 @@
+/* Global Font Weight Standardization */
+h1, h2, h3, .section-heading, .card-title, .about-title, .group-title, .tool-title-container, .step-title-container {
+    font-weight: 600; /* Semi-bold for headings */
+}
+
+p, li, .card-text, .about-content, .mission-statement p, .team-why p, .call-to-action p, .testimonial p, .faq-item p, .why-list li, .hero-content p, .hero-subtext, .group-subtext, .journey-step p, .form-control, .btn-quiz-answer, .about-subtitle {
+    font-weight: 400; /* Regular for body text */
+}
+
 /* Financial Health Score Badge */
 .card:has(.badge-success) .card-title {
     flex-direction: column;
@@ -13,6 +22,35 @@
     align-items: center;
     margin-top: 0;
     margin-right: 0.5rem;
+    font-weight: 400; /* Consistent with body text */
+}
+
+/* Header Styles */
+.navbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem; /* Consistent base padding */
+}
+
+.navbar-brand {
+    margin-right: 1.5rem; /* Increased margin for spacing from nav */
+    padding: 0.5rem; /* Consistent padding */
+    font-weight: 600; /* Consistent with headings */
+}
+
+.nav-link {
+    margin: 0 0.75rem; /* Consistent horizontal margin for nav items */
+    padding: 0.5rem 0.75rem; /* Consistent padding */
+    font-weight: 400; /* Consistent with body text */
+}
+
+.lang-switch {
+    margin-left: 1.5rem; /* Spacing from nav */
+    padding: 0.5rem 0.75rem; /* Consistent padding */
+    display: flex;
+    align-items: center;
+    font-weight: 400; /* Consistent with body text */
 }
 
 /* About Page Specific Styles */
@@ -38,14 +76,12 @@
 
 .about-title {
     font-size: 1.8rem;
-    font-weight: bold;
     color: #fff;
     margin-bottom: 0.5rem;
 }
 
 .about-subtitle {
     font-size: 0.9rem;
-    font-weight: normal;
     color: #e3f2fd;
 }
 
@@ -71,6 +107,7 @@
 .about-disclaimer {
     color: #dc3545;
     font-style: italic;
+    font-weight: 400; /* Consistent with body text */
 }
 
 .mission-statement {
@@ -84,7 +121,6 @@
 
 .mission-statement h3 {
     font-size: 1.2rem;
-    font-weight: bold;
     color: #0288d1;
     margin-bottom: 0.5rem;
     display: flex;
@@ -113,7 +149,6 @@
 
 .team-why h3 {
     font-size: 1.2rem;
-    font-weight: bold;
     color: #2e7d32;
     margin-bottom: 0.5rem;
     display: flex;
@@ -156,7 +191,6 @@
 .testimonials-section h2.section-heading {
     font-size: 1.4rem;
     color: var(--section-header);
-    font-weight: bold;
     text-align: center;
     line-height: 1.5;
     padding: 1rem;
@@ -186,7 +220,7 @@
     align-items: center;
     justify-content: center;
     font-size: 0.8rem;
-    font-weight: bold;
+    font-weight: 600; /* Consistent with headings for avatar text */
     margin: 0 auto;
     margin-bottom: 0.5rem;
 }
@@ -197,11 +231,12 @@
     border-radius: 50%;
     font-size: 0.8rem;
     margin-bottom: 0.5rem;
+    font-weight: 600; /* Consistent with headings */
 }
 
 .testimonial .home {
     color: #028028;
-    font-weight: 0.8rem;
+    font-weight: 400; /* Consistent with body text */
     margin-top: 0.5rem;
 }
 
@@ -212,14 +247,14 @@
 
 .testimonial .quote {
     color: var(--testimonial-quote);
-    font-weight: normal;
+    font-weight: 400; /* Consistent with body text */
     font-size: 0.85rem;
     margin-right: 0.3125rem;
 }
 
 .testimonial .name {
     color: var(--testimonial-quote);
-    font-weight: bold;
+    font-weight: 600; /* Consistent with headings */
     font-size: 0.95rem;
     margin-bottom: 0.5rem;
 }
@@ -261,7 +296,6 @@
 }
 
 .faq-item p {
-    color: var(--text-color);
     font-size: 0.95rem;
 }
 
@@ -280,7 +314,6 @@
 
 .why-section h2.section-heading {
     font-size: 1.4rem;
-    font-weight: bold;
     color: #028028;
     text-align: center;
     line-height: 1.5;
@@ -292,7 +325,6 @@
     display: flex;
     align-items: center;
     margin-bottom: 0.5rem;
-    color: var(--text-color);
 }
 
 .dark-mode .why-list li {
@@ -339,6 +371,7 @@
 
 .forms-section .form-label {
     text-align: left !important;
+    font-weight: 400; /* Consistent with body text */
 }
 
 .forms-section .form-control {
@@ -351,7 +384,7 @@
 
 .quiz-container .form-label {
     text-align: left;
-    font-weight: normal;
+    font-weight: 400; /* Consistent with body text */
 }
 
 .quiz-container .form-control {
@@ -394,18 +427,20 @@
     border-radius: 8px;
 }
 
-/* Mobile-Specific Optimizations (Untouched) */
+/* Mobile-Specific Optimizations */
 @media (max-width: 767px) {
     .btn-primary.btn-explore {
         padding: 12px 24px;
         font-size: 1rem;
         border-radius: 8px;
+        font-weight: 400; /* Consistent with body text */
     }
 
     .index-page .tool-card button {
         padding: 12px 24px;
         font-size: 1rem;
         border-radius: 8px;
+        font-weight: 400; /* Consistent with body text */
     }
 
     .journey-section {
@@ -419,6 +454,30 @@
         flex: 1 1 45%;
         max-width: 150px;
         margin-bottom: 1rem;
+    }
+
+    /* Header Adjustments for Mobile */
+    .navbar {
+        flex-direction: column; /* Stack elements vertically */
+        padding: 0.5rem 1rem;
+    }
+
+    .navbar-brand {
+        margin: 0.5rem 0; /* Vertical spacing */
+        padding: 0.25rem;
+        font-weight: 600; /* Consistent with headings */
+    }
+
+    .nav-link {
+        margin: 0.25rem 0; /* Vertical spacing for nav items */
+        padding: 0.5rem;
+        font-weight: 400; /* Consistent with body text */
+    }
+
+    .lang-switch {
+        margin: 0.5rem 0; /* Vertical spacing */
+        padding: 0.5rem;
+        font-weight: 400; /* Consistent with body text */
     }
 
     /* Visual Size and Alignment */
@@ -488,7 +547,7 @@
     /* Accordion Headers */
     .accordion-header {
         font-size: 1.3rem;
-        font-weight: 700;
+        font-weight: 600; /* Consistent with headings */
         color: var(--accordion-button-text);
         background: var(--accordion-button-bg);
         padding: 1.2rem 1.5rem;
@@ -517,7 +576,7 @@
     .accordion-header::before {
         content: '\f078';
         font-family: 'Font Awesome';
-        font-weight: bold;
+        font-weight: 600; /* Consistent with headings */
         font-size: 0.8rem;
         color: var(--accordion-button-text);
         margin-right: 0.5rem;
@@ -548,45 +607,57 @@
     }
 
     .navbar {
-        padding: 1rem 3rem; /* Increased padding for wider screens */
+        padding: 1rem 3rem; /* Consistent padding for desktop */
+        flex-direction: row; /* Horizontal layout */
     }
 
     .navbar-brand {
         font-size: 1.4rem; /* Slightly larger for better visibility */
-    }
-
-    .logo-centered {
-        width: 25rem; /* Slightly increased for better proportion */
-        height: 25rem;
+        margin-right: 2rem; /* Increased spacing */
+        padding: 0.5rem 1rem;
+        font-weight: 600; /* Consistent with headings */
     }
 
     .nav-link {
         font-size: 1.1rem; /* Slightly larger for readability */
-        padding: 0.75rem 1.25rem; /* Increased padding for better spacing */
+        margin: 0 1rem; /* Increased horizontal spacing */
+        padding: 0.75rem 1.25rem; /* Consistent padding */
+        font-weight: 400; /* Consistent with body text */
+    }
+
+    .lang-switch {
+        margin-left: 2rem; /* Increased spacing from nav */
+        padding: 0.5rem 1rem;
+        font-weight: 400; /* Consistent with body text */
     }
 
     .nav-item .nav-link,
     .dropdown .nav-link {
         font-size: 1rem; /* Slightly larger for clarity */
+        font-weight: 400; /* Consistent with body text */
     }
 
     .dropdown-item {
         font-size: 0.95rem; /* Adjusted for consistency */
+        font-weight: 400; /* Consistent with body text */
     }
 
     .navbar-toggler {
         padding: 0.6rem 0.9rem;
         font-size: 1rem;
+        font-weight: 400; /* Consistent with body text */
     }
 
     .header-message {
         font-size: 1.05rem;
         padding: 1rem;
+        font-weight: 400; /* Consistent with body text */
     }
 
     .consent-banner {
         font-size: 1rem;
         padding: 1rem;
+        font-weight: 400; /* Consistent with body text */
     }
 
     .hero-section {
@@ -619,7 +690,7 @@
     .hero-disclaimer {
         font-size: 0.85rem;
         font-style: italic;
-        font-weight: normal;
+        font-weight: 400; /* Consistent with body text */
         opacity: 0.6;
     }
 
@@ -639,7 +710,6 @@
     }
 
     .card-text {
-        color: var(--card-text-color);
         font-size: 1.05rem; /* Slightly larger for readability */
     }
 
@@ -664,6 +734,18 @@
         justify-content: space-between;
         flex-wrap: nowrap;
         gap: 3rem; /* Increased gap for better separation */
+        position: relative;
+    }
+
+    .journey-steps::before {
+        content: '';
+        position: absolute;
+        top: 30%; /* Adjust to vertically center the line relative to steps */
+        left: 10%;
+        right: 10%;
+        height: 4px; /* Thickness of the connector line */
+        background-color: var(--accent-blue); /* Use existing variable for consistency */
+        z-index: 0; /* Ensure line is behind steps */
     }
 
     .journey-step {
@@ -675,6 +757,8 @@
         padding: 1rem;
         margin: 0;
         max-width: none;
+        position: relative; /* Ensure steps are above the connector line */
+        z-index: 1; /* Place steps above the connector line */
     }
 
     .step-badge {
@@ -682,6 +766,7 @@
         position: static;
         transform: none;
         margin-bottom: 0.75rem;
+        font-weight: 400; /* Consistent with body text */
     }
 
     .journey-step p {
@@ -735,6 +820,7 @@
         background-color: var(--button-color);
         font-size: 1.05rem;
         padding: 0.75rem 1.5rem; /* Increased for better clickability */
+        font-weight: 400; /* Consistent with body text */
     }
 
     .group-title {
@@ -742,12 +828,10 @@
     }
 
     .group-subtext {
-        background: var(--text-color);
         font-size: 1.1rem;
     }
 
     .accordion-button {
-        font-weight: 700;
         font-size: 2rem; /* Slightly larger for emphasis */
         color: var(--accordion-text);
         background-color: var(--bg-color);
@@ -758,6 +842,7 @@
         display: flex;
         align-items: center;
         gap: 0.75rem; /* Increased for better spacing */
+        font-weight: 600; /* Consistent with headings */
     }
 
     .accordion:hover {
@@ -777,7 +862,7 @@
         content: '\f078';
         font-family: 'Font Awesome';
         color: var(--text-color);
-        font-weight: bold;
+        font-weight: 600; /* Consistent with headings */
         font-size: 1.2rem; /* Slightly larger */
     }
 
@@ -806,6 +891,7 @@
 
     .tool-title {
         font-size: 1rem;
+        font-weight: 600; /* Consistent with headings */
     }
 
     .step-title-container {
@@ -915,7 +1001,6 @@
     }
 
     .testimonial p {
-        color: var(--testimonial-text);
         font-size: 1rem;
     }
 
@@ -973,11 +1058,13 @@
     .btn-success {
         font-size: 1.05rem;
         padding: 0.85rem 1.5rem; /* Increased for clickability */
+        font-weight: 400; /* Consistent with body text */
     }
 
     .btn-secondary {
         font-size: 1.05rem;
         padding: 0.85rem 1.5rem;
+        font-weight: 400; /* Consistent with body text */
     }
 
     .video-player {
@@ -994,6 +1081,28 @@
     .container {
         max-width: 1440px; /* Increased from 1400px for larger screens */
         padding: 2.5rem 4rem; /* Increased padding */
+    }
+
+    .navbar {
+        padding: 1.25rem 4rem; /* Slightly increased for larger screens */
+    }
+
+    .navbar-brand {
+        margin-right: 2.5rem; /* Further increased spacing */
+        padding: 0.5rem 1.25rem;
+        font-weight: 600; /* Consistent with headings */
+    }
+
+    .nav-link {
+        margin: 0 1.25rem; /* Increased spacing for larger screens */
+        padding: 0.75rem 1.5rem;
+        font-weight: 400; /* Consistent with body text */
+    }
+
+    .lang-switch {
+        margin-left: 2.5rem; /* Further increased spacing */
+        padding: 0.5rem 1.25rem;
+        font-weight: 400; /* Consistent with body text */
     }
 
     .card-title {
@@ -1065,11 +1174,13 @@
     .btn-primary {
         font-size: 1.1rem;
         padding: 1rem 2rem; /* Increased for clickability */
+        font-weight: 400; /* Consistent with body text */
     }
 
     .btn-secondary {
         font-size: 1.1rem;
         padding: 1rem 2rem;
+        font-weight: 400; /* Consistent with body text */
     }
 
     .video-player {
