@@ -5,7 +5,7 @@ import uuid
 from datetime import datetime, timedelta
 import atexit
 from flask import Flask, jsonify, request, render_template, redirect, url_for, flash, make_response, has_request_context, g, send_from_directory, session
-from flask_wtf.csrf import CSRFProtect, CSRFError, generate_csrf  # Added generate_csrf import
+from flask_wtf.csrf import CSRFProtect, CSRFError, generate_csrf
 from flask_login import LoginManager, current_user
 from flask_compress import Compress
 from dotenv import load_dotenv
@@ -150,6 +150,7 @@ def setup_session(app):
                 tlsCAFile=certifi.where(),
                 maxPoolSize=20,
                 socketTimeoutMS=60000,
+                connectTimeoutneedle
                 connectTimeoutMS=30000,
                 serverSelectionTimeoutMS=30000,
                 retryWrites=True
@@ -465,10 +466,17 @@ def create_app():
     @app.teardown_appcontext
     def teardown_appcontext(exception=None):
         """
-        Handle application context teardown without scheduler shutdown.
+        Handle application context teardown, closing MongoDB connection if open.
         """
-        logger.info("Teardown completed without closing MongoDB connection or shutting down scheduler")
-    
+        try:
+            mongo_client = app.config.get('MONGO_CLIENT')
+            if mongo_client is not None:
+                mongo_client.close()
+                logger.info("MongoDB connection closed during teardown")
+        except Exception as e:
+            logger.error(f"Error closing MongoDB connection during teardown: {str(e)}", exc_info=True)
+        logger.info("Teardown completed")
+
     # Register blueprints
     from blueprints.financial_health import financial_health_bp
     from blueprints.budget import budget_bp
@@ -735,6 +743,10 @@ def create_app():
         response.headers['Cache-Control'] = 'public, max-age=31536000'
         return response
 
+    @app.route('/favicon.ico')
+    def favicon():
+        return send_from_directory(app.static_folder, 'favicon.ico')
+
     @app.route('/feedback', methods=['GET', 'POST'])
     @ensure_session_id
     def feedback():
@@ -753,11 +765,11 @@ def create_app():
                 if not tool_name or tool_name not in tool_options:
                     logger.error(f"Invalid feedback tool: {tool_name}")
                     flash(translate('error_feedback_form', default='Please select a valid tool', comment='invalid-tool'), 'danger')
-                    return render_template('index.html', {}, t=translate, lang=lang, tool_options=tool_options)
+                    return render_template('index.html', t=translate, lang=lang, tool_options=tool_options)
                 if not rating or not rating.isdigit() or int(rating) <= 0 or int(rating) > 5:
                     logger.error(f"Invalid rating: {rating}")
                     flash(translate('error_feedback_rating', default='Please provide a rating between 1 and 5', comment='invalid-rating'), 'danger')
-                    return render_template('index.html', {}, t=translate, lang=lang, tool_options=tool_options)
+                    return render_template('index.html', t=translate, lang=lang, tool_options=tool_options)
                 feedback_entry = create_feedback(mongo, {
                     'user_id': current_user.id if current_user.is_authenticated else None,
                     'session_id': session.get('sid', 'no-session-id'),
@@ -771,9 +783,9 @@ def create_app():
             except Exception as e:
                 logger.error(f"Error processing feedback: {str(e)}", exc_info=True)
                 flash(translate('error_feedback', default='Error occurred during feedback submission', comment='error'), 'danger')
-                return render_template('index.html', {}, t=translate, lang=lang, tool_options=tool_options), 500
+                return render_template('index.html', t=translate, lang=lang, tool_options=tool_options), 500
         logger.info("Rendering feedback index template")
-        return render_template('index.html', {}, t=translate, lang=lang, tool_options=tool_options)
+        return render_template('index.html', t=translate, lang=lang, tool_options=tool_options)
 
     logger.info("App creation completed")
     return app
