@@ -1417,15 +1417,21 @@ section {
         flex-direction: row;
         align-items: center;
         justify-content: space-between;
+        padding: 1rem 2rem; /* Increased padding for better spacing */
+        max-width: 1200px; /* Limit navbar width for larger screens */
+        margin: 0 auto;
     }
 
     .navbar-actions {
         width: auto;
         margin: 0;
+        gap: 1rem; /* Increased gap for better spacing */
     }
 
     .logo-centered {
         border-left: 0px solid white;
+        width: 100px; /* Slightly larger logo for desktop */
+        height: 100px;
     }
 
     .navbar-collapse {
@@ -1437,9 +1443,227 @@ section {
     .navbar-nav {
         flex-direction: row;
         align-items: center;
+        gap: 1rem; /* Increased gap for better spacing */
     }
 
     .nav-link {
-        padding: 0.5rem 1rem;
+        padding: 0.5rem 1.5rem; /* Adjusted padding for better click area */
+        font-size: 1rem; /* Slightly larger font size */
+    }
+
+    .container {
+        max-width: 1200px; /* Set max-width for content to avoid stretching */
+        padding: 1rem 2rem; /* Increased padding for better spacing */
+    }
+
+    .step-container {
+        max-width: 1200px; /* Consistent max-width for step containers */
+        padding: 1rem 2rem;
+    }
+
+    .hero {
+        padding: 2rem; /* Increased padding for hero section */
+    }
+
+    .hero-content {
+        max-width: 900px; /* Limit hero content width for better readability */
+    }
+
+    .hero h2 {
+        font-size: clamp(2rem, 5vw, 2.5rem); /* Larger heading for desktop */
+    }
+
+    .hero p {
+        font-size: 1.1rem; /* Slightly larger paragraph text */
+    }
+
+    .hero-subtext {
+        font-size: 1rem; /* Slightly larger subtext */
+    }
+
+    .course-grid, .dashboard-grid {
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Wider cards for desktop */
+        gap: 2rem; /* Increased gap for better spacing */
+        max-width: 1200px; /* Limit grid width */
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .card {
+        padding: 1.5rem; /* Increased padding for card content */
+    }
+
+    .card-title {
+        font-size: 1.3rem; /* Larger card titles */
+    }
+
+    .card-text {
+        font-size: 1rem; /* Larger card text */
+    }
+
+    .journey-strip {
+        padding: 2rem; /* Increased padding for journey strip */
+        max-width: 1200px; /* Limit width for consistency */
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .journey-steps {
+        flex-wrap: nowrap; /* Prevent wrapping for desktop */
+        gap: 2rem; /* Increased gap for better spacing */
+        max-width: 1000px; /* Limit steps width */
+    }
+
+    .journey-step {
+        flex: 1 1 auto; /* Allow steps to scale evenly */
+        max-width: 200px; /* Slightly wider steps */
+        font-size: 1rem; /* Larger text for steps */
+    }
+
+    .step-badge {
+        width: 3rem; /* Larger badge for desktop */
+        height: 3rem;
+        font-size: 1.2rem;
+    }
+
+    .tool-group {
+        padding: 1rem; /* Increased padding for tool groups */
+        max-width: 1200px; /* Limit width for consistency */
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .group-title {
+        font-size: 1.4rem; /* Larger group titles */
+    }
+
+    .group-subtext {
+        font-size: 1rem; /* Larger subtext */
+    }
+
+    .tools-grid {
+        gap: 2rem; /* Increased gap for better spacing */
+    }
+
+    .accordion-button {
+        font-size: 1.6rem; /* Larger accordion button text */
+        padding: 1.5rem 2rem; /* Increased padding */
+    }
+
+    .accordion-body {
+        padding: 2rem; /* Increased padding for accordion content */
+    }
+
+    .btn, .btn-primary, .btn-explore, .course-link, .tool-card button, .modal .btn {
+        padding: 14px 28px; /* Larger padding for buttons */
+        font-size: 1.1rem; /* Larger font size */
+    }
+
+    .btn-explore {
+        padding: 16px 32px; /* Even larger for explore buttons */
+        font-size: 1.2rem;
+    }
+
+    .btn-secondary {
+        padding: 12px 24px; /* Larger padding for secondary buttons */
+        font-size: 1rem;
+    }
+
+    .step-container .btn-nav, .quiz-container .btn-nav {
+        padding: 12px 24px; /* Larger padding for nav buttons */
+        font-size: 1rem;
+        min-width: 120px; /* Slightly wider buttons */
+    }
+
+    .video-player {
+        max-height: 600px; /* Larger video player for desktop */
+    }
+
+    .pdf-viewer {
+        height: 700px; /* Larger PDF viewer for desktop */
+    }
+
+    .section-heading,
+    .tools-section-heading {
+        font-size: 2.5rem; /* Larger section headings */
+    }
+
+    .h1, .h3,
+    .tools-section h2,
+    .recommended-learning h2,
+    .faq-section h2.section-heading,
+    .why-section h2,
+    .testimonials-section h2.section-heading {
+        font-size: 2rem; /* Larger headings */
+        padding: 1.5rem; /* Increased padding */
+    }
+}
+
+/* Large Desktop Optimizations */
+@media (min-width: 1024px) {
+    .container {
+        max-width: 1400px; /* Wider max-width for large screens */
+        padding: 1.5rem 3rem; /* Increased padding */
+    }
+
+    .step-container {
+        max-width: 1400px; /* Wider max-width for step containers */
+        padding: 1.5rem 3rem;
+    }
+
+    .navbar {
+        max-width: 1400px; /* Wider navbar for large screens */
+        padding: 1.5rem 3rem; /* Increased padding */
+    }
+
+    .hero-content {
+        max-width: 1100px; /* Wider hero content */
+    }
+
+    .hero h2 {
+        font-size: clamp(2.5rem, 5vw, 3rem); /* Larger heading */
+    }
+
+    .hero p {
+        font-size: 1.2rem; /* Larger paragraph text */
+    }
+
+    .course-grid, .dashboard-grid {
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); /* Wider cards */
+        gap: 2.5rem; /* Increased gap */
+        max-width: 1400px; /* Wider grid */
+    }
+
+    .card {
+        padding: 2rem; /* Increased padding */
+    }
+
+    .card-title {
+        font-size: 1.5rem; /* Larger card titles */
+    }
+
+    .journey-strip {
+        max-width: 1400px; /* Wider journey strip */
+        padding: 2.5rem; /* Increased padding */
+    }
+
+    .journey-steps {
+        max-width: 1200px; /* Wider steps container */
+        gap: 3rem; /* Increased gap */
+    }
+
+    .journey-step {
+        max-width: 250px; /* Wider steps */
+        font-size: 1.1rem; /* Larger text */
+    }
+
+    .tool-group {
+        max-width: 1400px; /* Wider tool group */
+        padding: 1.5rem; /* Increased padding */
+    }
+
+    .section-heading,
+    .tools-section-heading {
+        font-size: 3rem; /* Larger section headings */
     }
 }
