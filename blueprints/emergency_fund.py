@@ -527,10 +527,3 @@ def debug_storage():
     except Exception as e:
         current_app.logger.error(f"Debug storage failed: {str(e)}")
         return jsonify({"error": str(e)}), 500
-
-@emergency_fund_bp.teardown_appcontext
-def close_mongo(exception):
-    mongo_client = g.pop('mongo_client', None)
-    if mongo_client is not None:
-        current_app.logger.info("Closing MongoDB connection")
-        mongo_client.close()
