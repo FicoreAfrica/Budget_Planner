@@ -1,0 +1,1029 @@
+/* Financial Health Score Badge */
+.card:has(.badge-success) .card-title {
+    flex-direction: column;
+    align-items: center;
+}
+
+.card-title {
+    flex-direction: column;
+    align-items: center;
+}
+
+.card-title .badge-success {
+    align-items: center;
+    margin-top: 0;
+    margin-right: 0.5rem;
+}
+
+/* About Page Specific Styles */
+.about-page {
+    padding: 0.5rem 0 0.8rem;
+}
+
+.about-container {
+    background: var(--about-container-gradient);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.about-header {
+    text-align: center;
+    margin-bottom: 0.8rem;
+    background: var(--about-header-gradient);
+    color: white;
+    padding: 0.5rem;
+    border-radius: 8px;
+}
+
+.about-title {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: white;
+    margin-bottom: 0.5rem;
+}
+
+.about-subtitle {
+    font-size: 0.9rem;
+    font-weight: normal;
+    color: var(--about-subtitle);
+}
+
+.about-content {
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--about-content);
+    margin-bottom: 0.8rem;
+}
+
+.about-content p {
+    margin-bottom: 0.5rem;
+}
+
+.about-disclaimer {
+    color: #dc3545;
+    font-style: italic;
+}
+
+.mission-statement {
+    margin: 0.8rem 0;
+    padding: 0.5rem;
+    background-color: var(--mission-statement-bg);
+    border-left: 5px solid var(--mission-statement-border);
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.mission-statement h3 {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--mission-statement-title);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.mission-statement p {
+    font-size: 0.9rem;
+    color: var(--mission-statement-text);
+    line-height: 1.6;
+}
+
+.team-why {
+    margin: 0.8rem 0;
+    padding: 0.5rem;
+    background-color: var(--team-why-bg);
+    border-left: 5px solid var(--team-why-border);
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.team-why h3 {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--team-why-title);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.team-why p {
+    font-size: 0.9rem;
+    color: var(--team-why-text);
+    line-height: 1.6;
+}
+
+.call-to-action {
+    text-align: center;
+    margin-bottom: 0.8rem;
+}
+
+.call-to-action p {
+    font-size: 0.9rem;
+}
+
+/* Testimonials */
+.testimonials-section {
+    background-color: var(--section-bg);
+    padding: 2rem 0.3rem;
+    border: 1px solid var(--section-border);
+    border-radius: 8px;
+    margin-bottom: 2rem;
+}
+
+.testimonials-section h2.section-heading {
+    font-size: 1.4rem;
+    color: var(--section-header);
+    font-weight: bold;
+    text-align: center;
+    line-height: 1.5;
+    padding: 1rem;
+    border-bottom-width: 1px;
+    border-bottom-style: solid;
+    border-bottom-color: var(--section-border);
+}
+
+.testimonial {
+    color: var(--testimonial-text);
+    padding: 0.3rem;
+}
+
+.testimonial + .testimonial {
+    margin-top: 0.8rem;
+}
+
+.testimonial-avatar {
+    width: 30px;
+    height: 30px;
+    background-color: var(--accent-blue);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: bold;
+    margin: 0 auto 0;
+    margin-bottom: .5rem;
+}
+
+.test-home {
+    background-color: var(--accent-blue);
+    color: white;
+    border-radius: 50%;
+    font-size: 0.8rem;
+    margin-bottom: 0.5rem;
+}
+
+.testimonial .home {
+    color: #028028;
+    font-weight: 0.8rem;
+    margin-top: .5rem;
+}
+
+.testimonial p {
+    font-size: .85rem;
+    line-height: 1.5;
+}
+
+.testimonial .quote {
+    color: var(--testimonial-quote);
+    font-weight: normal;
+    font-size: 1rem;
+    margin-right: .3125rem;
+}
+
+.testimonial .name {
+    color: var(--testimonial-quote);
+    font-weight: bold;
+    font-size: .95rem;
+    margin-bottom: .5rem;
+}
+
+/* Recommended Learning */
+.recommended-learning {
+    background-color: var(--section-bg);
+    border-width: 1px;
+    border-style: solid;
+    border-color: var(--section-border);
+    padding: .3rem;
+    border-radius: 2px;
+    margin-bottom: .8px;
+}
+
+/* FAQ Section */
+.faq-section {
+    background-color: var(--section-bg);
+    padding: 2rem 0.33rem;
+    border-radius: 8px;
+    margin-bottom: 2px;
+}
+
+.faq-item {
+    margin-bottom: .8rem;
+}
+
+.faq-item .h3 {
+    font-size: 1.1rem;
+    color: var(--text-color);
+}
+
+.faq-item h3 i {
+    color: #028028;
+    margin-right: 8px;
+    font-size: .1rem;
+}
+
+.faq-item .p {
+    color: var(--text-color);
+    font-size: .95rem;
+}
+
+/* Why-Section */
+.why-section {
+    background-color: var(--section-bg);
+    padding: 2rem 0.3rem;
+    border-radius: 0px;
+    border: 1px solid var(--section-border);
+    margin-bottom: 2rem;
+}
+
+.why-section h2.section-heading {
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: var(--section-header);
+    text-align: center;
+    line-height: 1.5;
+    padding-bottom: 1px;
+    padding: 1rem;
+}
+
+.why-section-heading {
+    color: #028028;
+    font-size: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #333;
+}
+
+.why-list li {
+    display: flex;
+    align-items: center;
+    margin-bottom: .5rem;
+}
+
+.list-list li i {
+    color: #444;
+    margin-right: .5rem;
+}
+
+.why-list li i {
+    color: var(--accent-blue);
+    margin-right: .8px;
+}
+
+/* Insights and Comparison Boxes */
+.ins-insights-box {
+    background: var(--section-bg);
+    padding: .5rem;
+    border-radius: 8px;
+    margin-bottom: .8rem;
+}
+
+.comins-box {
+    background-color: var(--section-bg);
+    padding: .5rem;
+    margin-bottom: .8rem;
+}
+
+.insights-box {
+    background: var(--insights-box-bg);
+    border-radius: 8px;
+    padding: 0.5rem;
+    margin-bottom: 0.8rem;
+}
+
+.comparison-box {
+    background-color: var(--section-bg);
+    border-radius: 5px;
+    padding: 0.5rem;
+}
+
+/* Form and Quiz Pages */
+.forms-section .card-heading,
+.forms-section .card-body {
+    text-align: left !important;
+}
+
+.forms-section .form-label,
+.forms-section .form-control {
+    text-align: left !important;
+}
+
+.quiz-container .card-body {
+    text-align: left !important;
+}
+
+.quiz-container .form-label {
+    text-align: left;
+    font-weight: normal;
+}
+
+.quiz-container .form-control {
+    text-align: left !important;
+}
+
+.btn-quiz-answer {
+    background-color: var(--secondary-button-bg);
+    color: var(--text-color);
+    border: 1px solid var(--secondary-button-border);
+    padding: 10px 20px;
+    margin-top: 10px;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.btn-quiz-answer:hover {
+    background-color: var(--secondary-button-bg-hover);
+    transform: scale(1.05);
+}
+
+/* Index Page */
+.index-page .tool-title,
+.index-container .tool-card .card-title {
+    text-align: center !important;
+}
+
+.tool-card.custom-card {
+    background-color: #FFFFFF;
+    width: 100%;
+    max-width: none;
+    margin: 0.5rem 0;
+    padding: 1rem;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    border-radius: 8px;
+}
+
+/* Mobile-Specific Optimizations */
+@media (max-width: 767px) {
+    .btn-primary.btn-explore {
+        padding: 10px 20px;
+        font-size: 1rem;
+        border-radius: 8px;
+    }
+
+    .index-page .tool-card button {
+        padding: 10px 20px;
+        font-size: 1rem;
+        border-radius: 8px;
+    }
+
+    .journey-steps {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 1.2rem;
+        justify-content: center;
+    }
+
+    .journey-step {
+        flex: 1 1 45%;
+        max-width: 150px;
+        margin-bottom: 1rem;
+    }
+
+    /* Visual Size and Alignment */
+    .tool-card h3 {
+        font-size: 1.2rem;
+    }
+
+    .tool-card p {
+        font-size: 0.9rem;
+    }
+
+    .tool-icon {
+        font-size: 1.4rem;
+    }
+
+    .card-title i {
+        font-size: 1.3rem;
+    }
+
+    .section-heading,
+    .tools-section-heading,
+    .testimonials-section h2.section-heading,
+    .why-section h2.section-heading,
+    .faq-section h2.section-heading {
+        text-align: center;
+        margin: 0 auto;
+        max-width: 90%;
+    }
+
+    /* Spacing and Whitespace */
+    section,
+    .testimonials-section,
+    .why-section,
+    .faq-section {
+        padding: 1.5rem 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .card,
+    .tool-card {
+        margin: 1rem auto;
+        padding: 1.2rem;
+    }
+
+    .tools-grid {
+        gap: 1.5rem;
+    }
+
+    .testimonial {
+        margin-bottom: 1rem;
+    }
+
+    .journey-steps {
+        gap: 1.2rem;
+    }
+
+    .accordion-item {
+        margin-bottom: 1rem;
+    }
+
+    .accordion-body {
+        padding: 1.2rem;
+    }
+
+    /* Accordion Headers */
+    .accordion-button {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: var(--accordion-button-text);
+        background: var(--accordion-button-bg);
+        padding: 1.2rem 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+        transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .accordion-button:hover,
+    .accordion-button:active {
+        background: var(--accordion-button-bg-hover);
+        color: var(--accordion-button-text-hover);
+        transform: scale(1.01);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    }
+
+    .accordion-button:not(.collapsed) {
+        background: var(--accordion-button-bg-hover);
+        color: var(--accordion-button-text-hover);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    }
+
+    .accordion-button::before {
+        content: '8px';
+        font-family: 'Font Awesome 5 Free';
+        font-weight: bold;
+        font-size: 1rem;
+        color: var(--accordion-button-text);
+        margin-right: 0.5rem;
+    }
+
+    .accordion-button:not(.collapsed)::before {
+        content: '';
+    }
+
+    .accordion-item {
+        border: 1px solid var(--accordion-border);
+        border-radius: 6px;
+        margin-bottom: 1rem;
+    }
+}
+
+/* Desktop Optimizations */
+@media (min-width: 768px) {
+    .container {
+        max-width: 1200px;
+        padding: 1.5rem 2rem;
+    }
+
+    .step-container {
+        max-width: 600px;
+        padding: 1rem;
+    }
+
+    .navbar {
+        padding: 0.8rem 2rem;
+    }
+
+    .navbar-brand {
+        font-size: 1.2rem;
+    }
+
+    .logo-centered {
+        width: 120px;
+        height: 120px;
+    }
+
+    .navbar-nav {
+        flex-direction: row;
+        align-items: center;
+    }
+
+    .nav-link {
+        font-size: 1rem;
+    }
+
+    .nav-item.nav-item.dropdown .nav-link {
+        font-size: 0.9rem;
+    }
+
+    .dropdown-item {
+        font-size: .9rem;
+    }
+
+    .navbar-toggler {
+        padding: 10px 20px;
+        font-size: 0.95rem;
+    }
+
+    .header-message {
+        font-size: 1rem;
+        padding: 0.8rem;
+    }
+
+    .consent-banner {
+        font-size: 0.9rem;
+        padding: 0.8rem;
+    }
+
+    .hero {
+        padding: 2rem;
+        margin-top: 40px;
+    }
+
+    .hero-content {
+        max-width: 90%;
+    }
+
+    .hero h2 {
+        font-size: clamp(1.5rem, 5vw, 2rem);
+    }
+
+    .hero p {
+        font-size: 1rem;
+    }
+
+    .hero-subtext {
+        font-size: 0.9rem;
+    }
+
+    .hero-subtext i {
+        font-size: 1rem;
+    }
+
+    .hero-disclaimer {
+        font-size: 0;
+        font-style: italic;
+        font-weight: normal;
+        opacity: 0.6;
+    }
+
+    .card-body {
+        padding: 1.5rem;
+    }
+
+    .card-title {
+        flex-direction:  row;
+        font-size: 1.25rem;
+    }
+
+    .card-title i {
+        font-size: .1.8rem;
+    }
+
+    .card-text {
+        font-size: 1rem;
+        color: var(--card-text);
+    }
+
+    .journey-container {
+        padding: 1rem 0;
+    }
+
+    .journey-container::before {
+        top: 50%;
+        bottom: auto;
+        left: 0;
+        right: 0;
+        transform: none;
+        width: auto;
+        height: 4px;
+        background: var(--journey-line-gradient-horizontal);
+        margin-top: auto 2rem;
+    }
+
+    .journey-steps {
+        flex-direction: row;
+        justify-content: space-between;
+        max-width: none;
+        gap: 2rem;
+        flex-wrap: nowrap;
+    }
+
+    .journey-step {
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        width: 20%;
+        padding: 0.5rem;
+        margin: 0;
+        flex: 0 0 auto;
+        max-width: none;
+    }
+
+    .step-badge {
+        position: static;
+        transform: none;
+        margin-bottom: 0.5rem;
+    }
+
+    .journey-step p {
+        margin: 0.75rem 0;
+    }
+
+    .journey-icon {
+        font-size: .1.4rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .tools-section {
+        padding: flex;
+        max-width: 2.5rem;
+        background: 4rem;
+        margin: auto;
+    }
+
+    .tools-grid {
+        display: flex;
+        flex-direction: center;
+        justify-content: center;
+        gap: 2.5rem;
+    }
+
+    .tools-grid .col-md-4 {
+        flex: 0 0 30%;
+        max-width: 30%;
+    }
+
+    .tools-grid .col-md-6 {
+        flex: 0 0 45%;
+        max-width: 45%;
+    }
+
+    .tool-card {
+        background: auto;
+        max-width: 450px;
+        margin: 1rem auto;
+        padding-top: 1.5rem;
+    }
+
+    .tool-card h3 {
+        font-size: .1.4rem;
+    }
+
+    .tool-card p {
+        background: 1rem;
+    }
+
+    .tool-card button {
+        font-size: 0.95rem;
+    }
+
+    .group-title {
+        font-size: .1.6rem;
+    }
+
+    .group-subtext {
+        background: 1rem;
+        color: var(--group-subtext);
+    }
+
+    .accordion-button {
+        background: .700rem;
+        font-size: 1.8rem;
+        color: var(--card-text);
+        font-weight::700;
+        color: var(--accordion-button-text);
+        background: var(--bg-bg);
+        padding-top: 1.2rem;
+        margin-bottom: 2.5rem;
+        border-radius: 2px;
+        box-shadow: 0 2px 4px;
+        transition: none;
+        background: none;
+        align-items: center;
+        gap: 0.05rem;
+    }
+
+    .accordion-button:hover {
+        background: .hover;
+        color: .text-hover;
+        background-color: var(--button-bg);
+        margin-bottom: var(--button-color);
+        margin-top: 2.02px;
+        box-shadow: 0 4px 12px;
+    }
+
+    .accordion-button:not(.collapsed) {
+        background-color: var(--bg-hover);
+        color: var(--text-hover);
+        box-shadow: 2px 4px 8px;
+    }
+
+    .accordion-button::before {
+        content: '\f078';
+        font-family: 'Font Awesome';
+        color: var(--font-text-color);
+ font-weight: bold;
+ font-size: bold;
+    }
+
+    .accordion-button:not(.collapsed)::before {
+        content: '\f077';
+    }
+
+    .accordion-body {
+        padding-top: 2rem;
+    }
+
+    .accordion-item {
+        border: 2px;
+        margin-bottom: 1.5rem;
+    }
+
+    .tool-header-container {
+        margin-bottom: 1px;
+    }
+
+    .tool-title-container {
+        font-size: 1.8rem;
+    }
+
+    .tool-icon {
+        margin-bottom: .1.8rem;
+    }
+
+    .tool-title {
+        font-size: .85rem;
+    }
+
+    .step-title-container {
+        font-size: .85rem;
+    }
+
+    .step-dot {
+        width: .35rem;
+        height: .35rem;
+    }
+
+    .step-dot-container {
+        width: .75rem;
+    }
+
+    .score-gauge {
+        width: .781.25px;
+    }
+
+    .about-page {
+        margin: 1rem;
+        padding-top: 0;
+    }
+
+    .about-container {
+        padding: 1rem 2rem;
+    }
+
+    .about-header {
+        padding-top: 2rem;
+    }
+
+    .about-title {
+        font-size: .2.5rem;
+    }
+
+    .about-title {
+        font-size: .0.9375rem;
+    }
+
+    .about-content {
+        font-size: .95rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .about-content p {
+        margin-bottom: 1rem;
+    }
+
+    .mission-statement, .team-why {
+        margin: .1rem;
+        padding: 1rem;
+    }
+
+    .mission-statement .h3, .team-why h3 {
+        font-size: .95rem;
+    }
+
+    .mission-statement p, .team-why p {
+        margin-bottom: .1rem;
+    }
+
+    .call-to-action p {
+        margin-bottom: .1rem;
+    }
+
+    .info-box {
+        padding: .1rem;
+    }
+
+    .info-box i {
+        font-size: .1.05rem;
+    }
+
+    .testimonials-section {
+        display: flex;
+        flex-direction: normal;
+        align-items: center;
+        padding: 2rem.5rem;
+    }
+
+    .testimonials-section testimonials-section h2.section-heading {
+        font-size: .4rem;
+        padding: .2rem;
+        border-bottom-width: 1px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .testimonial {
+        margin-bottom: .1rem;
+    }
+
+    .testimonial .avatar {
+        width: .35rem;
+        height: .35rem;
+    }
+
+    .testimonial p {
+        color: var(--testimonial-text);
+    }
+
+    .testimonial .name {
+        font-size: .9rem;
+    }
+
+    .why-section {
+        padding: .2.5rem;
+    }
+
+    .why-section .h2 {
+        font-size: .4rem;
+        padding: .2rem;
+        border-bottom-width: 1px;
+        margin-left: auto;
+    margin-right: auto;
+}
+
+    .faq-section {
+        padding: .2rem;
+    }
+
+    .faq-section .h2 {
+        font-size: .4rem;
+        padding: .2rem;
+        border-bottom-width: 1px;
+        margin-left: auto;
+    margin-right: auto;
+    }
+
+    .faq-item h3 {
+        font-size: .1.4rem;
+    }
+
+    .course-grid {
+        grid-template-columns: auto;
+        gap: 2rem;
+    }
+    .dashboard-grid {
+        grid-template-columns: auto;
+        gap: 2rem;
+    }
+
+    .form-control {
+        .: 1rem;
+        padding: .75rem;
+    }
+
+    .btn-success {
+        background: .95rem;
+        padding: .75rem;
+    }
+    .btn-secondary {
+        background: .75rem;
+        padding: .75rem;
+    }
+
+    .video-player {
+        .: 500px;
+    }
+
+    .pdf-viewer {
+        height: 600px;
+    }
+}
+
+/* Larger Screens */
+@media (min-width: 1024px) {
+    .container {
+        width: 1400px;
+        padding: 1.5rem;
+    }
+
+    .card-title {
+        font-size: .2rem;
+    }
+
+    .tool-card {
+        background: auto;
+        width: 425px;
+    }
+
+    .group-title {
+        font-size: .1.8rem;
+    }
+
+    .accordion {
+        font-size: .2rem;
+    }
+
+    .tool-title {
+        margin-bottom: .2rem;
+    }
+
+    .about-title {
+        font-size: .3rem;
+    }
+
+    .testimonials-section {
+        margin-bottom: .2rem;
+    }
+    .why-section {
+        margin-bottom: .2rem;
+    }
+    .faq-section {
+        margin-bottom: .2rem;
+    }
+
+    .journey-steps {
+        flex-direction: normal;
+        gap: .2rem;
+    }
+
+    .journey-step {
+        margin: .22%;
+    }
+
+    .course-grid {
+        grid-template-columns: auto;
+        gap: 2.5rem;
+    }
+    .dashboard-grid {
+        grid-template-columns: auto;
+        gap: .2rem;
+    }
+
+    .form-control {
+        .: 1.2rem;
+        padding: .85rem;
+    }
+
+    .btn-primary {
+        background: 1rem;
+        padding: .2rem;
+    }
+    .btn-secondary {
+        background: .2rem;
+        padding: .2rem;
+    }
+
+    .video-player {
+        .: .600px;
+    }
+
+    .pdf-viewer {
+        height: .6;
+    }
+}
