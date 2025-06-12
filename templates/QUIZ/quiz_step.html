@@ -55,10 +55,12 @@
                                 <span class="question-status"></span>
                             </label>
                         </div>
-                        <div class="btn-group" role="group" aria-label="{{ trans(question.text_key, default=question.text, lang=lang) }}">
+                        <div class="button-container">
                             {% for choice_value, choice_label in form[question.id].choices %}
-                                <input type="radio" class="btn-check" name="{{ question.id }}" id="{{ question.id }}_{{ loop.index }}" value="{{ choice_value }}" autocomplete="off" {% if form[question.id].data == choice_value %}checked{% endif %}>
-                                <label class="btn btn-outline-primary btn-quiz-answer" for="{{ question.id }}_{{ loop.index }}">{{ trans(choice_value, default=choice_label, lang=lang) }}</label>
+                                <input type="radio" class="d-none" name="{{ question.id }}" id="{{ question.id }}_{{ loop.index }}" value="{{ choice_value }}" {% if form[question.id].data == choice_value %}checked{% endif %}>
+                                <button type="button" class="btn-quiz-answer {{ 'yes' if choice_value == 'Yes' else 'no' }} {% if form[question.id].data == choice_value %}active{% endif %}" data-input-id="{{ question.id }}_{{ loop.index }}" aria-label="{{ trans(choice_value, default=choice_label, lang=lang) }}">
+                                    {{ trans(choice_value, default=choice_label, lang=lang) }}
+                                </button>
                             {% endfor %}
                         </div>
                         <small class="form-text text-muted" id="help_{{ question.id }}">{{ trans(question.tooltip, default='', lang=lang) }}</small>
@@ -93,14 +95,34 @@
 document.addEventListener('DOMContentLoaded', function() {
     const questions = document.querySelectorAll('.question-block');
     questions.forEach(question => {
+        const buttons = question.querySelectorAll('.btn-quiz-answer');
         const radios = question.querySelectorAll('input[type="radio"]');
         const statusSpan = question.querySelector('.question-status');
+
+        buttons.forEach(button => {
+            button.addEventListener('click', function() {
+                // Remove active class from all buttons in this question
+                buttons.forEach(btn => btn.classList.remove('active'));
+                // Add active class to clicked button
+                this.classList.add('active');
+                // Check the corresponding radio input
+                const inputId = this.getAttribute('data-input-id');
+                const radio = document.getElementById(inputId);
+                radio.checked = true;
+                // Update question status
+                statusSpan.innerHTML = '<i class="fas fa-check text-success"></i>';
+            });
+        });
+
+        // Initialize status for pre-selected answers
         radios.forEach(radio => {
-            radio.addEventListener('change', function() {
-                if (this.checked) {
+            if (radio.checked) {
+                const button = question.querySelector(`.btn-quiz-answer[data-input-id="${radio.id}"]`);
+                if (button) {
+                    button.classList.add('active');
                     statusSpan.innerHTML = '<i class="fas fa-check text-success"></i>';
                 }
-            });
+            }
         });
     });
 });
