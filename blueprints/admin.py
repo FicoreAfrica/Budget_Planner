@@ -141,50 +141,11 @@ def tool_usage():
         available_actions = db.tool_usage.distinct('action', {'tool_name': tool_name} if tool_name else {})
         available_actions = [a for a in available_actions if a]
 
-        # Chart data
-        chart_data = {
-            'labels': [],
-            'usage_counts': {},
-            'total_counts': []
-        }
-        current_date = start_date
-        while current_date < end_date:
-            date_str = current_date.strftime('%Y-%m-%d')
-            chart_data['labels'].append(date_str)
-            daily_filters = filters.copy()
-            daily_filters['created_at'] = {
-                '$gte': current_date,
-                '$lt': current_date + timedelta(days=1)
-            }
-            total_count = db.tool_usage.count_documents(daily_filters)
-            chart_data['total_counts'].append(total_count)
-            if tool_name:
-                action_counts = list(db.tool_usage.aggregate([
-                    {'$match': {
-                        'tool_name': tool_name,
-                        'created_at': {
-                            '$gte': current_date,
-                            '$lt': current_date + timedelta(days=1)
-                        }
-                    }},
-                    {'$group': {'_id': '$action', 'count': {'$sum': 1}}},
-                    {'$project': {'action': '$_id', 'count': 1, '_id': 0}}
-                ]))
-                for act in action_counts:
-                    action = act['action']
-                    count = act['count']
-                    if action and action not in chart_data['usage_counts']:
-                        chart_data['usage_counts'][action] = [0] * len(chart_data['labels'])
-                    if action:
-                        chart_data['usage_counts'][action][-1] = count
-            current_date += timedelta(days=1)
-
         logger.info(f"Tool usage analytics accessed by {current_user.username}, tool={tool_name}, action={action}, start={start_date_str}, end={end_date_str}", extra={'session_id': session_id})
         return render_template(
             'admin_dashboard.html',
             lang=lang,
             metrics=usage_logs,
-            chart_data=chart_data,
             valid_tools=VALID_TOOLS[3:],
             tool_name=tool_name,
             start_date=start_date_str,
