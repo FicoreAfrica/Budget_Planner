@@ -150,7 +150,6 @@ def setup_session(app):
                 tlsCAFile=certifi.where(),
                 maxPoolSize=20,
                 socketTimeoutMS=60000,
-                connectTimeoutneedle
                 connectTimeoutMS=30000,
                 serverSelectionTimeoutMS=30000,
                 retryWrites=True
