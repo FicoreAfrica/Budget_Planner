@@ -10,13 +10,13 @@ import logging
 import uuid
 from datetime import datetime, timedelta
 import os
-from extensions import mongo  # Import mongo from extensions
-from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature  # Added for password reset tokens
-from google_auth_oauthlib.flow import Flow  # Added for Google OAuth2
-from google.oauth2 import id_token  # Added for Google OAuth2
-from google.auth.transport import requests as google_requests  # Added for Google OAuth2
-import smtplib  # Added for email sending
-from email.mime.text import MIMEText  # Added for email sending
+from extensions import mongo
+from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
+from google_auth_oauthlib.flow import Flow
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
+import smtplib
+from email.mime.text import MIMEText
 
 # Configure logging
 logger = logging.getLogger('ficore_app')
@@ -371,7 +371,7 @@ def forgot_password():
         logger.info("Teardown completed for forgot_password route", extra={'session_id': session_id})
 
 @auth_bp.route('/reset-password/<token>', methods=['GET', 'POST'])
-def reset_password():
+def reset_password(token):
     if current_user.is_authenticated:
         return redirect(url_for('index'))
     
@@ -453,12 +453,18 @@ def google_login():
             },
             scopes=['openid', 'email', 'profile']
         )
+
+        # Debug logging for redirect URI and resolved URL
+        logger.info(f"[AUTH_DEBUG] flow.redirect_uri before authorization_url call: {flow.redirect_uri}", extra={'session_id': session_id})
+        resolved_url_for = url_for('auth.google_callback', _external=True)
+        logger.info(f"[AUTH_DEBUG] url_for('auth.google_callback', _external=True) resolved to: {resolved_url_for}", extra={'session_id': session_id})
+
         authorization_url, state = flow.authorization_url(
             access_type='offline',
             include_granted_scopes='true'
         )
         session['google_state'] = state
-        logger.info(f"Generated Google OAuth2 authorization_url: {authorization_url}", extra={'session_id': session_id})
+        logger.info(f"[AUTH_DEBUG] Generated Google OAuth2 authorization_url: {authorization_url}", extra={'session_id': session_id})
         return redirect(authorization_url)
     except Exception as e:
         logger.exception(f"Error in google_login: {str(e)} - Type: {type(e).__name__}", extra={'session_id': session_id})
