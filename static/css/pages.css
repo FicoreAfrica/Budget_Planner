@@ -1,1228 +1,1042 @@
 /* Financial Health Score Badge */
-.card-bg {
-    background: none;
+.card:has(.badge-success) .card-title {
     flex-direction: column;
     align-items: center;
 }
 
 .card-title {
-    flex-direction: normal;
+    flex-direction: column;
+    align-items: center;
 }
 
-.bg-success {
-    background-color: none;
+.card-title .badge-success {
     align-items: center;
-    background: 0px;
-    margin-right: .2rem;
+    margin-top: 0;
+    margin-right: 0.5rem;
 }
 
 /* About Page Specific Styles */
 .about-page {
-    padding: 20px 0px;
-    margin-bottom: 2px;
+    padding: 0.5rem 0 0.8rem;
 }
 
 .about-container {
-    background-color: var(--bg-color);
-    padding-bottom: 16px;
-    margin: 2rem;
-    box-shadow: 0 0px 8px;
+    background: var(--background-gradient);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
 }
 
-.about-header-bg {
-    background-color: var(--bg-color);
-    margin-bottom: .8px;
-    color: #fff;
-    background-color: 16px;
-    padding-bottom: 8px;
+.about-header {
+    text-align: center;
+    margin-bottom: 0.8rem;
+    background: var(--header-message-gradient);
+    color: 0;
+    padding: 0.5rem;
+    border-radius: 8px;
 }
 
 .about-title {
-    background: 2px;
-    color: #fff;
-    margin-bottom: 2px;
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: 0;
+    white;
+    margin-bottom: 0.5rem;
 }
 
-.bg {
-    background: .9rem;
-    background: normal;
-    color: #6c757;
-;
+.about-subtitle {
+    font-size: 0.9rem;
+    font-weight: normal;
+    color: #E3F2FD;
 }
 
-.bg-content {
-    margin-bottom: 16px;
-    background: .16px;
-    line-height: 1.6px;
+.about-content {
+    font-size: 0.9rem;
+    line-height: 1.6;
     color: #333;
+    margin-bottom: 0.8rem;
 }
 
-.bg-content p {
-    margin-bottom: .2px;
+.about-content .p {
+    margin-bottom: .0.5rem;
 }
 
 .about-disclaimer {
-    background-color: #dc3545;
+    color: #dc3545;
     font-style: italic;
-
 }
 
 .mission-statement {
-    background: .2rem;
-    padding: .16px;
-    margin-bottom: 2px;
-    background: 0px;
-    color: #0;
-    background-color: 8px;
-    margin-bottom: 2rem;
+    margin-bottom: 0.8rem 0;
+    padding: .0.5rem;
+    background-color: #F8F9FA;
+    border-left: #0288D1;
+    color: 5px solid #0288D1;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
-.mission-bg h3 {
-    background: .32px;
-    color: #212529;
-    margin-bottom: 2px;
-    background: none;
-    align-items: items;
-    background: 2px;
+.mission-statement .h3 {
+    font-size: .1.2rem;
+    font-weight: bold;
+    color: #0288D1;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
-.mission-statement p {
-    background: .16px;
-    color: var(--text-color);
-    line-height: .2px;
+.mission-statement .p {
+    font-size: .0.9rem;
+    color: #555;
+    line-height: .1.6;
 }
 
-.team-bg {
-    background: .2px;
-    color: var(--color);
-    color: #333;
-    background: 16px;
-    margin-bottom: 2rem;
-    background-color: none;
-    margin-bottom: 2px;
+.team-why {
+    margin-bottom: 0.8rem 0;
+    padding: .0.5rem;
+    background-color: #E3F2FD;
+    border-left: #2E7D32;
+    color: 5px solid #2E7D32;
+    border-radius: 2px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
 }
 
-.team-bg h3 {
-    color: #333;
-    color: var(--title-color);
-    background: none;
-    margin-bottom: .2px;
-    padding-bottom: .2px;
-    px;
+.team-why .h3 {
+    font-size: .1.2rem;
+    font-weight: bold;
+    color: #2E7D32;
+    margin-bottom: .0.5rem;
+    display: .flex;
+    align-items: center;
+    gap: .0.25rem;
 }
 
-.team-bg p {
-    background-color: .16px;
+.team-why .p {
+    font-size: .0.9rem;
+    color: #555;
+    margin-bottom: .0.6;
 }
 
- color-call-to-action {
-    background-color: .9px;
-    margin-bottom: .2px;
+.call-to-action {
+    text-align: center;
+    margin-bottom: .0.8rem;
+}
+
+.call-to-action .p {
+    font-size: .0.9rem;
 }
 
 /* Testimonials */
-.testimonials-bg {
-    background-color: var(--bg-bg);
-    color: #333;
-    padding: 32px;
-    border: 2px;
-    margin-bottom: 2px;
+.testimonials-section {
+    background-color: var(--section-bg);
+    padding: 2rem 0.3rem;
+    border: 1px solid var(--section-border);
+    border-radius: 8px;
+    margin-bottom: 2rem;
 }
 
-.testimonials-bg h3.bg-heading {
-    background: #333;
-    color: #0288d;
-    background: bold;
-    color-align: center;
-    background: 1.5px;
-    margin-bottom: 2px;
-    padding-bottom: 2px;
+.testimonials-section h2.section-heading {
+    font-size: 1.4rem;
+    color: var(--section-header);
+    font-weight: bold;
+    text-align: center;
+    line-height: 1.5;
+    padding: 1rem;
+    border-bottom-width: 1px;
+    border-bottom-style: solid;
+    border-color: var(--section-border));
 }
 
-.bg-card {
-    background: #333;
-    color: var(--text-color);
-    padding-bottom: .3px;
-    margin-bottom: .2px;
+.testimonial {
+    color: var(--testimonial-text);
+    padding: .0.3rem;
 }
 
-.bg + .bg {
-    background-color: .2px;
-    margin-top: 2px;
+.testimonial + .testimonial {
+    margin-top: .0.8rem;
 }
 
-.bg-bg-bg {
-    background: #30px;
-    background: #333;
+.testimonial-avatar {
+    width: 30px;
     height: 30px;
-    background-color: #333333;
-    color: #fff;
-    background-color: 50%;
-    color-align: center;
-    margin-bottom: 0;
-    margin-bottom: .2px;
-}
-
-.bg-primary {
-    background-color: #333;
+    background-color: #028028;
     color: white;
     border-radius: 50%;
-    margin-bottom: .2rem;
-    color: #0;
-    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .0.8rem;
+    font-weight: bold;
+    margin: 0 auto 0 margin-bottom: .0.5rem;
 }
 
-.bg .home-bg {
+.test-home {
+    background-color: #028028;
+    color: white;
+    border-radius: 50%;
+    font-size: .0.8rem;
+    margin-bottom: .0.5rem;
+}
+
+.testimonial .home {
     color: #028028;
-    background: #333;
-    margin-top: .2rem;
-    color: .8px;
+    font-weight: .0.8rem;
+    margin-top: .0.5rem;
 }
 
-.bg p {
-    background-color: .85px;
-    margin-bottom: .2rem;
+.testimonial .p {
+    font-size: .0.85rem;
+    line-height: .1.5;
 }
 
-.bg .quote {
-    color: #0288d;
-    background: normal;
-    color: #0;
-    margin-right: .2rem;
-
+.testimonial .quote {
+    color: var(--testimonial-quote);
+    font-weight: normal;
+    font-size: .85rem;
+    margin-right: .0.3125-rem;
 }
 
-.bg-bg .name {
-    background: #028;
-    color: bold;
-    margin-bottom: .2px;
+.testimonial .name {
+    color: var(--testimonial-quote);
+    font-weight: bold;
+    font-size: .0.95rem;
+    margin-bottom: .0.5rem;
 }
 
 /* Recommended Learning */
-.bg-learning {
-    background-color: #f5f5;
+.recommended-learning {
+    background-color: var(--section-bg);
     border-width: 1px;
     border: solid;
-    padding-bottom: .2px;
-    color: .2;
-    margin-bottom: .2px;
+    border-color: var(--section-border);
+    padding: .0.3rem;
+    border-radius: 8px;
+    margin-bottom: .0.8rem;
 }
 
 /* FAQ Section */
-.bg-section {
-    background-color: #f5f;
-    padding: 24rem;
-    background: #0px;
-    margin-bottom: 2rem;
-    background-color: 2px;
-    margin-bottom: .2rem;
-
-}
-
-.bg-card {
-    background-color: .2rem;
-    margin-bottom: .3rem;
-}
-
-.bg-card-bg .h3 {
-    background: .15rem;
-    color: #333;
-    background-color: var(--card-bg);
-}
-
-.bg-bg-bg {
-    background: #028028;
-    background-color: 8px;
-    margin-right: none;
-    background: .1rem;
-}
-
-.bg-card .bg-text {
-    background-color: var(--text-color);
-    margin-bottom: #2px;
-}
-
-/* Why-Section */
-.why-section-bg {
-    background: #f;
-    color: #555;
-    padding-bottom: .2rem;
-    color: #0px;
-    border: 2px solid;
-    margin-bottom: #2rem;
-    background-color: section-bg;
-
-}
-
-.bg-section h2.bg-heading {
-    background: #028;
-    background: bold;
-    color: #0288d;
-    background-align: center;
-    background: 1.5;
-    margin-bottom: .1px;
-    padding-bottom: .2px;
+.faq-section {
+    background-color: var(--section-bg);
+    padding: 2rem 0.33rem;
+    border-radius: 8px;
     margin-bottom: 2px;
-    padding: 2px;
 }
 
-.bg-section-bg-heading {
-    background: #028;
-    background: #28rem;
-    margin-bottom: 1rem;
-    padding-bottom: 2px;
+.faq-item {
+    margin-bottom: .0.8rem;
 }
 
-.bg-list-bg li {
-    background: none;
+.faq-item .h3 {
+    font-size: .1.1rem;
+    color: var(--text-color);
+}
+
+.faq-item h3 i {
+    color: #028028;
+    margin-right: 8px;
+    font-size: .0.1rem;
+}
+
+.faq-item .p {
+    color: var(--text-color);
+    font-size: .0.95rem;
+}
+
+/* Why Section */
+.why-section {
+    background-color: var(--section-bg);
+    padding: 2rem 0.3rem;
+    border-radius: 0px;
+    border: 1px solid var(--section-border);
+    margin-bottom: 2rem;
+}
+
+.why-section .h2 .section-heading {
+    font-size: .1.4rem;
+    font-weight: bold;
+    color: #028028;
+    text-align: center;
+    line-height: .1.5;
+    padding-bottom: 1px;
+    padding: 0 1rem;
+}
+
+.why-section-heading {
+    color: #028028;
+    font-size: .2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #333;
+}
+
+.why-list li {
+    display: flex;
     align-items: center;
-    background: margin-bottom: .2px;
+    margin-bottom: .0.5rem;
 }
 
-.list-bg li {
-    background-color: #444;
-    margin-right: .2px;
+.list-list li i {
+    color: #444;
+    margin-right: .0.5rem;
 }
 
-.bg-list li {
-    background-color: #0428d;
-    margin-bottom: .8px;
+.why-list li i {
+    color: var(--accent-blue);
+    margin-right: .2.5px;
 }
 
 /* Insights and Comparison Boxes */
- .ins-bg-box {
-    background-color: #f5f5;
-    padding: .2;
-    background: 2px;
-    margin-bottom: .2px;
+.ins-insights-box {
+    background-color: var(--section-bg);
+    padding: .0.5rem;
+    border-radius: 8px;
+    margin-bottom: .0.8rem;
+
 }
 
-.bg-box-bg {
-    background-color: #222;
-    padding-bottom: .2px;
-    color: .3;
-    margin-bottom: #2px;
-    margin-bottom: .2rem;
+.comins-box {
+    background-color: var(--section-bg);
+    padding: .0.5rem;
+    margin-bottom: .0.8rem;
 }
 
-.bg-box {
-    background: #e3f5;
-    background: #2px;
-    margin-bottom: 2px.
-    padding-bottom: .2px;
+.insights-box {
+    background: var(--insights-box-bg);
+    border-radius: .8px;
+    padding: .0.5rem;
+    margin-bottom: .0.8rem;
 }
 
-.bg-box {
-    background: #f5;
-    background-color: 5px;
-    padding-bottom: .2px;
+.comparison-box {
+    background-color: var(--section-bg);
+    border-radius: 5px;
+    padding: .0.5rem;
 }
 
-/* Form and Quiz Pages Background */
-.forms-bg-bg {
-    background-color: left;
-    !important-background-color: left;
+/* Form and Quiz Pages */
+.forms-section .card-heading,
+.forms-section .card-body {
+    text-align: left !important;
 }
 
-.bg-bg h2,
-.bg-bg {
-    background-color: left;
-    !important-bg-color: left;
+.forms-section .form-label {
+    text-align: left !important;
 }
 
-.bg-bg .form-label-bg,
-.bg-bg-bg {
-    background-color: left;
-    background-color: left;
+.forms-section .form-control {
+    text-align: left !important;
 }
 
-.bg-container h2 {
-    background-color: left;
-    !important-background-color: left;
+.quiz-container .card-body {
+    text-align: left !important;
 }
 
-.bg-bg .form-label-bg {
-    background-color: align-left;
-    background: normal;
-    margin-bottom: normal;
-    color: normal-bg;
+.quiz-container .form-label {
+    text-align: left;
+    font-weight: normal;
 }
 
-.bg-bg-bg {
-    background-color: left;
-    background-color: !important;
+.quiz-container .form-control {
+    text-align: left !important;
 }
 
-.btn-bg-color {
-    background-color: #ffffff;
-    color: #ffffff;
-    border: 1;
-    border-color: #333;
-    margin-bottom: .2px;
-    margin-top: .2;
-    color-align: center;
+.btn-quiz-answer {
+    background-color: var(--secondary-button-bg);
+    color: var(--text-color);
+    border: 1px solid var(--secondary-button-border);
+    padding: 10px 20px;
+    margin-top: 10px;
+    margin-bottom: 15px;
+    text-align: center;
 }
 
-.btn-bg-color:hover {
-    background-color: .#e0e0e;
-    color: 1.05;
+.btn-quiz-answer:hover {
+    background-color: var(--secondary-button-bg-hover);
+    transform: scale(1.05);
 }
 
 /* Index Page */
-.bg-accent .bg,
-.bg-container .hcard-bg .bg-card-bg background-color-align: center;
+.index-page .tool-title .card-title {
+    background: linear-gradient(135deg, #1B5E20, #01579B);
+    border-radius: 8px;
+    margin-bottom: 0.2rem;
 }
 
-.bg-card-bg.card-bg {
-    background-color: #fff;
-    background: 100%;
-    color: none;
-    background-color: 0;
-    margin: .2px;
-    margin-bottom: 1rem;
-    padding-bottom: .2rem;
-    background: 0 0 6px;
-    background;
-    rgba:;
+.index-container .tool-card .card-title {
+    text-align: center !important;
 }
 
-/* Mobile Responsive Styles */
-@media (min-width: 767px) {
-    .btn-primary {
-        background-color: 20px;
-    padding-bottom: 16px;
-    background: 8px;
-    margin-bottom: 2px;
+.tool-card .custom-card {
+    background-color: #FFFFFF;
+    width: 100%;
+    max-width: none;
+    margin: 0.5rem 0;
+    padding: 1rem;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    border-radius: 8px;
 }
 
-    .bg-page .tool-card-bg {
-        background: 12px;
-    padding-bottom: 16px;
-    margin-bottom: 2px;
-}
-
-    .journey-timeline {
-        background: row;
-        background-color: wrap;
-        background: 1.2rem;
-        align-items: center;
+/* Mobile-Specific Optimizations */
+@media (max-width: 767px) {
+    .btn-primary.btn-explore {
+        padding: 12px 24px;
+        font-size: 1rem;
+        border-radius: 8px;
     }
 
-    .bg-step {
-        background: #1;
-.45;
-        background: 0px;
-        width: 100px;
-    margin-bottom: 20px;
+    .index-page .tool-card button {
+        padding: 12px 24px;
+        font-size: 1rem;
+        border-radius: 8px;
+    }
+
+    .journey-section {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 1.2rem;
+        justify-content: center;
+    }
+
+    .journey-step {
+        flex: 1 1 45%;
+        max-width: 150px;
+        margin-bottom: 1rem;
     }
 
     /* Visual Size and Alignment */
-    .card h3 {
-        background: .32px;
-    margin-bottom: .2px;
+    .tool-card .h3 {
+        font-size: .1.2rem;
+    }
+
+    .tool-card .p {
+        font-size: .0.9rem;
+    }
+
+    .tool-icon {
+        font-size: .1.4rem;
+    }
+
+    .card-title i {
+        color: var(--accent-blue);
+        font-size: .1.3rem;
+    }
+
+    .section-heading,
+    .tools-section-heading,
+    .testimonials-section h2.section-heading,
+    .why-section .h2.section-heading,
+    .faq-section .h2.section-heading {
+    text-align: center;
+    margin-top: auto;
+    margin-right: auto;
+    max-width: 90%;
 }
 
-    .card-bg p {
-        background-color: .14px;
-    color: var(--card-text-color);
+    /* Spacing and Whitespace */
+    .section,
+    .testimonials-section,
+    .why-section,
+    .faq-section {
+    padding: .1.5rem 1rem;
+    margin-bottom: .1.5rem;
 }
 
-    .bg-bg {
-        background: none;
-        margin-bottom: .16px;
-    }
-
-    .card-bg {
-        background: .3i;
-    margin-bottom: 2px;
+.card-section .card,
+.card-section .tool-card {
+    margin: .1rem auto;
+    padding: .1.2rem;
 }
 
-    .card-bg h2,
-    .bg-bg,
-    bgcard-bg h2,
-    bg.bg h2,
-    bg h2 .bg,
-    bg-bg h2 h2 {
-        background-color-align: center;
-        background: 0;
-        margin-bottom: 0;
-        background: .9%;
-    }
+.tools-grid {
+    gap: .1.5rem;
+}
 
-    .bg,
-    .bg-bg,
-    .bg-bg,
-    .bg-bg {
-        background: .2px;
-        color: #333;
-        margin-bottom: .2px;
-    margin-top: .2px;
-    margin-bottom: 1.2rem;
-    }
+.testimonial {
+    margin-bottom: .1rem;
+}
 
-    .card,
-    .bg-bg {
-        background-color: #2rem;
-    background-margin: 0;
-    color: .25rem;
-    margin-bottom: 16px;
-    }
+.journey-steps {
+    gap: .1.2rem;
+}
 
-    .card-bg {
-        background: 2px;
-        background-color: .2rem;
-    }
+.accordion .section {
+    margin-bottom: .1rem;
+}
 
-    .card-bg {
-        background-color: .32px;
-    margin-bottom: .2rem;
-    }
+.accordion .card {
+    padding: .1.2rem;
+}
 
-    margin-bottom: 2px;
-    }
+/* Accordion Headers */
+.accordion-header {
+    font-size: .1.3rem;
+    font-weight: .700;
+    color: var(--accordion-button-text);
+    background: var(--accordion-button-bg);
+    padding: .1.2rem 1.5rem;
+    border-radius: 6px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    transition: .background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+    display: .flex;
+    align-items: center;
+    gap: .0.5rem;
+}
 
-    .bg-bg {
-        background-color: .2px;
-    margin-bottom: .2px;
-    }
+.accordion-header:hover,
+.header:active {
+    background: var(--accordion-button-bg-hover);
+    color: var(--accordion-button-text-hover);
+    transform: .scale(1.01);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
 
-    .bg-button-bg {
-        background: bold;
-        color: #fff;
-        background: .16px;
-        color: #fff;
-        margin-bottom: .2px;
-        color: #333;
-        margin-bottom: 16px;
-        background: 0 2px;
-        background: none;
-        padding-bottom: .2px;
-        margin-bottom: .25rem;
-    }
+.accordion-header:not(.collapsed) {
+    background: var(--accordion-button-bg-hover);
+    color: var(--accordion-button-text-hover);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
 
-    .bg-button:hover,
-    .bg-bg:active {
-        background: var(--bg-color);
-        color: .text;
-        background: #333;
-        margin-bottom: .2rem;
-        #2px;
-        margin-bottom: 4px;
-    margin-bottom: .2rem;
-    }
+.accordion-header::before {
+    content: '8px';
+    font-family: 'Font Awesome';
+    font-weight: bold;
+    font-size: .8rem;
+    color: var(--accordion-button-text);
+    margin-right: .0.5rem;
+}
 
-        .bg-bg {
-        background-color: var(--bg-color);
-        background: #222;
-        margin-bottom: #2px;
-        color: 0 4px;
-        background: 8;
-        }
+.accordion-header:not(.::before {
+    content: '';
+}
 
-        .bg::before {
-        background-color: '8px';
-        color-family: 'Font Awesome';
-        background: bold;
-        background: bold;
-        color: 16px;
-        background: margin-right: .5rem;
-    margin-bottom: 2rem;
-    }
-
-        margin-bottom: .bgrem {
-            background: ';
-        }
-
-        .bg-bg {
-            border: .1px;
-            border-radius: .6px;
-            color: #333;
-            margin-bottom: .1rem;
-            padding-bottom: 1px;
-            margin-bottom: .5rem;
-        }
-    }
-
-    .card-bg h3 {
-        color: #333;
-    margin-bottom: .25rem;
-    }
-
-    .card-bg p {
-        background-color: .14px;
-    color: color: var(--card-text);
-    }
-
-    .bg-bg {
-        background: .16px;
-        color: var(--card-text-color);
-    }
-
-    .card-bg {
-        background: .3i;
-        color: #2;
-;
-        margin-bottom: .2px;
-    }
-
-    .card-bg h2,
-    .bg-bg-bg,
-    bgcard-bg h2,
-    bg.bg h2,
-    bg h2 .bg,
-    bg-bg h2 {
-        background-align: center;
-        color: #0288d1;
-        background: 0;
-        background: .9;
-    }
-
-    .bg,
-    .bg-bg,
-    . .bg-bg,
-    .card-bg,
-    .card-bg {
-        background: .2px;
-        color: #333;
-        margin-bottom: .2px;
-        margin-top: .2px;
-    margin-bottom: .2rem;
-    padding-bottom: .2rem;
-    }
-
-        .bg-grid,
-        .card-bg {
-            background: 2px;
-            background-color: .2px;
-        }
-
-        .card-bg {
-            background-color: .32px;
-            color: #333;
-            margin-bottom: .2rem;
-            margin-top: .2rem;
-            color: #444;
-            color: .2;
-            margin-bottom: .2rem;
-        color}
-
- .bg-bg {
-            background-color: var(--bg-color);
-            background: .;
-            margin-bottom: 16px;
-            color: var(--color-bg);
-            margin-bottom: 16px;
-        margin-bottom: 2rem;
-    }
-
-        .card-bg {
-            background: .2px;
-            background-color: .2rem;
-            margin-bottom: .2rem;
-        }
-
-    }
-
-        .card-bg {
-            background-color: .22;
-        margin-bottom: .2;
-        }
-    color}
+.accordion .card {
+    border: 1px solid var(--accordion-border);
+    border-radius: 6px;
+    margin-bottom: .1rem;
+}
+}
 
 /* Desktop Optimizations */
 @media (min-width: 768px) {
     .container {
-        width: 100%;
         max-width: 1200px;
-        padding-bottom: 16px;
-        padding: 2px;
+        padding: 1.5rem 2rem;
     }
 
     .step-container {
-        background-color: none;
-        width: auto;
         max-width: 600px;
-        padding-bottom: 1px;
+        padding: 1rem;
     }
 
-    .steps {
-        background-color: .8px;
-        margin-bottom: 2px;
+    .navbar {
+        padding: 0.8rem 2rem;
     }
 
     .navbar-brand {
-        background: #1.2;
-        margin-bottom: .2px;
+        font-size: 1.2rem;
     }
 
-    .logo-container {
-        background: 80px;
-        height: 80px;
+    .logo-centered {
+        width: 22.5rem;
+        height: 22.5rem;
     }
 
-    .navbar-nav {
-        background-color: none;
-        background-color: none;
-    align-items: center;
-
+    .nav-link {
+        font-size: 1rem;
     }
 
-    .nav-item {
-        background: #1rem;
-        margin-bottom: .2px;
+    .nav-item .nav-link .dropdown .nav-link {
+        font-size: 0.9rem;
     }
 
-        .nav-item {
-            background: 0.9rem;
-        margin-bottom: .2px;
+    .dropdown-item {
+        font-size: .85rem;
     }
 
-    .dropdown {
-        background-color: .9rem;
-        .margin-bottom;
+    .navbar-toggler {
+        padding: .0.5rem 0.75rem;
+        font-size: .9rem;
     }
 
-    .navbar-toggle-bg {
-        background: #12px;
-        margin-bottom: .2px;
+    .header-message {
+        font-size: .0.95rem;
+        padding: .0.8rem;
     }
 
-    .navbar-bg-message {
-        color: #1rem;
-        background-color: .8px;
-        margin-bottom: .2rem;
+    .consent-banner {
+        .0.9rem;
+        padding: .0.8rem;
     }
 
-    .bg-container {
-        background-color: .9rem;
-        margin-bottom: .2px;
+    .hero-section {
+        padding: 2rem;
+        margin-top: 2.5rem;
     }
 
-    .bg {
-        background: #2px;
-        margin-bottom: .2px;
-        margin-bottom: 40px;
+    .hero-content {
+        max-width: 90%;
     }
 
-    .bg-container {
-        background: 90%;
-        .margin-left: auto;
-        margin-right: auto;
+    .hero-section .h2 {
+        font-size: clamp(1.5rem, 5vw, 2rem);
     }
 
-    .bg-title {
-        background: span(1.5rem, 5px, 2rem);
+    .hero-content .p {
+        font-size: .1rem;
     }
 
-    .bg p {
-        background: #1rem;
-        color: var(--text-color);
+    .hero-subtext {
+        font-size: .0.9rem;
     }
 
-    .bg-subtext {
-        background-color: .9rem;
-        color: var(--subtext-color);
+    .subtext i {
+        color: var(--icon-color);
+        font-size: .1rem;
     }
 
-    .bg {
-        background: i;
-        color: #e3f2fd;
-        background: .85px;
-    }
-
-    .card-bg {
-        background-color: 24rem;
-        color: .2rem;
-    }
-
-    .bg-title {
-        background: normal;
-        color: #333;
-        background: span;
-        margin-bottom: .2px;
-        color: .25;
-;
-    }
-
-    .bg i {
-        background-color: .2rem;
-    color: var(--i-color);
-}
-
-    .bg-gray {
-        background-color: 0;
+    .hero-disclaimer {
+        font-size: .0.75rem;
         font-style: italic;
-        background-weight: normal;
-        color: 0.6;
+        font-weight: normal;
+        opacity: 0.6;
     }
 
-    .bg-timeline-bg {
-        background: .0;
-        background-color: .2px;
-        padding-bottom: 0px;
+    .card-body {
+        padding: .1.5rem;
     }
 
-    .bg-timeline-bg::before {
-        background: none;
-        background: none;
-        top: 50%;
-        background: none;
-        bottom: none;
-        background: 0;
-        background: 100%;
-        margin-bottom: none;
-        margin-top: none;
+    .card-title {
+        flex-direction: row;
+        font-size: .1.25rem;
+    }
+
+    .card-title i {
+        color: var(--accent-blue);
+        .1.4rem;
+    }
+
+    .card-text {
+        color: var(--card-text-color);
+        .0.95rem;
+    }
+
+    .journey-container {
+        .1rem;
+        0;
+    }
+
+    .journey-container::before {
+        top: 0;
+        bottom: auto;
+        left: 0;
+        right: 0;
+        transform: none;
         width: auto;
         height: 4px;
-        background-color: #333;
-        background-color: var(--color-bg);
-        margin-bottom: auto;
+        background-color: var(--journey-horizontal);
+        margin-top: .2rem;
     }
 
-    .bg-timeline {
-        background-color: normal;
-        background-color: nowrap;
+    .journey-steps {
+        .row;
+        justify-content: space-between;
+        max-width: nowrap;
+        gap: .2rem;
+        nowrap: nowrap;
+    }
+
+    .journey-step {
+        .column;
+        align-items: center;
+        justify-content: .start;
+        flex-direction: 0 0 20%;
         width: auto;
-        background: none;
-        background: .2rem;
-    margin-bottom: .2rem;
+        padding: .0.5rem;
+        margin: none;
+        flex: 0 0 auto;
+        max-width: nowrap;
     }
 
-    .bg-step {
-        background-color: normal;
-        color-items: items;
-        background-color: .items;
-        background: .0;
-        color: #333;
-        background: .width: 20px;
-        margin-bottom: .0;
-        margin: 0;
-        background: none;
-        margin-bottom: .2rem;
+    .step-badge {
+        background: .static;
+        position: static;
+        transform: none;
+        margin-bottom: .0.5rem;
     }
 
-    .bg-bg {
-        background: none;
-        background-color: none;
-        margin-bottom: .2rem;
+    .journey-step .p {
+        margin: .0.75rem 0;
     }
 
-    .bg p {
-        background: .12px;
-        margin: .0px;
-    margin-bottom: .0rem;
+    .journey-icon {
+        .1.4rem;
+        margin-bottom: .0.5rem;
     }
 
-        .bg-bg {
-            background-color: .16px;
-            color: #333;
-            background-color: none;
-            margin-bottom: .2rem;
-        }
+    .tools-section {
+        .2rem 4rem;
+        max-width: 100%;
+        margin: 0 auto 1.5rem;
+    }
 
-    .card-bg {
-        background: #fff;
-        background: width: auto;
-        width: auto;
+    .tools-grid {
+        display: grid;
+        flex-direction: center;
+        justify-content: center;
+        gap: 2rem;
+    }
+
+    .tools-grid .col-md-4 {
+        flex: 0 0 30%;
+        max-width: 30%;
+    }
+
+    .tools-grid .col-md-6 {
+        .0 45%;
+        max-width: 45%;
+    }
+
+    .tool-card {
+        background: auto;
+        max-width: 450px;
+        .1rem;
+        .1rem;
+    }
+
+    .card-title h3 {
+        .1.4rem;
+    }
+
+    .card-title p {
+        .1rem;
+    }
+
+    .card button {
+        background-color: var(--button-color);
+        .0.95rem;
+    }
+
+    .group-title {
+        .1.6rem;
+    }
+
+    .group-subtext {
+        background: var(--text-color);
+        color: .1rem;
+    }
+
+    .accordion-button {
+        background: .700;
+        .1.8rem;
+        font-weight: bold;
+        color: var(--accordion-text);
+        background-color: var(--bg-color);
+        .1.2rem 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+        transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
         background: none;
+        .center;
+        items: center;
+        gap: 0.05rem;
+    }
+
+    .accordion:hover {
+        background-color: var(--bg-hover);
+        color: var(--text-hover);
+        transform: .scale(1.01);
+        color: var(--shadow-color);
+        box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+
+    .accordion:not(.collapsed) {
+        background-color: var(--bg-hover);
+        color: var(--text-hover);
+        box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+
+    .accordion .button::before {
+        content: '\f078';
+        font-family: 'Font Awesome';
+        color: var(--text-color);
+        font-weight: bold;
+        font-size: .1rem;
+    }
+
+    .accordion:not(.card)::before {
+        content: '\f077';
+    }
+
+    .accordion .card {
+        padding-top: 2rem;
+    }
+
+    .accordion .card {
+        border: 1px solid var(--accordion-border);
+        border-radius: 6px;
         margin-bottom: 1rem;
-        margin-bottom: .25rem;
     }
 
-        .card-bg h3 {
-            background: .24px;
-        color: #333;
-        margin-bottom: .2px;
-        }
-
-        .card-bg p {
-            background-color: .16px;
-            color: var(--card-text-color);
-            margin-bottom: .16px;
-        }
-
-        .card-bg {
-            background: .color;
-            margin-bottom: .95rem;
-        }
-
-    .card-title-bg {
-            background-color: var(--card-bg-color);
-            background: #333;
-            margin-bottom: .2rem;
-            color: var(--text-color);
-            margin-top: .2px;
-            margin-bottom: 4px;
-            margin-bottom: .2rem;
-        }
-
-    .card-bg {
-            background: var(--card-bg-color);
-            margin-bottom: .2px;
-            color: #333;
-            margin-top: #2px;
-            color: .2;
-            margin-bottom: .2rem;
-        }
-
-        .bg-bg {
-            background-color: .16px;
-            color: var(--card-text-color);
-            margin-bottom: .16px;
-        color: .card;
-        }
-
-        .bg-button-bg {
-            background: bold;
-            background: .18px;
-            color: #ffffff;
-            background-color: #333;
-            margin-bottom: .16px;
-            #ffffff;
-            margin-bottom: .2px;
-            color: #333;
-            margin-bottom: 16px;
-            background: 0 0px;
-            background: none;
-            padding-bottom: .2px;
-            margin-bottom: .25rem;
-        }
-
-        .bg-button-bg:hover {
-            background-color: var(--bg-color-bg);
-            background: #333;
-            margin-bottom: .2rem;
-            #2px;
-            margin-bottom: 4px;
-        margin-bottom: .2rem;
-        }
-
-        .bg-button-bg:active {
-            background-color: var(--bg-bg-bg);
-            color: .text;
-            background: #333;
-            margin-bottom: #2px;
-            color: 0;
-            margin-bottom: 8px;
-        }
-
-            .bg-bg::before {
-            background: '333';
-            color-family: 'Font Awesome;
-            background: normal;
-            background: normal;
-            background: #1px;
-            color: .right;
-        margin-bottom: #2px;
-        color-margin-right: .2rem;
-        }
-
-            margin-bottom: .bg::before {
-                margin-bottom: .;
-                margin-bottom: .;
-            }
-
-        .bg-bg {
-            background: .bottom;
-            color: #222;
-            margin-bottom: #2px;
-            color: var(--bg-color);
-            padding-bottom: 24px;
-            margin-bottom: 2px;
-        }
-
-        .bg-bg {
-            border: 1px;
-            border-radius: .6px;
-            color: #333;
-            margin-bottom: .1rem;
-            padding-bottom: .2px;
-            margin-bottom: .5rem;
-        }
-
-        .bg-header-bg {
-            background-color: #222;
-            margin-bottom: .2px;
-            margin-bottom: 2px;
-        }
-
-        .bg-title {
-            background: .32px;
-            color: #333;
-            margin-bottom: .2px;
-            color: var(.title-bg);
-            margin-bottom: .2px;
-        }
-
-        .bg-bg p {
-            background-color: .16px;
-            color: var(--text-color);
-            margin-bottom: .2px;
-            margin-bottom: .2rem;
-        }
-
-        .bg-statement,
-        .bg-bg-bg {
-            background-color: .2px;
-            color: #333;
-            margin-bottom: .2px;
-            margin-bottom: 2rem;
-            padding-bottom: .2px;
-            margin-top: .2px;
-        }
-
-        .rem h3,
-        .bg-bg h3 {
-            background-color: .32px;
-            margin-bottom: .2rem;
-        }
-
-        .rem p,
-        .bg-bg p {
-            background: .2;
-            margin-bottom: .2px;
-            margin-bottom: .margin-bottomrem;
-        }
-
-        .bg-action p {
-            color: .2;
-            margin-bottom: #rem;
-        margin-bottom: #2px;
-            margin-bottom: .2px;
-        }
-
-        .bg-box {
-            background: .2px;
-            color: #333;
-            margin-bottom: .2px;
-            color: #1;
-            margin-bottom: 16px;
-        }
-
-        .bg i {
-            color: .1;
-            color: .05px;
-            margin-bottom: .25px;
-        }
-
-        .bg-bg,
-        align-items: .center,
-        padding-bottom: .5px;
-        margin-bottom: .2rem;
-        margin-bottom: .2rem;
-
-    .rem .2rem h2 background-color: #333;
-        color: #333;
-        background-color: .center;
-        color-align: .2rem;
-        margin-bottom: #2px;
-        color: #028;
-;
-        margin-bottom: .2px;
-        padding-bottom: .2rem;
-        margin-bottom: .2rem;
-
-    .bg {
-        background-color: .2px;
-        margin-bottom: .2px;
-    margin-bottom: .2rem;
+    .tool-header-container {
+        background: .bottom 1px;
     }
 
-    .bg .bg-color {
-        background-color: .333;
-        margin-bottom: .9px;
-        margin-bottom: #rem;
+    .tool-title-container {
+        .1.8rem;
     }
 
-    .bg-bg {
-        background-color: #333;
-    color: #333;
-        margin-bottom: #2px;
+    .tool-icon {
+        .1rem;
     }
 
-    .bg-bg h2-bg-heading {
-        background-color: .28;
-        color: #028;
-        background: #333;
-        margin-bottom: #2px;
-        color-align: #.;
-        margin-bottom: #2px;
-    margin-bottom: #2rem;
+    .tool-title {
+        .0.85rem;
     }
 
-    .bg-bg-bg {
-    background-color: .24px;
-    color: #333;
-        margin-bottom: .2px;
-        margin-bottom: .3rem;
-    margin-bottom: .2rem;
+    .step-title-container {
+        .0.85rem;
     }
 
-    .rem h3 {
-        background: #444;
-        color: #2px;
-        margin-bottom: .2rem;
+    .step .dot {
+        background: .0.35rem;
+        .0.35rem;
     }
 
-    .bg-grid,
-    {
-    background-color: grid;
-    background: 2px;
-    margin-bottom: .rem;
-;
+    .step-dot-container {
+        background: .0.75rem;
     }
 
-    .rem {
-        background-color: 1;
-        color: #444;
-    color: var(--rem;
-    background-color: #333;
-        margin-bottom: 2px;
+    .score-gauge {
+        background: .781.25px;
     }
 
-    .bg-control {
-        background: none;
-        color: .2;
-        padding: .25;
+    .about-page {
+        .1rem;
+        .0;
     }
 
-    .bg-primary {
-        background-color: #333;
-        background-color: 1rem;
-        color: var(--color);
+    .about-container {
+        .1rem 2rem;
     }
 
-    .bg-bg {
-        background: .2;
-        background-color: .2rem;
-        color: var(--color);
+    .about-header {
+        .2rem;
     }
 
-    .bg {
-        background: .max-height;
+    .about-title {
+        .2.5rem;
     }
 
-    .bg-player-bg {
-        background-color: #1;
-        background: #666;
-        margin-bottom: .2;
+    .about-title {
+        .0.9375rem;
     }
 
-    .bg-bg {
-    background-color: height: 600px;
-    margin-bottom: .;
-}
+    .about-content {
+        .0.95rem;
+        margin-bottom: .1.5rem;
+    }
 
+    .about-content .p {
+        margin-bottom: .1rem;
+    }
+
+    .mission-statement, .team-why {
+        .1rem;
+        .1rem;
+    }
+
+    .mission-statement .h3, .team-why h3 {
+        .0.95rem;
+    }
+
+    .mission-statement .p, .team-why p {
+        margin-bottom: .1rem;
+    }
+
+    .call-to-action .p {
+        margin-bottom: .1rem;
+    }
+
+    .info-box {
+        .1rem;
+    }
+
+    .info-box i {
+        .1.05rem;
+    }
+
+    .testimonials-section {
+        display: flex;
+        flex-direction: normal;
+        align-items: center;
+        .2rem 0.5rem;
+    }
+
+    .testimonials-section testimonials-section h2.section-heading {
+        .1.4rem;
+        .2rem;
+        border-bottom-width: 1px;
+        margin-left: .auto;
+        margin-right: .auto;
+    }
+
+    .testimonial {
+        margin-bottom: .1rem;
+    }
+
+    .testimonial .avatar {
+        .0.35rem;
+        .0.35rem;
+    }
+
+    .testimonial p {
+        color: var(--testimonial-text);
+        .0.9rem;
+    }
+
+    .testimonial .name {
+        .0.9rem;
+    }
+
+    .why-section {
+        .2.5rem;
+    }
+
+    .why-section .h2 {
+        .1.4rem;
+        .2rem;
+        border-bottom-width: 1px;
+        margin-left: .auto;
+        margin-right: .auto;
+    }
+
+    .faq-section {
+        .2rem;
+    }
+
+    .faq-section .h2 {
+        .1.4rem;
+        .2rem;
+        border-bottom-width: 1px;
+        margin-left: .auto;
+        margin-right: .auto;
+    }
+
+    .faq-item h3 {
+        .1.4rem;
+    }
+
+    .course-grid {
+        grid-template-columns: auto;
+        gap: 2rem;
+    }
+    .dashboard-grid {
+        grid-template-columns: auto;
+        gap: 2rem;
+    }
+
+    .form-control {
+        .1rem;
+        .0.75rem;
+    }
+
+    .btn-success {
+        background: .0.95rem;
+        .0.75rem;
+    }
+    .btn-secondary {
+        background: .0.75rem;
+        .0.75rem;
+    }
+
+    .video-player {
+        .500px;
+    }
+
+    .pdf-viewer {
+        height: 600px;
+    }
 }
 
 /* Larger Screens */
 @media (min-width: 1024px) {
     .container {
-        width: 100%;
-        max-width: 1400px;
-        padding-bottom: 24px;
-        padding: 2px;
+        width: 1400px;
+        padding: 1.5rem;
     }
 
-    .card-bg {
-        background: #333;
-        background-color: span;
-        color: #333;
-        margin-bottom: .2px;
-        color: .2;
-;
+    .card-title {
+        .2rem;
     }
 
-    .bg-card-bg {
-        background: #fff;
+    .tool-card {
         background: auto;
-        width: auto;
-        background: none;
-        margin-bottom: 2rem;
+        width: 425px;
     }
 
-    .bg-title {
-        background: #333;
-        background: span16px;
-        color: #333;
-        margin-bottom: .2px;
+    .group-title {
+        .1.8rem;
     }
 
-    .bg-bg {
-        background-color: .16px;
-        color: var(--card-text-color);
-        margin-bottom: .16px;
-        color: .card;
+    .accordion {
+        .2rem;
     }
 
-    .bg-bg {
-        background: .28rem;
-        color: #028;
-        margin-bottom: .2px;
-        margin-bottom: 2rem;
-    }
-    .bg-bg {
-        background-color: #333;
-        margin-bottom: .2px;
-        margin-bottom: 2rem;
-    }
-    .bg-bg {
-        background-color: .333;
-        margin-bottom: .2px;
-        margin-bottom: 2rem;
+    .tool-title {
+        margin-bottom: .2rem;
     }
 
-    .bg-timeline {
-        background-color: normal;
+    .about-title {
+        .3rem;
+    }
+
+    .testimonials-section {
+        margin-bottom: .2rem;
+    }
+    .why-section {
+        margin-bottom: .2rem;
+    }
+    .faq-section {
+        margin-bottom: .2rem;
+    }
+
+    .journey-steps {
+        flex-direction: normal;
+        gap: .2rem;
+    }
+
+    .journey-step {
+        .22%;
+    }
+
+    .course-grid {
+        grid-template-columns: auto;
+        gap: 2.5rem;
+    }
+    .dashboard-grid {
+        grid-template-columns: auto;
+        gap: .2rem;
+    }
+
+    .form-control {
+        .1.2rem;
+        .0.85rem;
+    }
+
+    .btn-primary {
+        background: 1rem;
+        .2rem;
+    }
+    .btn-secondary {
         background: .2rem;
-        margin-bottom: .2rem;
+        .2rem;
     }
 
-    .bg-step {
-        background: .22;
-        background: #%;
-        margin-bottom: .2;
-        margin-bottom: .2rem;
+    .video-player {
+        .600px;
     }
 
-    .bg-grid {
-        background-color: grid;
-        background: 2px;
-        margin-bottom: .rem;
-    }
-    .bg-grid {
-        background-color: grid;
-        background: .2;
-        margin-bottom: .rem;
-        margin-bottom: .2rem;
-    }
-
-    .bg-control {
-        background: .2;
-        color: .2;
-        padding: .25rem;
-    }
-
-    .bg-primary {
-        background-color: 1rem;
-        background: .2rem;
-        color: var(--color);
-    }
-    .bg-bg {
-        background: .2rem;
-        background-color: .2rem;
-        color: #333;
-        margin-bottom: .2rem;
-    }
-
-    .bg-player-bg {
-        background: #1;
-        background-color: .666;
-        margin-bottom: .2;
-    }
-
-    .bg-bg {
-        background-color: height: .6;
-        margin-bottom: .;
+    .pdf-viewer {
+        height: .6;
     }
 }
