@@ -1667,3 +1667,280 @@ section {
         font-size: 3rem; /* Larger section headings */
     }
 }
+/* Financial Health Score Badge */
+.card:has(.badge-success) .card-title {
+    flex-direction: column;
+    align-items: center;
+}
+
+/* About Page Specific Styles */
+.about-page {
+    padding: 0.5rem 0 0.8rem;
+}
+
+.about-container {
+    background: var(--background-gradient);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.about-header {
+    text-align: center;
+    margin-bottom: 0.8rem;
+    background: var(--header-message-gradient);
+    color: #fff;
+    padding: 0.5rem;
+    border-radius: 8px;
+}
+
+.about-title {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #fff;
+    margin-bottom: 0.5rem;
+}
+
+.about-subtitle {
+    font-size: 0.9rem;
+    font-weight: normal;
+    color: #e3f2fd;
+}
+
+.dark-mode .about-subtitle {
+    color: #e9ecef;
+}
+
+.about-content {
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: #333;
+    margin-bottom: 0.8rem;
+}
+
+.dark-mode .about-content {
+    color: #e9ecef;
+}
+
+.about-content p {
+    margin-bottom: 0.5rem;
+}
+
+.about-disclaimer {
+    color: #dc3545;
+    font-style: italic;
+}
+
+.mission-statement {
+    margin-bottom: 0.8rem;
+    padding: 0.5rem;
+    background-color: #f8f9fa;
+    border-left: 5px solid #0288d1;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.mission-statement h3 {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #0288d1;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.mission-statement p {
+    font-size: 0.9rem;
+    color: #555;
+    line-height: 1.6;
+}
+
+.dark-mode .mission-statement p {
+    color: #e9ecef;
+}
+
+.team-why {
+    margin-bottom: 0.8rem;
+    padding: 0.5rem;
+    background-color: #e3f2fd;
+    border-left: 5px solid #2e7d32;
+    border-radius: 2px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.team-why h3 {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #2e7d32;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.team-why p {
+    font-size: 0.9rem;
+    color: #555;
+    margin-bottom: 0.6rem;
+}
+
+.dark-mode .team-why p {
+    color: #e9ecef;
+}
+
+.call-to-action {
+    text-align: center;
+    margin-bottom: 0.8rem;
+}
+
+.call-to-action p {
+    font-size: 0.9rem;
+}
+
+.dark-mode .call-to-action p {
+    color: #e9ecef;
+}
+
+/* Testimonials */
+.testimonial-avatar {
+    width: 30px;
+    height: 30px;
+    background-color: #028028;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: bold;
+    margin: 0 auto;
+    margin-bottom: 0.5rem;
+}
+
+.test-home {
+    background-color: #028028;
+    color: white;
+    border-radius: 50%;
+    font-size: 0.8rem;
+    margin-bottom: 0.5rem;
+}
+
+.testimonial .home {
+    color: #028028;
+    font-weight: 0.8rem;
+    margin-top: 0.5rem;
+}
+
+/* Form and Quiz Pages */
+.forms-section .card-heading,
+.forms-section .card-body {
+    text-align: left !important;
+}
+
+.forms-section .form-label {
+    text-align: left !important;
+}
+
+.forms-section .form-control {
+    text-align: left !important;
+}
+
+.quiz-container .card-body {
+    text-align: left !important;
+}
+
+.quiz-container .form-label {
+    text-align: left;
+    font-weight: normal;
+}
+
+.quiz-container .form-control {
+    text-align: left !important;
+}
+
+.btn-quiz-answer {
+    background-color: var(--secondary-button-bg);
+    color: var(--text-color);
+    border: 1px solid var(--secondary-button-border);
+    padding: 10px 20px;
+    margin-top: 10px;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.btn-quiz-answer:hover {
+    background-color: var(--secondary-button-bg-hover);
+    transform: scale(1.05);
+}
+
+/* Index Page */
+.index-page .tool-title .card-title {
+    background: linear-gradient(135deg, #1b5e20, #01579b);
+    border-radius: 8px;
+    margin-bottom: 0.2rem;
+}
+
+.index-container .tool-card .card-title {
+    text-align: center !important;
+}
+
+/* Desktop Optimizations */
+@media (min-width: 768px) {
+    .about-container {
+        padding: 1.5rem 3rem;
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+
+    .about-header {
+        margin-bottom: 2.5rem;
+    }
+
+    .about-title {
+        font-size: 3rem;
+    }
+
+    .about-subtitle {
+        font-size: 1.1rem;
+    }
+
+    .about-content {
+        font-size: 1.05rem;
+        margin-bottom: 2rem;
+    }
+
+    .about-content p {
+        margin-bottom: 1.25rem;
+    }
+
+    .mission-statement,
+    .team-why {
+        padding: 1.5rem;
+        max-width: 900px;
+        margin: 0 auto 1.5rem;
+    }
+
+    .mission-statement h3,
+    .team-why h3 {
+        font-size: 1.4rem;
+    }
+
+    .mission-statement p,
+    .team-why p {
+        margin-bottom: 1.25rem;
+        font-size: 1.05rem;
+    }
+
+    .call-to-action p {
+        margin-bottom: 1.25rem;
+        font-size: 1.05rem;
+    }
+}
+
+/* Larger Screens */
+@media (min-width: 1024px) {
+    .about-title {
+        font-size: 3.5rem;
+    }
+}
