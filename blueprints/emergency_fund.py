@@ -1,4 +1,4 @@
-from flask import Blueprint, request, session, redirect, url_for, render_template, flash, current_app, jsonify
+from flask import Blueprint, request, session, redirect, url_for, render_template, flash, current_app, jsonify, g
 from flask_wtf import FlaskForm
 from wtforms import StringField, FloatField, IntegerField, SelectField, BooleanField, SubmitField
 from wtforms.validators import DataRequired, Optional, Email, NumberRange
@@ -11,7 +11,6 @@ from translations import trans
 from extensions import mongo
 from bson import ObjectId
 from models import log_tool_usage
-
 
 emergency_fund_bp = Blueprint(
     'emergency_fund',
@@ -125,6 +124,7 @@ def step1():
     form = Step1Form(data=form_data)
     try:
         log_tool_usage(
+            mongo=mongo.db,
             tool_name='emergency_fund',
             user_id=current_user.id,
             session_id=session['sid'],
@@ -132,6 +132,7 @@ def step1():
         )
         if request.method == 'POST':
             log_tool_usage(
+                mongo=mongo.db,
                 tool_name='emergency_fund',
                 user_id=current_user.id,
                 session_id=session['sid'],
@@ -174,6 +175,7 @@ def step2():
     form = Step2Form()
     try:
         log_tool_usage(
+            mongo=mongo.db,
             tool_name='emergency_fund',
             user_id=current_user.id,
             session_id=session['sid'],
@@ -181,6 +183,7 @@ def step2():
         )
         if request.method == 'POST':
             log_tool_usage(
+                mongo=mongo.db,
                 tool_name='emergency_fund',
                 user_id=current_user.id,
                 session_id=session['sid'],
@@ -220,6 +223,7 @@ def step3():
     form = Step3Form()
     try:
         log_tool_usage(
+            mongo=mongo.db,
             tool_name='emergency_fund',
             user_id=current_user.id,
             session_id=session['sid'],
@@ -227,6 +231,7 @@ def step3():
         )
         if request.method == 'POST':
             log_tool_usage(
+                mongo=mongo.db,
                 tool_name='emergency_fund',
                 user_id=current_user.id,
                 session_id=session['sid'],
@@ -239,7 +244,7 @@ def step3():
                     'risk_tolerance_level': form.risk_tolerance_level.data,
                     'dependents': int(form.dependents.data) if form.dependents.data else 0
                 }
-                session.modified = True
+                session['modified'] = True
                 current_app.logger.info(f"Step3 data saved to session: {session['emergency_fund_step3']}")
                 return redirect(url_for('emergency_fund.step4'))
             else:
@@ -258,8 +263,8 @@ def step3():
 def step4():
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
-        session.permanent = True
-        session.modified = True
+        session['permanent'] = True
+        session['modified'] = True
     lang = session.get('lang', 'en')
     if 'emergency_fund_step3' not in session:
         flash(trans('emergency_fund_missing_step3', default='Please complete previous steps first.', lang=lang), 'danger')
@@ -267,6 +272,7 @@ def step4():
     form = Step4Form(lang=lang)
     try:
         log_tool_usage(
+            mongo=mongo.db,
             tool_name='emergency_fund',
             user_id=current_user.id,
             session_id=session['sid'],
@@ -274,6 +280,7 @@ def step4():
         )
         if request.method == 'POST':
             log_tool_usage(
+                mongo=mongo.db,
                 tool_name='emergency_fund',
                 user_id=current_user.id,
                 session_id=session['sid'],
@@ -372,7 +379,7 @@ def step4():
 
                 for key in ['emergency_fund_data', 'emergency_fund_step2', 'emergency_fund_step3']:
                     session.pop(key, None)
-                session.modified = True
+                session['modified'] = True
 
                 flash(trans('emergency_fund_completed_successfully', default='Emergency fund calculation completed successfully!'), 'success')
                 return redirect(url_for('emergency_fund.dashboard'))
@@ -392,11 +399,12 @@ def step4():
 def dashboard():
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
-        session.permanent = True
-        session.modified = True
+        session['permanent'] = True
+        session['modified'] = True
     lang = session.get('lang', 'en')
     try:
         log_tool_usage(
+            mongo=mongo.db,
             tool_name='emergency_fund',
             user_id=current_user.id,
             session_id=session['sid'],
@@ -479,6 +487,7 @@ def unsubscribe(email):
     try:
         lang = session.get('lang', 'en')
         log_tool_usage(
+            mongo=mongo.db,
             tool_name='emergency_fund',
             user_id=current_user.id,
             session_id=session['sid'],
@@ -499,6 +508,7 @@ def unsubscribe(email):
 def debug_storage():
     try:
         log_tool_usage(
+            mongo=mongo.db,
             tool_name='emergency_fund',
             user_id=current_user.id,
             session_id=session['sid'],
@@ -517,3 +527,10 @@ def debug_storage():
     except Exception as e:
         current_app.logger.error(f"Debug storage failed: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
+@emergency_fund_bp.teardown_appcontext
+def close_mongo(exception):
+    mongo_client = g.pop('mongo_client', None)
+    if mongo_client is not None:
+        current_app.logger.info("Closing MongoDB connection")
+        mongo_client.close()
