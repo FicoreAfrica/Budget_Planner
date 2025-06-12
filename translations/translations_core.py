@@ -8,6 +8,19 @@ CORE_TRANSLATIONS = {
         'core_error': 'An error occurred. Please try again.',
         'core_profile_title': 'Your Profile',
         # Module: core
+         'admin_usage_logs': 'Usage Logs',
+        'admin_export_csv': 'Export CSV',
+        'admin_id': 'ID',
+        'admin_user_id': 'User ID',
+        'admin_session_id': 'Session ID',
+        'admin_tool_name': 'Tool Name',
+        'admin_action': 'Action',
+        'admin_created_at': 'Created At',
+        'admin_usage_trend': 'Usage Trend',
+
+# Module: tool
+    'tool_google_login': 'Google Login',
+    'tool_logout': 'Logout',
         'admin_dashboard_title': 'Admin Dashboard',
         'admin_dashboard_desc': 'View and analyze platform usage and engagement metrics',
         'admin_overview': 'Overview',
@@ -962,6 +975,19 @@ CORE_TRANSLATIONS = {
         'admin_error': 'Kuskure ya faru. Don Allah a sake gwadawa.',
         
         # Module: tool
+        'admin_usage_logs': 'Log ɗin Amfani',
+        'admin_export_csv': 'Fitar da CSV',
+        'admin_id': 'ID',
+        'admin_user_id': 'ID na Mai Amfani',
+        'admin_session_id': 'ID na Zama',
+        'admin_tool_name': 'Sunan Kayan Aiki',
+        'admin_action': 'Aiki',
+        'admin_created_at': 'An Ƙirƙira Shi a',
+        'admin_usage_trend': 'Yanayin Amfani',
+
+        # Module: tool
+        'tool_google_login': 'Shigar Google',
+        'tool_logout': 'Fita',
         'tool_financial_health': 'Lafiyar Kuɗi',
         'tool_budget': 'Kasafin Kuɗi',
         'tool_bill': 'Kudin Biya',
