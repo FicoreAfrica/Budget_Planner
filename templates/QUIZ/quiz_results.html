@@ -9,14 +9,20 @@
 <div class="container">
     {% set tool_name = 'quiz_your_financial_personality_results' | default('Your Financial Personality Results') %}
     {% set tool_icon = 'fa-user-circle' %}
-    {% set subtitle = trans('quiz_your_financial_personality_results_subtitle') | default('Discover your financial personality and insights') %}
+    {% set subtitle = trans('quiz_your_financial_personality_results_subtitle', default='Discover your financial personality and insights', lang=lang) %}
     {% include 'tool_header.html' %}
     <div class="card mb-4">
         <div class="card-body">
-            <p><strong>{{ trans('core_first_name', default='First Name', lang=lang) }}</strong>: {{ latest_record.first_name }}</p>
-            <p><strong>{{ trans('quiz_your_personality', default='Your Personality', lang=lang) }}</strong>: {{ trans('quiz_' + latest_record.personality.lower() + '_description', default=latest_record.personality, lang=lang) }}</p>
-            <p><strong>{{ trans('quiz_score', default='Score', lang=lang) }}</strong>: {{ latest_record.score }} / {{ max_score }}</p>
-            <p><strong>{{ trans('core_created_at', default='Created At', lang=lang) }}</strong>: {{ latest_record.created_at }}</p>
+            <p><strong>{{ trans('core_first_name', default='First Name', lang=lang) }}</strong>: {{ latest_record.first_name | default('N/A') }}</p>
+            <p><strong>{{ trans('quiz_your_personality', default='Your Personality', lang=lang) }}</strong>: {{ trans('quiz_' + latest_record.personality.lower() + '_description', default=latest_record.personality | default('Unknown'), lang=lang) }}</p>
+            <p><strong>{{ trans('quiz_score', default='Score', lang=lang) }}</strong>: {{ latest_record.score | default(0) }} / {{ max_score }}</p>
+            <p><strong>{{ trans('core_created_at', default='Created At', lang=lang) }}</strong>: 
+                {% if latest_record.created_at %}
+                    {{ latest_record.created_at.strftime('%Y-%m-%d %H:%M:%S') }}
+                {% else %}
+                    {{ trans('core_not_available', default='Not Available', lang=lang) }}
+                {% endif %}
+            </p>
         </div>
     </div>
     <div class="card mb-4">
@@ -25,8 +31,8 @@
             {% if latest_record.badges %}
                 <div>
                     {% for badge in latest_record.badges %}
-                        <span class="badge {{ badge.color_class }}" title="{{ trans('badge_' + badge.name.lower().replace(' ', '_') + '_desc', default=badge.description, lang=lang) }}">
-                            {{ trans('badge_' + badge.name.lower().replace(' ', '_'), default=badge.name, lang=lang) }}
+                        <span class="badge {{ badge.color_class }}" title="{{ trans('badge_' + badge.name.lower().replace(' ', '_') + '_desc', default=badge.description | default('No description'), lang=lang) }}">
+                            {{ trans('badge_' + badge.name.lower().replace(' ', '_'), default=badge.name | default('Unknown'), lang=lang) }}
                         </span>
                     {% endfor %}
                 </div>
@@ -71,13 +77,13 @@
     {% if current_user.is_authenticated %}
         <div class="card mb-4">
             <div class="card-header">
-                <h5>{{ trans('share_ficore', lang=lang) | default('Share Ficore Africa with Friends') }}</h5>
+                <h5>{{ trans('share_ficore', default='Share Ficore Africa with Friends', lang=lang) }}</h5>
             </div>
             <div class="card-body">
-                <p>{{ trans('core_share_ficore_invite', lang=lang) | default('Invite your friends to join Ficore Africa and manage their finances better!') }}</p>
+                <p>{{ trans('core_share_ficore_invite', default='Invite your friends to join Ficore Africa and manage their finances better!', lang=lang) }}</p>
                 <div class="input-group mb-3">
                     <input type="text" class="form-control" id="referralLink" value="{{ url_for('auth.signup', ref=current_user.referral_code, _external=True) }}" readonly>
-                    <button class="btn btn-primary" type="button" onclick="copyReferralLink()">{{ trans('core_profile_copy_link', lang=lang) | default('Copy') }}</button>
+                    <button class="btn btn-primary" type="button" onclick="copyReferralLink()">{{ trans('core_profile_copy_link', default='Copy', lang=lang) }}</button>
                 </div>
             </div>
         </div>
@@ -87,12 +93,12 @@
 {% block extra_scripts %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        function copyReferralLink() {
+        window.copyReferralLink = function() {
             const referralLink = document.getElementById('referralLink');
             referralLink.select();
             document.execCommand('copy');
-            alert('{{ trans('profile_link_copied', lang=lang) | default('Referral link copied to clipboard!') }}');
-        }
+            alert('{{ trans('profile_link_copied', default='Referral link copied to clipboard!', lang=lang) }}');
+        };
     });
 </script>
 {% endblock %}
