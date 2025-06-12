@@ -1,7 +1,7 @@
 Flask==3.0.3
 gunicorn==23.0.0
 google-auth==2.39.0
-google-auth-oauthlib==1.2.1 
+google-auth-oauthlib==1.2.1
 gspread==6.2.0
 pandas==2.2.3
 python-dotenv==1.0.1
@@ -21,11 +21,10 @@ flask-migrate==4.0.7
 flask-login==0.6.3
 psycopg2-binary==2.9.9
 redis==5.0.3
-flask_pymongo==2.3.0
+flask-pymongo==2.4.0  # Upgraded to support pymongo>=4.0
 certifi==2024.8.30
-flask-pymongo==2.3.0
 pymongo==4.6.3
 psutil==6.0.0
 Flask-Compress==1.15
 itsdangerous==2.2.0
-Flask-Babel==4.0.0
+werkzeug==3.0.4
