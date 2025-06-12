@@ -103,90 +103,6 @@
             </ul>
         </div>
     </div>
-
-    <!-- Charts -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div class="bg-white shadow-sm rounded-lg p-6">
-            <h5 class="text-lg font-semibold mb-4">{{ trans('admin_auth_and_referral_trends', default='Registration, Login, and Referral Trends', lang=lang) }}</h5>
-            <canvas id="authChart" class="w-full h-80"></canvas>
-        </div>
-        <div class="bg-white shadow-sm rounded-lg p-6">
-            <h5 class="text-lg font-semibold mb-4">{{ trans('admin_tool_usage_dist', default='Tool Usage Distribution', lang=lang) }}</h5>
-            <canvas id="toolChart" class="w-full h-80"></canvas>
-        </div>
-    </div>
-
-    <script type="text/javascript">
-        // Authentication and Referral Trends Chart
-        const authCtx = document.getElementById('authChart').getContext('2d');
-        new Chart(authCtx, {
-            type: 'line',
-            data: {
-                labels: {{ chart_data.labels | tojson }},
-                datasets: [
-                    {
-                        label: '{{ trans('admin_register', default='Registrations', lang=lang) }}',
-                        data: {{ chart_data.registrations | tojson }},
-                        borderColor: '#007bff',
-                        backgroundColor: 'rgba(0, 123, 255, 0.1)',
-                        fill: false
-                    },
-                    {
-                        label: '{{ trans('admin_login', default='Logins', lang=lang) }}',
-                        data: {{ chart_data.logins | tojson }},
-                        borderColor: '#28a745',
-                        backgroundColor: 'rgba(40, 167, 69, 0.1)',
-                        fill: false
-                    },
-                    {
-                        label: '{{ trans('admin_referrals', default='Referrals', lang=lang) }}',
-                        data: {{ chart_data.referrals | tojson }},
-                        borderColor: '#ff6f00',
-                        backgroundColor: 'rgba(255, 111, 0, 0.1)',
-                        fill: false
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: { beginAtZero: true, ticks: { color: '#333333' } },
-                    x: { ticks: { color: '#333333' } }
-                },
-                plugins: { legend: { labels: { color: '#333333' } } }
-            }
-        });
-
-        // Tool Usage Distribution Chart
-        const toolCtx = document.getElementById('toolChart').getContext('2d');
-        new Chart(toolCtx, {
-            type: 'bar',
-            data: {
-                labels: {{ chart_data.labels | tojson }},
-                datasets: [
-                    {% for tool, counts in chart_data.tool_usage.items %}
-                    {
-                        label: '{{ trans('tool_' + tool, default=tool.replace('_', ' ').title(), lang=lang) }}',
-                        data: {{ counts | tojson }},
-                        backgroundColor: '{{ ['#007bff', '#28a745', '#ff6f00', '#dc3545', '#6f42c1', '#fd7e14', '#17a2b8'][loop.index % 7] }}',
-                        borderColor: '{{ ['#0056b3', '#1e7e34', '#e65c00', '#c82333', '#5a32a3', '#e06c00', '#117a8b'][loop.index % 7] }}',
-                        borderWidth: 1
-                    }{% if not loop.last %},{% endif %}
-                    {% endfor %}
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: { beginAtZero: true, stacked: true, ticks: { color: '#333333' } },
-                    x: { stacked: true, ticks: { color: '#333333' } }
-                },
-                plugins: { legend: { labels: { color: '#333333' } } }
-            }
-        });
-    </script>
     {% endif %}
 
     <!-- Tool Usage Logs -->
@@ -287,9 +203,9 @@
             }
         });
     </script>
-    {% endif %}
 
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.min.js"></script>
+    {% endif %}
 </div>
 {% endblock %}
