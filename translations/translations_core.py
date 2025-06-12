@@ -510,7 +510,7 @@ CORE_TRANSLATIONS = {
         'core_change_language': 'Canza Harshe',
         'core_toggle_navigation': 'Togglin Kewayawa',
         'core_tools': 'Kayan Aiki',
-        'core_general_dashboard': 'Dashboard na Gabaɗaya',
+        'core_general_dashboard': 'Allon Duka Bayanai',
         'core_feedback': 'Ra\'ayi',
         'core_all_in_one_toolkit': 'Dukkan Kayan Aiki Da Kuke Bukata Don Inganta Kudinku a Afrika',
         'core_track_finances': 'Bi diddigin kuɗin ku cikin sauƙi',
