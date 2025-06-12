@@ -402,7 +402,7 @@ CORE_TRANSLATIONS = {
         'core_invalid_language': 'Invalid language selected',
         'core_logged_out': 'You have been logged out',
         'core_all_in_one_toolkit': 'Your All-in-One Toolkit for Financial Health Across Africa',
-        'core_localized': 'Localized for Africa with support for Naira and regional financial contexts',
+        'core_localized': 'Localized for Africa with support for all major languages and regional financial contexts',
         'core_actionable': 'Provides actionable insights for better financial decisions',
         'core_empowers': 'Empowers financial literacy with easy-to-use tools',
         'core_what_people_say': 'What people are saying about Us',
