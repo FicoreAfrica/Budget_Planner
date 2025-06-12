@@ -127,17 +127,17 @@ def check_mongodb_connection(mongo_client, app):
                     retryWrites=True
                 )
                 new_client.admin.command('ping')
-                logger.info("MongoDB client reinitialized successfully")
+                logger.info(" Nueva cliente de MongoDB reinicializado exitosamente")
                 # Update app.config and Flask-PyMongo
                 app.config['MONGO_CLIENT'] = new_client
                 app.config['SESSION_MONGODB'] = new_client
                 mongo.init_app(app, connect=False, uri=app.config['MONGO_URI'])
                 return True
             except Exception as reinit_e:
-                logger.error(f"Failed to reinitialize MongoDB client: {str(reinit_e)}")
+                logger.error(f"Fallo al reinicializar el cliente de MongoDB: {str(reinit_e)}")
                 return False
     except (AttributeError, ConnectionFailure) as e:
-        logger.error(f"MongoDB connection error: {str(e)}", exc_info=True)
+        logger.error(f"Error de conexión de MongoDB: {str(e)}", exc_info=True)
         return False
 
 def setup_session(app):
@@ -372,7 +372,7 @@ def create_app():
         # Register MongoClient shutdown on app exit
         @atexit.register
         def close_mongo_client():
- komma            try:
+            try:
                 if mongo_client is not None:
                     mongo_client.close()
                     logger.info("MongoDB client closed on app shutdown")
