@@ -22,6 +22,11 @@ from uuid import uuid4
 from werkzeug.security import generate_password_hash
 from mailersend_email import init_email_config
 from pymongo.errors import ConnectionFailure, ConfigurationError, InvalidOperation
+from google_auth_oauthlib.flow import Flow  # Added for Google OAuth2
+from google.auth.transport import requests as google_requests  # Added for Google OAuth2
+from itsdangerous import URLSafeTimedSerializer  # Added for password reset tokens
+import smtplib  # Added for email sending
+from email.mime.text import MIMEText  # Added for email sending
 
 # Load environment variables
 load_dotenv()
@@ -260,6 +265,11 @@ def initialize_database(app):
         if 'due_date_1' not in existing_indexes:
             db.bills.create_index('due_date')
         
+        # Add index for reset_tokens collection
+        existing_indexes = db.reset_tokens.index_information()
+        if 'token_1' not in existing_indexes:
+            db.reset_tokens.create_index('token', unique=True)
+        
         logger.info("MongoDB indexes created or verified")
 
         # Initialize courses
@@ -314,6 +324,19 @@ def create_app():
     app.config['SECRET_KEY'] = secret_key
     logger.info("FLASK_SECRET_KEY configured successfully")
     
+    # Load Google OAuth2 and SMTP configurations
+    app.config['GOOGLE_CLIENT_ID'] = os.environ.get('GOOGLE_CLIENT_ID')
+    app.config['GOOGLE_CLIENT_SECRET'] = os.environ.get('GOOGLE_CLIENT_SECRET')
+    app.config['SMTP_SERVER'] = os.environ.get('SMTP_SERVER', 'smtp.gmail.com')
+    app.config['SMTP_PORT'] = int(os.environ.get('SMTP_PORT', 587))
+    app.config['SMTP_USERNAME'] = os.environ.get('SMTP_USERNAME')
+    app.config['SMTP_PASSWORD'] = os.environ.get('SMTP_PASSWORD')
+    
+    if not app.config['GOOGLE_CLIENT_ID'] or not app.config['GOOGLE_CLIENT_SECRET']:
+        logger.warning("Google OAuth2 credentials (GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET) not set in environment variables")
+    if not app.config['SMTP_USERNAME'] or not app.config['SMTP_PASSWORD']:
+        logger.warning("SMTP credentials (SMTP_USERNAME or SMTP_PASSWORD) not set in environment variables")
+    
     logger.info("Starting app creation")
     setup_logging(app)
     
@@ -349,7 +372,7 @@ def create_app():
         # Register MongoClient shutdown on app exit
         @atexit.register
         def close_mongo_client():
-            try:
+ komma            try:
                 if mongo_client is not None:
                     mongo_client.close()
                     logger.info("MongoDB client closed on app shutdown")
@@ -512,6 +535,11 @@ def create_app():
         logger=g.get('logger', logger),
         **{k: v for k, v in kwargs.items() if k != 'lang'}
     )
+
+    # Inject Google Client ID into templates
+    @app.context_processor
+    def inject_google_client_id():
+        return {'google_client_id': app.config.get('GOOGLE_CLIENT_ID', '')}
 
     # Route handlers and other app-specific decorators
     @app.before_request
