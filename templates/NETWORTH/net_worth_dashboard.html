@@ -29,10 +29,17 @@
         <div class="card mb-4">
             <div class="card-body">
                 <h3><i class="fas fa-chart-bar"></i> {{ trans('net_worth_net_worth_metrics') | default('Net Worth Metrics') }}</h3>
-                <canvas id="netWorthChart" class="chart-container"></canvas>
+                <canvas id="netWorthChart" class="chart-container" style="max-height: 400px;"></canvas>
                 <script>
                     document.addEventListener('DOMContentLoaded', function() {
                         const ctx = document.getElementById('netWorthChart').getContext('2d');
+                        const dataValues = [
+                            {{ latest_record.total_assets | default(0) }},
+                            {{ latest_record.total_liabilities | default(0) }},
+                            {{ latest_record.net_worth | default(0) }}
+                        ];
+                        const maxValue = Math.max(...dataValues) * 1.2; // Add 20% padding to max value
+                        
                         new Chart(ctx, {
                             type: 'bar',
                             data: {
@@ -43,11 +50,7 @@
                                 ],
                                 datasets: [{
                                     label: '{{ trans('net_worth_metrics') | default('Metrics') }}',
-                                    data: [
-                                        {{ latest_record.total_assets | default(0) }},
-                                        {{ latest_record.total_liabilities | default(0) }},
-                                        {{ latest_record.net_worth | default(0) }}
-                                    ],
+                                    data: dataValues,
                                     backgroundColor: ['#4CAF50', '#EF5350', '#42A5F5'],
                                     borderColor: ['#388E3C', '#D32F2F', '#0288D1'],
                                     borderWidth: 1
@@ -57,13 +60,22 @@
                                 scales: {
                                     y: {
                                         beginAtZero: true,
+                                        suggestedMax: maxValue > 0 ? maxValue : 1000, // Fallback max if all values are 0
                                         grid: { color: '#E0E0E0' },
-                                        title: { display: true, text: '{{ trans('core_value') | default('Value (₦)') }}' }
+                                        title: { 
+                                            display: true, 
+                                            text: '{{ trans('core_value') | default('Value (₦)') }}'
+                                        },
+                                        ticks: {
+                                            callback: function(value) {
+                                                return `₦${value.toLocaleString('en-NG', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+                                            }
+                                        }
                                     },
                                     x: { 
                                         grid: { display: false },
-                                        barPercentage: 0.3,
-                                        categoryPercentage: 0.4
+                                        barPercentage: 0.25, // Reduced for better spacing
+                                        categoryPercentage: 0.3
                                     }
                                 },
                                 plugins: {
@@ -85,9 +97,13 @@
                                         font: { size: 12, weight: 'bold' }
                                     }
                                 },
-                                animation: false,
                                 responsive: true,
-                                maintainAspectRatio: false
+                                maintainAspectRatio: false,
+                                layout: {
+                                    padding: {
+                                        top: 30 // Space for data labels
+                                    }
+                                }
                             },
                             plugins: [ChartDataLabels]
                         });
