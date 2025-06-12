@@ -14,6 +14,10 @@ from extensions import mongo  # Import mongo from extensions
 
 # Configure logging
 logger = logging.getLogger('ficore_app')
+logger.setLevel(logging.INFO)
+handler = logging.StreamHandler()
+handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+logger.addHandler(handler)
 
 # Define the auth blueprint
 auth_bp = Blueprint('auth', __name__, template_folder='templates/auth', url_prefix='/auth')
@@ -115,19 +119,21 @@ def signup():
 
     if referral_code:
         try:
-            # Validate referral_code as UUID
             uuid.UUID(referral_code)
             referrer = mongo.db.users.find_one({'referral_code': referral_code}, {'_id': 0})
             if not referrer:
                 logger.warning(f"Invalid referral code: {referral_code}", extra={'session_id': session_id})
                 flash(trans('auth_invalid_referral', default='Invalid referral code.', lang=lang), 'warning')
             else:
-                # Check referral limit (e.g., max 100 referrals per user)
-                referral_count = mongo.db.users.count_documents({'referred_by_id': referrer['id']})
-                if referral_count >= 100:
-                    logger.warning(f"Referral limit reached for referrer with code: {referral_code}", extra={'session_id': session_id})
-                    flash(trans('auth_referral_limit_reached', default='This user has reached their referral limit.', lang=lang), 'warning')
+                if not isinstance(referrer, dict):
+                    logger.error(f"Referrer is not a dictionary: {type(referrer)}", extra={'session_id': session_id})
                     referrer = None
+                else:
+                    referral_count = mongo.db.users.count_documents({'referred_by_id': referrer.get('id')})
+                    if referral_count >= 100:
+                        logger.warning(f"Referral limit reached for referrer with code: {referral_code}", extra={'session_id': session_id})
+                        flash(trans('auth_referral_limit_reached', default='This user has reached their referral limit.', lang=lang), 'warning')
+                        referrer = None
         except ValueError:
             logger.error(f"Invalid referral code format: {referral_code}", extra={'session_id': session_id})
             flash(trans('auth_invalid_referral_format', default='Invalid referral code format.', lang=lang), 'warning')
@@ -143,13 +149,16 @@ def signup():
                     'password_hash': generate_password_hash(form.password.data),
                     'is_admin': is_admin,
                     'role': role,
-                    'referred_by_id': referrer['id'] if referrer else None,
+                    'referred_by_id': referrer.get('id') if referrer else None,
                     'created_at': datetime.utcnow(),
                     'lang': lang
                 }
                 user = create_user(mongo, user_data)
-                logger.info(f"User signed up: {user['username']} with referral code: {user_data.get('referral_code', 'none')}, role={role}, is_admin={is_admin}", extra={'session_id': session_id})
-                log_tool_usage(mongo, 'register', user_id=user['id'], session_id=session_id, action='submit_success')
+                # Safe access for user attributes
+                username = getattr(user, 'username', user.get('username')) if user else 'unknown'
+                user_id = getattr(user, 'id', user.get('id')) if user else None
+                logger.info(f"User signed up: {username} with referral code: {user_data.get('referral_code', 'none')}, role={role}, is_admin={is_admin}", extra={'session_id': session_id})
+                log_tool_usage(mongo, 'register', user_id=user_id, session_id=session_id, action='submit_success')
                 flash(trans('auth_signup_success', default='Account created successfully! Please sign in.', lang=lang), 'success')
                 return redirect(url_for('auth.signin'))
             else:
@@ -159,10 +168,12 @@ def signup():
         
         return render_template('signup.html', form=form, lang=lang, referral_code=referral_code, referrer=referrer)
     except Exception as e:
-        logger.error(f"Error in signup: {str(e)}", extra={'session_id': session_id, 'username': form.username.data if form.username.data else 'unknown', 'email': form.email.data if form.email.data else 'unknown'})
-        log_tool_usage(mongo, 'register', user_id=None, session_id=session_id, action='error', details=f"Exception: {str(e)}")
+        logger.exception(f"Error in signup: {str(e)} - Type: {type(e).__name__}", extra={'session_id': session_id, 'username': form.username.data if form.username.data else 'unknown', 'email': form.email.data if form.email.data else 'unknown'})
+        log_tool_usage(mongo, 'register', user_id=None, session_id=session_id, action='error', details=f"Exception: {str(e)} - Type: {type(e).__name__}")
         flash(trans('auth_error', default='An error occurred. Please try again.', lang=lang), 'danger')
         return render_template('signup.html', form=form, lang=lang, referral_code=referral_code, referrer=referrer), 500
+    finally:
+        logger.info("Teardown completed for signup route", extra={'session_id': session_id})
 
 @auth_bp.route('/signin', methods=['GET', 'POST'])
 def signin():
@@ -180,10 +191,14 @@ def signin():
     try:
         if request.method == 'POST' and form.validate_on_submit():
             user = get_user_by_email(mongo, form.email.data)
-            if user and check_password_hash(user.password_hash, form.password.data):
+            if user and check_password_hash(getattr(user, 'password_hash', user.get('password_hash')), form.password.data):
+               毒
+
                 login_user(user)
-                logger.info(f"User signed in: {user.username}", extra={'session_id': session_id})
-                log_tool_usage(mongo, 'login', user_id=user.id, session_id=session_id, action='submit_success')
+                username = getattr(user, 'username', user.get('username')) if user else 'unknown'
+                user_id = getattr(user, 'id', user.get('id')) if user else None
+                logger.info(f"User signed in: {username}", extra={'session_id': session_id})
+                log_tool_usage(mongo, 'login', user_id=user_id, session_id=session_id, action='submit_success')
                 flash(trans('auth_signin_success', default='Signed in successfully!', lang=lang), 'success')
                 return redirect(url_for('index'))
             else:
@@ -197,17 +212,19 @@ def signin():
     
         return render_template('signin.html', form=form, lang=lang)
     except Exception as e:
-        logger.error(f"Error in signin: {str(e)}", extra={'session_id': session_id})
-        log_tool_usage(mongo, 'login', user_id=None, session_id=session_id, action='error')
+        logger.exception(f"Error in signin: {str(e)} - Type: {type(e).__name__}", extra={'session_id': session_id})
+        log_tool_usage(mongo, 'login', user_id=None, session_id=session_id, action='error', details=f"Exception: {str(e)} - Type: {type(e).__name__}")
         flash(trans('auth_error', default='An error occurred. Please try again.', lang=lang), 'danger')
         return render_template('signin.html', form=form, lang=lang), 500
+    finally:
+        logger.info("Teardown completed for signin route", extra={'session_id': session_id})
 
 @auth_bp.route('/logout')
 @login_required
 def logout():
     lang = session.get('lang', 'en')
-    username = current_user.username
-    user_id = current_user.id
+    username = getattr(current_user, 'username', current_user.get('username')) if current_user else 'unknown'
+    user_id = getattr(current_user, 'id', current_user.get('id')) if current_user else None
     session_id = session.get('sid', str(uuid.uuid4()))
     
     # Log logout action
@@ -227,27 +244,32 @@ def profile():
     
     try:
         if request.method == 'POST' and password_form.validate_on_submit():
-            update_user(mongo, current_user.id, {
+            update_user(mongo, getattr(current_user, 'id', current_user.get('id')), {
                 'password_hash': generate_password_hash(password_form.new_password.data)
             })
-            logger.info(f"User changed password: {current_user.username}", extra={'session_id': session_id})
+            username = getattr(current_user, 'username', current_user.get('username')) if current_user else 'unknown'
+            logger.info(f"User changed password: {username}", extra={'session_id': session_id})
             flash(trans('core_password_changed_success', default='Password changed successfully!', lang=lang), 'success')
             return redirect(url_for('auth.profile'))
         elif password_form.errors:
             logger.error(f"Change password form validation failed: {password_form.errors}", extra={'session_id': session_id})
             flash(trans('core_form_errors', default='Please correct the errors in the form.', lang=lang), 'danger')
         
-        referral_link = url_for('auth.signup', ref=current_user.referral_code, _external=True)
-        referred_users = get_referrals(mongo, current_user.id)
+        referral_code = getattr(current_user, 'referral_code', current_user.get('referral_code')) if current_user else None
+        referral_link = url_for('auth.signup', ref=referral_code, _external=True)
+        referred_users = get_referrals(mongo, getattr(current_user, 'id', current_user.get('id')))
         referral_count = len(referred_users)
         return render_template('profile.html', lang=lang, referral_link=referral_link, referral_count=referral_count, referred_users=referred_users, password_form=password_form)
     except Exception as e:
-        logger.error(f"Error in profile: {str(e)}", extra={'session_id': session_id})
+        logger.exception(f"Error in profile: {str(e)} - Type: {type(e).__name__}", extra={'session_id': session_id})
         flash(trans('core_error', default='An error occurred. Please try again.', lang=lang), 'danger')
-        referral_link = url_for('auth.signup', ref=current_user.referral_code, _external=True)
+        referral_code = getattr(current_user, 'referral_code', current_user.get('referral_code')) if current_user else None
+        referral_link = url_for('auth.signup', ref=referral_code, _external=True)
         referred_users = []
         referral_count = 0
         return render_template('profile.html', lang=lang, referral_link=referral_link, referral_count=referral_count, referred_users=referred_users, password_form=password_form), 500
+    finally:
+        logger.info("Teardown completed for profile route", extra={'session_id': session_id})
 
 @auth_bp.route('/debug/auth')
 def debug_auth():
@@ -255,12 +277,14 @@ def debug_auth():
     try:
         return jsonify({
             'is_authenticated': current_user.is_authenticated,
-            'is_admin': current_user.is_admin if current_user.is_authenticated else False,
-            'role': current_user.role if current_user.is_authenticated else None,
-            'email': current_user.email if current_user.is_authenticated else None,
-            'username': current_user.username if current_user.is_authenticated else None,
+            'is_admin': getattr(current_user, 'is_admin', current_user.get('is_admin', False)) if current_user.is_authenticated else False,
+            'role': getattr(current_user, 'role', current_user.get('role')) if current_user.is_authenticated else None,
+            'email': getattr(current_user, 'email', current_user.get('email')) if current_user.is_authenticated else None,
+            'username': getattr(current_user, 'username', current_user.get('username')) if current_user.is_authenticated else None,
             'session_id': session_id
         })
     except Exception as e:
-        logger.error(f"Error in debug_auth: {str(e)}", extra={'session_id': session_id})
+        logger.exception(f"Error in debug_auth: {str(e)} - Type: {type(e).__name__}", extra={'session_id': session_id})
         return jsonify({'error': str(e)}), 500
+    finally:
+        logger.info("Teardown completed for debug_auth route", extra={'session_id': session_id})
