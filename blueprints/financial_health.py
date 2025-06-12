@@ -6,7 +6,6 @@ from flask_login import current_user, login_required
 from datetime import datetime
 import uuid
 import json
-from pymongo import MongoClient
 from mailersend_email import send_email, EMAIL_CONFIG
 from translations import trans
 from extensions import mongo  # Import mongo from extensions
@@ -21,11 +20,9 @@ financial_health_bp = Blueprint(
     url_prefix='/HEALTHSCORE'
 )
 
-# MongoDB client setup (assuming configuration in current_app.config)
+# MongoDB client setup using Flask-PyMongo
 def get_mongo_collection():
-    client = MongoClient(current_app.config['MONGO_URI'])
-    db = client[current_app.config['MONGO_DB_NAME']]
-    return db['financial_health_scores']
+    return mongo.db['financial_health_scores']
 
 class Step1Form(FlaskForm):
     first_name = StringField()
@@ -246,7 +243,7 @@ def step3():
         session.permanent = True
     lang = session.get('lang', 'en')
     if 'health_step2' not in session:
-        flash(trans('financial_health_missing_step2', lang=lang, default='Please complete step 2 first.'), "danger")
+        flash(trans('financial_health_missing_step2', lang=lang, default='Please complete step 2 first.'), 'danger')
         return redirect(url_for('financial_health.step2'))
     form = Step3Form()
     current_app.logger.info(f"Starting step3 for session {session['sid']}")
@@ -340,7 +337,7 @@ def step3():
             if step1_data.get('send_email', False) and step1_data.get('email'):
                 try:
                     config = EMAIL_CONFIG["financial_health"]
-                    Targets = trans(config["subject_key"], lang=lang)
+                    subject = trans(config["subject_key"], lang=lang)
                     template = config["template"]
                     send_email(
                         app=current_app,
