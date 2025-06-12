@@ -52,7 +52,7 @@ class QuizStep2aForm(FlaskForm):
     question_2 = RadioField(validators=[DataRequired()], choices=[('Yes', 'Yes'), ('No', 'No')], id='question_2')
     question_3 = RadioField(validators=[DataRequired()], choices=[('Yes', 'Yes'), ('No', 'No')], id='question_3')
     question_4 = RadioField(validators=[DataRequired()], choices=[('Yes', 'Yes'), ('No', 'No')], id='question_4')
-    question_5 = RadioField(validators=[DataRequired()], choices=[('Yes', 'Yes'), ('No', 'No')], id='question_5')
+    question_5 = RadioField(validators=[DataRequired()], choices=[('Yes', 'Yes'), ('No', 'No'), id='question_5')
     submit = SubmitField()
     back = SubmitField()
 
@@ -369,11 +369,12 @@ def step2b():
                 badges = assign_badges(score, lang)
                 
                 # Create and persist quiz result record to MongoDB
+                created_at = datetime.utcnow().isoformat()
                 quiz_result = {
                     '_id': str(uuid.uuid4()),
                     'user_id': current_user.id,
                     'session_id': session['sid'],
-                    'created_at': datetime.utcnow().isoformat(),
+                    'created_at': created_at,
                     'first_name': session['quiz_data'].get('first_name', ''),
                     'email': session['quiz_data'].get('email', ''),
                     'send_email': session['quiz_data'].get('send_email', False),
@@ -383,6 +384,7 @@ def step2b():
                     'insights': personality['insights'],
                     'tips': personality['tips']
                 }
+                logger.debug(f"Saving quiz result with created_at: {created_at}, type: {type(created_at)}", extra={'session_id': session['sid']})
                 mongo.db.quiz_responses.insert_one(quiz_result)
                 session['quiz_result_id'] = quiz_result['_id']
                 session.modified = True
@@ -390,13 +392,17 @@ def step2b():
                 
                 # Prepare results for display
                 results = quiz_result.copy()
-                results['created_at'] = datetime.fromisoformat(results['created_at'])
+                try:
+                    results['created_at'] = datetime.fromisoformat(results['created_at'])
+                except (TypeError, ValueError) as e:
+                    logger.error(f"Failed to parse created_at '{results['created_at']}' in step2b: {str(e)}", extra={'session_id': session['sid']})
+                    results['created_at'] = None  # Fallback to None for template handling
                 
                 # Send email if user opted in
                 if session['quiz_data'].get('send_email') and session['quiz_data'].get('email'):
                     try:
                         config = EMAIL_CONFIG["quiz"]
-                        subject = trans(config["subject_key"], lang=lang)
+                        subject = trans(config["subject_key"], default='Your Financial Quiz Results', lang=lang)
                         template = config["template"]
                         send_email(
                             app=current_app,
@@ -486,8 +492,8 @@ def results():
                 )
                 if quiz_result:
                     results = quiz_result
-            # Fallback to email
             if not results and current_user.email:
+                # Fallback to email
                 quiz_result = mongo.db.quiz_responses.find_one(
                     {'email': current_user.email},
                     sort=[('created_at', -1)]
@@ -500,12 +506,21 @@ def results():
             flash(trans('quiz_no_results', default='No quiz results found. Please take the quiz again.', lang=lang), 'danger')
             return redirect(url_for('quiz.step1', course_id=course_id))
         
-        # Convert created_at to datetime for display
-        results['created_at'] = datetime.fromisoformat(results['created_at'])
+        # Convert created_at to datetime for display, with validation
+        if isinstance(results.get('created_at'), str):
+            try:
+                results['created_at'] = datetime.fromisoformat(results['created_at'])
+            except (TypeError, ValueError) as e:
+                logger.error(f"Failed to parse created_at '{results['created_at']}' in results: {str(e)}", extra={'session_id': session['sid']})
+                results['created_at'] = None  # Fallback to None for template handling
+        else:
+            logger.error(f"Invalid created_at type: {type(results['created_at'])}, value: {results['created_at']}", extra={'session_id': session['sid']})
+            results['created_at'] = None
         
         # Clear session data
         session.pop('quiz_data', None)
         session.pop('quiz_results', None)
+        session.pop('quiz_result_id', None)
         session.modified = True
         logger.info(f"Displaying quiz results for session {session['sid']}", extra={'session_id': session['sid']})
         
@@ -520,5 +535,5 @@ def results():
         )
     except Exception as e:
         logger.error(f"Error in quiz.results: {str(e)}", extra={'session_id': session['sid']})
-        flash(trans('quiz_error_results', default='An error occurred while loading results.', lang=lang), 'danger')
-        return redirect(url_for('quiz.step1', core_id=course_id)), 500
+        flash(trans('quiz_error_results', default='An error occurred while loading results. Please try again.', lang=lang), 'danger')
+        return redirect(url_for('quiz.step1', course_id=course_id)), 500
