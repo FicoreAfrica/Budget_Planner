@@ -1,6 +1,7 @@
 CORE_TRANSLATIONS = {
     'en': {
         'core_home': 'Home',
+        'core_not_available': 'Not Available',
         'core_feedback_page_title': 'Provide Feedback',
         'auth_change_password': 'Change Password',
         'Your Profile': 'Your Profile',
