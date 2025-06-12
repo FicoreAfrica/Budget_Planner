@@ -65,29 +65,6 @@ def overview():
             ]))
             action_breakdown[tool] = [(a['action'], a['count']) for a in actions] if actions else []
 
-        # Engagement Metrics
-        multi_tool_users = db.tool_usage.aggregate([
-            {'$match': {'tool_name': {'$in': VALID_TOOLS[3:]}}},
-            {'$group': {'_id': '$user_id', 'tools': {'$addToSet': '$tool_name'}}},
-            {'$match': {'$expr': {'$gt': [{'$size': '$tools'}, 1]}}},
-            {'$count': 'multi_tool_users'}
-        ])
-        multi_tool_users = next(multi_tool_users, {'multi_tool_users': 0})['multi_tool_users']
-        total_sessions = db.tool_usage.distinct('session_id', {'tool_name': {'$in': VALID_TOOLS[3:]}})
-        total_sessions_count = len(total_sessions)
-        multi_tool_ratio = (multi_tool_users / total_sessions_count * 100) if total_sessions_count else 0.0
-
-        anon_sessions = db.tool_usage.distinct('session_id', {
-            'user_id': None,
-            'tool_name': {'$in': VALID_TOOLS[3:]}
-        })
-        converted_sessions = db.tool_usage.count_documents({
-            'tool_name': 'register',
-            'session_id': {'$in': anon_sessions}
-        })
-        anon_total = len(anon_sessions)
-        conversion_rate = (converted_sessions / anon_total * 100) if anon_total else 0.0
-
         # Feedback
         avg_feedback = list(db.feedback.aggregate([
             {'$group': {'_id': None, 'avg_rating': {'$avg': '$rating'}}},
@@ -170,8 +147,6 @@ def overview():
             'tool_usage_total': tool_usage_total,
             'top_tools': [(t['tool_name'], t['count']) for t in top_tools],
             'action_breakdown': action_breakdown,
-            'multi_tool_ratio': round(multi_tool_ratio, 2),
-            'conversion_rate': round(conversion_rate, 2),
             'avg_feedback_rating': round(avg_feedback, 2)
         }
 
@@ -226,7 +201,7 @@ def tool_usage():
         else:
             end_date = datetime.utcnow()
 
-        usage_logs = list(db.tool_usage.find(filters, {'_id': 0}).sort('created_at', -1).limit(100))
+        usage_logs = list(db.tool_usage.find(filters, {'_id': False}).sort('created_at', -1).limit(100))
         usage_logs = [to_dict_tool_usage(log) for log in usage_logs]
 
         # Available actions for the selected tool
@@ -317,7 +292,7 @@ def export_csv():
             filters['created_at'] = filters.get('created_at', {})
             filters['created_at']['$lt'] = end_date
 
-        usage_logs = list(db.tool_usage.find(filters, {'_id': 0}))
+        usage_logs = list(db.tool_usage.find(filters, {'_id': False}))
         usage_logs = [to_dict_tool_usage(log) for log in usage_logs]
 
         si = StringIO()
