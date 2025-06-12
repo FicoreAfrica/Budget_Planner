@@ -150,7 +150,7 @@ LEARNING_HUB_TRANSLATIONS = {
 
         # Core UI Translations
         'learning_hub_why_ficore': 'Me yasa Ficore Africa?',
-        'learning_hub_localized': 'An keɓance shi don Afirka tare da tallafi ga Naira da yanayin kuɗi na yanki',
+        'learning_hub_localized': 'An keɓance shi ga Afirka ta hanyar aiki cikin manyan yarurrukan Afirka da yanayin muamalar kuɗi na yanki',
         'learning_hub_empowers': 'Yana ƙarfafa ilimin kuɗi tare da kayan aiki masu sauƙin amfani',
         'learning_hub_actionable': 'Yana ba da fahimta mai amfani don ingantaccen yanke shawara na kuɗi',
         'learning_hub_all_in_one_toolkit': 'Kayan Aikin Ku Duk-in-Daya don Lafiyar Kuɗi na Mutum & SME a Duk Afirka',
