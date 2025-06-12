@@ -587,7 +587,7 @@ CORE_TRANSLATIONS = {
         'core_correct_errors_below': 'Da fatan za a gyara kurakurai a ƙasa.',
         'core_ficore_africa_logo': 'Alamar Ficore Africa',
         'core_why_ficore_africa': 'Me yasa Ficore Africa?',
-        'core_localized': 'An keɓance shi ga Afirka ta hanyar aiki cikin manyan yarurrukan Afirka da yanayin mu'amalar kuɗi na yanki',
+        'core_localized': 'An keɓance shi ga Afirka ta hanyar aiki cikin manyan yarurrukan Afirka da yanayin muamalar kuɗi na yanki',
         'core_actionable': 'Yana ba da haske mai aiki don mafi kyawun yanke shawara na kuɗi',
         'core_empowers': 'Yana ƙarfafa ilimin kuɗi tare da kayan aiki masu sauƙin amfani',
         'core_what_people_say': 'Abin da mutane ke faɗi game da Mu',
