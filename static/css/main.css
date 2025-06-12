@@ -1,11 +1,81 @@
+/* Define CSS Custom Properties for Colors */
+:root {
+    --background-gradient: #f9fbff;
+    --text-color: #333;
+    --navbar-gradient: linear-gradient(90deg, #0288D1, #2E7D32);
+    --header-message-gradient: linear-gradient(90deg, #0288D1, #2E7D32);
+    --consent-banner-bg: #E3F2FD;
+    --consent-banner-text: #333;
+    --accent-blue: #0288D1;
+    --accent-blue-dark: #01579B;
+    --accent-green: #2E7D32;
+    --accent-green-dark: #1B5E20;
+    --button-gradient: linear-gradient(135deg, #2E7D32, #0288D1);
+    --button-gradient-hover: linear-gradient(135deg, #1B5E20, #01579B);
+    --button-nav-gradient: linear-gradient(90deg, #0288D1, #2E7D32);
+    --button-nav-gradient-hover: linear-gradient(90deg, #0277BD, #27632A);
+    --hero-gradient: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), linear-gradient(135deg, #0288D1, #2E7D32);
+    --hero-subtext-icon: #E3F2FD;
+    --card-border: #0288D1;
+    --card-text: #212529;
+    --journey-strip-bg: #E3F2FD;
+    --journey-line-gradient: linear-gradient(to bottom, #0288D1, #2E7D32);
+    --journey-line-gradient-horizontal: linear-gradient(to right, #0288D1, #2E7D32);
+    --journey-step-hover-bg: #f8f9fa;
+    --journey-icon: #0288D1;
+    --tool-group-bg: #f5f6fa;
+    --tool-group-border: #e0e0e0;
+    --group-title: #0288D1;
+    --group-subtext: #343a40;
+    --accordion-button-bg: linear-gradient(90deg, #0288D1, #2E7D32);
+    --accordion-button-bg-hover: linear-gradient(90deg, #01579B, #1B5E20);
+    --accordion-button-text: #ffffff;
+    --accordion-button-text-hover: #ffffff;
+    --accordion-border: #e0e0e0;
+    --tool-header-bg: #f8f9fa;
+    --tool-header-border: #ddd;
+    --tool-title-gradient: linear-gradient(90deg, #2E7D32, #0288D1);
+    --tool-icon: #0288D1;
+    --tool-subtitle: #6c757d;
+    --step-indicator: #333;
+    --step-dot-bg: #ccc;
+    --step-dot-active-bg: #0288D1;
+    --step-connector-bg: #ccc;
+    --progress-bg: #e9ecef;
+    --progress-bar-bg: #2E7D32;
+    --badge-success-bg: #2E7D32;
+    --badge-blue-bg: #0288D1;
+    --badge-blue-border: #01579B;
+    --badge-gray-bg: #e9ecef;
+    --badge-gray-text: #333;
+    --badge-gray-border: #ced4da;
+    --net-worth-highlight: #2E7D32;
+    --section-bg: #f5f6fa;
+    --section-border: linear-gradient(135deg, #1B5E20, #01579B);
+    --testimonial-text: #212529;
+    --testimonial-quote: #0288D1;
+    --social-icon-hover: #E3F2FD;
+    --footer-disclaimer: #E3F2FD;
+    --footer-disclaimer-hover: #fff;
+    --section-header: #0288D1;
+    --insights-box-bg: #E3F2FD;
+    --list-group-item-bg: #f8f9fa;
+    --link-color: #0288D1;
+    --primary-button-bg: #4CAF50;
+    --primary-button-bg-hover: #388e3c;
+    --secondary-button-bg: white;
+    --secondary-button-bg-hover: #e0e0e0;
+    --secondary-button-border: #ced4da;
+}
+
 /* Dark Mode Overrides */
 .dark-mode {
     --background-gradient: linear-gradient(135deg, #343a40, #495057);
-    --text-color: #e9ecef;
+    --text-color: #e9ecef; /* Increased contrast for better readability */
     --navbar-bg: white;
     --header-message-gradient: linear-gradient(90deg, #0056b3, #1b5e20);
     --consent-banner-bg: #495057;
-    --consent-banner-text: #e9ecef;
+    --consent-banner-text: #e9ecef; /* Increased contrast for better readability */
     --accent-blue: #4dabf7;
     --accent-blue-dark: #003d82;
     --accent-green: #1b5e20;
@@ -17,7 +87,7 @@
     --hero-gradient: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), linear-gradient(135deg, #0056b3, #1b5e20);
     --hero-subtext-icon: #4dabf7;
     --card-border: #4dabf7;
-    --card-text: #e9ecef;
+    --card-text: #e9ecef; /* Increased contrast for better readability */
     --journey-strip-bg: #495057;
     --journey-line-gradient: linear-gradient(to bottom, #0056b3, #1b5e20);
     --journey-line-gradient-horizontal: linear-gradient(to right, #0056b3, #1b5e20);
@@ -25,19 +95,19 @@
     --journey-icon: #4dabf7;
     --tool-group-bg: #343a40;
     --tool-group-border: #6c757d;
-    --group-title: #e0e7ff;
-    --group-subtext: #ced4da;
+    --group-title: #e9ecef; /* Increased contrast for better readability */
+    --group-subtext: #ced4da; /* Increased contrast for better readability */
     --accordion-button-bg: linear-gradient(90deg, #0056b3, #1b5e20);
     --accordion-button-bg-hover: linear-gradient(90deg, #003d82, #123e14);
-    --accordion-button-text: #e9ecef;
-    --accordion-button-text-hover: #e9ecef;
+    --accordion-button-text: #e9ecef; /* Increased contrast for better readability */
+    --accordion-button-text-hover: #e9ecef; /* Increased contrast for better readability */
     --accordion-border: #333;
     --tool-header-bg: #6c757d;
     --tool-header-border: #adb5bd;
     --tool-title-gradient: linear-gradient(90deg, #1b5e20, #0056b3);
     --tool-icon: #4dabf7;
-    --tool-subtitle: #e0e7ff;
-    --step-indicator: #e9ecef;
+    --tool-subtitle: #e9ecef; /* Increased contrast for better readability */
+    --step-indicator: #e9ecef; /* Increased contrast for better readability */
     --step-dot-bg: #666;
     --step-dot-active-bg: #4dabf7;
     --step-connector-bg: #666;
@@ -47,17 +117,17 @@
     --badge-blue-bg: #4dabf7;
     --badge-blue-border: #003d82;
     --badge-gray-bg: #6c757d;
-    --badge-gray-text: #e9ecef;
+    --badge-gray-text: #e9ecef; /* Increased contrast for better readability */
     --badge-gray-border: #495057;
     --net-worth-highlight: #1b5e20;
     --section-bg: #343a40;
     --section-border: linear-gradient(135deg, #123e14, #003d82);
-    --testimonial-text: #e9ecef;
+    --testimonial-text: #e9ecef; /* Increased contrast for better readability */
     --testimonial-quote: #4dabf7;
     --social-icon-hover: #4dabf7;
-    --footer-disclaimer: #e0e7ff;
+    --footer-disclaimer: #e9ecef; /* Increased contrast for better readability */
     --footer-disclaimer-hover: #4dabf7;
-    --section-header: #4dabf7;
+    --section-header: #e9ecef; /* Increased contrast for better readability */
     --insights-box-bg: #495057;
     --list-group-item-bg: #6c757d;
     --link-color: #4dabf7;
@@ -424,6 +494,16 @@ body {
     transform: scale(1.05);
 }
 
+.dark-mode .btn-secondary {
+    background: var(--secondary-button-bg);
+    color: var(--badge-gray-text);
+    border-color: var(--secondary-button-border);
+}
+
+.dark-mode .btn-secondary:hover {
+    background: var(--secondary-button-bg-hover);
+}
+
 /* Form Navigation Buttons */
 .step-container .btn-nav, .quiz-container .btn-nav {
     padding: 10px 20px;
@@ -593,6 +673,16 @@ body {
     border: 1px solid var(--badge-blue);
 }
 
+.dark-mode .alert-success {
+    background-color: var(--badge-success-bg);
+    color: white;
+}
+
+.dark-mode .alert-danger {
+    background-color: #b02a25;
+    color: white;
+}
+
 /* Form Styles */
 .form-group {
     margin-bottom: 1rem;
@@ -626,6 +716,26 @@ body {
     height: 1rem;
 }
 
+.form-check-label {
+    font-size: 0.9rem;
+    color: var(--text-color);
+}
+
+.dark-mode .form-control {
+    background-color: #343a40;
+    color: #e9ecef;
+    border-color: #6c757d;
+}
+
+.dark-mode .form-control:focus {
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 0.2rem rgba(77, 171, 247, 0.25);
+}
+
+.dark-mode .form-check-label {
+    color: #e9ecef;
+}
+
 /* Media Styles */
 .video-player {
     width: 100%;
@@ -647,6 +757,14 @@ body {
 
 .text-danger {
     color: #dc3545;
+}
+
+.dark-mode .text-success {
+    color: var(--accent-green);
+}
+
+.dark-mode .text-danger {
+    color: #e63946;
 }
 
 /* Journey Strip (Timeline Style) */
@@ -806,7 +924,7 @@ body {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    color: #212529;
+    color: var(--group-title);
 }
 
 .group-subtext {
