@@ -3,7 +3,6 @@ from datetime import datetime, date
 import json
 from flask import current_app, session
 from flask_login import UserMixin
-from collections import namedtuple
 
 # User class for Flask-Login
 class User(UserMixin):
@@ -166,9 +165,9 @@ def create_financial_health(mongo, fh_data):
     mongo.db.financial_health.insert_one(fh)
     return fh
 
-def get_financial_health(mongo, recomendações):
+def get_financial_health(mongo, filters):
     """Retrieve financial health records by filters."""
-    return list(mongo.db.financial_health.find(recomendações, {'_id': 0}).sort('created_at', -1))
+    return list(mongo.db.financial_health.find(filters, {'_id': 0}).sort('created_at', -1))
 
 def to_dict_financial_health(fh):
     """Convert financial health document to dict."""
@@ -224,9 +223,9 @@ def create_budget(mongo, budget_data):
     mongo.db.budgets.insert_one(budget)
     return budget
 
-def get_budgets(mongo, recomendações):
+def get_budgets(mongo, filters):
     """Retrieve budget records by filters."""
-    return list(mongo.db.budgets.find(recomendações, {'_id': 0}).sort('created_at', -1))
+    return list(mongo.db.budgets.find(filters, {'_id': 0}).sort('created_at', -1))
 
 def to_dict_budget(budget):
     """Convert budget document to dict."""
@@ -271,9 +270,9 @@ def create_bill(mongo, bill_data):
     mongo.db.bills.insert_one(bill)
     return bill
 
-def get_bills(mongo, recomendações):
+def get_bills(mongo, filters):
     """Retrieve bill records by filters."""
-    return list(mongo.db.bills.find(recomendações, {'_id': 0}))
+    return list(mongo.db.bills.find(filters, {'_id': 0}))
 
 def to_dict_bill(bill):
     """Convert bill document to dict."""
@@ -282,7 +281,7 @@ def to_dict_bill(bill):
         'user_id': bill['user_id'],
         'session_id': bill['session_id'],
         'created_at': bill['created_at'].isoformat() + "Z" if isinstance(bill['created_at'], datetime) else bill['created_at'],
-        'user_email': bill['email'],
+        'user_email': bill['user_email'],
         'first_name': bill['first_name'],
         'bill_name': bill['bill_name'],
         'amount': bill['amount'],
@@ -317,9 +316,9 @@ def create_net_worth(mongo, nw_data):
     mongo.db.net_worth.insert_one(nw)
     return nw
 
-def get_net_worth(mongo, recomendações):
+def get_net_worth(mongo, filters):
     """Retrieve net worth records by filters."""
-    return list(mongo.db.net_worth.find(recomendações, {'_id': 0}).sort('created_at', -1))
+    return list(mongo.db.net_worth.find(filters, {'_id': 0}).sort('created_at', -1))
 
 def to_dict_net_worth(nw):
     """Convert net worth document to dict."""
@@ -374,9 +373,9 @@ def create_emergency_fund(mongo, ef_data):
     mongo.db.emergency_funds.insert_one(ef)
     return ef
 
-def get_emergency_funds(mongo, recomendações):
+def get_emergency_funds(mongo, filters):
     """Retrieve emergency fund records by filters."""
-    return list(mongo.db.emergency_funds.find(recomendações, {'_id': 0}).sort('created_at', -1))
+    return list(mongo.db.emergency_funds.find(filters, {'_id': 0}).sort('created_at', -1))
 
 def to_dict_emergency_fund(ef):
     """Convert emergency fund document to dict."""
@@ -423,9 +422,9 @@ def create_learning_progress(mongo, lp_data):
     mongo.db.learning_progress.insert_one(lp)
     return lp
 
-def get_learning_progress(mongo, recomendações):
+def get_learning_progress(mongo, filters):
     """Retrieve learning progress records by filters."""
-    return list(mongo.db.learning_progress.find(recomendações, {'_id': 0'}).sort('created_at', -1))
+    return list(mongo.db.learning_progress.find(filters, {'_id': 0}).sort('created_at', -1))
 
 def to_dict_learning_progress(lp):
     """Convert learning progress document to dict."""
@@ -466,9 +465,9 @@ def create_quiz_result(mongo, qr_data):
     mongo.db.quiz_results.insert_one(qr)
     return qr
 
-def get_quiz_results(mongo, recomendações):
+def get_quiz_results(mongo, filters):
     """Retrieve quiz result records by filters."""
-    return list(mongo.db.quiz_results.find(recomendações, {'_id': 0}).sort('created_at', -1))
+    return list(mongo.db.quiz_results.find(filters, {'_id': 0}).sort('created_at', -1))
 
 def to_dict_quiz_result(qr):
     """Convert quiz result document to dict."""
@@ -511,9 +510,9 @@ def create_feedback(mongo, feedback_data):
     mongo.db.feedback.insert_one(feedback)
     return feedback
 
-def get_feedback(mongo, recomendações):
+def get_feedback(mongo, filters):
     """Retrieve feedback records by filters."""
-    return list(mongo.db.feedback.find(recomendações, {'_id': 0}))
+    return list(mongo.db.feedback.find(filters, {'_id': 0}))
 
 def to_dict_feedback(feedback):
     """Convert feedback document to dict."""
@@ -541,9 +540,9 @@ def create_tool_usage(mongo, tool_usage_data):
     mongo.db.tool_usage.insert_one(tool_usage)
     return tool_usage
 
-def get_tool_usage(mongo, recomendações):
+def get_tool_usage(mongo, filters):
     """Retrieve tool usage records by filters."""
-    return list(mongo.db.tool_usage.find(recomendações, {'_id': 0}))
+    return list(mongo.db.tool_usage.find(filters, {'_id': 0}))
 
 def to_dict_tool_usage(tu):
     """Convert tool usage document to dict."""
