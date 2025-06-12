@@ -180,11 +180,9 @@ body {
     background: var(--navbar-gradient);
     animation: gradientShift 5s ease infinite;
     z-index: 1000;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    padding: 0.5rem 1rem;
     position: relative;
+    width: 100%;
+    padding: 0;
 }
 
 .navbar::after {
@@ -196,6 +194,15 @@ body {
     height: 10px;
     background: linear-gradient(to bottom, rgba(255, 255, 255, 0.1), transparent);
     pointer-events: none;
+}
+
+.navbar-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0.5rem 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
 }
 
 .navbar-brand {
@@ -282,6 +289,8 @@ body {
     border-radius: 8px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
+
+.dark-elle
 
 .dark-mode .dropdown-menu {
     background: #343a40;
@@ -1120,6 +1129,18 @@ body {
 }
 
 /* Footer */
+.footer {
+    background: var(--navbar-gradient);
+    width: 100%;
+    padding: 0;
+}
+
+.footer-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0.5rem 1rem;
+}
+
 .social-icons {
     color: white;
     margin: 0 .25rem;
@@ -1637,6 +1658,10 @@ section {
         padding: .3rem .5rem;
     }
 
+    .navbar-container, .footer-container {
+        padding: .3rem .5rem;
+    }
+
     .btn, .btn-primary, .btn-explore, .course-link, .tool-card button, .modal .btn, .btn-secondary {
         padding: 10px 20px;
         font-size: .9rem;
@@ -1727,12 +1752,22 @@ section {
 }
 
 @media (min-width: 768px) {
-    .navbar, .header-message {
+    .navbar {
+        max-width: 100%;
+        padding: 0;
+    }
+
+    .navbar-container, .header-message {
         max-width: 1200px;
         margin: 0 auto;
+        padding: 1rem 2rem;
         flex-direction: row;
         align-items: center;
         justify-content: space-between;
+    }
+
+    .footer-container {
+        max-width: 1200px;
         padding: 1rem 2rem;
     }
 
@@ -1975,6 +2010,16 @@ section {
     }
 
     .navbar {
+        max-width: 100%;
+        padding: 0;
+    }
+
+    .navbar-container {
+        max-width: 1400px;
+        padding: 1.5rem 3rem;
+    }
+
+    .footer-container {
         max-width: 1400px;
         padding: 1.5rem 3rem;
     }
