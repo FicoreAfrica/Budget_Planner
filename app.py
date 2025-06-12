@@ -770,7 +770,7 @@ def create_app():
                 if not rating or not rating.isdigit() or int(rating) <= 0 or int(rating) > 5:
                     logger.error(f"Invalid rating: {rating}")
                     flash(translate('error_feedback_rating', default='Please provide a rating between 1 and 5', comment='invalid-rating'), 'danger')
-                    return render_template('index.html', t=translate, lang=lang, tool_options=tool_options)
+                    return render_template('feedback.html', t=translate, lang=lang, tool_options=tool_options)
                 feedback_entry = create_feedback(mongo, {
                     'user_id': current_user.id if current_user.is_authenticated else None,
                     'session_id': session.get('sid', 'no-session-id'),
@@ -786,7 +786,7 @@ def create_app():
                 flash(translate('error_feedback', default='Error occurred during feedback submission', comment='error'), 'danger')
                 return render_template('index.html', t=translate, lang=lang, tool_options=tool_options), 500
         logger.info("Rendering feedback index template")
-        return render_template('index.html', t=translate, lang=lang, tool_options=tool_options)
+        return render_template('feedback.html', t=translate, lang=lang, tool_options=tool_options)
 
     logger.info("App creation completed")
     return app
