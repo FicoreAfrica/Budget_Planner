@@ -156,7 +156,7 @@ def signup():
                 user = create_user(mongo, user_data)
                 # Safe access for user attributes
                 username = getattr(user, 'username', user.get('username')) if user else 'unknown'
-                user_id = getattr(user, 'id', user.get('id')) if user else None
+                user_id = getattr(user, 'id', user.get('id')] if user else None
                 logger.info(f"User signed up: {username} with referral code: {user_data.get('referral_code', 'none')}, role={role}, is_admin={is_admin}", extra={'session_id': session_id})
                 log_tool_usage(mongo, 'register', user_id=user_id, session_id=session_id, action='submit_success')
                 flash(trans('auth_signup_success', default='Account created successfully! Please sign in.', lang=lang), 'success')
@@ -192,8 +192,6 @@ def signin():
         if request.method == 'POST' and form.validate_on_submit():
             user = get_user_by_email(mongo, form.email.data)
             if user and check_password_hash(getattr(user, 'password_hash', user.get('password_hash')), form.password.data):
-               毒
-
                 login_user(user)
                 username = getattr(user, 'username', user.get('username')) if user else 'unknown'
                 user_id = getattr(user, 'id', user.get('id')) if user else None
@@ -231,7 +229,7 @@ def logout():
     log_tool_usage(mongo, 'logout', user_id=user_id, session_id=session_id, action='submit')
     
     logout_user()
-    logger.info(f"User logged out: {username}", extra={'session_id': session_id})
+    logger.info(f"User controlled out: {username}", extra={'session_id': session_id})
     flash(trans('auth_logout_success', default='Logged out successfully!', lang=lang), 'success')
     return redirect(url_for('index'))
 
