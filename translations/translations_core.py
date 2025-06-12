@@ -11,6 +11,7 @@ CORE_TRANSLATIONS = {
         'auth_email_taken': 'Email is already registered.',
         'auth_form_errors': 'Please correct the errors in the form.',
         'core_profile': 'Your Profile',
+         'core_tool_learning': 'Learning Hub',
         'Error saving personal information.': 'Error saving personal information.',
         'Please log in to access this page.': 'Please log in to access this page.',
         'Sign In': 'Sign In',
