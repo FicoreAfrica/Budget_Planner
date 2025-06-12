@@ -8,9 +8,9 @@ from datetime import datetime, date, timedelta
 import uuid
 from translations import trans
 from pymongo.errors import DuplicateKeyError
-from bson import ObjectId  # Added import to fix NameError
-from extensions import mongo  # Use mongo from extensions
-from models import log_tool_usage  # Import log_tool_usage
+from bson import ObjectId
+from extensions import mongo
+from models import log_tool_usage
 
 bill_bp = Blueprint(
     'bill',
@@ -19,7 +19,6 @@ bill_bp = Blueprint(
     url_prefix='/BILL'
 )
 
-# Use mongo.db.bills instead of a separate client
 bills_collection = mongo.db.bills
 
 def strip_commas(value):
@@ -233,7 +232,7 @@ def form_step2():
                     'first_name': bill_step1_data['first_name'],
                     'bill_name': bill_step1_data['bill_name'],
                     'amount': float(bill_step1_data['amount']),
-                    'due_date': due_date,
+                    'due_date': due_date.isoformat(),  # Convert datetime.date to ISO string
                     'frequency': form.frequency.data,
                     'category': form.category.data,
                     'status': status,
@@ -277,7 +276,7 @@ def form_step2():
                                 'bills': [{
                                     'bill_name': bill_step1_data['bill_name'],
                                     'amount': bill_step1_data['amount'],
-                                    'due_date': bill_step1_data['due_date'],
+                                    'due_date': bill_step1_data['due_date'],  # Use session string format for email
                                     'category': trans(f'bill_category_{form.category.data}', lang=lang),
                                     'status': trans(f'bill_status_{status}', lang=lang)
                                 }],
@@ -387,7 +386,7 @@ def dashboard():
                 pending_count += 1
 
             try:
-                bill_due_date = bill['due_date']
+                bill_due_date = datetime.strptime(bill['due_date'], '%Y-%m-%d').date()  # Parse string to datetime.date
                 if bill_due_date == today:
                     due_today.append((b_id, bill))
                 if today <= bill_due_date <= (today + timedelta(days=7)):
@@ -455,6 +454,7 @@ def view_edit():
     log_tool_usage(
         mongo,
         tool_name='bill',
+       რღ
         user_id=current_user.id if current_user.is_authenticated else None,
         session_id=session['sid'],
         action='view_edit_view'
@@ -464,6 +464,13 @@ def view_edit():
         bills = bills_collection.find(filter_kwargs)
         bills_data = []
         for bill in bills:
+            try:
+                due_date = bill['due_date']
+                if isinstance(due_date, str):
+                    due_date = datetime.strptime(due_date, '%Y-%m-%d').date()
+            except ValueError:
+                current_app.logger.warning(f"Invalid due_date format for bill {bill['_id']}: {due_date}")
+                due_date = None
             form = BillFormStep2(
                 data={
                     'frequency': bill['frequency'],
@@ -525,12 +532,20 @@ def view_edit():
                     session_id=session['sid'],
                     action='edit_bill'
                 )
+                try:
+                    due_date = bill['due_date']
+                    if isinstance(due_date, str):
+                        due_date = datetime.strptime(due_date, '%Y-%m-%d').date()
+                except ValueError:
+                    current_app.logger.error(f"Invalid due_date format for bill {bill_id}: {bill['due_date']}")
+                    flash(trans('bill_due_date_format_invalid', lang) or 'Invalid due date format', 'danger')
+                    return redirect(url_for('bill.view_edit'))
                 session['bill_step1'] = {
                     'first_name': bill['first_name'],
                     'email': bill['user_email'],
                     'bill_name': bill['bill_name'],
                     'amount': bill['amount'],
-                    'due_date': bill['due_date'].strftime('%Y-%m-%d')
+                    'due_date': due_date.strftime('%Y-%m-%d')
                 }
                 session['bill_step2'] = {
                     'frequency': bill['frequency'],
@@ -578,7 +593,15 @@ def view_edit():
                     current_app.logger.info(f"Bill status toggled: {bill_id}, new_status={new_status}")
                     flash(trans('bill_bill_status_toggled_success', lang) or 'Bill status updated', 'success')
                     if new_status == 'paid' and bill['frequency'] != 'one-time':
-                        new_due_date = calculate_next_due_date(bill['due_date'], bill['frequency'])
+                        try:
+                            due_date = bill['due_date']
+                            if isinstance(due_date, str):
+                                due_date = datetime.strptime(due_date, '%Y-%m-%d').date()
+                        except ValueError:
+                            current_app.logger.error(f"Invalid due_date format for bill {bill_id}: {bill['due_date']}")
+                            flash(trans('bill_due_date_format_invalid', lang) or 'Invalid due date format', 'danger')
+                            return redirect(url_for('bill.view_edit'))
+                        new_due_date = calculate_next_due_date(due_date, bill['frequency'])
                         new_bill = {
                             '_id': ObjectId(),
                             'user_id': bill['user_id'],
@@ -587,7 +610,7 @@ def view_edit():
                             'first_name': bill['first_name'],
                             'bill_name': bill['bill_name'],
                             'amount': bill['amount'],
-                            'due_date': new_due_date,
+                            'due_date': new_due_date.isoformat(),  # Convert to ISO string
                             'frequency': bill['frequency'],
                             'category': bill['category'],
                             'status': 'unpaid',
