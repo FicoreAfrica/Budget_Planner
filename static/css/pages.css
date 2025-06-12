@@ -473,9 +473,6 @@
         margin-bottom: 1rem;
     }
 
-    .journey-steps {
-        gap: 1.2rem;
-    }
 
     .accordion .section {
         margin-bottom: 1rem;
@@ -659,23 +656,6 @@
         margin-top: 2.5rem;
     }
 
-    .journey-steps {
-        display: flex;
-        justify-content: space-between;
-        flex-wrap: nowrap;
-        gap: 3rem; /* Increased gap for better separation */
-    }
-
-    .journey-step {
-        display: flex;
-        align-items: center;
-        justify-content: start;
-        flex: 0 0 18%; /* Slightly reduced to fit more comfortably */
-        width: auto;
-        padding: 1rem;
-        margin: 0;
-        max-width: none;
-    }
 
     .step-badge {
         background: static;
@@ -1038,14 +1018,6 @@
         padding: 3.5rem 1.5rem;
     }
 
-    .journey-steps {
-        flex-direction: row;
-        gap: 3.5rem; /* Increased gap for spacing */
-    }
-
-    .journey-step {
-        flex: 0 0 20%; /* Adjusted for better fit */
-    }
 
     .course-grid {
         grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); /* Larger min-width for scaling */
