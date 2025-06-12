@@ -1,3 +1,12 @@
+/* Global Font Weight Standardization for Core Components */
+h1, h2, h3, .section-heading, .card-title, .group-title, .tool-title, .accordion-button {
+    font-weight: 600; /* Semi-bold for headings */
+}
+
+p, li, .card-text, .hero-subtext, .group-subtext, .journey-step p, .form-control, .btn, .btn-primary, .btn-secondary, .form-check-label, .footer-disclaimer, .resources a, .list-group-item a {
+    font-weight: 400; /* Regular for body text */
+}
+
 /* Define CSS Custom Properties for Colors */
 :root {
     --background-gradient: #f9fbff;
@@ -71,11 +80,11 @@
 /* Dark Mode Overrides */
 .dark-mode {
     --background-gradient: linear-gradient(135deg, #343a40, #495057);
-    --text-color: #e9ecef; /* Increased contrast for better readability */
+    --text-color: #e9ecef;
     --navbar-bg: white;
     --header-message-gradient: linear-gradient(90deg, #0056b3, #1b5e20);
     --consent-banner-bg: #495057;
-    --consent-banner-text: #e9ecef; /* Increased contrast for better readability */
+    --consent-banner-text: #e9ecef;
     --accent-blue: #4dabf7;
     --accent-blue-dark: #003d82;
     --accent-green: #1b5e20;
@@ -87,7 +96,7 @@
     --hero-gradient: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), linear-gradient(135deg, #0056b3, #1b5e20);
     --hero-subtext-icon: #4dabf7;
     --card-border: #4dabf7;
-    --card-text: #e9ecef; /* Increased contrast for better readability */
+    --card-text: #e9ecef;
     --journey-strip-bg: #495057;
     --journey-line-gradient: linear-gradient(to bottom, #0056b3, #1b5e20);
     --journey-line-gradient-horizontal: linear-gradient(to right, #0056b3, #1b5e20);
@@ -95,19 +104,19 @@
     --journey-icon: #4dabf7;
     --tool-group-bg: #343a40;
     --tool-group-border: #6c757d;
-    --group-title: #e9ecef; /* Increased contrast for better readability */
-    --group-subtext: #ced4da; /* Increased contrast for better readability */
+    --group-title: #e9ecef;
+    --group-subtext: #ced4da;
     --accordion-button-bg: linear-gradient(90deg, #0056b3, #1b5e20);
     --accordion-button-bg-hover: linear-gradient(90deg, #003d82, #123e14);
-    --accordion-button-text: #e9ecef; /* Increased contrast for better readability */
-    --accordion-button-text-hover: #e9ecef; /* Increased contrast for better readability */
+    --accordion-button-text: #e9ecef;
+    --accordion-button-text-hover: #e9ecef;
     --accordion-border: #333;
     --tool-header-bg: #6c757d;
     --tool-header-border: #adb5bd;
     --tool-title-gradient: linear-gradient(90deg, #1b5e20, #0056b3);
     --tool-icon: #4dabf7;
-    --tool-subtitle: #e9ecef; /* Increased contrast for better readability */
-    --step-indicator: #e9ecef; /* Increased contrast for better readability */
+    --tool-subtitle: #e9ecef;
+    --step-indicator: #e9ecef;
     --step-dot-bg: #666;
     --step-dot-active-bg: #4dabf7;
     --step-connector-bg: #666;
@@ -117,17 +126,17 @@
     --badge-blue-bg: #4dabf7;
     --badge-blue-border: #003d82;
     --badge-gray-bg: #6c757d;
-    --badge-gray-text: #e9ecef; /* Increased contrast for better readability */
+    --badge-gray-text: #e9ecef;
     --badge-gray-border: #495057;
     --net-worth-highlight: #1b5e20;
     --section-bg: #343a40;
     --section-border: linear-gradient(135deg, #123e14, #003d82);
-    --testimonial-text: #e9ecef; /* Increased contrast for better readability */
+    --testimonial-text: #e9ecef;
     --testimonial-quote: #4dabf7;
     --social-icon-hover: #4dabf7;
-    --footer-disclaimer: #e9ecef; /* Increased contrast for better readability */
+    --footer-disclaimer: #e9ecef;
     --footer-disclaimer-hover: #4dabf7;
-    --section-header: #e9ecef; /* Increased contrast for better readability */
+    --section-header: #e9ecef;
     --insights-box-bg: #495057;
     --list-group-item-bg: #6c757d;
     --link-color: #4dabf7;
@@ -139,10 +148,9 @@
 }
 
 /* Add Transitions for Smooth Color Changes */
-body, .navbar, .header-message, .consent-banner, .btn, .hero, .card, .journey-strip, .journey-step,
+body, .navbar, .header-message, .consent-banner, .btn, .hero-content, .card, .journey-strip, .journey-step,
 .tool-group, .accordion-button, .accordion-item, .tool-header-container, .progress, .badge,
-.testimonials-section, .recommended-learning, .faq-section, .why-section, .footer-disclaimer,
-.social-icons a, .insights-box, .course-link, .list-group-item, .alert-success, .alert-danger,
+.social-links, .footer-content, .list-group-item, .alert-success, .alert-danger,
 .form-control, .form-check-input {
     transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, background 0.3s ease;
 }
@@ -183,7 +191,7 @@ body {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    padding: 0.5rem 1rem;
+    padding: 0.75rem 1rem;
     position: relative;
 }
 
@@ -195,16 +203,16 @@ body {
     right: 0;
     height: 10px;
     background: linear-gradient(to bottom, rgba(255, 255, 255, 0.1), transparent);
-    pointer-events: none;
 }
 
 .navbar-brand {
-    color: #FFFFFF !important;
-    font-weight: bold;
+    color: #fff !important;
     font-size: 1rem;
-    margin: 0;
+    margin: 0.5rem 0;
+    padding: 0.5rem;
     display: flex;
     align-items: center;
+    font-weight: 600;
 }
 
 .logo-centered {
@@ -241,6 +249,7 @@ body {
     color: white;
     border-radius: 8px;
     align-self: flex-end;
+    font-weight: 400;
 }
 
 .navbar-toggler:hover {
@@ -260,11 +269,11 @@ body {
 }
 
 .nav-link {
-    color: #FFFFFF !important;
-    font-weight: bold;
+    color: #fff !important;
     font-size: 0.9rem;
     padding: 0.5rem 1rem;
     transition: background 0.3s ease;
+    font-weight: 400;
 }
 
 .nav-link:hover {
@@ -274,12 +283,13 @@ body {
 
 .nav-item.dropdown .nav-link {
     font-size: 0.85rem;
-    color: #FFFFFF !important;
+    color: #fff !important;
     padding: 0.5rem 1rem;
+    font-weight: 400;
 }
 
 .dropdown-menu {
-    background: #ffffff;
+    background: #fff;
     border: none;
     border-radius: 8px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
@@ -290,6 +300,7 @@ body {
     color: #004d26 !important;
     padding: 0.5rem 1rem;
     transition: background-color 0.3s ease;
+    font-weight: 400;
 }
 
 .dropdown-item:hover {
@@ -318,7 +329,6 @@ body {
     font-weight: 600;
     cursor: pointer;
     transition: background 0.3s ease, transform 0.2s ease;
-    width: auto;
     margin-top: 10px;
     margin-bottom: 15px;
 }
@@ -330,24 +340,21 @@ body {
 
 #modeToggle i {
     font-size: 1rem;
-    transition: color 0.3s ease;
 }
 
 /* Language Toggle Button */
 .language-btn {
     font-size: 0.85rem;
     min-width: 80px;
-    white-space: nowrap;
     border: 1px solid rgba(255, 255, 255, 0.8);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     padding: 10px 20px;
-    margin-top: 10px;
-    margin-bottom: 15px;
-    text-align: center;
     background: var(--button-gradient);
     color: white;
     border-radius: 8px;
     transition: background 0.3s ease, transform 0.2s ease;
+    margin-top: 10px;
+    margin-bottom: 15px;
+    font-weight: 400;
 }
 
 .language-btn:hover {
@@ -367,6 +374,7 @@ body {
     padding: 0.5rem;
     font-size: 0.85rem;
     animation: fadeInOut 6s ease-in-out infinite;
+    font-weight: 400;
 }
 
 @keyframes fadeInOut {
@@ -392,7 +400,7 @@ body {
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    word-break: break-word;
+    font-weight: 400;
 }
 
 .consent-banner i {
@@ -401,9 +409,6 @@ body {
 }
 
 .consent-banner .close-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
     padding: 10px 20px;
     background: var(--button-gradient);
     color: white;
@@ -413,10 +418,8 @@ body {
     font-weight: 600;
     cursor: pointer;
     transition: background 0.3s ease, transform 0.2s ease;
-    width: auto;
     margin-top: 10px;
     margin-bottom: 15px;
-    text-align: center;
 }
 
 .consent-banner .close-btn:hover {
@@ -436,13 +439,8 @@ body {
     text-decoration: none;
     border-radius: 8px;
     font-size: 1rem;
-    font-weight: 600;
     border: none;
     transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
-    width: auto;
-    max-width: 100%;
-    box-sizing: border-box;
-    text-align: center;
     margin-top: 10px;
     margin-bottom: 15px;
 }
@@ -464,11 +462,6 @@ body {
 .btn-explore {
     font-size: 1.1rem;
     padding: 14px 28px;
-    transition: box-shadow 0.3s ease;
-}
-
-.btn-explore:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .btn-secondary {
@@ -478,7 +471,6 @@ body {
     padding: 10px 20px;
     border-radius: 8px;
     font-size: 0.9rem;
-    font-weight: 600;
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
@@ -486,7 +478,6 @@ body {
     transition: background 0.3s ease, transform 0.2s ease;
     margin-top: 10px;
     margin-bottom: 15px;
-    text-align: center;
 }
 
 .btn-secondary:hover {
@@ -511,14 +502,10 @@ body {
     border-radius: 8px;
     margin: 10px 0.5rem 15px 0;
     min-width: 100px;
-    display: inline-flex;
-    justify-content: center;
-    align-items: center;
     background: var(--button-gradient);
     color: white;
     border: none;
     transition: background 0.3s ease, transform 0.2s ease;
-    text-align: center;
 }
 
 .step-container .btn-nav:hover, .quiz-container .btn-nav:hover {
@@ -536,28 +523,26 @@ body {
 }
 
 /* Hero */
-.hero {
+.hero-content {
     background: var(--hero-gradient);
     color: white;
     padding: 0.5rem;
     margin-top: 30px;
     position: relative;
     z-index: 900;
-}
-
-.hero-content {
     max-width: 95%;
-    margin: 0 auto;
+    margin-left: auto;
+    margin-right: auto;
     text-align: center;
 }
 
-.hero h2 {
+.hero-content h2 {
     font-size: clamp(1.2rem, 4vw, 1.6rem);
     color: white;
     margin-bottom: 0.5rem;
 }
 
-.hero p {
+.hero-content p {
     margin-bottom: 0.5rem;
     font-size: 0.9rem;
 }
@@ -566,7 +551,6 @@ body {
     font-size: 0.85rem;
     color: white;
     margin: 0.5rem 0 1rem;
-    font-weight: 400;
 }
 
 .hero-subtext i {
@@ -576,7 +560,6 @@ body {
 
 .hero-disclaimer {
     font-style: italic;
-    font-weight: 300;
     font-size: 0.75rem;
     opacity: 0.6;
     color: white;
@@ -585,7 +568,7 @@ body {
 
 /* Card */
 .card {
-    background: #FFFFFF;
+    background: #fff;
     border-radius: 8px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
     margin-bottom: 0.8rem;
@@ -600,9 +583,7 @@ body {
 }
 
 .card.custom-card {
-    border-radius: 8px;
     border: none;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
 }
 
 .card-body {
@@ -616,11 +597,8 @@ body {
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    font-weight: 600;
     margin-bottom: 0.4rem;
     font-size: 1.1rem;
-    text-wrap: balance;
-    white-space: normal;
     color: #212529;
 }
 
@@ -630,9 +608,7 @@ body {
 }
 
 .card-text {
-    color: var(--card-text);
     font-size: 0.85rem;
-    margin-bottom: 0.5rem;
 }
 
 /* Recommended Label */
@@ -644,6 +620,7 @@ body {
     color: white;
     display: inline-block;
     margin-bottom: 0.5rem;
+    font-weight: 400;
 }
 
 /* Grid Styles */
@@ -662,6 +639,7 @@ body {
     border-radius: 8px;
     margin-bottom: 1rem;
     border: 1px solid var(--accent-blue);
+    font-weight: 400;
 }
 
 .alert-danger {
@@ -671,6 +649,7 @@ body {
     border-radius: 8px;
     margin-bottom: 1rem;
     border: 1px solid var(--badge-blue);
+    font-weight: 400;
 }
 
 .dark-mode .alert-success {
@@ -718,7 +697,6 @@ body {
 
 .form-check-label {
     font-size: 0.9rem;
-    color: var(--text-color);
 }
 
 .dark-mode .form-control {
@@ -753,10 +731,12 @@ body {
 /* Text Styles */
 .text-success {
     color: var(--accent-green);
+    font-weight: 400;
 }
 
 .text-danger {
     color: #dc3545;
+    font-weight: 400;
 }
 
 .dark-mode .text-success {
@@ -767,14 +747,13 @@ body {
     color: #e63946;
 }
 
-/* Journey Strip (Timeline Style) */
+/* Journey Strip */
 .journey-strip {
     background-color: var(--journey-strip-bg);
     padding: 1rem;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     position: relative;
-    z-index: 1;
 }
 
 .journey-container {
@@ -783,16 +762,12 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    z-index: 2;
 }
 
 .journey-container h2 {
-    position: relative;
-    z-index: 3;
     margin-bottom: 2rem;
     margin-top: 1rem;
     font-size: 1.4rem;
-    font-weight: 600;
     color: var(--section-header);
 }
 
@@ -805,7 +780,6 @@ body {
     transform: translateY(-50%);
     height: 4px;
     background: var(--journey-line-gradient-horizontal);
-    z-index: 0;
     margin-top: 2rem;
 }
 
@@ -814,10 +788,8 @@ body {
     flex-direction: row;
     flex-wrap: wrap;
     gap: 1.5rem;
-    position: relative;
     width: 100%;
     max-width: 100%;
-    z-index: 2;
     justify-content: center;
 }
 
@@ -826,16 +798,11 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    position: relative;
     text-align: center;
     font-size: 0.9rem;
-    font-weight: 500;
     color: var(--text-color);
-    text-decoration: none;
-    transition: transform 0.2s ease, background-color 0.2s ease;
     padding: 1rem;
-    margin: 0;
-    z-index: 3;
+    transition: transform 0.2s ease, background-color 0.2s ease;
     opacity: 0;
     animation: fadeInOnScroll 0.5s ease forwards;
     flex: 1 1 45%;
@@ -854,7 +821,6 @@ body {
 
 .journey-step:focus {
     outline: 2px solid var(--accent-blue);
-    outline-offset: 2px;
 }
 
 .journey-step:active .journey-icon {
@@ -882,21 +848,15 @@ body {
     background: var(--button-gradient);
     color: white;
     border-radius: 50%;
-    font-weight: 600;
     font-size: 1rem;
-    position: static;
     margin-bottom: 0.5rem;
-    z-index: 4;
     border: 2px solid #fff;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    font-weight: 400;
 }
 
 .journey-step p {
     margin: 0.75rem 0 0;
-    text-wrap: balance;
-    white-space: normal;
-    position: relative;
-    z-index: 3;
 }
 
 .journey-step p strong {
@@ -906,7 +866,7 @@ body {
 /* Tool Group */
 .tool-group {
     margin-bottom: 0.8rem;
-    padding: 0.5rem 0.5rem;
+    padding: 0.5rem;
     border: 1px solid var(--tool-group-border);
     border-radius: 6px;
     background-color: var(--tool-group-bg);
@@ -919,7 +879,6 @@ body {
 
 .group-title {
     font-size: 1.2rem;
-    font-weight: 600;
     margin-bottom: 0.5rem;
     display: flex;
     align-items: center;
@@ -942,7 +901,6 @@ body {
 /* Accordion */
 .accordion-button {
     font-size: 1.4rem;
-    font-weight: 600;
     color: var(--accordion-button-text);
     background: var(--accordion-button-bg);
     border: none;
@@ -975,7 +933,7 @@ body {
 .accordion-button::before {
     content: '\f078';
     font-family: 'Font Awesome 5 Free';
-    font-weight: 900;
+    font-weight: 600;
     font-size: 1rem;
     color: var(--accordion-button-text);
     margin-right: 0.5rem;
@@ -987,7 +945,7 @@ body {
 
 .accordion-body {
     padding: 1.5rem;
-    background-color: #ffffff;
+    background-color: #fff;
     border: 1px solid var(--accordion-border);
     border-top: none;
 }
@@ -996,7 +954,6 @@ body {
     border: 1px solid var(--accordion-border);
     border-radius: 8px;
     margin-bottom: 0.5rem;
-    transition: max-height 0.3s ease;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
@@ -1008,14 +965,12 @@ body {
 .tool-card h3 {
     margin-bottom: 0.4rem;
     font-size: 1.1rem;
-    font-weight: 600;
     color: #212529;
 }
 
 .tool-card p {
     font-size: 0.85rem;
     margin-bottom: 1rem;
-    color: var(--card-text);
 }
 
 /* Tool Header */
@@ -1031,11 +986,9 @@ body {
     align-items: center;
     gap: 0.5rem;
     font-size: 1.4rem;
-    font-weight: 700;
     background: var(--tool-title-gradient);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    margin: 0;
 }
 
 .tool-icon {
@@ -1051,10 +1004,10 @@ body {
 }
 
 .progress-bar {
-    transition: width 0.5s ease-in-out;
     background-color: var(--progress-bar-bg);
     height: 100%;
     border-radius: 4px;
+    transition: width 0.5s ease-in-out;
 }
 
 /* Score Gauge */
@@ -1071,12 +1024,9 @@ body {
     display: inline-flex;
     align-items: center;
     gap: 0.25rem;
-    white-space: nowrap;
-    text-wrap: nowrap;
-    max-width: 100%;
-    box-sizing: border-box;
     margin-bottom: 0.3rem;
     margin-right: 0.3rem;
+    font-weight: 400;
 }
 
 .badge:hover {
@@ -1136,15 +1086,14 @@ body {
 }
 
 .net-worth-highlight {
-    font-weight: bold;
     color: var(--net-worth-highlight);
+    font-weight: 600;
 }
 
 /* Info Box */
 .info-box {
-    background-color: var(--info-box-bg);
-    color: var(--info-box-text);
-    border: 1px solid var(--info-box-border);
+    background-color: var(--insights-box-bg);
+    border: 1px solid var(--badge-gray-border);
     padding: 0.5rem;
     border-radius: 8px;
     margin-bottom: 0.8rem;
@@ -1159,43 +1108,45 @@ body {
 }
 
 /* Footer */
-.social-icons {
+.social-links {
     color: white;
     margin: 0 .25rem;
     font-size: .85rem;
 }
 
-.social-icons a {
+.social-links a {
     color: white !important;
     margin: 4px 8px;
     font-size: 0.85rem;
     text-decoration: none;
+    font-weight: 400;
 }
 
-.social-icons a:hover {
+.social-links a:hover {
     color: var(--social-icon-hover) !important;
     text-decoration: underline;
 }
 
-.footer-disclaimer {
+.footer-content {
     font-size: .75rem;
     color: var(--footer-disclaimer);
     margin: .3rem 0;
 }
 
-.footer-disclaimer i,
-.footer-disclaimer a {
+.footer-content i,
+.footer-content a {
     color: var(--footer-disclaimer);
     font-size: .85rem;
 }
 
-.footer-disclaimer a:hover {
+.footer-content a:hover {
     color: var(--footer-disclaimer-hover);
 }
 
 .learn-more {
     color: var(--link-color);
     text-decoration: underline;
+    font-weight: 400;
 }
 
 .learn-more:hover {
@@ -1218,27 +1169,17 @@ section {
 }
 
 .h1, .h3,
-.tools-section h2,
-.recommended-learning h2,
-.faq-section h2.section-heading,
-.why-section h2,
-.testimonials-section h2.section-heading {
+.tools-section h2 {
     font-family: 'Poppins', sans-serif;
     color: var(--section-header);
     font-size: 1.4rem;
-    font-weight: bold;
     text-align: center;
     line-height: 1.5;
-    padding-bottom: 1px;
     padding: 1rem;
 }
 
 .card-title i,
-.card-title h2,
-.tools-section h2 i,
-.why-section h2 i,
-.testimonials-section h2 i,
-.faq-section h2 i {
+.tools-section h2 i {
     color: var(--accent-blue);
     margin-right: 8px;
 }
@@ -1335,7 +1276,7 @@ section {
         min-width: 80px;
     }
 
-    .hero h2 {
+    .hero-content h2 {
         font-size: clamp(1rem, 3.5rem, 1.4rem);
     }
 
@@ -1411,26 +1352,109 @@ section {
     }
 }
 
+/* Mobile-Specific Optimizations */
+@media (max-width: 767px) {
+    .navbar {
+        flex-direction: column;
+        padding: 0.5rem 1rem;
+    }
+
+    .navbar-brand {
+        margin: 0.5rem 0;
+        padding: 0.25rem;
+    }
+
+    .nav-link {
+        margin: 0.25rem 0;
+        padding: 0.5rem;
+    }
+
+    .language-btn {
+        margin: 0.5rem 0;
+        padding: 0.5rem;
+    }
+
+    .tool-card h3 {
+        font-size: 1.2rem;
+    }
+
+    .tool-card p {
+        font-size: 0.9rem;
+    }
+
+    .tool-icon {
+        font-size: 1.4rem;
+    }
+
+    .card-title i {
+        font-size: 1.3rem;
+    }
+
+    .section-heading,
+    .tools-section-heading {
+        text-align: center;
+        margin-top: auto;
+        margin-right: auto;
+        max-width: 90%;
+    }
+
+    .card-section .card,
+    .card-section .tool-card {
+        margin: 1rem auto;
+        padding: 1.2rem;
+    }
+
+    .tools-grid {
+        gap: 1.5rem;
+    }
+
+    .journey-steps {
+        gap: 1.2rem;
+    }
+
+    .accordion .section {
+        margin-bottom: 1rem;
+    }
+
+    .accordion .card {
+        padding: 1.2rem;
+    }
+
+    .accordion-button {
+        font-size: 1.3rem;
+        padding: 1.2rem 1.5rem;
+    }
+}
+
 /* Desktop Optimizations */
 @media (min-width: 768px) {
+    .container {
+        max-width: 1200px;
+        padding: 1rem 2rem;
+    }
+
+    .step-container {
+        max-width: 1200px;
+        padding: 1rem 2rem;
+    }
+
     .navbar {
         flex-direction: row;
         align-items: center;
         justify-content: space-between;
-        padding: 1rem 2rem; /* Increased padding for better spacing */
-        max-width: 1200px; /* Limit navbar width for larger screens */
+        padding: 1rem 2rem;
+        max-width: 1200px;
         margin: 0 auto;
     }
 
     .navbar-actions {
         width: auto;
         margin: 0;
-        gap: 1rem; /* Increased gap for better spacing */
+        gap: 1rem;
     }
 
     .logo-centered {
-        border-left: 0px solid white;
-        width: 100px; /* Slightly larger logo for desktop */
+        width: 100px;
         height: 100px;
     }
 
@@ -1443,227 +1467,401 @@ section {
     .navbar-nav {
         flex-direction: row;
         align-items: center;
-        gap: 1rem; /* Increased gap for better spacing */
+        gap: 1rem;
     }
 
     .nav-link {
-        padding: 0.5rem 1.5rem; /* Adjusted padding for better click area */
-        font-size: 1rem; /* Slightly larger font size */
+        font-size: 1rem;
+        padding: 0.5rem 1.5rem;
     }
 
-    .container {
-        max-width: 1200px; /* Set max-width for content to avoid stretching */
-        padding: 1rem 2rem; /* Increased padding for better spacing */
+    .navbar-brand {
+        font-size: 1.4rem;
+        margin-right: 2rem;
+        padding: 0.5rem 1rem;
     }
 
-    .step-container {
-        max-width: 1200px; /* Consistent max-width for step containers */
-        padding: 1rem 2rem;
+    .language-btn {
+        margin-left: 2rem;
+        padding: 0.5rem 1rem;
     }
 
-    .hero {
-        padding: 2rem; /* Increased padding for hero section */
+    .nav-item .nav-link,
+    .dropdown .nav-link {
+        font-size: 1rem;
+    }
+
+    .dropdown-item {
+        font-size: 0.95rem;
+    }
+
+    .navbar-toggler {
+        padding: 0.6rem 0.9rem;
+        font-size: 1rem;
+    }
+
+    .header-message {
+        font-size: 1.05rem;
+        padding: 1rem;
+    }
+
+    .consent-banner {
+        font-size: 1rem;
+        padding: 1rem;
     }
 
     .hero-content {
-        max-width: 900px; /* Limit hero content width for better readability */
+        padding: 2rem;
+        max-width: 900px;
     }
 
-    .hero h2 {
-        font-size: clamp(2rem, 5vw, 2.5rem); /* Larger heading for desktop */
+    .hero-content h2 {
+        font-size: clamp(2rem, 5vw, 2.5rem);
     }
 
-    .hero p {
-        font-size: 1.1rem; /* Slightly larger paragraph text */
+    .hero-content p {
+        font-size: 1.1rem;
     }
 
     .hero-subtext {
-        font-size: 1rem; /* Slightly larger subtext */
+        font-size: 1rem;
     }
 
-    .course-grid, .dashboard-grid {
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Wider cards for desktop */
-        gap: 2rem; /* Increased gap for better spacing */
-        max-width: 1200px; /* Limit grid width */
-        margin-left: auto;
-        margin-right: auto;
+    .hero-subtext i {
+        font-size: 1.1rem;
     }
 
-    .card {
-        padding: 1.5rem; /* Increased padding for card content */
+    .hero-disclaimer {
+        font-size: 0.85rem;
+    }
+
+    .card-body {
+        padding: 1.5rem;
     }
 
     .card-title {
-        font-size: 1.3rem; /* Larger card titles */
+        flex-direction: row;
+        font-size: 1.3rem;
+        gap: 1rem;
+    }
+
+    .card-title i {
+        font-size: 1.6rem;
     }
 
     .card-text {
-        font-size: 1rem; /* Larger card text */
+        font-size: 1rem;
     }
 
-    .journey-strip {
-        padding: 2rem; /* Increased padding for journey strip */
-        max-width: 1200px; /* Limit width for consistency */
+    .course-grid, .dashboard-grid {
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        max-width: 1200px;
         margin-left: auto;
         margin-right: auto;
     }
 
+    .journey-strip {
+        padding: 2rem;
+        max-width: 1200px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .journey-container {
+        padding: 2rem 0;
+    }
+
+    .journey-container::before {
+        top: 0;
+        bottom: auto;
+        transform: none;
+        height: 4px;
+        margin-top: 2.5rem;
+    }
+
     .journey-steps {
-        flex-wrap: nowrap; /* Prevent wrapping for desktop */
-        gap: 2rem; /* Increased gap for better spacing */
-        max-width: 1000px; /* Limit steps width */
+        flex-wrap: nowrap;
+        gap: 2rem;
+        max-width: 1000px;
+        justify-content: space-between;
+    }
+
+    .journey-steps::before {
+        content: '';
+        position: absolute;
+        top: 30%;
+        left: 10%;
+        right: 10%;
+        height: 4px;
+        background-color: var(--accent-blue);
+        z-index: 0;
     }
 
     .journey-step {
-        flex: 1 1 auto; /* Allow steps to scale evenly */
-        max-width: 200px; /* Slightly wider steps */
-        font-size: 1rem; /* Larger text for steps */
+        flex: 0 0 18%;
+        max-width: 200px;
+        font-size: 1rem;
     }
 
     .step-badge {
-        width: 3rem; /* Larger badge for desktop */
+        width: 3rem;
         height: 3rem;
         font-size: 1.2rem;
     }
 
+    .journey-icon {
+        font-size: 1.6rem;
+        margin-bottom: 0.75rem;
+    }
+
     .tool-group {
-        padding: 1rem; /* Increased padding for tool groups */
-        max-width: 1200px; /* Limit width for consistency */
+        padding: 1rem;
+        max-width: 1200px;
         margin-left: auto;
         margin-right: auto;
     }
 
     .group-title {
-        font-size: 1.4rem; /* Larger group titles */
+        font-size: 1.4rem;
     }
 
     .group-subtext {
-        font-size: 1rem; /* Larger subtext */
+        font-size: 1rem;
     }
 
     .tools-grid {
-        gap: 2rem; /* Increased gap for better spacing */
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 2rem;
+    }
+
+    .tools-grid .col-md-4 {
+        flex: 0 0 32%;
+        max-width: 32%;
+    }
+
+    .tools-grid .col-md-6 {
+        flex: 0 0 48%;
+        max-width: 48%;
+    }
+
+    .tool-card {
+        max-width: 500px;
+        padding: 1.5rem;
+    }
+
+    .tool-card h3 {
+        font-size: 1.6rem;
+    }
+
+    .tool-card p {
+        font-size: 1.1rem;
+    }
+
+    .tool-card button {
+        font-size: 1.05rem;
+        padding: 0.75rem 1.5rem;
     }
 
     .accordion-button {
-        font-size: 1.6rem; /* Larger accordion button text */
-        padding: 1.5rem 2rem; /* Increased padding */
+        font-size: 1.6rem;
+        padding: 1.5rem 2rem;
     }
 
     .accordion-body {
-        padding: 2rem; /* Increased padding for accordion content */
+        padding: 2rem;
+    }
+
+    .tool-header-container {
+        border-bottom: 1px solid;
+    }
+
+    .tool-title {
+        font-size: 2rem;
+    }
+
+    .tool-icon {
+        font-size: 1.2rem;
+    }
+
+    .step .dot {
+        width: 0.5rem;
+        height: 0.5rem;
+    }
+
+    .step-dot-container {
+        width: 1rem;
+    }
+
+    .score-gauge {
+        width: 900px;
     }
 
     .btn, .btn-primary, .btn-explore, .course-link, .tool-card button, .modal .btn {
-        padding: 14px 28px; /* Larger padding for buttons */
-        font-size: 1.1rem; /* Larger font size */
+        padding: 14px 28px;
+        font-size: 1.1rem;
     }
 
     .btn-explore {
-        padding: 16px 32px; /* Even larger for explore buttons */
+        padding: 16px 32px;
         font-size: 1.2rem;
     }
 
     .btn-secondary {
-        padding: 12px 24px; /* Larger padding for secondary buttons */
+        padding: 12px 24px;
         font-size: 1rem;
     }
 
     .step-container .btn-nav, .quiz-container .btn-nav {
-        padding: 12px 24px; /* Larger padding for nav buttons */
+        padding: 12px 24px;
         font-size: 1rem;
-        min-width: 120px; /* Slightly wider buttons */
+        min-width: 120px;
     }
 
     .video-player {
-        max-height: 600px; /* Larger video player for desktop */
+        max-height: 600px;
     }
 
     .pdf-viewer {
-        height: 700px; /* Larger PDF viewer for desktop */
+        height: 700px;
+    }
+
+    .form-control {
+        font-size: 1.1rem;
+        padding: 0.85rem;
     }
 
     .section-heading,
     .tools-section-heading {
-        font-size: 2.5rem; /* Larger section headings */
+        font-size: 2.5rem;
     }
 
     .h1, .h3,
-    .tools-section h2,
-    .recommended-learning h2,
-    .faq-section h2.section-heading,
-    .why-section h2,
-    .testimonials-section h2.section-heading {
-        font-size: 2rem; /* Larger headings */
-        padding: 1.5rem; /* Increased padding */
+    .tools-section h2 {
+        font-size: 2rem;
+        padding: 1.5rem;
     }
 }
 
 /* Large Desktop Optimizations */
 @media (min-width: 1024px) {
     .container {
-        max-width: 1400px; /* Wider max-width for large screens */
-        padding: 1.5rem 3rem; /* Increased padding */
+        max-width: 1400px;
+        padding: 1.5rem 3rem;
     }
 
     .step-container {
-        max-width: 1400px; /* Wider max-width for step containers */
+        max-width: 1400px;
         padding: 1.5rem 3rem;
     }
 
     .navbar {
-        max-width: 1400px; /* Wider navbar for large screens */
-        padding: 1.5rem 3rem; /* Increased padding */
+        max-width: 1400px;
+        padding: 1.5rem 3rem;
+    }
+
+    .navbar-brand {
+        margin-right: 2.5rem;
+        padding: 0.5rem 1.25rem;
+    }
+
+    .nav-link {
+        margin: 0 1.25rem;
+        padding: 0.75rem 1.5rem;
+    }
+
+    .language-btn {
+        margin-left: 2.5rem;
+        padding: 0.5rem 1.25rem;
     }
 
     .hero-content {
-        max-width: 1100px; /* Wider hero content */
+        max-width: 1100px;
+        padding: 2.5rem;
     }
 
-    .hero h2 {
-        font-size: clamp(2.5rem, 5vw, 3rem); /* Larger heading */
+    .hero-content h2 {
+        font-size: clamp(2.5rem, 5vw, 3rem);
     }
 
-    .hero p {
-        font-size: 1.2rem; /* Larger paragraph text */
-    }
-
-    .course-grid, .dashboard-grid {
-        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); /* Wider cards */
-        gap: 2.5rem; /* Increased gap */
-        max-width: 1400px; /* Wider grid */
-    }
-
-    .card {
-        padding: 2rem; /* Increased padding */
+    .hero-content p {
+        font-size: 1.2rem;
     }
 
     .card-title {
-        font-size: 1.5rem; /* Larger card titles */
+        font-size: 1.5rem;
+    }
+
+    .card {
+        padding: 2rem;
+    }
+
+    .course-grid, .dashboard-grid {
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 2.5rem;
+        max-width: 1400px;
     }
 
     .journey-strip {
-        max-width: 1400px; /* Wider journey strip */
-        padding: 2.5rem; /* Increased padding */
+        max-width: 1400px;
+        padding: 2.5rem;
     }
 
     .journey-steps {
-        max-width: 1200px; /* Wider steps container */
-        gap: 3rem; /* Increased gap */
+        max-width: 1200px;
+        gap: 3rem;
     }
 
     .journey-step {
-        max-width: 250px; /* Wider steps */
-        font-size: 1.1rem; /* Larger text */
+        flex: 0 0 20%;
+        max-width: 250px;
+        font-size: 1.1rem;
     }
 
     .tool-group {
-        max-width: 1400px; /* Wider tool group */
-        padding: 1.5rem; /* Increased padding */
+        max-width: 1400px;
+        padding: 1.5rem;
+    }
+
+    .tool-card {
+        max-width: 550px;
+        padding: 2rem;
+    }
+
+    .group-title {
+        font-size: 2rem;
+    }
+
+    .tools-grid {
+        gap: 3rem;
     }
 
     .section-heading,
     .tools-section-heading {
-        font-size: 3rem; /* Larger section headings */
+        font-size: 3rem;
+    }
+
+    .form-control {
+        font-size: 1.2rem;
+        padding: 1rem;
+    }
+
+    .btn-primary {
+        font-size: 1.1rem;
+        padding: 1rem 2rem;
+    }
+
+    .btn-secondary {
+        font-size: 1.1rem;
+        padding: 1rem 2rem;
+    }
+
+    .video-player {
+        max-height: 700px;
+    }
+
+    .pdf-viewer {
+        height: 800px;
     }
 }
