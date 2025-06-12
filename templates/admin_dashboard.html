@@ -100,8 +100,10 @@
                     <li class="mb-2">
                         {{ trans('tool_' + tool, default=tool.replace('_', ' ').title(), lang=lang) }}: {{ count }} {{ trans('admin_uses', default='uses', lang=lang) }}
                         <ul class="list-circle pl-6 mt-1">
-                            {% for action, action_count in metrics.action_breakdown[tool] %}
+                            {% for action, action_count in (metrics.action_breakdown.get(tool, []) or []) %}
                                 <li>{{ action.replace('_', ' ').title() }}: {{ action_count }} {{ trans('admin_uses', default='uses', lang=lang) }}</li>
+                            {% else %}
+                                <li>{{ trans('admin_no_actions', default='No actions available', lang=lang) }}</li>
                             {% endfor %}
                         </ul>
                     </li>
@@ -221,8 +223,8 @@
                                 <td class="py-2 px-4">{{ log.user_id or 'anonymous' }}</td>
                                 <td class="py-2 px-4">{{ log.session_id }}</td>
                                 <td class="py-2 px-4">{{ trans('tool_' + log.tool_name, default=log.tool_name.replace('_', ' ').title(), lang=lang) }}</td>
-                                <td class="py-2 px-4">{{ log.action.replace('_', ' ').title() }}</td>
-                                <td class="py-2 px-4">{{ log.created_at|format_datetime }}</td>
+                                <td class="py-2 px-4">{{ log.action.replace('_', ' ').title() if log.action else 'N/A' }}</td>
+                                <td class="py-2 px-4">{{ log.created_at|format_datetime if log.created_at else 'N/A' }}</td>
                             </tr>
                         {% else %}
                             <tr>
