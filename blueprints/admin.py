@@ -63,7 +63,7 @@ def overview():
                 {'$sort': {'count': -1}},
                 {'$limit': 5}
             ]))
-            action_breakdown[tool] = [(a['action'], a['count']) for a in actions]
+            action_breakdown[tool] = [(a['action'], a['count']) for a in actions] if actions else []
 
         # Engagement Metrics
         multi_tool_users = db.tool_usage.aggregate([
@@ -112,7 +112,7 @@ def overview():
 
         daily_referrals = list(db.users.aggregate([
             {'$match': {
-                'referred_by_id': {'$ne': None},
+                'referred_name_id': {'$ne': None},
                 'created_at': {'$gte': start_date, '$lte': end_date}
             }},
             {'$group': {
@@ -175,6 +175,9 @@ def overview():
             'avg_feedback_rating': round(avg_feedback, 2)
         }
 
+        # Log metrics for debugging
+        logger.debug(f"Metrics prepared: {metrics}", extra={'session_id': session_id})
+
         logger.info(f"Admin dashboard overview accessed by {current_user.username}", extra={'session_id': session_id})
         return render_template(
             'admin_dashboard.html',
@@ -213,7 +216,7 @@ def tool_usage():
         if start_date_str:
             start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
             filters['created_at'] = filters.get('created_at', {})
-            filters['created_at']['$gte'] = start_date
+            filters['created_atstacks: {'$gte': start_date}
         else:
             start_date = datetime.utcnow() - timedelta(days=30)
         if end_date_str:
