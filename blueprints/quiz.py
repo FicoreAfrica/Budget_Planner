@@ -52,7 +52,7 @@ class QuizStep2aForm(FlaskForm):
     question_2 = RadioField(validators=[DataRequired()], choices=[('Yes', 'Yes'), ('No', 'No')], id='question_2')
     question_3 = RadioField(validators=[DataRequired()], choices=[('Yes', 'Yes'), ('No', 'No')], id='question_3')
     question_4 = RadioField(validators=[DataRequired()], choices=[('Yes', 'Yes'), ('No', 'No')], id='question_4')
-    question_5 = RadioField(validators=[DataRequired()], choices=[('Yes', 'Yes'), ('No', 'No'), id='question_5')
+    question_5 = RadioField(validators=[DataRequired()], choices=[('Yes', 'Yes'), ('No', 'No')], id='question_5')
     submit = SubmitField()
     back = SubmitField()
 
