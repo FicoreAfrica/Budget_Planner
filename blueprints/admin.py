@@ -29,24 +29,25 @@ def overview():
     lang = session.get('lang', 'en')
     session_id = session.get('sid', 'no-session-id')
     try:
-        mongo = mongo.db
+        # Use mongo.db directly without reassignment
+        db = mongo.db
 
         # User Stats
-        total_users = mongo.users.count_documents({})
+        total_users = db.users.count_documents({})
         last_day = datetime.utcnow() - timedelta(days=1)
-        new_users_last_24h = mongo.users.count_documents({'created_at': {'$gte': last_day}})
+        new_users_last_24h = db.users.count_documents({'created_at': {'$gte': last_day}})
 
         # Referral Stats
-        total_referrals = mongo.users.count_documents({'referred_by_id': {'$ne': None}})
-        new_referrals_last_24h = mongo.users.count_documents({
+        total_referrals = db.users.count_documents({'referred_by_id': {'$ne': None}})
+        new_referrals_last_24h = db.users.count_documents({
             'referred_by_id': {'$ne': None},
             'created_at': {'$gte': last_day}
         })
         referral_conversion_rate = (total_referrals / total_users * 100) if total_users else 0.0
 
         # Tool Usage Stats
-        tool_usage_total = mongo.tool_usage.count_documents({})
-        usage_by_tool = list(mongo.tool_usage.aggregate([
+        tool_usage_total = db.tool_usage.count_documents({})
+        usage_by_tool = list(db.tool_usage.aggregate([
             {'$group': {'_id': '$tool_name', 'count': {'$sum': 1}}},
             {'$project': {'tool_name': '$_id', 'count': 1, '_id': 0}}
         ]))
@@ -55,7 +56,7 @@ def overview():
         # Action Breakdown for Top Tools
         action_breakdown = {}
         for tool in [t['tool_name'] for t in top_tools]:
-            actions = list(mongo.tool_usage.aggregate([
+            actions = list(db.tool_usage.aggregate([
                 {'$match': {'tool_name': tool}},
                 {'$group': {'_id': '$action', 'count': {'$sum': 1}}},
                 {'$project': {'action': '$_id', 'count': 1, '_id': 0}},
@@ -65,22 +66,22 @@ def overview():
             action_breakdown[tool] = [(a['action'], a['count']) for a in actions]
 
         # Engagement Metrics
-        multi_tool_users = mongo.tool_usage.aggregate([
+        multi_tool_users = db.tool_usage.aggregate([
             {'$match': {'tool_name': {'$in': VALID_TOOLS[3:]}}},
             {'$group': {'_id': '$user_id', 'tools': {'$addToSet': '$tool_name'}}},
             {'$match': {'$expr': {'$gt': [{'$size': '$tools'}, 1]}}},
             {'$count': 'multi_tool_users'}
         ])
         multi_tool_users = next(multi_tool_users, {'multi_tool_users': 0})['multi_tool_users']
-        total_sessions = mongo.tool_usage.distinct('session_id', {'tool_name': {'$in': VALID_TOOLS[3:]}})
+        total_sessions = db.tool_usage.distinct('session_id', {'tool_name': {'$in': VALID_TOOLS[3:]}})
         total_sessions_count = len(total_sessions)
         multi_tool_ratio = (multi_tool_users / total_sessions_count * 100) if total_sessions_count else 0.0
 
-        anon_sessions = mongo.tool_usage.distinct('session_id', {
+        anon_sessions = db.tool_usage.distinct('session_id', {
             'user_id': None,
             'tool_name': {'$in': VALID_TOOLS[3:]}
         })
-        converted_sessions = mongo.tool_usage.count_documents({
+        converted_sessions = db.tool_usage.count_documents({
             'tool_name': 'register',
             'session_id': {'$in': anon_sessions}
         })
@@ -88,7 +89,7 @@ def overview():
         conversion_rate = (converted_sessions / anon_total * 100) if anon_total else 0.0
 
         # Feedback
-        avg_feedback = list(mongo.feedback.aggregate([
+        avg_feedback = list(db.feedback.aggregate([
             {'$group': {'_id': None, 'avg_rating': {'$avg': '$rating'}}},
             {'$project': {'avg_rating': 1, '_id': 0}}
         ]))
@@ -97,7 +98,7 @@ def overview():
         # Chart Data (last 30 days)
         end_date = datetime.utcnow()
         start_date = end_date - timedelta(days=30)
-        daily_usage = list(mongo.tool_usage.aggregate([
+        daily_usage = list(db.tool_usage.aggregate([
             {'$match': {'created_at': {'$gte': start_date, '$lte': end_date}}},
             {'$group': {
                 '_id': {
@@ -109,7 +110,7 @@ def overview():
             {'$sort': {'_id.date': 1}}
         ]))
 
-        daily_referrals = list(mongo.users.aggregate([
+        daily_referrals = list(db.users.aggregate([
             {'$match': {
                 'referred_by_id': {'$ne': None},
                 'created_at': {'$gte': start_date, '$lte': end_date}
@@ -198,7 +199,7 @@ def tool_usage():
     lang = session.get('lang', 'en')
     session_id = session.get('sid', 'no-session-id')
     try:
-        mongo = mongo.db
+        db = mongo.db
         tool_name = request.args.get('tool_name')
         start_date_str = request.args.get('start_date')
         end_date_str = request.args.get('end_date')
@@ -222,11 +223,11 @@ def tool_usage():
         else:
             end_date = datetime.utcnow()
 
-        usage_logs = list(mongo.tool_usage.find(filters, {'_id': 0}).sort('created_at', -1).limit(100))
+        usage_logs = list(db.tool_usage.find(filters, {'_id': 0}).sort('created_at', -1).limit(100))
         usage_logs = [to_dict_tool_usage(log) for log in usage_logs]
 
         # Available actions for the selected tool
-        available_actions = mongo.tool_usage.distinct('action', {'tool_name': tool_name} if tool_name else {})
+        available_actions = db.tool_usage.distinct('action', {'tool_name': tool_name} if tool_name else {})
         available_actions = [a for a in available_actions if a]
 
         # Chart data
@@ -244,10 +245,10 @@ def tool_usage():
                 '$gte': current_date,
                 '$lt': current_date + timedelta(days=1)
             }
-            total_count = mongo.tool_usage.count_documents(daily_filters)
+            total_count = db.tool_usage.count_documents(daily_filters)
             chart_data['total_counts'].append(total_count)
             if tool_name:
-                action_counts = list(mongo.tool_usage.aggregate([
+                action_counts = list(db.tool_usage.aggregate([
                     {'$match': {
                         'tool_name': tool_name,
                         'created_at': {
@@ -293,7 +294,7 @@ def export_csv():
     lang = session.get('lang', 'en')
     session_id = session.get('sid', 'no-session-id')
     try:
-        mongo = mongo.db
+        db = mongo.db
         tool_name = request.args.get('tool_name')
         start_date_str = request.args.get('start_date')
         end_date_str = request.args.get('end_date')
@@ -313,7 +314,7 @@ def export_csv():
             filters['created_at'] = filters.get('created_at', {})
             filters['created_at']['$lt'] = end_date
 
-        usage_logs = list(mongo.tool_usage.find(filters, {'_id': 0}))
+        usage_logs = list(db.tool_usage.find(filters, {'_id': 0}))
         usage_logs = [to_dict_tool_usage(log) for log in usage_logs]
 
         si = StringIO()
