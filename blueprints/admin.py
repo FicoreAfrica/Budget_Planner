@@ -72,72 +72,6 @@ def overview():
         ]))
         avg_feedback = avg_feedback[0]['avg_rating'] if avg_feedback else 0.0
 
-        # Chart Data (last 30 days)
-        end_date = datetime.utcnow()
-        start_date = end_date - timedelta(days=30)
-        daily_usage = list(db.tool_usage.aggregate([
-            {'$match': {'created_at': {'$gte': start_date, '$lte': end_date}}},
-            {'$group': {
-                '_id': {
-                    'date': {'$dateToString': {'format': '%Y-%m-%d', 'date': '$created_at'}},
-                    'tool_name': '$tool_name'
-                },
-                'count': {'$sum': 1}
-            }},
-            {'$sort': {'_id.date': 1}}
-        ]))
-
-        daily_referrals = list(db.users.aggregate([
-            {'$match': {
-                'referred_by_id': {'$ne': None},
-                'created_at': {'$gte': start_date, '$lte': end_date}
-            }},
-            {'$group': {
-                '_id': {'$dateToString': {'format': '%Y-%m-%d', 'date': '$created_at'}},
-                'count': {'$sum': 1}
-            }},
-            {'$sort': {'_id': 1}}
-        ]))
-
-        chart_data = {
-            'labels': [],
-            'registrations': [],
-            'logins': [],
-            'referrals': [],
-            'tool_usage': {tool: [] for tool in VALID_TOOLS[3:]}
-        }
-
-        current_date = start_date
-        while current_date <= end_date:
-            date_str = current_date.strftime('%Y-%m-%d')
-            chart_data['labels'].append(date_str)
-            chart_data['registrations'].append(0)
-            chart_data['logins'].append(0)
-            chart_data['referrals'].append(0)
-            for tool in chart_data['tool_usage']:
-                chart_data['tool_usage'][tool].append(0)
-            current_date += timedelta(days=1)
-
-        for item in daily_usage:
-            date = item['_id']['date']
-            tool_name = item['_id']['tool_name']
-            count = item['count']
-            idx = chart_data['labels'].index(date) if date in chart_data['labels'] else None
-            if idx is not None:
-                if tool_name == 'register':
-                    chart_data['registrations'][idx] = count
-                elif tool_name == 'login':
-                    chart_data['logins'][idx] = count
-                elif tool_name in chart_data['tool_usage']:
-                    chart_data['tool_usage'][tool_name][idx] = count
-
-        for item in daily_referrals:
-            date = item['_id']
-            count = item['count']
-            idx = chart_data['labels'].index(date) if date in chart_data['labels'] else None
-            if idx is not None:
-                chart_data['referrals'][idx] = count
-
         metrics = {
             'total_users': total_users,
             'new_users_last_24h': new_users_last_24h,
@@ -158,7 +92,6 @@ def overview():
             'admin_dashboard.html',
             lang=lang,
             metrics=metrics,
-            chart_data=chart_data,
             valid_tools=VALID_TOOLS[3:],
             tool_name=None,
             start_date=None,
