@@ -18,6 +18,7 @@ class User(UserMixin):
         self.is_admin = user_data['is_admin']
         self.role = user_data['role']
         self.referred_by_id = user_data.get('referred_by_id')
+        self.google_id = user_data.get('google_id')  # Added for Google OAuth2
 
     def get_id(self):
         return self.id  # Flask-Login expects a string
@@ -35,7 +36,8 @@ def create_user(mongo, user_data):
         'referral_code': user_data.get('referral_code', str(uuid.uuid4())),
         'is_admin': user_data.get('is_admin', False),
         'role': user_data.get('role', 'user'),
-        'referred_by_id': user_data.get('referred_by_id')
+        'referred_by_id': user_data.get('referred_by_id'),
+        'google_id': user_data.get('google_id')  # Added for Google OAuth2
     }
     mongo.db.users.insert_one(user)
     return User(user)
@@ -62,6 +64,25 @@ def get_referrals(mongo, user_id):
     """Retrieve users referred by the given user ID."""
     referrals = mongo.db.users.find({'referred_by_id': int(user_id)}, {'_id': 0})
     return [User(r) for r in referrals]
+
+def create_reset_token(mongo, token_data):
+    """Create a reset token in the reset_tokens collection."""
+    reset_token = {
+        'user_id': token_data['user_id'],
+        'token': token_data['token'],
+        'created_at': token_data.get('created_at', datetime.utcnow()),
+        'expires_at': token_data['expires_at']
+    }
+    mongo.db.reset_tokens.insert_one(reset_token)
+    return reset_token
+
+def get_reset_token(mongo, token):
+    """Retrieve a reset token by token string."""
+    return mongo.db.reset_tokens.find_one({'token': token}, {'_id': 0})
+
+def delete_reset_token(mongo, token):
+    """Delete a reset token by token string."""
+    mongo.db.reset_tokens.delete_one({'token': token})
 
 # Course helper functions
 def create_course(mongo, course_data):
@@ -404,12 +425,12 @@ def create_learning_progress(mongo, lp_data):
 
 def get_learning_progress(mongo, recomendações):
     """Retrieve learning progress records by filters."""
-    return list(mongo.db.learning_progress.find(recomendações, {'_id': 0}))
+    return list(mongo.db.learning_progress.find(recomendações, {'_id': 0'}).sort('created_at', -1))
 
 def to_dict_learning_progress(lp):
     """Convert learning progress document to dict."""
     try:
-        lessons_completed = json.loads(lp['lessons_completed']) if lp.get('lessons_completed') else []
+        lessons_completed = json.loads(lp['lessons_completed'][:]) if lp.get('lessons_completed') else []
         quiz_scores = json.loads(lp['quiz_scores']) if lp.get('quiz_scores') else {}
     except json.JSONDecodeError:
         current_app.logger.error(f"Invalid JSON in LearningProgress ID {lp['id']}")
