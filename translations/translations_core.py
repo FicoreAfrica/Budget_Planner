@@ -2,6 +2,10 @@ CORE_TRANSLATIONS = {
     'en': {
         'core_home': 'Home',
         'core_feedback_page_title': 'Provide Feedback',
+        'auth_change_password': 'Change Password',
+        'Your Profile': 'Your Profile',
+        'share_ficore': 'Share Ficore',
+        'profile_link_copied': 'Profile link copied to clipboard!',
         'core_password_changed_success': 'Password changed successfully!',
         'core_form_errors': 'Please correct the errors in the form.',
         'core_share_ficore_invite': 'Invite your friends to join Ficore Africa and manage their finances better!',
@@ -19,8 +23,8 @@ CORE_TRANSLATIONS = {
         'admin_usage_trend': 'Usage Trend',
 
 # Module: tool
-    'tool_google_login': 'Google Login',
-    'tool_logout': 'Logout',
+        'tool_google_login': 'Google Login',
+        'tool_logout': 'Logout',
         'admin_dashboard_title': 'Admin Dashboard',
         'admin_dashboard_desc': 'View and analyze platform usage and engagement metrics',
         'admin_overview': 'Overview',
@@ -995,6 +999,10 @@ CORE_TRANSLATIONS = {
         'tool_emergency_fund': 'Asusun Gaggawa',
         'tool_learning_hub': 'Cibiyar Koyo',
         'tool_quiz': 'Gwaji',
+        'auth_change_password': 'Canja Kalmar Sirri',
+        'Your Profile': 'Bayanan Ka',
+        'share_ficore': 'Aika  Ficore Ga Abokai',
+        'profile_link_copied': 'An kwafe hanyar haɗi zuwa allo!',
         'tool_login': 'Aikin Shiga',
         'tool_register': 'Aikin Rajista',
         'core_auth_new_password_placeholder': 'Shigar da sabuwar kalmar sirri mai tsaro',
