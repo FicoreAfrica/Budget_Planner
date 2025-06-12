@@ -8,6 +8,7 @@ from datetime import datetime, date, timedelta
 import uuid
 from translations import trans
 from pymongo.errors import DuplicateKeyError
+from bson import ObjectId  # Added import to fix NameError
 from extensions import mongo  # Use mongo from extensions
 from models import log_tool_usage  # Import log_tool_usage
 
