@@ -8,7 +8,7 @@ from translations import trans
 from models import create_user, get_user, get_user_by_email, update_user, get_referrals, log_tool_usage
 import logging
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 from extensions import mongo  # Import mongo from extensions
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature  # Added for password reset tokens
@@ -371,7 +371,7 @@ def forgot_password():
         logger.info("Teardown completed for forgot_password route", extra={'session_id': session_id})
 
 @auth_bp.route('/reset-password/<token>', methods=['GET', 'POST'])
-def reset_password(token):
+def reset_password():
     if current_user.is_authenticated:
         return redirect(url_for('index'))
     
@@ -458,7 +458,7 @@ def google_login():
             include_granted_scopes='true'
         )
         session['google_state'] = state
-        logger.info(f"Redirecting to Google OAuth2 authorization", extra={'session_id': session_id})
+        logger.info(f"Generated Google OAuth2 authorization_url: {authorization_url}", extra={'session_id': session_id})
         return redirect(authorization_url)
     except Exception as e:
         logger.exception(f"Error in google_login: {str(e)} - Type: {type(e).__name__}", extra={'session_id': session_id})
