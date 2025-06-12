@@ -154,9 +154,9 @@ def signup():
                     'lang': lang
                 }
                 user = create_user(mongo, user_data)
-                # Safe access for user attributes
-                username = getattr(user, 'username', user.get('username')) if user else 'unknown'
-                user_id = getattr(user, 'id', user.get('id')) if user else None
+                # Safe attribute access for user
+                username = getattr(user, 'username', 'unknown') if user else 'unknown'
+                user_id = getattr(user, 'id', None) if user else None
                 logger.info(f"User signed up: {username} with referral code: {user_data.get('referral_code', 'none')}, role={role}, is_admin={is_admin}", extra={'session_id': session_id})
                 log_tool_usage(mongo, 'register', user_id=user_id, session_id=session_id, action='submit_success')
                 flash(trans('auth_signup_success', default='Account created successfully! Please sign in.', lang=lang), 'success')
@@ -191,10 +191,10 @@ def signin():
     try:
         if request.method == 'POST' and form.validate_on_submit():
             user = get_user_by_email(mongo, form.email.data)
-            if user and check_password_hash(getattr(user, 'password_hash', user.get('password_hash')), form.password.data):
+            if user and check_password_hash(getattr(user, 'password_hash', ''), form.password.data):
                 login_user(user)
-                username = getattr(user, 'username', user.get('username')) if user else 'unknown'
-                user_id = getattr(user, 'id', user.get('id')) if user else None
+                username = getattr(user, 'username', 'unknown') if user else 'unknown'
+                user_id = getattr(user, 'id', None) if user else None
                 logger.info(f"User signed in: {username}", extra={'session_id': session_id})
                 log_tool_usage(mongo, 'login', user_id=user_id, session_id=session_id, action='submit_success')
                 flash(trans('auth_signin_success', default='Signed in successfully!', lang=lang), 'success')
@@ -221,8 +221,8 @@ def signin():
 @login_required
 def logout():
     lang = session.get('lang', 'en')
-    username = getattr(current_user, 'username', current_user.get('username')) if current_user else 'unknown'
-    user_id = getattr(current_user, 'id', current_user.get('id')) if current_user else None
+    username = getattr(current_user, 'username', 'unknown') if current_user else 'unknown'
+    user_id = getattr(current_user, 'id', None) if current_user else None
     session_id = session.get('sid', str(uuid.uuid4()))
     
     # Log logout action
@@ -242,10 +242,10 @@ def profile():
     
     try:
         if request.method == 'POST' and password_form.validate_on_submit():
-            update_user(mongo, getattr(current_user, 'id', current_user.get('id')), {
+            update_user(mongo, getattr(current_user, 'id', None), {
                 'password_hash': generate_password_hash(password_form.new_password.data)
             })
-            username = getattr(current_user, 'username', current_user.get('username')) if current_user else 'unknown'
+            username = getattr(current_user, 'username', 'unknown') if current_user else 'unknown'
             logger.info(f"User changed password: {username}", extra={'session_id': session_id})
             flash(trans('core_password_changed_success', default='Password changed successfully!', lang=lang), 'success')
             return redirect(url_for('auth.profile'))
@@ -253,15 +253,15 @@ def profile():
             logger.error(f"Change password form validation failed: {password_form.errors}", extra={'session_id': session_id})
             flash(trans('core_form_errors', default='Please correct the errors in the form.', lang=lang), 'danger')
         
-        referral_code = getattr(current_user, 'referral_code', current_user.get('referral_code')) if current_user else None
+        referral_code = getattr(current_user, 'referral_code', None) if current_user else None
         referral_link = url_for('auth.signup', ref=referral_code, _external=True)
-        referred_users = get_referrals(mongo, getattr(current_user, 'id', current_user.get('id')))
+        referred_users = get_referrals(mongo, getattr(current_user, 'id', None))
         referral_count = len(referred_users)
         return render_template('profile.html', lang=lang, referral_link=referral_link, referral_count=referral_count, referred_users=referred_users, password_form=password_form)
     except Exception as e:
         logger.exception(f"Error in profile: {str(e)} - Type: {type(e).__name__}", extra={'session_id': session_id})
         flash(trans('core_error', default='An error occurred. Please try again.', lang=lang), 'danger')
-        referral_code = getattr(current_user, 'referral_code', current_user.get('referral_code')) if current_user else None
+        referral_code = getattr(current_user, 'referral_code', None) if current_user else None
         referral_link = url_for('auth.signup', ref=referral_code, _external=True)
         referred_users = []
         referral_count = 0
@@ -275,10 +275,10 @@ def debug_auth():
     try:
         return jsonify({
             'is_authenticated': current_user.is_authenticated,
-            'is_admin': getattr(current_user, 'is_admin', current_user.get('is_admin', False)) if current_user.is_authenticated else False,
-            'role': getattr(current_user, 'role', current_user.get('role')) if current_user.is_authenticated else None,
-            'email': getattr(current_user, 'email', current_user.get('email')) if current_user.is_authenticated else None,
-            'username': getattr(current_user, 'username', current_user.get('username')) if current_user.is_authenticated else None,
+            'is_admin': getattr(current_user, 'is_admin', False) if current_user.is_authenticated else False,
+            'role': getattr(current_user, 'role', None) if current_user.is_authenticated else None,
+            'email': getattr(current_user, 'email', None) if current_user.is_authenticated else None,
+            'username': getattr(current_user, 'username', None) if current_user.is_authenticated else None,
             'session_id': session_id
         })
     except Exception as e:
