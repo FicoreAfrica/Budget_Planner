@@ -112,7 +112,7 @@ def overview():
 
         daily_referrals = list(db.users.aggregate([
             {'$match': {
-                'referred_name_id': {'$ne': None},
+                'referred_by_id': {'$ne': None},
                 'created_at': {'$gte': start_date, '$lte': end_date}
             }},
             {'$group': {
@@ -216,7 +216,7 @@ def tool_usage():
         if start_date_str:
             start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
             filters['created_at'] = filters.get('created_at', {})
-            filters['created_atstacks: {'$gte': start_date}
+            filters['created_at']['$gte'] = start_date
         else:
             start_date = datetime.utcnow() - timedelta(days=30)
         if end_date_str:
