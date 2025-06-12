@@ -1,11 +1,11 @@
 /* Define CSS Custom Properties for Colors */
 :root {
     --background-gradient: #f9fbff;
-    --text-color: #333;
+    --text-color: #1a1a1a;
     --navbar-gradient: linear-gradient(90deg, #0288D1, #2E7D32);
     --header-message-gradient: linear-gradient(90deg, #0288D1, #2E7D32);
     --consent-banner-bg: #E3F2FD;
-    --consent-banner-text: #333;
+    --consent-banner-text: #1a1a1a;
     --accent-blue: #0288D1;
     --accent-blue-dark: #01579B;
     --accent-green: #2E7D32;
@@ -18,6 +18,7 @@
     --hero-subtext-icon: #E3F2FD;
     --card-border: #0288D1;
     --card-text: #212529;
+    --card-bg: #ffffff;
     --journey-strip-bg: #E3F2FD;
     --journey-line-gradient: linear-gradient(to bottom, #0288D1, #2E7D32);
     --journey-line-gradient-horizontal: linear-gradient(to right, #0288D1, #2E7D32);
@@ -37,7 +38,7 @@
     --tool-title-gradient: linear-gradient(90deg, #2E7D32, #0288D1);
     --tool-icon: #0288D1;
     --tool-subtitle: #6c757d;
-    --step-indicator: #333;
+    --step-indicator: #1a1a1a;
     --step-dot-bg: #ccc;
     --step-dot-active-bg: #0288D1;
     --step-connector-bg: #ccc;
@@ -47,17 +48,17 @@
     --badge-blue-bg: #0288D1;
     --badge-blue-border: #01579B;
     --badge-gray-bg: #e9ecef;
-    --badge-gray-text: #333;
+    --badge-gray-text: #1a1a1a;
     --badge-gray-border: #ced4da;
     --net-worth-highlight: #2E7D32;
-    --section-bg: #f5f6fa;
+    --section-bg: #f9f9f9;
     --section-border: linear-gradient(135deg, #1B5E20, #01579B);
     --testimonial-text: #212529;
     --testimonial-quote: #0288D1;
     --social-icon-hover: #E3F2FD;
     --footer-disclaimer: #E3F2FD;
     --footer-disclaimer-hover: #fff;
-    --section-header: #0288D1;
+    --section-header: #0066cc;
     --insights-box-bg: #E3F2FD;
     --list-group-item-bg: #f8f9fa;
     --link-color: #0288D1;
@@ -70,71 +71,73 @@
 
 /* Dark Mode Overrides */
 .dark-mode {
-    --background-gradient: linear-gradient(135deg, #343a40, #495057);
-    --text-color: #e9ecef;
-    --navbar-bg: white;
-    --header-message-gradient: linear-gradient(90deg, #0056b3, #1b5e20);
-    --consent-banner-bg: #495057;
-    --consent-banner-text: #e9ecef;
+    --background-gradient: linear-gradient(135deg, #212529, #343a40);
+    --text-color: #f8f9fa;
+    --navbar-bg: #343a40;
+    --navbar-gradient: linear-gradient(90deg, #4dabf7, #66bb6a);
+    --header-message-gradient: linear-gradient(90deg, #4dabf7, #66bb6a);
+    --consent-banner-bg: #343a40;
+    --consent-banner-text: #f8f9fa;
     --accent-blue: #4dabf7;
-    --accent-blue-dark: #003d82;
-    --accent-green: #1b5e20;
-    --accent-green-dark: #123e14;
-    --button-gradient: linear-gradient(135deg, #1b5e20, #0056b3);
-    --button-gradient-hover: linear-gradient(135deg, #123e14, #003d82);
-    --button-nav-gradient: linear-gradient(90deg, #0056b3, #1b5e20);
-    --button-nav-gradient-hover: linear-gradient(90deg, #004a99, #144d17);
-    --hero-gradient: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), linear-gradient(135deg, #0056b3, #1b5e20);
-    --hero-subtext-icon: #4dabf7;
+    --accent-blue-dark: #2196f3;
+    --accent-green: #66bb6a;
+    --accent-green-dark: #4caf50;
+    --button-gradient: linear-gradient(135deg, #66bb6a, #4dabf7);
+    --button-gradient-hover: linear-gradient(135deg, #4caf50, #2196f3);
+    --button-nav-gradient: linear-gradient(90deg, #4dabf7, #66bb6a);
+    --button-nav-gradient-hover: linear-gradient(90deg, #2196f3, #4caf50);
+    --hero-gradient: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), linear-gradient(135deg, #4dabf7, #66bb6a);
+    --hero-subtext-icon: #bbdefb;
     --card-border: #4dabf7;
-    --card-text: #e9ecef;
-    --journey-strip-bg: #495057;
-    --journey-line-gradient: linear-gradient(to bottom, #0056b3, #1b5e20);
-    --journey-line-gradient-horizontal: linear-gradient(to right, #0056b3, #1b5e20);
-    --journey-step-hover-bg: #6c757d;
+    --card-text: #f8f9fa;
+    --card-bg: #343a40;
+    --journey-strip-bg: #343a40;
+    --journey-line-gradient: linear-gradient(to bottom, #4dabf7, #66bb6a);
+    --journey-line-gradient-horizontal: linear-gradient(to right, #4dabf7, #66bb6a);
+    --journey-step-hover-bg: #495057;
     --journey-icon: #4dabf7;
-    --tool-group-bg: #343a40;
-    --tool-group-border: #6c757d;
-    --group-title: #e9ecef;
-    --group-subtext: #ced4da;
-    --accordion-button-bg: linear-gradient(90deg, #0056b3, #1b5e20);
-    --accordion-button-bg-hover: linear-gradient(90deg, #003d82, #123e14);
-    --accordion-button-text: #e9ecef;
-    --accordion-button-text-hover: #e9ecef;
-    --accordion-border: #333;
-    --tool-header-bg: #6c757d;
-    --tool-header-border: #adb5bd;
-    --tool-title-gradient: linear-gradient(90deg, #1b5e20, #0056b3);
+    --tool-group-bg: #212529;
+    --tool-group-border: #495057;
+    --group-title: #4dabf7;
+    --group-subtext: #adb5bd;
+    --accordion-button-bg: linear-gradient(90deg, #4dabf7, #66bb6a);
+    --accordion-button-bg-hover: linear-gradient(90deg, #2196f3, #4caf50);
+    --accordion-button-text: #f8f9fa;
+    --accordion-button-text-hover: #f8f9fa;
+    --accordion-border: #495057;
+    --tool-header-bg: #343a40;
+    --tool-header-border: #495057;
+    --tool-title-gradient: linear-gradient(90deg, #66bb6a, #4dabf7);
     --tool-icon: #4dabf7;
-    --tool-subtitle: #e9ecef;
-    --step-indicator: #e9ecef;
-    --step-dot-bg: #666;
+    --tool-subtitle: #adb5bd;
+    --step-indicator: #f8f9fa;
+    --step-dot-bg: #6c757d;
     --step-dot-active-bg: #4dabf7;
-    --step-connector-bg: #666;
-    --progress-bg: #6c757d;
-    --progress-bar-bg: #1b5e20;
-    --badge-success-bg: #1b5e20;
+    --step-connector-bg: #6c757d;
+    --progress-bg: #495057;
+    --progress-bar-bg: #66bb6a;
+    --badge-success-bg: #66bb6a;
     --badge-blue-bg: #4dabf7;
-    --badge-blue-border: #003d82;
-    --badge-gray-bg: #6c757d;
-    --badge-gray-text: #e9ecef;
-    --badge-gray-border: #495057;
-    --net-worth-highlight: #1b5e20;
-    --section-bg: #343a40;
-    --section-border: linear-gradient(135deg, #123e14, #003d82);
-    --testimonial-text: #e9ecef;
+    --badge-blue-border: #2196f3;
+    --badge-gray-bg: #495057;
+    --badge-gray-text: #f8f9fa;
+    --badge-gray-border: #343a40;
+    --net-worth-highlight: #66bb6a;
+    --section-bg: #2d3237;
+    --section-border: linear-gradient(135deg, #4caf50, #2196f3);
+    --testimonial-text: #f8f9fa;
     --testimonial-quote: #4dabf7;
-    --social-icon-hover: #4dabf7;
-    --footer-disclaimer: #e9ecef;
-    --footer-disclaimer-hover: #4dabf7;
-    --section-header: #e9ecef;
-    --insights-box-bg: #495057;
-    --list-group-item-bg: #6c757d;
+    --social-icon-hover: #bbdefb;
+    --footer-disclaimer: #f8f9fa;
+    --footer-disclaimer-hover: #bbdefb;
+    --section-header: #4dabf7;
+    --insights-box-bg: #343a40;
+    --list-group-item-bg: #495057;
     --link-color: #4dabf7;
-    --primary-button-bg: #4CAF50;
-    --primary-button-bg-hover: #388e3c;
-    --secondary-button-bg: #6c757d;
-    --secondary-button-bg-hover: #5c6269;
+    --primary-button-bg: #66bb6a;
+    --primary-button-bg-hover: #4caf50;
+    --secondary-button-bg: #343a40;
+    --secondary-button-bg-hover: #495057;
     --secondary-button-border: #495057;
 }
 
@@ -150,7 +153,7 @@ body, .navbar, .header-message, .consent-banner, .btn, .hero, .card, .journey-st
 body {
     scroll-behavior: smooth;
     font-family: 'Poppins', 'Arial', sans-serif;
-    background: var(--background-gradient);
+    background: #f5f5f5;
     color: var(--text-color);
     padding: 0.5rem;
     margin: 0;
@@ -160,13 +163,14 @@ body {
 
 /* Containers */
 .container {
-    max-width: 100%;
+    width: 100%;
+    max-width: 1200px;
     margin: 0 auto;
-    padding: 0.5rem 1rem;
+    padding: 0 1rem;
 }
 
 .step-container {
-    max-width: 100%;
+    max-width: 1200px;
     margin: 0.5rem auto;
     padding: 0.5rem;
 }
@@ -244,7 +248,7 @@ body {
 }
 
 .navbar-toggler .navbar-toggler-icon {
-    font-size: 1.colar: white;
+    font-size: 1rem;
     background-color: white;
     color: #003366;
     border-radius: 5px;
@@ -262,7 +266,7 @@ body {
 }
 
 .nav-link:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.2);
     border-radius: 4px;
 }
 
@@ -279,6 +283,11 @@ body {
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
+.dark-mode .dropdown-menu {
+    background: #343a40;
+    border: 1px solid #495057;
+}
+
 .dropdown-item {
     font-size: 0.85rem;
     color: #004d26 !important;
@@ -286,9 +295,18 @@ body {
     transition: background-color 0.3s ease;
 }
 
+.dark-mode .dropdown-item {
+    color: #f8f9fa !important;
+}
+
 .dropdown-item:hover {
     background-color: #c8f0d2;
     color: #003319 !important;
+}
+
+.dark-mode .dropdown-item:hover {
+    background-color: #495057;
+    color: #f8f9fa !important;
 }
 
 @keyframes gradientShift {
@@ -547,6 +565,7 @@ body {
 .hero p {
     margin-bottom: 0.5rem;
     font-size: 0.9rem;
+    margin-top: 1rem;
 }
 
 .hero-subtext {
@@ -565,14 +584,14 @@ body {
     font-style: italic;
     font-weight: 300;
     font-size: 0.75rem;
-    opacity: 0.6;
+    opacity: 0.8;
     color: white;
     margin: 0.5rem 0;
 }
 
 /* Cards */
 .card {
-    background: #FFFFFF;
+    background: var(--card-bg);
     border-radius: 8px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
     margin-bottom: 0.8rem;
@@ -608,7 +627,7 @@ body {
     font-size: 1.1rem;
     text-wrap: balance;
     white-space: normal;
-    color: #212529;
+    color: var(--card-text);
 }
 
 .card-title i {
@@ -620,6 +639,7 @@ body {
     color: var(--card-text);
     font-size: 0.85rem;
     margin-bottom: 0.5rem;
+    margin-top: 1rem;
 }
 
 .card:has(.badge-success) .card-title {
@@ -628,22 +648,28 @@ body {
 }
 
 /* Tool Card */
+.tool-card {
+    margin-bottom: 1.5rem;
+}
+
 .tool-card h3 {
     margin-bottom: 0.4rem;
     font-size: 1.1rem;
     font-weight: 600;
-    color: #212529;
+    color: var(--card-text);
 }
 
 .tool-card p {
     font-size: 0.85rem;
     margin-bottom: 1rem;
+    margin-top: 1rem;
     color: var(--card-text);
 }
 
 .index-page .tool-title .card-title {
-    background: linear-gradient(135deg, #1b5e20, #01579b);
-    border-radius: 8px;
+    background: var(--tool-title-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
     margin-bottom: 0.2rem;
 }
 
@@ -698,11 +724,13 @@ body {
 .journey-container h2 {
     position: relative;
     z-index: 3;
-    margin-bottom: 2rem;
-    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+    margin-top: 0.5rem;
     font-size: 1.4rem;
     font-weight: 600;
     color: var(--section-header);
+    border-bottom: 2px solid var(--accent-blue);
+    padding-bottom: 0.25rem;
 }
 
 .journey-container::before {
@@ -834,18 +862,21 @@ body {
     align-items: center;
     gap: 0.5rem;
     color: var(--group-title);
+    border-bottom: 2px solid var(--accent-blue);
+    padding-bottom: 0.25rem;
 }
 
 .group-subtext {
     font-size: 0.85rem;
     color: var(--group-subtext);
     margin-bottom: 0.5rem;
+    margin-top: 1rem;
 }
 
 .tools-grid {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 2rem;
 }
 
 /* Accordion */
@@ -896,7 +927,7 @@ body {
 
 .accordion-body {
     padding: 1.5rem;
-    background-color: #ffffff;
+    background-color: var(--card-bg);
     border: 1px solid var(--accordion-border);
     border-top: none;
 }
@@ -1077,14 +1108,19 @@ section {
     background-color: var(--section-bg);
     border: 4px solid;
     border-image: var(--section-border) 1;
-    border-radius: 10px;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    margin-bottom: 2rem;
 }
 
 .section-heading,
 .tools-section-heading {
     color: var(--section-header);
     font-size: 2rem;
-    border-bottom: 1px solid var(--section-border);
+    border-bottom: 2px solid var(--accent-blue);
+    padding-bottom: 0.25rem;
+    margin-bottom: 0.5rem;
 }
 
 .h1, .h3,
@@ -1099,8 +1135,19 @@ section {
     font-weight: bold;
     text-align: center;
     line-height: 1.5;
-    padding-bottom: 1px;
-    padding: 1rem;
+    padding-bottom: 0.25rem;
+    margin-bottom: 0.5rem;
+    border-bottom: 2px solid var(--accent-blue);
+}
+
+.h1 + *,
+.h3 + *,
+.tools-section h2 + *,
+.recommended-learning h2 + *,
+.faq-section h2.section-heading + *,
+.why-section h2 + *,
+.testimonials-section h2.section-heading + * {
+    margin-top: 1rem;
 }
 
 .card-title i,
@@ -1211,7 +1258,7 @@ section {
     font-size: 0.9rem;
     border: 1px solid var(--badge-gray-border);
     border-radius: 4px;
-    background-color: #fff;
+    background-color: var(--card-bg);
     color: var(--text-color);
 }
 
@@ -1239,9 +1286,9 @@ section {
 }
 
 .dark-mode .form-control {
-    background-color: #343a40;
-    color: #e9ecef;
-    border-color: #6c757d;
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    border-color: var(--badge-gray-border);
 }
 
 .dark-mode .form-control:focus {
@@ -1250,7 +1297,7 @@ section {
 }
 
 .dark-mode .form-check-label {
-    color: #e9ecef;
+    color: var(--text-color);
 }
 
 .forms-section .card-heading,
@@ -1321,7 +1368,7 @@ section {
 
 /* Recommended Label */
 .recommended-label {
-    background: #198754;
+    background: var(--badge-success-bg);
     padding: 4px 10px;
     border-radius: 20px;
     font-size: 12px;
@@ -1336,10 +1383,10 @@ section {
 }
 
 .about-container {
-    background: var(--background-gradient);
-    padding: 0.5rem 1rem;
+    background: var(--section-bg);
+    padding: 1.5rem;
     border-radius: 8px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
 .about-header {
@@ -1361,22 +1408,23 @@ section {
 .about-subtitle {
     font-size: 0.9rem;
     font-weight: normal;
-    color: #e3f2fd;
+    color: var(--hero-subtext-icon);
 }
 
 .dark-mode .about-subtitle {
-    color: #e9ecef;
+    color: var(--hero-subtext-icon);
 }
 
 .about-content {
     font-size: 0.9rem;
     line-height: 1.6;
-    color: #333;
+    color: var(--text-color);
     margin-bottom: 0.8rem;
+    margin-top: 1rem;
 }
 
 .dark-mode .about-content {
-    color: #e9ecef;
+    color: var(--text-color);
 }
 
 .about-content p {
@@ -1391,8 +1439,8 @@ section {
 .mission-statement {
     margin-bottom: 0.8rem;
     padding: 0.5rem;
-    background-color: #f8f9fa;
-    border-left: 5px solid #0288d1;
+    background-color: var(--journey-strip-bg);
+    border-left: 5px solid var(--accent-blue);
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
@@ -1400,7 +1448,7 @@ section {
 .mission-statement h3 {
     font-size: 1.2rem;
     font-weight: bold;
-    color: #0288d1;
+    color: var(--section-header);
     margin-bottom: 0.5rem;
     display: flex;
     align-items: center;
@@ -1409,19 +1457,20 @@ section {
 
 .mission-statement p {
     font-size: 0.9rem;
-    color: #555;
+    color: var(--group-subtext);
     line-height: 1.6;
+    margin-top: 1rem;
 }
 
 .dark-mode .mission-statement p {
-    color: #e9ecef;
+    color: var(--group-subtext);
 }
 
 .team-why {
     margin-bottom: 0.8rem;
     padding: 0.5rem;
-    background-color: #e3f2fd;
-    border-left: 5px solid #2e7d32;
+    background-color: var(--journey-strip-bg);
+    border-left: 5px solid var(--accent-green);
     border-radius: 2px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
@@ -1429,7 +1478,7 @@ section {
 .team-why h3 {
     font-size: 1.2rem;
     font-weight: bold;
-    color: #2e7d32;
+    color: var(--accent-green);
     margin-bottom: 0.5rem;
     display: flex;
     align-items: center;
@@ -1438,12 +1487,13 @@ section {
 
 .team-why p {
     font-size: 0.9rem;
-    color: #555;
+    color: var(--group-subtext);
     margin-bottom: 0.6rem;
+    margin-top: 1rem;
 }
 
 .dark-mode .team-why p {
-    color: #e9ecef;
+    color: var(--group-subtext);
 }
 
 .call-to-action {
@@ -1453,17 +1503,38 @@ section {
 
 .call-to-action p {
     font-size: 0.9rem;
+    margin-top: 1rem;
 }
 
 .dark-mode .call-to-action p {
-    color: #e9ecef;
+    color: var(--text-color);
 }
 
 /* Testimonials */
+.testimonials-section .card {
+    background: var(--journey-strip-bg);
+    font-style: italic;
+    position: relative;
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.testimonials-section .card::before {
+    content: '\f10d';
+    font-family: 'Font Awesome 5 Free';
+    font-weight: 900;
+    color: var(--testimonial-quote);
+    font-size: 1.5rem;
+    position: absolute;
+    top: 0.5rem;
+    left: 0.5rem;
+    opacity: 0.3;
+}
+
 .testimonial-avatar {
     width: 30px;
     height: 30px;
-    background-color: #028028;
+    background-color: var(--accent-green);
     color: white;
     border-radius: 50%;
     display: flex;
@@ -1471,22 +1542,21 @@ section {
     justify-content: center;
     font-size: 0.8rem;
     font-weight: bold;
-    margin: 0 auto;
-    margin-bottom: 0.5rem;
+    margin: 0 auto 1rem;
 }
 
 .test-home {
-    background-color: #028028;
+    background-color: var(--accent-green);
     color: white;
     border-radius: 50%;
     font-size: 0.8rem;
-    margin-bottom: 0.5rem;
+    margin-bottom: 1rem;
 }
 
 .testimonial .home {
-    color: #028028;
-    font-weight: 0.8rem;
-    margin-top: 0.5rem;
+    color: var(--accent-green);
+    font-size: 0.8rem;
+    margin-top: 1rem;
 }
 
 /* Media Queries */
@@ -1597,13 +1667,13 @@ section {
 }
 
 @media (min-width: 768px) {
-    .navbar {
+    .navbar, .header-message {
+        max-width: 1200px;
+        margin: 0 auto;
         flex-direction: row;
         align-items: center;
         justify-content: space-between;
         padding: 1rem 2rem;
-        max-width: 1200px;
-        margin: 0 auto;
     }
 
     .navbar-actions {
@@ -1726,7 +1796,7 @@ section {
     }
 
     .tools-grid {
-        gap: 2rem;
+        gap: 2.5rem;
     }
 
     .accordion-button {
@@ -1779,7 +1849,7 @@ section {
     .why-section h2,
     .testimonials-section h2.section-heading {
         font-size: 2rem;
-        padding: 1.5rem;
+        padding: 0.5rem;
     }
 
     .about-container {
