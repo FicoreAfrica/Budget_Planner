@@ -242,7 +242,7 @@ def signin():
                 flash(trans('auth_invalid_credentials', default='Invalid email or password.', lang=lang), 'danger')
         elif form.errors:
             logger.error(f"Signin form validation failed: {form.errors}", extra={'session_id': session_id})
-            log_tool_usage(mongo, 'login', user_id=None, session_id=session_id, session_id=session_id, action='submit_error')
+            log_tool_usage(mongo, 'login', user_id=None, session_id=session_id, action='submit_error')
             flash(trans('auth_form_errors', default='Please correct the errors in the form.', lang=lang), 'danger')
     
         return render_template('signin.html', form=form, lang=lang)
