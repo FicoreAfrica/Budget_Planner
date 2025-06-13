@@ -1,29 +1,37 @@
 {% extends "base.html" %}
 {% block title %}{{ trans('admin_dashboard_title', default='Admin Dashboard', lang=lang) }}{% endblock %}
 {% block content %}
-<div class="container mx-auto px-4 sm:px-6 lg:px-8 py-8" style="background-color: #1a202c; color: #e2e8f0;">
-    <h1 class="text-3xl font-bold mb-4" style="color: #ff6b6b;">{{ trans('admin_dashboard_title', default='Admin Dashboard', lang=lang) }}</h1>
+<div class="container mx-auto px-4 sm:px-6 lg:px-8 py-8" id="dashboard" style="background-color: #1a202c; color: #e2e8f0;">
+    <!-- Color Toggle Buttons -->
+    <div class="mb-4">
+        <button onclick="changeColorScheme('red')" style="background-color: #ff6b6b; color: #ffffff; padding: 8px 16px; border: none; border-radius: 4px; margin-right: 8px;">Red Theme</button>
+        <button onclick="changeColorScheme('blue')" style="background-color: #4dabf7; color: #ffffff; padding: 8px 16px; border: none; border-radius: 4px; margin-right: 8px;">Blue Theme</button>
+        <button onclick="changeColorScheme('green')" style="background-color: #6be585; color: #ffffff; padding: 8px 16px; border: none; border-radius: 4px; margin-right: 8px;">Green Theme</button>
+        <button onclick="changeColorScheme('purple')" style="background-color: #9f7aea; color: #ffffff; padding: 8px 16px; border: none; border-radius: 4px;">Purple Theme</button>
+    </div>
+
+    <h1 class="text-3xl font-bold mb-4" style="color: #ff6b6b;" id="main-title">{{ trans('admin_dashboard_title', default='Admin Dashboard', lang=lang) }}</h1>
     <a href="{{ url_for('learning_hub.upload_content') }}" 
        class="inline-block py-2 px-4 rounded mb-4" 
-       style="background-color: #4dabf7; color: #ffffff; text-decoration: none; display: inline-block; padding: 10px 20px; border-radius: 5px; transition: background-color 0.3s; font-weight: bold;">
+       style="background-color: #4dabf7; color: #ffffff; text-decoration: none; display: inline-block; padding: 10px 20px; border-radius: 5px; transition: background-color 0.3s; font-weight: bold;" id="upload-button">
         <i class="fas fa-upload" style="margin-right: 8px; color: #ffffff;"></i>
         {{ trans('learning_hub_upload_content', default='Upload Learning Content', lang=lang) }}
     </a>
-    <p class="text-lg mb-6" style="color: #a0aec0;">{{ trans('admin_dashboard_desc', default='View and analyze platform usage and engagement metrics', lang=lang) }}</p>
+    <p class="text-lg mb-6" style="color: #a0aec0;" id="desc-text">{{ trans('admin_dashboard_desc', default='View and analyze platform usage and engagement metrics', lang=lang) }}</p>
 
     <!-- Navigation Tabs -->
-    <ul class="nav nav-tabs mb-6 flex border-b" style="border-bottom-color: #4a5568;">
+    <ul class="nav nav-tabs mb-6 flex border-b" style="border-bottom-color: #4a5568;" id="nav-tabs">
         <li class="nav-item">
             <a class="nav-link py-2 px-4 {{ 'font-semibold text-blue-700 border-b-2 border-blue-500' if request.endpoint == 'admin.overview' else 'text-gray-500 hover:text-gray-700' }}" 
                href="{{ url_for('admin.overview') }}" 
-               style="color: #ff9f43; text-decoration: none; transition: color 0.3s;">
+               style="color: #ff9f43; text-decoration: none; transition: color 0.3s;" id="overview-tab">
                 {{ trans('admin_overview', default='Overview', lang=lang) }}
             </a>
         </li>
         <li class="nav-item">
             <a class="nav-link py-2 px-4 {{ 'font-semibold text-blue-700 border-b-2 border-blue-500' if request.endpoint == 'admin.tool_usage' else 'text-gray-500 hover:text-gray-700' }}" 
                href="{{ url_for('admin.tool_usage') }}" 
-               style="color: #6be585; text-decoration: none; transition: color 0.3s;">
+               style="color: #6be585; text-decoration: none; transition: color 0.3s;" id="tool-usage-tab">
                 {{ trans('admin_tool_usage', default='Tool Usage', lang=lang) }}
             </a>
         </li>
@@ -33,8 +41,8 @@
     <form method="GET" action="{{ url_for('admin.tool_usage') }}" class="mb-6">
         <div class="flex flex-wrap gap-4">
             <div class="flex-1 md:w-1/4">
-                <label for="tool_name" class="block text-sm font-medium" style="color: #ff6b6b;">{{ trans('admin_filter_tool', default='Tool Name', lang=lang) }}</label>
-                <select name="tool_name" id="tool_name" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" style="border-color: #4a5568; padding: 8px; border-radius: 4px; color: #a0aec0; background-color: #2d3748;">
+                <label for="tool_name" class="block text-sm font-medium" style="color: #ff6b6b;" id="tool-label">{{ trans('admin_filter_tool', default='Tool Name', lang=lang) }}</label>
+                <select name="tool_name" id="tool_name" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" style="border-color: #4a5568; padding: 8px; border-radius: 4px; color: #a0aec0; background-color: #2d3748;" id="tool-select">
                     <option value="" style="color: #a0aec0;">{{ trans('admin_all_tools', default='All Tools', lang=lang) }}</option>
                     {% for tool in valid_tools %}
                         <option value="{{ tool }}" {{ 'selected' if tool == tool_name }} style="color: #a0aec0;">{{ trans('tool_' + tool, default=tool.replace('_', ' ').title(), lang=lang) }}</option>
@@ -42,8 +50,8 @@
                 </select>
             </div>
             <div class="flex-1 md:w-1/4">
-                <label for="action" class="block text-sm font-medium" style="color: #ff6b6b;">{{ trans('admin_filter_action', default='Action', lang=lang) }}</label>
-                <select name="action" id="action" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" style="border-color: #4a5568; padding: 8px; border-radius: 4px; color: #a0aec0; background-color: #2d3748;">
+                <label for="action" class="block text-sm font-medium" style="color: #ff6b6b;" id="action-label">{{ trans('admin_filter_action', default='Action', lang=lang) }}</label>
+                <select name="action" id="action" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" style="border-color: #4a5568; padding: 8px; border-radius: 4px; color: #a0aec0; background-color: #2d3748;" id="action-select">
                     <option value="" style="color: #a0aec0;">{{ trans('admin_all_actions', default='All Actions', lang=lang) }}</option>
                     {% for act in available_actions %}
                         <option value="{{ act }}" {{ 'selected' if act == action }} style="color: #a0aec0;">{{ act.replace('_', ' ').title() }}</option>
@@ -51,15 +59,15 @@
                 </select>
             </div>
             <div class="flex-1 md:w-1/4">
-                <label for="start_date" class="block text-sm font-medium" style="color: #ff6b6b;">{{ trans('admin_start_date', default='Start Date', lang=lang) }}</label>
-                <input type="date" name="start_date" id="start_date" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" style="border-color: #4a5568; padding: 8px; border-radius: 4px; color: #a0aec0; background-color: #2d3748;" value="{{ start_date or '' }}">
+                <label for="start_date" class="block text-sm font-medium" style="color: #ff6b6b;" id="start-label">{{ trans('admin_start_date', default='Start Date', lang=lang) }}</label>
+                <input type="date" name="start_date" id="start_date" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" style="border-color: #4a5568; padding: 8px; border-radius: 4px; color: #a0aec0; background-color: #2d3748;" value="{{ start_date or '' }}" id="start-input">
             </div>
             <div class="flex-1 md:w-1/4">
-                <label for="end_date" class="block text-sm font-medium" style="color: #ff6b6b;">{{ trans('admin_end_date', default='End Date', lang=lang) }}</label>
-                <input type="date" name="end_date" id="end_date" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" style="border-color: #4a5568; padding: 8px; border-radius: 4px; color: #a0aec0; background-color: #2d3748;" value="{{ end_date or '' }}">
+                <label for="end_date" class="block text-sm font-medium" style="color: #ff6b6b;" id="end-label">{{ trans('admin_end_date', default='End Date', lang=lang) }}</label>
+                <input type="date" name="end_date" id="end_date" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" style="border-color: #4a5568; padding: 8px; border-radius: 4px; color: #a0aec0; background-color: #2d3748;" value="{{ end_date or '' }}" id="end-input">
             </div>
             <div class="flex items-end">
-                <button type="submit" class="mt-1 w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700" style="background-color: #4dabf7; color: #ffffff; padding: 10px 20px; border-radius: 5px; transition: background-color 0.3s;">
+                <button type="submit" class="mt-1 w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700" style="background-color: #4dabf7; color: #ffffff; padding: 10px 20px; border-radius: 5px; transition: background-color 0.3s;" id="filter-button">
                     {{ trans('admin_filter', default='Apply Filter', lang=lang) }}
                 </button>
             </div>
@@ -68,50 +76,50 @@
 
     <!-- Overview Metrics -->
     {% if request.endpoint == 'admin.overview' %}
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-        <div class="bg-white shadow-sm rounded-lg p-4" style="background-color: #2d3748; box-shadow: 0 1px 3px rgba(0,0,0,0.3);">
-            <h5 class="text-lg font-semibold" style="color: #ff6b6b;">{{ trans('admin_total_users', default='Total Users', lang=lang) }}</h5>
-            <p class="text-4xl font-bold mt-2" style="color: #e2e8f0;">{{ metrics.total_users }}</p>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6" id="metrics-grid">
+        <div class="bg-white shadow-sm rounded-lg p-4" style="background-color: #2d3748; box-shadow: 0 1px 3px rgba(0,0,0,0.3);" id="metric-1">
+            <h5 class="text-lg font-semibold" style="color: #ff6b6b;" id="metric-title-1">{{ trans('admin_total_users', default='Total Users', lang=lang) }}</h5>
+            <p class="text-4xl font-bold mt-2" style="color: #e2e8f0;" id="metric-value-1">{{ metrics.total_users }}</p>
         </div>
-        <div class="bg-white shadow-sm rounded-lg p-4" style="background-color: #2d3748; box-shadow: 0 1px 3px rgba(0,0,0,0.3);">
-            <h5 class="text-lg font-semibold" style="color: #6be585;">{{ trans('admin_new_users_24h', default='New Users (24h)', lang=lang) }}</h5>
-            <p class="text-4xl font-bold mt-2" style="color: #e2e8f0;">{{ metrics.new_users_last_24h }}</p>
+        <div class="bg-white shadow-sm rounded-lg p-4" style="background-color: #2d3748; box-shadow: 0 1px 3px rgba(0,0,0,0.3);" id="metric-2">
+            <h5 class="text-lg font-semibold" style="color: #6be585;" id="metric-title-2">{{ trans('admin_new_users_24h', default='New Users (24h)', lang=lang) }}</h5>
+            <p class="text-4xl font-bold mt-2" style="color: #e2e8f0;" id="metric-value-2">{{ metrics.new_users_last_24h }}</p>
         </div>
-        <div class="bg-white shadow-sm rounded-lg p-4" style="background-color: #2d3748; box-shadow: 0 1px 3px rgba(0,0,0,0.3);">
-            <h5 class="text-lg font-semibold" style="color: #ff9f43;">{{ trans('admin_total_referrals', default='Total Referrals', lang=lang) }}</h5>
-            <p class="text-4xl font-bold mt-2" style="color: #e2e8f0;">{{ metrics.total_referrals }}</p>
+        <div class="bg-white shadow-sm rounded-lg p-4" style="background-color: #2d3748; box-shadow: 0 1px 3px rgba(0,0,0,0.3);" id="metric-3">
+            <h5 class="text-lg font-semibold" style="color: #ff9f43;" id="metric-title-3">{{ trans('admin_total_referrals', default='Total Referrals', lang=lang) }}</h5>
+            <p class="text-4xl font-bold mt-2" style="color: #e2e8f0;" id="metric-value-3">{{ metrics.total_referrals }}</p>
         </div>
-        <div class="bg-white shadow-sm rounded-lg p-4" style="background-color: #2d3748; box-shadow: 0 1px 3px rgba(0,0,0,0.3);">
-            <h5 class="text-lg font-semibold" style="color: #9f7aea;">{{ trans('admin_new_referrals_24h', default='New Referrals (24h)', lang=lang) }}</h5>
-            <p class="text-4xl font-bold mt-2" style="color: #e2e8f0;">{{ metrics.new_referrals_last_24h }}</p>
+        <div class="bg-white shadow-sm rounded-lg p-4" style="background-color: #2d3748; box-shadow: 0 1px 3px rgba(0,0,0,0.3);" id="metric-4">
+            <h5 class="text-lg font-semibold" style="color: #9f7aea;" id="metric-title-4">{{ trans('admin_new_referrals_24h', default='New Referrals (24h)', lang=lang) }}</h5>
+            <p class="text-4xl font-bold mt-2" style="color: #e2e8f0;" id="metric-value-4">{{ metrics.new_referrals_last_24h }}</p>
         </div>
-        <div class="bg-white shadow-sm rounded-lg p-4" style="background-color: #2d3748; box-shadow: 0 1px 3px rgba(0,0,0,0.3);">
-            <h5 class="text-lg font-semibold" style="color: #d69e2e;">{{ trans('admin_referral_conversion_rate', default='Referral Conversion (%)', lang=lang) }}</h5>
-            <p class="text-4xl font-bold mt-2" style="color: #e2e8f0;">{{ metrics.referral_conversion_rate }}%</p>
+        <div class="bg-white shadow-sm rounded-lg p-4" style="background-color: #2d3748; box-shadow: 0 1px 3px rgba(0,0,0,0.3);" id="metric-5">
+            <h5 class="text-lg font-semibold" style="color: #d69e2e;" id="metric-title-5">{{ trans('admin_referral_conversion_rate', default='Referral Conversion (%)', lang=lang) }}</h5>
+            <p class="text-4xl font-bold mt-2" style="color: #e2e8f0;" id="metric-value-5">{{ metrics.referral_conversion_rate }}%</p>
         </div>
-        <div class="bg-white shadow-sm rounded-lg p-4" style="background-color: #2d3748; box-shadow: 0 1px 3px rgba(0,0,0,0.3);">
-            <h5 class="text-lg font-semibold" style="color: #38b2ac;">{{ trans('admin_avg_feedback_rating', default='Avg Feedback Rating', lang=lang) }}</h5>
-            <p class="text-4xl font-bold mt-2" style="color: #e2e8f0;">{{ metrics.avg_feedback_rating }}</p>
+        <div class="bg-white shadow-sm rounded-lg p-4" style="background-color: #2d3748; box-shadow: 0 1px 3px rgba(0,0,0,0.3);" id="metric-6">
+            <h5 class="text-lg font-semibold" style="color: #38b2ac;" id="metric-title-6">{{ trans('admin_avg_feedback_rating', default='Avg Feedback Rating', lang=lang) }}</h5>
+            <p class="text-4xl font-bold mt-2" style="color: #e2e8f0;" id="metric-value-6">{{ metrics.avg_feedback_rating }}</p>
         </div>
-        <div class="bg-white shadow-sm rounded-lg p-4" style="background-color: #2d3748; box-shadow: 0 1px 3px rgba(0,0,0,0.3);">
-            <h5 class="text-lg font-semibold" style="color: #805ad5;">{{ trans('admin_tool_usage_total', default='Total Tool Usage', lang=lang) }}</h5>
-            <p class="text-4xl font-bold mt-2" style="color: #e2e8f0;">{{ metrics.tool_usage_total }}</p>
+        <div class="bg-white shadow-sm rounded-lg p-4" style="background-color: #2d3748; box-shadow: 0 1px 3px rgba(0,0,0,0.3);" id="metric-7">
+            <h5 class="text-lg font-semibold" style="color: #805ad5;" id="metric-title-7">{{ trans('admin_tool_usage_total', default='Total Tool Usage', lang=lang) }}</h5>
+            <p class="text-4xl font-bold mt-2" style="color: #e2e8f0;" id="metric-value-7">{{ metrics.tool_usage_total }}</p>
         </div>
     </div>
 
     <!-- Top Tools and Action Breakdown -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <div class="bg-white shadow-sm rounded-lg p-6" style="background-color: #2d3748; box-shadow: 0 1px 3px rgba(0,0,0,0.3);">
-            <h5 class="text-lg font-semibold mb-4" style="color: #ff6b6b;">{{ trans('admin_top_tools', default='Top Tools', lang=lang) }}</h5>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6" id="tools-grid">
+        <div class="bg-white shadow-sm rounded-lg p-6" style="background-color: #2d3748; box-shadow: 0 1px 3px rgba(0,0,0,0.3);" id="tools-div">
+            <h5 class="text-lg font-semibold mb-4" style="color: #ff6b6b;" id="tools-title">{{ trans('admin_top_tools', default='Top Tools', lang=lang) }}</h5>
             <ul class="list-disc pl-5">
                 {% for tool, count in metrics.top_tools %}
-                    <li class="mb-2" style="color: #a0aec0;">
+                    <li class="mb-2" style="color: #a0aec0;" id="tool-item-{{ loop.index }}">
                         {{ trans('tool_' + tool, default=tool.replace('_', ' ').title(), lang=lang) }}: {{ count }} {{ trans('admin_uses', default='uses', lang=lang) }}
                         <ul class="list-circle pl-6 mt-1">
                             {% for action, action_count in (metrics.action_breakdown.get(tool, []) or []) %}
-                                <li style="color: #a0aec0;">{{ action.replace('_', ' ').title() }}: {{ action_count }} {{ trans('admin_uses', default='uses', lang=lang) }}</li>
+                                <li style="color: #a0aec0;" id="action-item-{{ loop.parent.loop.index }}-{{ loop.index }}">{{ action.replace('_', ' ').title() }}: {{ action_count }} {{ trans('admin_uses', default='uses', lang=lang) }}</li>
                             {% else %}
-                                <li style="color: #a0aec0;">{{ trans('admin_no_actions', default='No actions available', lang=lang) }}</li>
+                                <li style="color: #a0aec0;" id="no-action-{{ loop.parent.loop.index }}">{{ trans('admin_no_actions', default='No actions available', lang=lang) }}</li>
                             {% endfor %}
                         </ul>
                     </li>
@@ -123,39 +131,39 @@
 
     <!-- Tool Usage Logs -->
     {% if request.endpoint == 'admin.tool_usage' %}
-    <div class="bg-white shadow-lg rounded-lg mb-8" style="background-color: #2d3748; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+    <div class="bg-white shadow-lg rounded-lg mb-8" style="background-color: #2d3748; box-shadow: 0 4px 6px rgba(0,0,0,0.3);" id="logs-div">
         <div class="p-6">
-            <h5 class="text-lg font-semibold mb-4" style="color: #ff6b6b;">{{ trans('admin_usage_logs', default='Usage Logs', lang=lang) }}</h5>
+            <h5 class="text-lg font-semibold mb-4" style="color: #ff6b6b;" id="logs-title">{{ trans('admin_usage_logs', default='Usage Logs', lang=lang) }}</h5>
             <a href="{{ url_for('admin.export_csv', tool_name=tool_name or '', start_date=start_date or '', end_date=end_date or '', action=action or '') }}" 
                class="inline-block bg-green-600 text-white hover:bg-green-700 py-2 px-4 rounded mb-3" 
-               style="background-color: #2ecc71; color: #ffffff; padding: 10px 20px; border-radius: 5px; transition: background-color 0.3s; text-decoration: none;">
+               style="background-color: #2ecc71; color: #ffffff; padding: 10px 20px; border-radius: 5px; transition: background-color 0.3s; text-decoration: none;" id="export-link">
                 {{ trans('admin_export_csv', default='Export CSV', lang=lang) }}
             </a>
             <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
+                <table class="w-full text-left border-collapse" id="logs-table">
                     <thead>
                         <tr class="bg-gray-100" style="background-color: #4a5568;">
-                            <th class="py-3 px-4 text-sm font-medium" style="color: #ff6b6b;">{{ trans('admin_id', default='ID', lang=lang) }}</th>
-                            <th class="py-3 px-4 text-sm font-medium" style="color: #6be585;">{{ trans('admin_user_id', default='User ID', lang=lang) }}</th>
-                            <th class="py-3 px-4 text-sm font-medium" style="color: #ff9f43;">{{ trans('admin_session_id', default='Session ID', lang=lang) }}</th>
-                            <th class="py-3 px-4 text-sm font-medium" style="color: #9f7aea;">{{ trans('admin_tool_name', default='Tool Name', lang=lang) }}</th>
-                            <th class="py-3 px-4 text-sm font-medium" style="color: #d69e2e;">{{ trans('admin_action', default='Action', lang=lang) }}</th>
-                            <th class="py-3 px-4 text-sm font-medium" style="color: #38b2ac;">{{ trans('admin_created_at', default='Created', lang=lang) }}</th>
+                            <th class="py-3 px-4 text-sm font-medium" style="color: #ff6b6b;" id="id-header">{{ trans('admin_id', default='ID', lang=lang) }}</th>
+                            <th class="py-3 px-4 text-sm font-medium" style="color: #6be585;" id="user-header">{{ trans('admin_user_id', default='User ID', lang=lang) }}</th>
+                            <th class="py-3 px-4 text-sm font-medium" style="color: #ff9f43;" id="session-header">{{ trans('admin_session_id', default='Session ID', lang=lang) }}</th>
+                            <th class="py-3 px-4 text-sm font-medium" style="color: #9f7aea;" id="tool-header">{{ trans('admin_tool_name', default='Tool Name', lang=lang) }}</th>
+                            <th class="py-3 px-4 text-sm font-medium" style="color: #d69e2e;" id="action-header">{{ trans('admin_action', default='Action', lang=lang) }}</th>
+                            <th class="py-3 px-4 text-sm font-medium" style="color: #38b2ac;" id="created-header">{{ trans('admin_created_at', default='Created', lang=lang) }}</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for log in metrics %}
-                            <tr class="border-t" style="border-top-color: #4a5568;">
-                                <td class="py-2 px-4" style="color: #a0aec0;">{{ log.id }}</td>
-                                <td class="py-2 px-4" style="color: #a0aec0;">{{ log.user_id or 'anonymous' }}</td>
-                                <td class="py-2 px-4" style="color: #a0aec0;">{{ log.session_id }}</td>
-                                <td class="py-2 px-4" style="color: #a0aec0;">{{ trans('tool_' + log.tool_name, default=log.tool_name.replace('_', ' ').title(), lang=lang) }}</td>
-                                <td class="py-2 px-4" style="color: #a0aec0;">{{ log.action.replace('_', ' ').title() if log.action else 'N/A' }}</td>
-                                <td class="py-2 px-4" style="color: #a0aec0;">{{ log.created_at|format_datetime if log.created_at else 'N/A' }}</td>
+                            <tr class="border-t" style="border-top-color: #4a5568;" id="log-row-{{ loop.index }}">
+                                <td class="py-2 px-4" style="color: #a0aec0;" id="log-id-{{ loop.index }}">{{ log.id }}</td>
+                                <td class="py-2 px-4" style="color: #a0aec0;" id="log-user-{{ loop.index }}">{{ log.user_id or 'anonymous' }}</td>
+                                <td class="py-2 px-4" style="color: #a0aec0;" id="log-session-{{ loop.index }}">{{ log.session_id }}</td>
+                                <td class="py-2 px-4" style="color: #a0aec0;" id="log-tool-{{ loop.index }}">{{ trans('tool_' + log.tool_name, default=log.tool_name.replace('_', ' ').title(), lang=lang) }}</td>
+                                <td class="py-2 px-4" style="color: #a0aec0;" id="log-action-{{ loop.index }}">{{ log.action.replace('_', ' ').title() if log.action else 'N/A' }}</td>
+                                <td class="py-2 px-4" style="color: #a0aec0;" id="log-created-{{ loop.index }}">{{ log.created_at|format_datetime if log.created_at else 'N/A' }}</td>
                             </tr>
                         {% else %}
                             <tr>
-                                <td colspan="6" class="py-2 px-4 text-center" style="color: #a0aec0;">{{ trans('admin_no_logs', default='No logs found', lang=lang) }}</td>
+                                <td colspan="6" class="py-2 px-4 text-center" style="color: #a0aec0;" id="no-logs">{{ trans('admin_no_logs', default='No logs found', lang=lang) }}</td>
                             </tr>
                         {% endfor %}
                     </tbody>
@@ -165,7 +173,178 @@
     </div>
 
     <script>
-        // Chart.js is no longer needed for tool_usage
+        function changeColorScheme(theme) {
+            const dashboard = document.getElementById('dashboard');
+            const mainTitle = document.getElementById('main-title');
+            const uploadButton = document.getElementById('upload-button');
+            const descText = document.getElementById('desc-text');
+            const navTabs = document.getElementById('nav-tabs');
+            const toolLabel = document.getElementById('tool-label');
+            const actionLabel = document.getElementById('action-label');
+            const startLabel = document.getElementById('start-label');
+            const endLabel = document.getElementById('end-label');
+            const toolSelect = document.getElementById('tool-select');
+            const actionSelect = document.getElementById('action-select');
+            const startInput = document.getElementById('start-input');
+            const endInput = document.getElementById('end-input');
+            const filterButton = document.getElementById('filter-button');
+            const metricsGrid = document.getElementById('metrics-grid');
+            const toolsGrid = document.getElementById('tools-grid');
+            const toolsDiv = document.getElementById('tools-div');
+            const toolsTitle = document.getElementById('tools-title');
+            const logsDiv = document.getElementById('logs-div');
+            const logsTitle = document.getElementById('logs-title');
+            const exportLink = document.getElementById('export-link');
+            const logsTable = document.getElementById('logs-table');
+            const overviewTab = document.getElementById('overview-tab');
+            const toolUsageTab = document.getElementById('tool-usage-tab');
+
+            const metricTitles = document.querySelectorAll('[id^="metric-title-"]');
+            const metricValues = document.querySelectorAll('[id^="metric-value-"]');
+            const toolItems = document.querySelectorAll('[id^="tool-item-"]');
+            const actionItems = document.querySelectorAll('[id^="action-item-"]');
+            const noActions = document.querySelectorAll('[id^="no-action-"]');
+            const logRows = document.querySelectorAll('[id^="log-row-"]');
+            const tableHeaders = document.querySelectorAll('th');
+
+            switch (theme) {
+                case 'red':
+                    dashboard.style.backgroundColor = '#1a202c';
+                    mainTitle.style.color = '#ff6b6b';
+                    uploadButton.style.backgroundColor = '#ff6b6b';
+                    descText.style.color = '#a0aec0';
+                    navTabs.style.borderBottomColor = '#4a5568';
+                    overviewTab.style.color = '#ff6b6b';
+                    toolUsageTab.style.color = '#ff6b6b';
+                    toolLabel.style.color = '#ff6b6b';
+                    actionLabel.style.color = '#ff6b6b';
+                    startLabel.style.color = '#ff6b6b';
+                    endLabel.style.color = '#ff6b6b';
+                    toolSelect.style.backgroundColor = '#2d3748';
+                    actionSelect.style.backgroundColor = '#2d3748';
+                    startInput.style.backgroundColor = '#2d3748';
+                    endInput.style.backgroundColor = '#2d3748';
+                    filterButton.style.backgroundColor = '#ff6b6b';
+                    metricsGrid.querySelectorAll('div').forEach(div => div.style.backgroundColor = '#2d3748');
+                    metricTitles.forEach(title => title.style.color = '#ff6b6b');
+                    metricValues.forEach(value => value.style.color = '#e2e8f0');
+                    toolsDiv.style.backgroundColor = '#2d3748';
+                    toolsTitle.style.color = '#ff6b6b';
+                    toolItems.forEach(item => item.style.color = '#a0aec0');
+                    actionItems.forEach(item => item.style.color = '#a0aec0');
+                    noActions.forEach(item => item.style.color = '#a0aec0');
+                    logsDiv.style.backgroundColor = '#2d3748';
+                    logsTitle.style.color = '#ff6b6b';
+                    exportLink.style.backgroundColor = '#ff6b6b';
+                    logsTable.querySelector('thead').style.backgroundColor = '#4a5568';
+                    tableHeaders.forEach(header => header.style.color = '#ff6b6b');
+                    logRows.forEach(row => row.style.borderTopColor = '#4a5568');
+                    logRows.forEach(row => row.querySelectorAll('td').forEach(td => td.style.color = '#a0aec0'));
+                    break;
+
+                case 'blue':
+                    dashboard.style.backgroundColor = '#1a202c';
+                    mainTitle.style.color = '#4dabf7';
+                    uploadButton.style.backgroundColor = '#4dabf7';
+                    descText.style.color = '#a0aec0';
+                    navTabs.style.borderBottomColor = '#4a5568';
+                    overviewTab.style.color = '#4dabf7';
+                    toolUsageTab.style.color = '#4dabf7';
+                    toolLabel.style.color = '#4dabf7';
+                    actionLabel.style.color = '#4dabf7';
+                    startLabel.style.color = '#4dabf7';
+                    endLabel.style.color = '#4dabf7';
+                    toolSelect.style.backgroundColor = '#2d3748';
+                    actionSelect.style.backgroundColor = '#2d3748';
+                    startInput.style.backgroundColor = '#2d3748';
+                    endInput.style.backgroundColor = '#2d3748';
+                    filterButton.style.backgroundColor = '#4dabf7';
+                    metricsGrid.querySelectorAll('div').forEach(div => div.style.backgroundColor = '#2d3748');
+                    metricTitles.forEach(title => title.style.color = '#4dabf7');
+                    metricValues.forEach(value => value.style.color = '#e2e8f0');
+                    toolsDiv.style.backgroundColor = '#2d3748';
+                    toolsTitle.style.color = '#4dabf7';
+                    toolItems.forEach(item => item.style.color = '#a0aec0');
+                    actionItems.forEach(item => item.style.color = '#a0aec0');
+                    noActions.forEach(item => item.style.color = '#a0aec0');
+                    logsDiv.style.backgroundColor = '#2d3748';
+                    logsTitle.style.color = '#4dabf7';
+                    exportLink.style.backgroundColor = '#4dabf7';
+                    logsTable.querySelector('thead').style.backgroundColor = '#4a5568';
+                    tableHeaders.forEach(header => header.style.color = '#4dabf7');
+                    logRows.forEach(row => row.style.borderTopColor = '#4a5568');
+                    logRows.forEach(row => row.querySelectorAll('td').forEach(td => td.style.color = '#a0aec0'));
+                    break;
+
+                case 'green':
+                    dashboard.style.backgroundColor = '#1a202c';
+                    mainTitle.style.color = '#6be585';
+                    uploadButton.style.backgroundColor = '#6be585';
+                    descText.style.color = '#a0aec0';
+                    navTabs.style.borderBottomColor = '#4a5568';
+                    overviewTab.style.color = '#6be585';
+                    toolUsageTab.style.color = '#6be585';
+                    toolLabel.style.color = '#6be585';
+                    actionLabel.style.color = '#6be585';
+                    startLabel.style.color = '#6be585';
+                    endLabel.style.color = '#6be585';
+                    toolSelect.style.backgroundColor = '#2d3748';
+                    actionSelect.style.backgroundColor = '#2d3748';
+                    startInput.style.backgroundColor = '#2d3748';
+                    endInput.style.backgroundColor = '#2d3748';
+                    filterButton.style.backgroundColor = '#6be585';
+                    metricsGrid.querySelectorAll('div').forEach(div => div.style.backgroundColor = '#2d3748');
+                    metricTitles.forEach(title => title.style.color = '#6be585');
+                    metricValues.forEach(value => value.style.color = '#e2e8f0');
+                    toolsDiv.style.backgroundColor = '#2d3748';
+                    toolsTitle.style.color = '#6be585';
+                    toolItems.forEach(item => item.style.color = '#a0aec0');
+                    actionItems.forEach(item => item.style.color = '#a0aec0');
+                    noActions.forEach(item => item.style.color = '#a0aec0');
+                    logsDiv.style.backgroundColor = '#2d3748';
+                    logsTitle.style.color = '#6be585';
+                    exportLink.style.backgroundColor = '#6be585';
+                    logsTable.querySelector('thead').style.backgroundColor = '#4a5568';
+                    tableHeaders.forEach(header => header.style.color = '#6be585');
+                    logRows.forEach(row => row.style.borderTopColor = '#4a5568');
+                    logRows.forEach(row => row.querySelectorAll('td').forEach(td => td.style.color = '#a0aec0'));
+                    break;
+
+                case 'purple':
+                    dashboard.style.backgroundColor = '#1a202c';
+                    mainTitle.style.color = '#9f7aea';
+                    uploadButton.style.backgroundColor = '#9f7aea';
+                    descText.style.color = '#a0aec0';
+                    navTabs.style.borderBottomColor = '#4a5568';
+                    overviewTab.style.color = '#9f7aea';
+                    toolUsageTab.style.color = '#9f7aea';
+                    toolLabel.style.color = '#9f7aea';
+                    actionLabel.style.color = '#9f7aea';
+                    startLabel.style.color = '#9f7aea';
+                    endLabel.style.color = '#9f7aea';
+                    toolSelect.style.backgroundColor = '#2d3748';
+                    actionSelect.style.backgroundColor = '#2d3748';
+                    startInput.style.backgroundColor = '#2d3748';
+                    endInput.style.backgroundColor = '#2d3748';
+                    filterButton.style.backgroundColor = '#9f7aea';
+                    metricsGrid.querySelectorAll('div').forEach(div => div.style.backgroundColor = '#2d3748');
+                    metricTitles.forEach(title => title.style.color = '#9f7aea');
+                    metricValues.forEach(value => value.style.color = '#e2e8f0');
+                    toolsDiv.style.backgroundColor = '#2d3748';
+                    toolsTitle.style.color = '#9f7aea';
+                    toolItems.forEach(item => item.style.color = '#a0aec0');
+                    actionItems.forEach(item => item.style.color = '#a0aec0');
+                    noActions.forEach(item => item.style.color = '#a0aec0');
+                    logsDiv.style.backgroundColor = '#2d3748';
+                    logsTitle.style.color = '#9f7aea';
+                    exportLink.style.backgroundColor = '#9f7aea';
+                    logsTable.querySelector('thead').style.backgroundColor = '#4a5568';
+                    tableHeaders.forEach(header => header.style.color = '#9f7aea');
+                    logRows.forEach(row => row.style.borderTopColor = '#4a5568');
+                    logRows.forEach(row => row.querySelectorAll('td').forEach(td => td.style.color = '#a0aec0'));
+                    break;
+            }
+        }
     </script>
     {% endif %}
 </div>
