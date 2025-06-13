@@ -24,6 +24,11 @@
     {% block extra_head %}{% endblock %}
 </head>
 <body>
+    <!-- Header Message (Moved directly under body) -->
+    <div class="header-message">
+        {{ trans('core_welcome_to_ficore') | default('Welcome to Ficore Africa Tools Suite: Use Ficore to Track your income, net worth, budgets, and bills, to grow your money with confidence.') }}
+    </div>
+
     <!-- Consent Banner -->
     {% if not session.get('consent_acknowledged') %}
     <div class="consent-banner alert alert-info alert-dismissible fade show" id="consentBanner" role="alert">
@@ -44,11 +49,6 @@
             </div>
         {% endif %}
     {% endwith %}
-
-    <!-- Header Message -->
-    <div class="header-message">
-        {{ trans('core_welcome_to_ficore') | default('Welcome to Ficore Africa Tools Suite: Use Ficore to Track your income, net worth, budgets, and bills, to grow your money with confidence.') }}
-    </div>
 
     <!-- Navigation Bar -->
     {% set nav_content %}
