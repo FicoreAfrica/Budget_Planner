@@ -1,4 +1,43 @@
-{% extends "base.html" %}
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script>{% extends "base.html" %}
 {% block title %}{{ trans('admin_dashboard_title', default='Admin Dashboard', lang=lang) }}{% endblock %}
 {% block content %}
 <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-8" id="dashboard" style="background-color: #1a202c; color: #e2e8f0;">
@@ -85,7 +124,7 @@
             <h5 class="text-lg font-semibold" style="color: #6be585;" id="metric-title-2">{{ trans('admin_new_users_24h', default='New Users (24h)', lang=lang) }}</h5>
             <p class="text-4xl font-bold mt-2" style="color: #e2e8f0;" id="metric-value-2">{{ metrics.new_users_last_24h }}</p>
         </div>
-        <div class="bg-white shadow-sm rounded-lg p-4" style="background-color: #2d3748; box-shadow: 0 1px 3px rgba(0,0,0,0.3);" id="metric-3">
+        <div class="bg-white shadow-sm rounded-lg p-4" style="  background-color: #2d3748; box-shadow: 0 1px 3px rgba(0,0,0,0.3);" id="metric-3">
             <h5 class="text-lg font-semibold" style="color: #ff9f43;" id="metric-title-3">{{ trans('admin_total_referrals', default='Total Referrals', lang=lang) }}</h5>
             <p class="text-4xl font-bold mt-2" style="color: #e2e8f0;" id="metric-value-3">{{ metrics.total_referrals }}</p>
         </div>
@@ -113,13 +152,14 @@
             <h5 class="text-lg font-semibold mb-4" style="color: #ff6b6b;" id="tools-title">{{ trans('admin_top_tools', default='Top Tools', lang=lang) }}</h5>
             <ul class="list-disc pl-5">
                 {% for tool, count in metrics.top_tools %}
-                    <li class="mb-2" style="color: #a0aec0;" id="tool-item-{{ loop.index }}">
+                    {% set outer_idx = loop.index %}
+                    <li class="mb-2" style="color: #a0aec0;" id="tool-item-{{ outer_idx }}">
                         {{ trans('tool_' + tool, default=tool.replace('_', ' ').title(), lang=lang) }}: {{ count }} {{ trans('admin_uses', default='uses', lang=lang) }}
                         <ul class="list-circle pl-6 mt-1">
                             {% for action, action_count in (metrics.action_breakdown.get(tool, []) or []) %}
-                                <li style="color: #a0aec0;" id="action-item-{{ loop.parent.loop.index }}-{{ loop.index }}">{{ action.replace('_', ' ').title() }}: {{ action_count }} {{ trans('admin_uses', default='uses', lang=lang) }}</li>
+                                <li style="color: #a0aec0;" id="action-item-{{ outer_idx }}-{{ loop.index }}">{{ action.replace('_', ' ').title() }}: {{ action_count }} {{ trans('admin_uses', default='uses', lang=lang) }}</li>
                             {% else %}
-                                <li style="color: #a0aec0;" id="no-action-{{ loop.parent.loop.index }}">{{ trans('admin_no_actions', default='No actions available', lang=lang) }}</li>
+                                <li style="color: #a0aec0;" id="no-action-{{ outer_idx }}">{{ trans('admin_no_actions', default='No actions available', lang=lang) }}</li>
                             {% endfor %}
                         </ul>
                     </li>
