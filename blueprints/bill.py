@@ -454,7 +454,6 @@ def view_edit():
     log_tool_usage(
         mongo,
         tool_name='bill',
-       
         user_id=current_user.id if current_user.is_authenticated else None,
         session_id=session['sid'],
         action='view_edit_view'
