@@ -147,6 +147,7 @@ EMERGENCY_FUND_TRANSLATIONS = {
     },
     'ha': {
         'emergency_fund_calculator': 'Asusun Gaggawa',
+        'emergency_fund_insight_high_income_percentage': 'Shirin ka na iya bukatar fiye da kashi 30% na kudin shigarka. Ka yi kokarin rage kashe kudi.',
         'emergency_fund_plan_emergency_fund': 'Tsara asusun gaggawa tare da Ficore Africa',
         'emergency_fund_dashboard': 'Dashboard na Asusun Gaggawa',
         'emergency_fund_emergency_fund_completed_success': 'An ƙirƙiri shirin asusun cikin nasara',
