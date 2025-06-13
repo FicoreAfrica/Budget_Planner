@@ -56,7 +56,7 @@
         <i class="fas fa-upload" style="margin-right: 8px; color: #ffffff;"></i>
         {{ trans('learning_hub_upload_content', default='Upload Learning Content', lang=lang) }}
     </a>
-    <p class="text-lg mb-6" style="color: #a0aec0;" id="desc-text">{{ trans('admin_dashboard_desc', default='View and analyze platform usage and engagement metrics', lang=lang) }}</p>
+    <p class="text-lg mb-6" style="color: #e2e8f0;" id="desc-text">{{ trans('admin_dashboard_desc', default='View and analyze platform usage and engagement metrics', lang=lang) }}</p>
 
     <!-- Navigation Tabs -->
     <ul class="nav nav-tabs mb-6 flex border-b" style="border-bottom-color: #4a5568;" id="nav-tabs">
@@ -81,29 +81,29 @@
         <div class="flex flex-wrap gap-4">
             <div class="flex-1 md:w-1/4">
                 <label for="tool_name" class="block text-sm font-medium" style="color: #ff6b6b;" id="tool-label">{{ trans('admin_filter_tool', default='Tool Name', lang=lang) }}</label>
-                <select name="tool_name" id="tool_name" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" style="border-color: #4a5568; padding: 8px; border-radius: 4px; color: #a0aec0; background-color: #2d3748;" id="tool-select">
-                    <option value="" style="color: #a0aec0;">{{ trans('admin_all_tools', default='All Tools', lang=lang) }}</option>
+                <select name="tool_name" id="tool_name" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" style="border-color: #4a5568; padding: 8px; border-radius: 4px; color: #e2e8f0; background-color: #2d3748;" id="tool-select">
+                    <option value="" style="color: #e2e8f0;">{{ trans('admin_all_tools', default='All Tools', lang=lang) }}</option>
                     {% for tool in valid_tools %}
-                        <option value="{{ tool }}" {{ 'selected' if tool == tool_name }} style="color: #a0aec0;">{{ trans('tool_' + tool, default=tool.replace('_', ' ').title(), lang=lang) }}</option>
+                        <option value="{{ tool }}" {{ 'selected' if tool == tool_name }} style="color: #e2e8f0;">{{ trans('tool_' + tool, default=tool.replace('_', ' ').title(), lang=lang) }}</option>
                     {% endfor %}
                 </select>
             </div>
             <div class="flex-1 md:w-1/4">
                 <label for="action" class="block text-sm font-medium" style="color: #ff6b6b;" id="action-label">{{ trans('admin_filter_action', default='Action', lang=lang) }}</label>
-                <select name="action" id="action" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" style="border-color: #4a5568; padding: 8px; border-radius: 4px; color: #a0aec0; background-color: #2d3748;" id="action-select">
-                    <option value="" style="color: #a0aec0;">{{ trans('admin_all_actions', default='All Actions', lang=lang) }}</option>
+                <select name="action" id="action" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" style="border-color: #4a5568; padding: 8px; border-radius: 4px; color: #e2e8f0; background-color: #2d3748;" id="action-select">
+                    <option value="" style="color: #e2e8f0;">{{ trans('admin_all_actions', default='All Actions', lang=lang) }}</option>
                     {% for act in available_actions %}
-                        <option value="{{ act }}" {{ 'selected' if act == action }} style="color: #a0aec0;">{{ act.replace('_', ' ').title() }}</option>
+                        <option value="{{ act }}" {{ 'selected' if act == action }} style="color: #e2e8f0;">{{ act.replace('_', ' ').title() }}</option>
                     {% endfor %}
                 </select>
             </div>
             <div class="flex-1 md:w-1/4">
                 <label for="start_date" class="block text-sm font-medium" style="color: #ff6b6b;" id="start-label">{{ trans('admin_start_date', default='Start Date', lang=lang) }}</label>
-                <input type="date" name="start_date" id="start_date" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" style="border-color: #4a5568; padding: 8px; border-radius: 4px; color: #a0aec0; background-color: #2d3748;" value="{{ start_date or '' }}" id="start-input">
+                <input type="date" name="start_date" id="start_date" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" style="border-color: #4a5568; padding: 8px; border-radius: 4px; color: #e2e8f0; background-color: #2d3748;" value="{{ start_date or '' }}" id="start-input">
             </div>
             <div class="flex-1 md:w-1/4">
                 <label for="end_date" class="block text-sm font-medium" style="color: #ff6b6b;" id="end-label">{{ trans('admin_end_date', default='End Date', lang=lang) }}</label>
-                <input type="date" name="end_date" id="end_date" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" style="border-color: #4a5568; padding: 8px; border-radius: 4px; color: #a0aec0; background-color: #2d3748;" value="{{ end_date or '' }}" id="end-input">
+                <input type="date" name="end_date" id="end_date" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" style="border-color: #4a5568; padding: 8px; border-radius: 4px; color: #e2e8f0; background-color: #2d3748;" value="{{ end_date or '' }}" id="end-input">
             </div>
             <div class="flex items-end">
                 <button type="submit" class="mt-1 w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700" style="background-color: #4dabf7; color: #ffffff; padding: 10px 20px; border-radius: 5px; transition: background-color 0.3s;" id="filter-button">
@@ -153,13 +153,13 @@
             <ul class="list-disc pl-5">
                 {% for tool, count in metrics.top_tools %}
                     {% set outer_idx = loop.index %}
-                    <li class="mb-2" style="color: #a0aec0;" id="tool-item-{{ outer_idx }}">
+                    <li class="mb-2" style="color: #e2e8f0;" id="tool-item-{{ outer_idx }}">
                         {{ trans('tool_' + tool, default=tool.replace('_', ' ').title(), lang=lang) }}: {{ count }} {{ trans('admin_uses', default='uses', lang=lang) }}
                         <ul class="list-circle pl-6 mt-1">
                             {% for action, action_count in (metrics.action_breakdown.get(tool, []) or []) %}
-                                <li style="color: #a0aec0;" id="action-item-{{ outer_idx }}-{{ loop.index }}">{{ action.replace('_', ' ').title() }}: {{ action_count }} {{ trans('admin_uses', default='uses', lang=lang) }}</li>
+                                <li style="color: #e2e8f0;" id="action-item-{{ outer_idx }}-{{ loop.index }}">{{ action.replace('_', ' ').title() }}: {{ action_count }} {{ trans('admin_uses', default='uses', lang=lang) }}</li>
                             {% else %}
-                                <li style="color: #a0aec0;" id="no-action-{{ outer_idx }}">{{ trans('admin_no_actions', default='No actions available', lang=lang) }}</li>
+                                <li style="color: #e2e8f0;" id="no-action-{{ outer_idx }}">{{ trans('admin_no_actions', default='No actions available', lang=lang) }}</li>
                             {% endfor %}
                         </ul>
                     </li>
@@ -194,16 +194,16 @@
                     <tbody>
                         {% for log in metrics %}
                             <tr class="border-t" style="border-top-color: #4a5568;" id="log-row-{{ loop.index }}">
-                                <td class="py-2 px-4" style="color: #a0aec0;" id="log-id-{{ loop.index }}">{{ log.id }}</td>
-                                <td class="py-2 px-4" style="color: #a0aec0;" id="log-user-{{ loop.index }}">{{ log.user_id or 'anonymous' }}</td>
-                                <td class="py-2 px-4" style="color: #a0aec0;" id="log-session-{{ loop.index }}">{{ log.session_id }}</td>
-                                <td class="py-2 px-4" style="color: #a0aec0;" id="log-tool-{{ loop.index }}">{{ trans('tool_' + log.tool_name, default=log.tool_name.replace('_', ' ').title(), lang=lang) }}</td>
-                                <td class="py-2 px-4" style="color: #a0aec0;" id="log-action-{{ loop.index }}">{{ log.action.replace('_', ' ').title() if log.action else 'N/A' }}</td>
-                                <td class="py-2 px-4" style="color: #a0aec0;" id="log-created-{{ loop.index }}">{{ log.created_at|format_datetime if log.created_at else 'N/A' }}</td>
+                                <td class="py-2 px-4" style="color: #e2e8f0;" id="log-id-{{ loop.index }}">{{ log.id }}</td>
+                                <td class="py-2 px-4" style="color: #e2e8f0;" id="log-user-{{ loop.index }}">{{ log.user_id or 'anonymous' }}</td>
+                                <td class="py-2 px-4" style="color: #e2e8f0;" id="log-session-{{ loop.index }}">{{ log.session_id }}</td>
+                                <td class="py-2 px-4" style="color: #e2e8f0;" id="log-tool-{{ loop.index }}">{{ trans('tool_' + log.tool_name, default=log.tool_name.replace('_', ' ').title(), lang=lang) }}</td>
+                                <td class="py-2 px-4" style="color: #e2e8f0;" id="log-action-{{ loop.index }}">{{ log.action.replace('_', ' ').title() if log.action else 'N/A' }}</td>
+                                <td class="py-2 px-4" style="color: #e2e8f0;" id="log-created-{{ loop.index }}">{{ log.created_at|format_datetime if log.created_at else 'N/A' }}</td>
                             </tr>
                         {% else %}
                             <tr>
-                                <td colspan="6" class="py-2 px-4 text-center" style="color: #a0aec0;" id="no-logs">{{ trans('admin_no_logs', default='No logs found', lang=lang) }}</td>
+                                <td colspan="6" class="py-2 px-4 text-center" style="color: #e2e8f0;" id="no-logs">{{ trans('admin_no_logs', default='No logs found', lang=lang) }}</td>
                             </tr>
                         {% endfor %}
                     </tbody>
@@ -239,151 +239,78 @@
             const logsTable = document.getElementById('logs-table');
             const overviewTab = document.getElementById('overview-tab');
             const toolUsageTab = document.getElementById('tool-usage-tab');
-
             const metricTitles = document.querySelectorAll('[id^="metric-title-"]');
             const metricValues = document.querySelectorAll('[id^="metric-value-"]');
+            const metricCards = document.querySelectorAll('[id^="metric-"]');
             const toolItems = document.querySelectorAll('[id^="tool-item-"]');
             const actionItems = document.querySelectorAll('[id^="action-item-"]');
             const noActions = document.querySelectorAll('[id^="no-action-"]');
             const logRows = document.querySelectorAll('[id^="log-row-"]');
             const tableHeaders = document.querySelectorAll('th');
 
+            let themeColor;
             switch (theme) {
                 case 'red':
-                    dashboard.style.backgroundColor = '#1a202c';
-                    mainTitle.style.color = '#ff6b6b';
-                    uploadButton.style.backgroundColor = '#ff6b6b';
-                    descText.style.color = '#a0aec0';
-                    navTabs.style.borderBottomColor = '#4a5568';
-                    overviewTab.style.color = '#ff6b6b';
-                    toolUsageTab.style.color = '#ff6b6b';
-                    toolLabel.style.color = '#ff6b6b';
-                    actionLabel.style.color = '#ff6b6b';
-                    startLabel.style.color = '#ff6b6b';
-                    endLabel.style.color = '#ff6b6b';
-                    toolSelect.style.backgroundColor = '#2d3748';
-                    actionSelect.style.backgroundColor = '#2d3748';
-                    startInput.style.backgroundColor = '#2d3748';
-                    endInput.style.backgroundColor = '#2d3748';
-                    filterButton.style.backgroundColor = '#ff6b6b';
-                    metricsGrid.querySelectorAll('div').forEach(div => div.style.backgroundColor = '#2d3748');
-                    metricTitles.forEach(title => title.style.color = '#ff6b6b');
-                    metricValues.forEach(value => value.style.color = '#e2e8f0');
-                    toolsDiv.style.backgroundColor = '#2d3748';
-                    toolsTitle.style.color = '#ff6b6b';
-                    toolItems.forEach(item => item.style.color = '#a0aec0');
-                    actionItems.forEach(item => item.style.color = '#a0aec0');
-                    noActions.forEach(item => item.style.color = '#a0aec0');
-                    logsDiv.style.backgroundColor = '#2d3748';
-                    logsTitle.style.color = '#ff6b6b';
-                    exportLink.style.backgroundColor = '#ff6b6b';
-                    logsTable.querySelector('thead').style.backgroundColor = '#4a5568';
-                    tableHeaders.forEach(header => header.style.color = '#ff6b6b');
-                    logRows.forEach(row => row.style.borderTopColor = '#4a5568');
-                    logRows.forEach(row => row.querySelectorAll('td').forEach(td => td.style.color = '#a0aec0'));
+                    themeColor = '#ff6b6b';
                     break;
-
                 case 'blue':
-                    dashboard.style.backgroundColor = '#1a202c';
-                    mainTitle.style.color = '#4dabf7';
-                    uploadButton.style.backgroundColor = '#4dabf7';
-                    descText.style.color = '#a0aec0';
-                    navTabs.style.borderBottomColor = '#4a5568';
-                    overviewTab.style.color = '#4dabf7';
-                    toolUsageTab.style.color = '#4dabf7';
-                    toolLabel.style.color = '#4dabf7';
-                    actionLabel.style.color = '#4dabf7';
-                    startLabel.style.color = '#4dabf7';
-                    endLabel.style.color = '#4dabf7';
-                    toolSelect.style.backgroundColor = '#2d3748';
-                    actionSelect.style.backgroundColor = '#2d3748';
-                    startInput.style.backgroundColor = '#2d3748';
-                    endInput.style.backgroundColor = '#2d3748';
-                    filterButton.style.backgroundColor = '#4dabf7';
-                    metricsGrid.querySelectorAll('div').forEach(div => div.style.backgroundColor = '#2d3748');
-                    metricTitles.forEach(title => title.style.color = '#4dabf7');
-                    metricValues.forEach(value => value.style.color = '#e2e8f0');
-                    toolsDiv.style.backgroundColor = '#2d3748';
-                    toolsTitle.style.color = '#4dabf7';
-                    toolItems.forEach(item => item.style.color = '#a0aec0');
-                    actionItems.forEach(item => item.style.color = '#a0aec0');
-                    noActions.forEach(item => item.style.color = '#a0aec0');
-                    logsDiv.style.backgroundColor = '#2d3748';
-                    logsTitle.style.color = '#4dabf7';
-                    exportLink.style.backgroundColor = '#4dabf7';
-                    logsTable.querySelector('thead').style.backgroundColor = '#4a5568';
-                    tableHeaders.forEach(header => header.style.color = '#4dabf7');
-                    logRows.forEach(row => row.style.borderTopColor = '#4a5568');
-                    logRows.forEach(row => row.querySelectorAll('td').forEach(td => td.style.color = '#a0aec0'));
+                    themeColor = '#4dabf7';
                     break;
-
                 case 'green':
-                    dashboard.style.backgroundColor = '#1a202c';
-                    mainTitle.style.color = '#6be585';
-                    uploadButton.style.backgroundColor = '#6be585';
-                    descText.style.color = '#a0aec0';
-                    navTabs.style.borderBottomColor = '#4a5568';
-                    overviewTab.style.color = '#6be585';
-                    toolUsageTab.style.color = '#6be585';
-                    toolLabel.style.color = '#6be585';
-                    actionLabel.style.color = '#6be585';
-                    startLabel.style.color = '#6be585';
-                    endLabel.style.color = '#6be585';
-                    toolSelect.style.backgroundColor = '#2d3748';
-                    actionSelect.style.backgroundColor = '#2d3748';
-                    startInput.style.backgroundColor = '#2d3748';
-                    endInput.style.backgroundColor = '#2d3748';
-                    filterButton.style.backgroundColor = '#6be585';
-                    metricsGrid.querySelectorAll('div').forEach(div => div.style.backgroundColor = '#2d3748');
-                    metricTitles.forEach(title => title.style.color = '#6be585');
-                    metricValues.forEach(value => value.style.color = '#e2e8f0');
-                    toolsDiv.style.backgroundColor = '#2d3748';
-                    toolsTitle.style.color = '#6be585';
-                    toolItems.forEach(item => item.style.color = '#a0aec0');
-                    actionItems.forEach(item => item.style.color = '#a0aec0');
-                    noActions.forEach(item => item.style.color = '#a0aec0');
-                    logsDiv.style.backgroundColor = '#2d3748';
-                    logsTitle.style.color = '#6be585';
-                    exportLink.style.backgroundColor = '#6be585';
-                    logsTable.querySelector('thead').style.backgroundColor = '#4a5568';
-                    tableHeaders.forEach(header => header.style.color = '#6be585');
-                    logRows.forEach(row => row.style.borderTopColor = '#4a5568');
-                    logRows.forEach(row => row.querySelectorAll('td').forEach(td => td.style.color = '#a0aec0'));
+                    themeColor = '#6be585';
                     break;
-
                 case 'purple':
-                    dashboard.style.backgroundColor = '#1a202c';
-                    mainTitle.style.color = '#9f7aea';
-                    uploadButton.style.backgroundColor = '#9f7aea';
-                    descText.style.color = '#a0aec0';
-                    navTabs.style.borderBottomColor = '#4a5568';
-                    overviewTab.style.color = '#9f7aea';
-                    toolUsageTab.style.color = '#9f7aea';
-                    toolLabel.style.color = '#9f7aea';
-                    actionLabel.style.color = '#9f7aea';
-                    startLabel.style.color = '#9f7aea';
-                    endLabel.style.color = '#9f7aea';
-                    toolSelect.style.backgroundColor = '#2d3748';
-                    actionSelect.style.backgroundColor = '#2d3748';
-                    startInput.style.backgroundColor = '#2d3748';
-                    endInput.style.backgroundColor = '#2d3748';
-                    filterButton.style.backgroundColor = '#9f7aea';
-                    metricsGrid.querySelectorAll('div').forEach(div => div.style.backgroundColor = '#2d3748');
-                    metricTitles.forEach(title => title.style.color = '#9f7aea');
-                    metricValues.forEach(value => value.style.color = '#e2e8f0');
-                    toolsDiv.style.backgroundColor = '#2d3748';
-                    toolsTitle.style.color = '#9f7aea';
-                    toolItems.forEach(item => item.style.color = '#a0aec0');
-                    actionItems.forEach(item => item.style.color = '#a0aec0');
-                    noActions.forEach(item => item.style.color = '#a0aec0');
-                    logsDiv.style.backgroundColor = '#2d3748';
-                    logsTitle.style.color = '#9f7aea';
-                    exportLink.style.backgroundColor = '#9f7aea';
-                    logsTable.querySelector('thead').style.backgroundColor = '#4a5568';
-                    tableHeaders.forEach(header => header.style.color = '#9f7aea');
-                    logRows.forEach(row => row.style.borderTopColor = '#4a5568');
-                    logRows.forEach(row => row.querySelectorAll('td').forEach(td => td.style.color = '#a0aec0'));
+                    themeColor = '#9f7aea';
                     break;
+                default:
+                    themeColor = '#ff6b6b'; // Fallback to red
+            }
+
+            // Apply styles for all themes
+            dashboard.style.backgroundColor = '#1a202c';
+            mainTitle.style.color = themeColor;
+            uploadButton.style.backgroundColor = themeColor;
+            descText.style.color = '#e2e8f0';
+            navTabs.style.borderBottomColor = '#4a5568';
+            overviewTab.style.color = themeColor;
+            toolUsageTab.style.color = themeColor;
+            toolLabel.style.color = themeColor;
+            actionLabel.style.color = themeColor;
+            startLabel.style.color = themeColor;
+            endLabel.style.color = themeColor;
+            toolSelect.style.backgroundColor = '#2d3748';
+            toolSelect.style.color = '#e2e8f0';
+            actionSelect.style.backgroundColor = '#2d3748';
+            actionSelect.style.color = '#e2e8f0';
+            startInput.style.backgroundColor = '#2d3748';
+            startInput.style.color = '#e2e8f0';
+            endInput.style.backgroundColor = '#2d3748';
+            endInput.style.color = '#e2e8f0';
+            filterButton.style.backgroundColor = themeColor;
+            if (metricsGrid) {
+                metricCards.forEach(card => {
+                    card.style.backgroundColor = '#2d3748';
+                });
+                metricTitles.forEach(title => title.style.color = themeColor);
+                metricValues.forEach(value => value.style.color = '#e2e8f0');
+            }
+            if (toolsGrid) {
+                toolsDiv.style.backgroundColor = '#2d3748';
+                toolsTitle.style.color = themeColor;
+                toolItems.forEach(item => item.style.color = '#e2e8f0');
+                actionItems.forEach(item => item.style.color = '#e2e8f0');
+                noActions.forEach(item => item.style.color = '#e2e8f0');
+            }
+            if (logsDiv) {
+                logsDiv.style.backgroundColor = '#2d3748';
+                logsTitle.style.color = themeColor;
+                exportLink.style.backgroundColor = themeColor;
+                logsTable.querySelector('thead').style.backgroundColor = '#4a5568';
+                tableHeaders.forEach(header => header.style.color = themeColor);
+                logRows.forEach(row => {
+                    row.style.borderTopColor = '#4a5568';
+                    row.querySelectorAll('td').forEach(td => td.style.color = '#e2e8f0');
+                });
             }
         }
     </script>
