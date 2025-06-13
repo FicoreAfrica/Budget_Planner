@@ -3,7 +3,8 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, BooleanField, SubmitField, HiddenField, FileField
 from wtforms.validators import DataRequired, Email, Optional
 from flask_wtf.csrf import CSRFProtect, CSRFError
-from flask_login import current_user, login_required
+from flask_login import current_user
+from app import custom_login_required
 from datetime import datetime
 from mailersend_email import send_email, EMAIL_CONFIG
 import uuid
@@ -15,6 +16,7 @@ from werkzeug.utils import secure_filename
 from models import log_tool_usage
 import pymongo
 import logging
+from flask import g
 
 learning_hub_bp = Blueprint(
     'learning_hub',
@@ -221,6 +223,10 @@ class ContentUploadForm(FlaskForm):
 def get_progress():
     """Retrieve learning progress from MongoDB with caching."""
     try:
+        if 'sid' not in session:
+            session['sid'] = str(uuid.uuid4())
+            session.permanent = True
+            session.modified = True
         filter_kwargs = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session.get('sid', str(uuid.uuid4()))}
         progress_records = mongo.db.learning_materials.find(filter_kwargs)  # Removed hint
         progress = {}
@@ -246,6 +252,10 @@ def get_progress():
 def save_course_progress(course_id, course_progress):
     """Save course progress to MongoDB with validation."""
     try:
+        if 'sid' not in session:
+            session['sid'] = str(uuid.uuid4())
+            session.permanent = True
+            session.modified = True
         if not isinstance(course_id, str) or not isinstance(course_progress, dict):
             current_app.logger.error(f"Invalid course_id or course_progress: course_id={course_id}, course_progress={course_progress}", extra={'session_id': session.get('sid', 'no-session-id')})
             return
@@ -331,8 +341,15 @@ def courses():
         session.permanent = True
         session.modified = True
     lang = session.get('lang', 'en')
-    progress = get_progress()
     try:
+        log_tool_usage(
+            mongo=mongo.db,
+            tool_name='learning_hub',
+            user_id=current_user.id if current_user.is_authenticated else None,
+            session_id=session['sid'],
+            action='courses_view'
+        )
+        progress = get_progress()
         if not isinstance(courses_data, dict):
             current_app.logger.error(f"Invalid courses_data type, Path: {request.path}, Type: {type(courses_data)}", extra={'session_id': session.get('sid', 'no-session-id')})
             raise ValueError("courses_data is not a dictionary")
@@ -351,14 +368,21 @@ def course_overview(course_id):
         session.permanent = True
         session.modified = True
     lang = session.get('lang', 'en')
-    course = course_lookup(course_id)
-    if not course:
-        current_app.logger.error(f"Course not found, Path: {request.path}, Course ID: {course_id}", extra={'session_id': session.get('sid', 'no-session-id')})
-        flash(trans("learning_hub_course_not_found", default="Course not found", lang=lang), "danger")
-        return redirect(url_for('learning_hub.courses'))
-    progress = get_progress()
-    course_progress = progress.get(course_id, {'lessons_completed': [], 'quiz_scores': {}, 'current_lesson': None})
     try:
+        log_tool_usage(
+            mongo=mongo.db,
+            tool_name='learning_hub',
+            user_id=current_user.id if current_user.is_authenticated else None,
+            session_id=session['sid'],
+            action='course_overview_view'
+        )
+        course = course_lookup(course_id)
+        if not course:
+            current_app.logger.error(f"Course not found, Path: {request.path}, Course ID: {course_id}", extra={'session_id': session.get('sid', 'no-session-id')})
+            flash(trans("learning_hub_course_not_found", default="Course not found", lang=lang), "danger")
+            return redirect(url_for('learning_hub.courses'))
+        progress = get_progress()
+        course_progress = progress.get(course_id, {'lessons_completed': [], 'quiz_scores': {}, 'current_lesson': None})
         current_app.logger.info(
             f"Rendering course overview, Path: {request.path}, Course ID: {course_id}, "
             f"Course data: {json.dumps(course, indent=2)}, Progress data: {json.dumps(course_progress, indent=2)}",
@@ -380,7 +404,6 @@ def course_overview(course_id):
         return redirect(url_for('learning_hub.courses')), 500
 
 @learning_hub_bp.route('/profile', methods=['GET', 'POST'])
-@login_required
 def profile():
     """Handle user profile form for first name and email."""
     if 'sid' not in session:
@@ -388,13 +411,27 @@ def profile():
         session.permanent = True
         session.modified = True
     lang = session.get('lang', 'en')
-    form_data = session.get('learning_hub_profile', {})
-    if current_user.is_authenticated:
-        form_data['email'] = form_data.get('email', current_user.email)
-        form_data['first_name'] = form_data.get('first_name', current_user.username)
-    form = LearningHubProfileForm(data=form_data)
     try:
+        log_tool_usage(
+            mongo=mongo.db,
+            tool_name='learning_hub',
+            user_id=current_user.id if current_user.is_authenticated else None,
+            session_id=session['sid'],
+            action='profile_view'
+        )
+        form_data = session.get('learning_hub_profile', {})
+        if current_user.is_authenticated:
+            form_data['email'] = form_data.get('email', current_user.email)
+            form_data['first_name'] = form_data.get('first_name', current_user.username)
+        form = LearningHubProfileForm(data=form_data)
         if request.method == 'POST' and form.validate_on_submit():
+            log_tool_usage(
+                mongo=mongo.db,
+                tool_name='learning_hub',
+                user_id=current_user.id if current_user.is_authenticated else None,
+                session_id=session['sid'],
+                action='profile_submit'
+            )
             session['learning_hub_profile'] = {
                 'first_name': form.first_name.data,
                 'email': form.email.data,
@@ -413,7 +450,7 @@ def profile():
         return render_template('LEARNINGHUB/learning_hub_profile.html', form=form, trans=trans, lang=lang), 500
 
 @learning_hub_bp.route('/courses/<course_id>/lesson/<lesson_id>', methods=['GET', 'POST'])
-@login_required
+@custom_login_required
 def lesson(course_id, lesson_id):
     """Display or process a lesson with email notification and CSRF protection."""
     if 'sid' not in session:
@@ -421,28 +458,42 @@ def lesson(course_id, lesson_id):
         session.permanent = True
         session.modified = True
     lang = session.get('lang', 'en')
-    course = course_lookup(course_id)
-    if not course:
-        current_app.logger.error(f"Course not found, Path: {request.path}, Course ID: {course_id}", extra={'session_id': session.get('sid', 'no-session-id')})
-        flash(trans("learning_hub_course_not_found", default="Course not found", lang=lang), "danger")
-        return redirect(url_for('learning_hub.courses'))
-    lesson, module = lesson_lookup(course, lesson_id)
-    if not lesson:
-        current_app.logger.error(f"Lesson not found, Path: {request.path}, Lesson ID: {lesson_id}", extra={'session_id': session.get('sid', 'no-session-id')})
-        flash(trans("learning_hub_lesson_not_found", default="Lesson not found", lang=lang), "danger")
-        return redirect(url_for('learning_hub.course_overview', course_id=course_id))
-
-    form = MarkCompleteForm()
-    progress = get_progress()
-    if course_id not in progress:
-        course_progress = {'lessons_completed': [], 'quiz_scores': {}, 'current_lesson': lesson_id}
-        progress[course_id] = course_progress
-        save_course_progress(course_id, course_progress)
-    else:
-        course_progress = progress[course_id]
-
     try:
+        log_tool_usage(
+            mongo=mongo.db,
+            tool_name='learning_hub',
+            user_id=current_user.id if current_user.is_authenticated else None,
+            session_id=session['sid'],
+            action='lesson_view'
+        )
+        course = course_lookup(course_id)
+        if not course:
+            current_app.logger.error(f"Course not found, Path: {request.path}, Course ID: {course_id}", extra={'session_id': session.get('sid', 'no-session-id')})
+            flash(trans("learning_hub_course_not_found", default="Course not found", lang=lang), "danger")
+            return redirect(url_for('learning_hub.courses'))
+        lesson, module = lesson_lookup(course, lesson_id)
+        if not lesson:
+            current_app.logger.error(f"Lesson not found, Path: {request.path}, Lesson ID: {lesson_id}", extra={'session_id': session.get('sid', 'no-session-id')})
+            flash(trans("learning_hub_lesson_not_found", default="Lesson not found", lang=lang), "danger")
+            return redirect(url_for('learning_hub.course_overview', course_id=course_id))
+
+        form = MarkCompleteForm()
+        progress = get_progress()
+        if course_id not in progress:
+            course_progress = {'lessons_completed': [], 'quiz_scores': {}, 'current_lesson': lesson_id}
+            progress[course_id] = course_progress
+            save_course_progress(course_id, course_progress)
+        else:
+            course_progress = progress[course_id]
+
         if request.method == 'POST' and form.validate_on_submit():
+            log_tool_usage(
+                mongo=mongo.db,
+                tool_name='learning_hub',
+                user_id=current_user.id if current_user.is_authenticated else None,
+                session_id=session['sid'],
+                action='lesson_complete'
+            )
             if form.lesson_id.data == lesson_id and lesson_id not in course_progress['lessons_completed']:
                 course_progress['lessons_completed'].append(lesson_id)
                 course_progress['current_lesson'] = lesson_id
@@ -499,7 +550,7 @@ def lesson(course_id, lesson_id):
         return redirect(url_for('learning_hub.course_overview', course_id=course_id)), 500
 
 @learning_hub_bp.route('/courses/<course_id>/quiz/<quiz_id>', methods=['GET', 'POST'])
-@login_required
+@custom_login_required
 def quiz(course_id, quiz_id):
     """Display or process a quiz with CSRF protection."""
     if 'sid' not in session:
@@ -507,27 +558,41 @@ def quiz(course_id, quiz_id):
         session.permanent = True
         session.modified = True
     lang = session.get('lang', 'en')
-    course = course_lookup(course_id)
-    if not course:
-        current_app.logger.error(f"Course not found, Path: {request.path}, Course ID: {course_id}", extra={'session_id': session.get('sid', 'no-session-id')})
-        flash(trans("learning_hub_course_not_found", default="Course not found", lang=lang), "danger")
-        return redirect(url_for('learning_hub.courses'))
-    quiz = quizzes_data.get(quiz_id)
-    if not quiz or not isinstance(quiz, dict) or 'questions' not in quiz:
-        current_app.logger.error(f"Quiz not found or invalid, Path: {request.path}, Quiz ID: {quiz_id}", extra={'session_id': session.get('sid', 'no-session-id')})
-        flash(trans("learning_hub_quiz_not_found", default="Quiz not found", lang=lang), "danger")
-        return redirect(url_for('learning_hub.course_overview', course_id=course_id))
-    progress = get_progress()
-    if course_id not in progress:
-        course_progress = {'lessons_completed': [], 'quiz_scores': {}, 'current_lesson': None}
-        progress[course_id] = course_progress
-        save_course_progress(course_id, course_progress)
-    else:
-        course_progress = progress[course_id]
-    form = QuizForm()
-
     try:
+        log_tool_usage(
+            mongo=mongo.db,
+            tool_name='learning_hub',
+            user_id=current_user.id if current_user.is_authenticated else None,
+            session_id=session['sid'],
+            action='quiz_view'
+        )
+        course = course_lookup(course_id)
+        if not course:
+            current_app.logger.error(f"Course not found, Path: {request.path}, Course ID: {course_id}", extra={'session_id': session.get('sid', 'no-session-id')})
+            flash(trans("learning_hub_course_not_found", default="Course not found", lang=lang), "danger")
+            return redirect(url_for('learning_hub.courses'))
+        quiz = quizzes_data.get(quiz_id)
+        if not quiz or not isinstance(quiz, dict) or 'questions' not in quiz:
+            current_app.logger.error(f"Quiz not found or invalid, Path: {request.path}, Quiz ID: {quiz_id}", extra={'session_id': session.get('sid', 'no-session-id')})
+            flash(trans("learning_hub_quiz_not_found", default="Quiz not found", lang=lang), "danger")
+            return redirect(url_for('learning_hub.course_overview', course_id=course_id))
+        progress = get_progress()
+        if course_id not in progress:
+            course_progress = {'lessons_completed': [], 'quiz_scores': {}, 'current_lesson': None}
+            progress[course_id] = course_progress
+            save_course_progress(course_id, course_progress)
+        else:
+            course_progress = progress[course_id]
+        form = QuizForm()
+
         if request.method == 'POST' and form.validate_on_submit():
+            log_tool_usage(
+                mongo=mongo.db,
+                tool_name='learning_hub',
+                user_id=current_user.id if current_user.is_authenticated else None,
+                session_id=session['sid'],
+                action='quiz_submit'
+            )
             answers = request.form.to_dict()
             score = 0
             for i, q in enumerate(quiz['questions']):
@@ -547,7 +612,7 @@ def quiz(course_id, quiz_id):
         return redirect(url_for('learning_hub.course_overview', course_id=course_id)), 500
 
 @learning_hub_bp.route('/dashboard')
-@login_required
+@custom_login_required
 def dashboard():
     """Display learning hub dashboard."""
     if 'sid' not in session:
@@ -555,9 +620,16 @@ def dashboard():
         session.permanent = True
         session.modified = True
     lang = session.get('lang', 'en')
-    progress = get_progress()
-    progress_summary = []
     try:
+        log_tool_usage(
+            mongo=mongo.db,
+            tool_name='learning_hub',
+            user_id=current_user.id if current_user.is_authenticated else None,
+            session_id=session['sid'],
+            action='dashboard_view'
+        )
+        progress = get_progress()
+        progress_summary = []
         for course_id, course in courses_data.items():
             if not course_lookup(course_id):
                 continue
@@ -585,7 +657,18 @@ def dashboard():
 @learning_hub_bp.route('/unsubscribe/<email>')
 def unsubscribe(email):
     """Unsubscribe user from learning hub emails."""
+    if 'sid' not in session:
+        session['sid'] = str(uuid.uuid4())
+        session.permanent = True
+        session.modified = True
     try:
+        log_tool_usage(
+            mongo=mongo.db,
+            tool_name='learning_hub',
+            user_id=current_user.id if current_user.is_authenticated else None,
+            session_id=session['sid'],
+            action='unsubscribe'
+        )
         lang = session.get('lang', 'en')
         profile = session.get('learning_hub_profile', {})
         if profile.get('email') == email and profile.get('send_email', False):
@@ -605,7 +688,7 @@ def unsubscribe(email):
         return redirect(url_for('index')), 500
 
 @learning_hub_bp.route('/upload_content', methods=['GET', 'POST'])
-@login_required
+@custom_login_required
 def upload_content():
     """Handle course content upload with validation."""
     if 'sid' not in session:
@@ -613,58 +696,88 @@ def upload_content():
         session.permanent = True
         session.modified = True
     lang = session.get('lang', 'en')
-    form = ContentUploadForm()
-    if request.method == 'POST' and form.validate_on_submit():
-        file = form.file.data
-        course_id = form.course_id.data
-        lesson_id = form.lesson_id.data
-        content_type = form.content_type.data
-        if not course_lookup(course_id):
-            flash(trans('learning_hub_course_not_found', default='Course not found', lang=lang), 'danger')
-            return redirect(url_for('learning_hub.upload_content'))
-        lesson, _ = lesson_lookup(course_lookup(course_id), lesson_id)
-        if not lesson:
-            flash(trans('learning_hub_lesson_not_found', default='Lesson not found', lang=lang), 'danger')
-            return redirect(url_for('learning_hub.upload_content'))
-        if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            file_path = os.path.join(current_app.config.get('UPLOAD_FOLDER', UPLOAD_FOLDER), filename)
-            try:
-                file.save(file_path)
-                # Update courses_data
-                course = course_lookup(course_id)
-                for module in course['modules']:
-                    for lesson in module['lessons']:
-                        if lesson['id'] == lesson_id:
-                            lesson['content_type'] = content_type
-                            lesson['content_path'] = f"Uploads/{filename}"
-                            break
-                # Store metadata in MongoDB
-                content_metadata = {
-                    'type': 'content_metadata',
-                    'course_id': course_id,
-                    'lesson_id': lesson_id,
-                    'content_type': content_type,
-                    'content_path': f"Uploads/{filename}",
-                    'uploaded_by': current_user.id if current_user.is_authenticated else None,
-                    'upload_date': datetime.now()
-                }
-                mongo.db.learning_materials.insert_one(content_metadata)
-                current_app.logger.info(f"Uploaded content for course {course_id}, lesson {lesson_id}: {filename}", extra={'session_id': session.get('sid', 'no-session-id')})
-                flash(trans('learning_hub_content_uploaded', default='Content uploaded successfully', lang=lang), 'success')
-                return redirect(url_for('learning_hub.courses'))
-            except Exception as e:
-                current_app.logger.error(f"Error saving content: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
-                flash(trans('learning_hub_error_uploading', default='Error uploading content', lang=lang), 'danger')
-        else:
-            flash(trans('learning_hub_invalid_file', default='Invalid file type. Allowed: mp4, pdf, txt', lang=lang), 'danger')
-    current_app.logger.info(f"Rendering upload content page, Path: {request.path}", extra={'session_id': session.get('sid', 'no-session-id')})
-    return render_template('LEARNINGHUB/learning_hub_upload.html', form=form, trans=trans, lang=lang)
+    try:
+        log_tool_usage(
+            mongo=mongo.db,
+            tool_name='learning_hub',
+            user_id=current_user.id if current_user.is_authenticated else None,
+            session_id=session['sid'],
+            action='upload_content_view'
+        )
+        form = ContentUploadForm()
+        if request.method == 'POST' and form.validate_on_submit():
+            log_tool_usage(
+                mongo=mongo.db,
+                tool_name='learning_hub',
+                user_id=current_user.id if current_user.is_authenticated else None,
+                session_id=session['sid'],
+                action='upload_content_submit'
+            )
+            file = form.file.data
+            course_id = form.course_id.data
+            lesson_id = form.lesson_id.data
+            content_type = form.content_type.data
+            if not course_lookup(course_id):
+                flash(trans('learning_hub_course_not_found', default='Course not found', lang=lang), 'danger')
+                return redirect(url_for('learning_hub.upload_content'))
+            lesson, _ = lesson_lookup(course_lookup(course_id), lesson_id)
+            if not lesson:
+                flash(trans('learning_hub_lesson_not_found', default='Lesson not found', lang=lang), 'danger')
+                return redirect(url_for('learning_hub.upload_content'))
+            if file and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                file_path = os.path.join(current_app.config.get('UPLOAD_FOLDER', UPLOAD_FOLDER), filename)
+                try:
+                    file.save(file_path)
+                    # Update courses_data
+                    course = course_lookup(course_id)
+                    for module in course['modules']:
+                        for lesson in module['lessons']:
+                            if lesson['id'] == lesson_id:
+                                lesson['content_type'] = content_type
+                                lesson['content_path'] = f"Uploads/{filename}"
+                                break
+                    # Store metadata in MongoDB
+                    content_metadata = {
+                        'type': 'content_metadata',
+                        'course_id': course_id,
+                        'lesson_id': lesson_id,
+                        'content_type': content_type,
+                        'content_path': f"Uploads/{filename}",
+                        'uploaded_by': current_user.id if current_user.is_authenticated else None,
+                        'upload_date': datetime.now()
+                    }
+                    mongo.db.learning_materials.insert_one(content_metadata)
+                    current_app.logger.info(f"Uploaded content for course {course_id}, lesson {lesson_id}: {filename}", extra={'session_id': session.get('sid', 'no-session-id')})
+                    flash(trans('learning_hub_content_uploaded', default='Content uploaded successfully', lang=lang), 'success')
+                    return redirect(url_for('learning_hub.courses'))
+                except Exception as e:
+                    current_app.logger.error(f"Error saving content: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
+                    flash(trans('learning_hub_error_uploading', default='Error uploading content', lang=lang), 'danger')
+            else:
+                flash(trans('learning_hub_invalid_file', default='Invalid file type. Allowed: mp4, pdf, txt', lang=lang), 'danger')
+        current_app.logger.info(f"Rendering upload content page, Path: {request.path}", extra={'session_id': session.get('sid', 'no-session-id')})
+        return render_template('LEARNINGHUB/learning_hub_upload.html', form=form, trans=trans, lang=lang)
+    except Exception as e:
+        current_app.logger.error(f"Error in upload content page: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
+        flash(trans("learning_hub_error_loading", default="Error loading upload page", lang=lang), "danger")
+        return render_template('LEARNINGHUB/learning_hub_upload.html', form=form, trans=trans, lang=lang), 500
 
 @learning_hub_bp.route('/static/uploads/<path:filename>')
 def serve_uploaded_file(filename):
     """Serve uploaded files securely with caching."""
+    if 'sid' not in session:
+        session['sid'] = str(uuid.uuid4())
+        session.permanent = True
+        session.modified = True
     try:
+        log_tool_usage(
+            mongo=mongo.db,
+            tool_name='learning_hub',
+            user_id=current_user.id if current_user.is_authenticated else None,
+            session_id=session['sid'],
+            action='serve_file'
+        )
         response = send_from_directory(current_app.config.get('UPLOAD_FOLDER', UPLOAD_FOLDER), filename)
         response.headers['Cache-Control'] = 'public, max-age=31536000'
         current_app.logger.info(f"Served file: {filename}", extra={'session_id': session.get('sid', 'no-session-id')})
@@ -677,6 +790,10 @@ def serve_uploaded_file(filename):
 @learning_hub_bp.errorhandler(404)
 def handle_not_found(e):
     """Handle 404 errors with user-friendly message."""
+    if 'sid' not in session:
+        session['sid'] = str(uuid.uuid4())
+        session.permanent = True
+        session.modified = True
     lang = session.get('lang', 'en')
     current_app.logger.error(f"404 error on {request.path}: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
     flash(trans("learning_hub_not_found", default="The requested page was not found. Please check the URL or return to courses.", lang=lang), "danger")
@@ -685,7 +802,18 @@ def handle_not_found(e):
 @learning_hub_bp.route('/static/<path:filename>')
 def static_files(filename):
     """Serve static files with cache control."""
+    if 'sid' not in session:
+        session['sid'] = str(uuid.uuid4())
+        session.permanent = True
+        session.modified = True
     try:
+        log_tool_usage(
+            mongo=mongo.db,
+            tool_name='learning_hub',
+            user_id=current_user.id if current_user.is_authenticated else None,
+            session_id=session['sid'],
+            action='serve_static_file'
+        )
         response = send_from_directory('static', filename)
         response.headers['Cache-Control'] = 'public, max-age=31536000'
         current_app.logger.info(f"Served static file: {filename}", extra={'session_id': session.get('sid', 'no-session-id')})
@@ -697,6 +825,10 @@ def static_files(filename):
 @learning_hub_bp.errorhandler(CSRFError)
 def handle_csrf_error(e):
     """Handle CSRF errors with user-friendly message."""
+    if 'sid' not in session:
+        session['sid'] = str(uuid.uuid4())
+        session.permanent = True
+        session.modified = True
     lang = session.get('lang', 'en')
     current_app.logger.error(f"CSRF error on {request.path}: {e.description}, Form Data: {request.form}", extra={'session_id': session.get('sid', 'no-session-id')})
     flash(trans("learning_hub_csrf_error", default="Form submission failed due to a missing security token. Please refresh and try again.", lang=lang), "danger")
