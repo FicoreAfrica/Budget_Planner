@@ -2,7 +2,7 @@ from flask import Blueprint, request, session, redirect, url_for, render_templat
 from flask_wtf import FlaskForm
 from wtforms import StringField, FloatField, BooleanField, SubmitField
 from wtforms.validators import DataRequired, NumberRange, Optional, Email, ValidationError
-from flask_login import current_user, login_required
+from flask_login import current_user
 from translations import trans
 from mailersend_email import send_email, EMAIL_CONFIG
 from datetime import datetime
@@ -10,6 +10,7 @@ import uuid
 import json
 from models import log_tool_usage  # Import log_tool_usage
 from extensions import mongo
+from app import custom_login_required, create_anonymous_session  # Import from app.py
 
 net_worth_bp = Blueprint(
     'net_worth',
@@ -110,32 +111,26 @@ class Step3Form(FlaskForm):
                 current_app.logger.error(f"Invalid loans input: {field.data}", extra={'session_id': session.get('sid', 'unknown')})
                 raise ValidationError(trans('net_worth_loans_invalid', lang=session.get('lang', 'en')))
 
-def log_tool_usage(tool_name, action):
-    """Log tool usage to MongoDB."""
-    mongo.db.tool_usage.insert_one({
-        'tool_name': tool_name,
-        'user_id': str(current_user.id) if current_user.is_authenticated else None,
-        'session_id': session.get('sid', str(uuid.uuid4())),
-        'action': action,
-        'timestamp': datetime.utcnow()
-    })
-
 @net_worth_bp.route('/step1', methods=['GET', 'POST'])
-@login_required
 def step1():
     """Handle net worth step 1 form (personal info)."""
     if 'sid' not in session:
-        session['sid'] = str(uuid.uuid4())
-        session.permanent = True
-        session.modified = True
+        create_anonymous_session()
+        logger.debug(f"New anonymous session created with sid: {session['sid']}", extra={'session_id': session['sid']})
     lang = session.get('lang', 'en')
     form_data = session.get('networth_step1_data', {})
-    form_data['email'] = form_data.get('email', current_user.email)
-    form_data['first_name'] = form_data.get('first_name', current_user.username)
+    if current_user.is_authenticated:
+        form_data['email'] = form_data.get('email', current_user.email)
+        form_data['first_name'] = form_data.get('first_name', current_user.username)
     form = Step1Form(data=form_data)
     try:
         if request.method == 'POST':
-            log_tool_usage(tool_name='net_worth', action='step1_submit')
+            log_tool_usage(
+                tool_name='net_worth',
+                user_id=current_user.id if current_user.is_authenticated else None,
+                session_id=session['sid'],
+                action='step1_submit'
+            )
             if form.validate_on_submit():
                 form_data = form.data.copy()
                 session['networth_step1_data'] = form_data
@@ -145,7 +140,12 @@ def step1():
             else:
                 current_app.logger.warning(f"Form validation failed: {form.errors}")
                 flash(trans("net_worth_form_validation_error", lang=lang), "danger")
-        log_tool_usage(tool_name='net_worth', action='step1_view')
+        log_tool_usage(
+            tool_name='net_worth',
+            user_id=current_user.id if current_user.is_authenticated else None,
+            session_id=session['sid'],
+            action='step1_view'
+        )
         return render_template('NETWORTH/net_worth_step1.html', form=form, trans=trans, lang=lang)
     except Exception as e:
         current_app.logger.error(f"Error in net_worth.step1: {str(e)}", extra={'session_id': session.get('sid', 'unknown')})
@@ -153,13 +153,12 @@ def step1():
         return render_template('NETWORTH/net_worth_step1.html', form=form, trans=trans, lang=lang), 500
 
 @net_worth_bp.route('/step2', methods=['GET', 'POST'])
-@login_required
+@custom_login_required
 def step2():
     """Handle net worth step 2 form (assets)."""
     if 'sid' not in session:
-        session['sid'] = str(uuid.uuid4())
-        session.permanent = True
-        session.modified = True
+        create_anonymous_session()
+        logger.debug(f"New anonymous session created with sid: {session['sid']}", extra={'session_id': session['sid']})
     lang = session.get('lang', 'en')
     if 'networth_step1_data' not in session:
         flash(trans('net_worth_missing_step1', lang=lang, default='Please complete step 1 first.'), 'danger')
@@ -167,7 +166,12 @@ def step2():
     form = Step2Form()
     try:
         if request.method == 'POST':
-            log_tool_usage(tool_name='net_worth', action='step2_submit')
+            log_tool_usage(
+                tool_name='net_worth',
+                user_id=current_user.id if current_user.is_authenticated else None,
+                session_id=session['sid'],
+                action='step2_submit'
+            )
             if form.validate_on_submit():
                 form_data = {
                     'cash_savings': float(form.cash_savings.data),
@@ -182,7 +186,12 @@ def step2():
             else:
                 current_app.logger.warning(f"Form validation failed: {form.errors}")
                 flash(trans("net_worth_form_validation_error", lang=lang), "danger")
-        log_tool_usage(tool_name='net_worth', action='step2_view')
+        log_tool_usage(
+            tool_name='net_worth',
+            user_id=current_user.id if current_user.is_authenticated else None,
+            session_id=session['sid'],
+            action='step2_view'
+        )
         return render_template('NETWORTH/net_worth_step2.html', form=form, trans=trans, lang=lang)
     except Exception as e:
         current_app.logger.error(f"Error in net_worth.step2: {str(e)}", extra={'session_id': session.get('sid', 'unknown')})
@@ -190,13 +199,12 @@ def step2():
         return render_template('NETWORTH/net_worth_step2.html', form=form, trans=trans, lang=lang), 500
 
 @net_worth_bp.route('/step3', methods=['GET', 'POST'])
-@login_required
+@custom_login_required
 def step3():
     """Calculate net worth and persist to MongoDB."""
     if 'sid' not in session:
-        session['sid'] = str(uuid.uuid4())
-        session.permanent = True
-        session.modified = True
+        create_anonymous_session()
+        logger.debug(f"New anonymous session created with sid: {session['sid']}", extra={'session_id': session['sid']})
     lang = session.get('lang', 'en')
     if 'networth_step2_data' not in session:
         flash(trans('net_worth_missing_step2', lang=lang, default='Please complete step 2 first.'), 'danger')
@@ -204,7 +212,12 @@ def step3():
     form = Step3Form()
     try:
         if request.method == 'POST':
-            log_tool_usage(tool_name='net_worth', action='step3_submit')
+            log_tool_usage(
+                tool_name='net_worth',
+                user_id=current_user.id if current_user.is_authenticated else None,
+                session_id=session['sid'],
+                action='step3_submit'
+            )
             if form.validate_on_submit():
                 step1_data = session.get('networth_step1_data', {})
                 step2_data = session.get('networth_step2_data', {})
@@ -235,8 +248,8 @@ def step3():
 
                 # Save to MongoDB
                 net_worth_record = {
-                    '_id': str(uuid.uuid4()),
-                    'user_id': str(current_user.id),
+                    '_id': str(uuid4()),
+                    'user_id': current_user.id if current_user.is_authenticated else None,
                     'session_id': session['sid'],
                     'first_name': step1_data.get('first_name', ''),
                     'email': step1_data.get('email', ''),
@@ -294,7 +307,12 @@ def step3():
             else:
                 current_app.logger.warning(f"Form validation failed: {form.errors}")
                 flash(trans("net_worth_form_validation_error", lang=lang), "danger")
-        log_tool_usage(tool_name='net_worth', action='step3_view')
+        log_tool_usage(
+            tool_name='net_worth',
+            user_id=current_user.id if current_user.is_authenticated else None,
+            session_id=session['sid'],
+            action='step3_view'
+        )
         return render_template('NETWORTH/net_worth_step3.html', form=form, trans=trans, lang=lang)
     except Exception as e:
         current_app.logger.error(f"Error in net_worth.step3: {str(e)}", extra={'session_id': session.get('sid', 'unknown')})
@@ -302,22 +320,28 @@ def step3():
         return render_template('NETWORTH/net_worth_step3.html', form=form, trans=trans, lang=lang), 500
 
 @net_worth_bp.route('/dashboard', methods=['GET', 'POST'])
-@login_required
+@custom_login_required
 def dashboard():
     """Display net worth dashboard using MongoDB data."""
     if 'sid' not in session:
-        session['sid'] = str(uuid.uuid4())
-        session.permanent = True
-        session.modified = True
+        create_anonymous_session()
+        logger.debug(f"New anonymous session created with sid: {session['sid']}", extra={'session_id': session['sid']})
     lang = session.get('lang', 'en')
     try:
-        log_tool_usage(tool_name='net_worth', action='dashboard_view')
-        # Fetch records by user_id
-        user_records = mongo.db.net_worth_data.find({'user_id': str(current_user.id)}).sort('created_at', -1)
+        log_tool_usage(
+            tool_name='net_worth',
+            user_id=current_user.id if current_user.is_authenticated else None,
+            session_id=session['sid'],
+            action='dashboard_view'
+        )
+        # Fetch records by user_id or session_id
+        user_records = mongo.db.net_worth_data.find(
+            {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
+        ).sort('created_at', -1)
         user_data = [(record['_id'], record) for record in user_records]
 
-        # Fallback to email
-        if not user_data and current_user.email:
+        # Fallback to email for authenticated users
+        if not user_data and current_user.is_authenticated and current_user.email:
             user_records = mongo.db.net_worth_data.find({'email': current_user.email}).sort('created_at', -1)
             user_data = [(record['_id'], record) for record in user_records]
 
@@ -356,7 +380,7 @@ def dashboard():
 
                 latest_record = {
                     '_id': session['sid'],
-                    'user_id': str(current_user.id),
+                    'user_id': current_user.id if current_user.is_authenticated else None,
                     'session_id': session['sid'],
                     'created_at': datetime.utcnow(),
                     'first_name': step1_data.get('first_name', ''),
@@ -430,17 +454,22 @@ def dashboard():
         ), 500
 
 @net_worth_bp.route('/unsubscribe/<email>')
-@login_required
+@custom_login_required
 def unsubscribe(email):
     """Unsubscribe user from net worth emails using MongoDB."""
     if 'sid' not in session:
-        session['sid'] = str(uuid.uuid4())
-        session.permanent = True
+        create_anonymous_session()
+        logger.debug(f"New anonymous session created with sid: {session['sid']}", extra={'session_id': session['sid']})
     lang = session.get('lang', 'en')
     try:
-        log_tool_usage(tool_name='net_worth', action='unsubscribe')
+        log_tool_usage(
+            tool_name='net_worth',
+            user_id=current_user.id if current_user.is_authenticated else None,
+            session_id=session['sid'],
+            action='unsubscribe'
+        )
         result = mongo.db.net_worth_data.update_many(
-            {'email': email, 'user_id': str(current_user.id)},
+            {'email': email, 'user_id': current_user.id if current_user.is_authenticated else {'$exists': False}},
             {'$set': {'send_email': False}}
         )
         if result.modified_count > 0:
