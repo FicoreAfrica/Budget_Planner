@@ -11,7 +11,8 @@ from translations import trans
 from mailersend_email import send_email, EMAIL_CONFIG
 from extensions import mongo
 from models import log_tool_usage
-from app import custom_login_required, create_anonymous_session  # Import from app.py
+from session_utils import create_anonymous_session
+from app import custom_login_required
 
 # Configure logging
 logger = logging.getLogger('ficore_app')
