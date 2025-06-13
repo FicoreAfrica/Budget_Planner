@@ -576,13 +576,19 @@ body {
 
 /* Header Message */
 .header-message {
-    width: 100%;
-    background: linear-gradient(to right, #006b9f, #00c18f);
+    width: 100vw; /* Stretch to viewport width */
+    position: relative; /* Or absolute if within a positioned parent */
+    left: 50%; /* Offset to center */
+    right: 50%; /* Offset to center */
+    margin-left: -50vw; /* Negative margin to align with viewport edges */
+    margin-right: -50vw; /* Negative margin to align with viewport edges */
+    background: linear-gradient(to right, #006b9f, #00c18f); /* Ensure gradient is full width */
     padding: 10px 15px;
     color: white;
     text-align: center;
     font-size: 0.85rem;
     animation: fadeInOut 6s ease-in-out infinite;
+    z-index: 900; /* Ensure it stays above other content */
 }
 
 @keyframes fadeInOut {
@@ -590,6 +596,16 @@ body {
     20% { opacity: 1; }
     80% { opacity: 1; }
     100% { opacity: 0; }
+}
+@media (min-width: 768px) {
+    .header-message {
+        padding: 1rem 2rem; /* Adjust padding for larger screens */
+    }
+    .navbar-container, .header-message {
+        max-width: none; /* Remove max-width constraint for full width */
+        margin: 0;
+        padding: 1rem 2rem;
+    }
 }
 
 /* Consent Banner */
@@ -1902,7 +1918,7 @@ section {
         padding: 0;
     }
 
-    .navbar-container, .header-message {
+    .navbar-container {
         max-width: 1200px;
         margin: 0 auto;
         padding: 1rem 2rem;
