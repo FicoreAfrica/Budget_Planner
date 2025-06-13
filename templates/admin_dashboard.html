@@ -4,7 +4,8 @@
 <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <h1 class="text-3xl font-bold mb-4">{{ trans('admin_dashboard_title', default='Admin Dashboard', lang=lang) }}</h1>
     <a href="{{ url_for('learning_hub.upload_content') }}" 
-       class="inline-block bg-yellow-500 text-white hover:bg-yellow-600 py-2 px-4 rounded mb-4">
+       class="inline-block bg-yellow-500 text-white hover:bg-yellow-600 py-2 px-4 rounded mb-4" 
+       style="display: inline-block; visibility: visible; opacity: 1;">
         <i class="fas fa-upload"></i>
         {{ trans('learning_hub_upload_content', default='Upload Learning Content', lang=lang) }}
     </a>
