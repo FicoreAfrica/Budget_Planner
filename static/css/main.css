@@ -234,10 +234,12 @@ body {
 .navbar-container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 0.5rem 1rem;
+    padding: 0.75rem 1.5rem; /* Increased padding for breathing room */
     display: flex;
-    flex-direction: column;
-    align-items: flex-start;
+    flex-direction: row; /* Changed to row for horizontal alignment */
+    align-items: center; /* Vertically center all items */
+    justify-content: space-between; /* Distribute items evenly */
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
 }
 
 .navbar-brand {
@@ -252,20 +254,42 @@ body {
 .logo-centered {
     border-radius: 50%;
     object-fit: contain;
-    width: 80px;
-    height: 80px;
+    width: 60px; /* Reduced size for balance */
+    height: 60px;
+    margin-right: 1rem; /* Added spacing for breathing room */
 }
 
 .navbar-actions {
     display: flex;
-    gap: 0.5rem;
-    margin: 0.5rem 0;
-    width: 100%;
-    justify-content: flex-end;
+    align-items: center; /* Vertically center toggles */
+    gap: 1.25rem; /* Increased for horizontal spacing */
+    margin: 0; /* Removed margin to align with row layout */
+}
+
+.language-toggle, .dark-mode-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    color: #FFFFFF;
+    background: var(--button-nav-gradient);
+    border-radius: 8px;
+    padding: 0.5rem;
+    transition: background 0.3s ease;
+    height: 36px; /* Fixed height for vertical alignment */
+}
+
+.language-toggle:hover, .dark-mode-toggle:hover {
+    background: var(--button-nav-gradient-hover);
 }
 
 .navbar-collapse {
     width: 100%;
+    display: none; /* Hidden by default, shown via JS or :focus */
+}
+
+.navbar-collapse.show {
+    display: block; /* Show when toggled */
 }
 
 .navbar-nav {
@@ -276,13 +300,16 @@ body {
 }
 
 .navbar-toggler {
-    padding: 0.3rem 0.6rem;
-    font-size: 0.9rem;
+    padding: 0.4rem 0.8rem; /* Slightly larger padding */
+    font-size: 1rem; /* Increased for larger icon */
     border: none;
     background: var(--button-nav-gradient);
     color: white;
     border-radius: 8px;
-    align-self: flex-end;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 36px; /* Match toggle height for vertical centering */
 }
 
 .navbar-toggler:hover {
@@ -290,13 +317,15 @@ body {
 }
 
 .navbar-toggler .navbar-toggler-icon {
-    font-size: 1rem;
+    font-size: 1.2rem; /* Slightly larger for emphasis */
     background-color: white;
     color: #003366;
     border-radius: 5px;
     display: flex;
     align-items: center;
     justify-content: center;
+    width: 24px;
+    height: 24px;
 }
 
 .nav-link {
@@ -357,6 +386,39 @@ body {
     100% { background-position: 0% 50%; }
 }
 
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .navbar-container {
+        padding: 0.5rem 1rem; /* Reduced padding for mobile */
+        flex-direction: row; /* Keep row layout */
+        flex-wrap: wrap;
+    }
+
+    .navbar-actions {
+        gap: 0.75rem; /* Slightly reduced spacing for mobile */
+    }
+
+    .logo-centered {
+        width: 50px;
+        height: 50px;
+        margin-right: 0.75rem;
+    }
+
+    .language-toggle, .dark-mode-toggle, .navbar-toggler {
+        height: 32px; /* Slightly smaller for mobile */
+        padding: 0.4rem;
+    }
+
+    .navbar-toggler .navbar-toggler-icon {
+        font-size: 1rem;
+        width: 20px;
+        height: 20px;
+    }
+
+    .navbar-collapse {
+        margin-top: 0.5rem;
+    }
+}
 /* Buttons */
 .btn, .btn-primary, .btn-explore, .course-link, .tool-card button, .modal .btn {
     display: inline-flex;
