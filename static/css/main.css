@@ -903,7 +903,7 @@ body {
 /* Journey Strip */
 .journey-strip {
     background-color: var(--journey-strip-bg);
-    padding: 1rem;
+    padding: 1.5rem; /* Increased padding for better spacing */
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     position: relative;
@@ -922,7 +922,7 @@ body {
 .journey-container h2 {
     position: relative;
     z-index: 3;
-    margin-bottom: 0.5rem;
+    margin-bottom: 1rem; /* Increased for consistent vertical spacing */
     margin-top: 0.5rem;
     font-size: 1.4rem;
     font-weight: 600;
@@ -948,12 +948,12 @@ body {
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
-    gap: 1.5rem;
+    gap: 2rem; /* Consistent horizontal and vertical spacing */
     position: relative;
     width: 100%;
-    max-width: 100%;
+    max-width: 1200px; /* Constrain width for larger screens */
     z-index: 2;
-    justify-content: center;
+    justify-content: space-between; /* Distribute steps evenly */
 }
 
 .journey-step {
@@ -967,14 +967,15 @@ body {
     font-weight: 500;
     color: var(--text-color);
     text-decoration: none;
-    transition: transform 0.2s ease, background-color 0.2s ease;
-    padding: 1rem;
+    transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+    padding: 1.5rem; /* Consistent padding for touch targets */
     margin: 0;
     z-index: 3;
     opacity: 0;
     animation: fadeInOnScroll 0.5s ease forwards;
-    flex: 1 1 45%;
-    max-width: 150px;
+    flex: 1 1 22%; /* Equal width for 4 steps, responsive */
+    min-width: 120px; /* Ensure steps don’t shrink too much on mobile */
+    max-width: 200px; /* Limit step width for balance */
 }
 
 @keyframes fadeInOnScroll {
@@ -985,6 +986,7 @@ body {
     transform: scale(1.05);
     background-color: var(--journey-step-hover-bg);
     border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* Subtle glow effect on hover */
 }
 
 .journey-step:focus {
@@ -998,14 +1000,20 @@ body {
 
 @keyframes pulse {
     0% { transform: scale(1); }
-    50% { transform: scale(1.1); }
+    50% { transform: scale(1.15); }
     100% { transform: scale(1); }
 }
 
 .journey-icon {
     font-size: 1.5rem;
-    color: var(--journey-icon);
-    margin-bottom: 0.5rem;
+    color: color-mix(in srgb, var(--journey-icon) 80%, #000 20%); /* Darkened icons for contrast */
+    margin-bottom: 0.75rem; /* Consistent vertical spacing */
+    transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.journey-step:hover .journey-icon {
+    transform: scale(1.1); /* Scale effect on hover */
+    filter: brightness(110%) drop-shadow(0 0 8px rgba(0, 0, 0, 0.2)); /* Subtle glow */
 }
 
 .step-badge {
@@ -1019,11 +1027,25 @@ body {
     border-radius: 50%;
     font-weight: 600;
     font-size: 1rem;
-    position: static;
-    margin-bottom: 0.5rem;
+    position: relative; /* Changed to relative for gradient ring */
+    margin-bottom: 0.75rem; /* Consistent vertical spacing */
     z-index: 4;
     border: 2px solid #fff;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Gradient ring around step badge */
+.step-badge::before {
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: -4px;
+    right: -4px;
+    bottom: -4px;
+    border-radius: 50%;
+    background: var(--accent-gradient); /* Theme-matching gradient */
+    z-index: -1;
+    opacity: 0.7;
 }
 
 .journey-step p {
@@ -1036,6 +1058,25 @@ body {
 
 .journey-step p strong {
     font-weight: 600;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .journey-steps {
+        flex-direction: column; /* Stack steps vertically on mobile */
+        gap: 2rem; /* Consistent vertical spacing */
+        align-items: center;
+    }
+
+    .journey-step {
+        flex: 1 1 100%; /* Full width on mobile */
+        max-width: 300px; /* Prevent steps from being too wide */
+        padding: 1rem;
+    }
+
+    .journey-container::before {
+        display: none; /* Hide horizontal line on mobile for cleaner look */
+    }
 }
 
 /* Tool Group */
