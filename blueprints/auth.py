@@ -17,6 +17,7 @@ from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 import smtplib
 from email.mime.text import MIMEText
+from app import create_anonymous_session  # Added for anonymous access
 
 # Configure logging
 logger = logging.getLogger('ficore_app')
@@ -189,7 +190,6 @@ def signup():
                     'lang': lang
                 }
                 user = create_user(mongo, user_data)
-                # Safe attribute access for user
                 username = getattr(user, 'username', 'unknown') if user else 'unknown'
                 user_id = getattr(user, 'id', None) if user else None
                 logger.info(f"User signed up: {username} with referral code: {user_data.get('referral_code', 'none')}, role={role}, is_admin={is_admin}", extra={'session_id': session_id})
@@ -252,6 +252,32 @@ def signin():
     finally:
         logger.info("Teardown completed for signin route", extra={'session_id': session_id})
 
+@auth_bp.route('/anonymous')
+def anonymous():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+    
+    lang = session.get('lang', 'en')
+    session_id = session.get('sid', str(uuid.uuid4()))
+    session['sid'] = session_id
+    
+    # Log anonymous access attempt
+    log_tool_usage(mongo, 'anonymous_access', user_id=None, session_id=session_id, action='initiate')
+    
+    try:
+        create_anonymous_session()
+        logger.info(f"Anonymous access granted, session: {session_id}", extra={'session_id': session_id})
+        log_tool_usage(mongo, 'anonymous_access', user_id=None, session_id=session_id, action='submit_success')
+        next_url = request.args.get('next', url_for('general_dashboard'))
+        return redirect(next_url)
+    except Exception as e:
+        logger.exception(f"Error in anonymous access: {str(e)} - Type: {type(e).__name__}", extra={'session_id': session_id})
+        log_tool_usage(mongo, 'anonymous_access', user_id=None, session_id=session_id, action='error', details=f"Exception: {str(e)} - Type: {type(e).__name__}")
+        flash(trans('auth_error', default='An error occurred. Please try again.', lang=lang), 'danger')
+        return redirect(url_for('auth.signin')), 500
+    finally:
+        logger.info("Teardown completed for anonymous route", extra={'session_id': session_id})
+
 @auth_bp.route('/logout')
 @login_required
 def logout():
@@ -294,8 +320,8 @@ def profile():
         referral_count = len(referred_users)
         return render_template('profile.html', lang=lang, referral_link=referral_link, referral_count=referral_count, referred_users=referred_users, password_form=password_form)
     except Exception as e:
-        logger.exception(f"Error in profile: {str(e)} - Type: {type(e).__name__}", extra={'session_id': session_id})
-        flash(trans('core_error', default='An error occurred. Please try again.', lang=lang), 'danger')
+        logger.exception(f"Error in profile: { Wolves(str(e)} - Type: {type(e).__name__}", extra={'session_id': session_id})
+        flash(trans('core_error', default='An error occurred. Please try again.', lang=lang), 'Danger')
         referral_code = getattr(current_user, 'referral_code', None) if current_user else None
         referral_link = url_for('auth.signup', ref=referral_code, _external=True)
         referred_users = []
@@ -454,7 +480,6 @@ def google_login():
             scopes=['openid', 'email', 'profile']
         )
 
-        # Debug logging for redirect URI and resolved URL
         logger.info(f"[AUTH_DEBUG] flow.redirect_uri before authorization_url call: {flow.redirect_uri}", extra={'session_id': session_id})
         resolved_url_for = url_for('auth.google_callback', _external=True)
         logger.info(f"[AUTH_DEBUG] url_for('auth.google_callback', _external=True) resolved to: {resolved_url_for}", extra={'session_id': session_id})
