@@ -172,16 +172,20 @@ def step1():
                 'send_email': form_data['send_email'],
                 'created_at': datetime.utcnow()
             }
+            document_id = None
             if record:
+                record_data['_id'] = record['_id']
                 collection.update_one(
                     {'_id': record['_id']},
-                    {'$set': record_data}
+                    {'$set': {k: v for k, v in record_data.items() if k != '_id'}}
                 )
+                document_id = record['_id']
             else:
                 record_data['_id'] = str(uuid.uuid4())
                 collection.insert_one(record_data)
+                document_id = record_data['_id']
 
-            current_app.logger.info(f"Step1 data updated/saved to MongoDB with ID {record_data['_id']} for session {session['sid']}")
+            current_app.logger.info(f"Step1 data updated/saved to MongoDB with ID {document_id} for session {session['sid']}")
             log_tool_usage(
                 mongo,
                 tool_name='financial_health',
@@ -238,16 +242,20 @@ def step2():
                 'expenses': float(form.expenses.data),
                 'created_at': datetime.utcnow()
             }
+            document_id = None
             if record:
+                record_data['_id'] = record['_id']
                 collection.update_one(
                     {'_id': record['_id']},
-                    {'$set': record_data}
+                    {'$set': {k: v for k, v in record_data.items() if k != '_id'}}
                 )
+                document_id = record['_id']
             else:
                 record_data['_id'] = str(uuid.uuid4())
                 collection.insert_one(record_data)
+                document_id = record_data['_id']
 
-            current_app.logger.info(f"Step2 data updated/saved to MongoDB with ID {record_data['_id']} for session {session['sid']}")
+            current_app.logger.info(f"Step2 data updated/saved to MongoDB with ID {document_id} for session {session['sid']}")
             log_tool_usage(
                 mongo,
                 tool_name='financial_health',
@@ -366,16 +374,20 @@ def step3():
                 'send_email': step1_data.get('send_email', False),
                 'created_at': datetime.utcnow()
             }
+            document_id = None
             if record:
+                record_data['_id'] = record['_id']
                 collection.update_one(
                     {'_id': record['_id']},
-                    {'$set': record_data}
+                    {'$set': {k: v for k, v in record_data.items() if k != '_id'}}
                 )
+                document_id = record['_id']
             else:
                 record_data['_id'] = str(uuid.uuid4())
                 collection.insert_one(record_data)
+                document_id = record_data['_id']
 
-            current_app.logger.info(f"Step3 data updated/saved to MongoDB with ID {record_data['_id']} for session {session['sid']}")
+            current_app.logger.info(f"Step3 data updated/saved to MongoDB with ID {document_id} for session {session['sid']}")
             log_tool_usage(
                 mongo,
                 tool_name='financial_health',
