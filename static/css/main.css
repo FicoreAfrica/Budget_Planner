@@ -478,7 +478,7 @@ body {
 
 .quiz-question p {
     font-size: 0.95rem;
-    color: var(--text-light);
+    color: var(--text-color); /* Corrected --text-light to --text-color as it was undefined */
     margin-top: 5px;
 }
 
@@ -505,7 +505,6 @@ body {
     transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
-/* Yes/No Styling */
 .btn-quiz-answer.yes {
     background-color: #28a745;
     color: white;
@@ -518,7 +517,6 @@ body {
     border-color: #dc3545;
 }
 
-/* Hover & Active States */
 .btn-quiz-answer:hover {
     transform: scale(1.05);
 }
@@ -536,7 +534,6 @@ body {
     font-weight: 600;
 }
 
-/* Focus for Accessibility */
 .btn-quiz-answer:focus {
     outline: 2px solid #007bff;
     outline-offset: 2px;
@@ -676,7 +673,7 @@ body {
 .card.custom-card {
     border-radius: 8px;
     border: none;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
 .card-body {
@@ -708,6 +705,7 @@ body {
     font-size: 0.85rem;
     margin-bottom: 0.5rem;
     margin-top: 1rem;
+    overflow-wrap: break-word; /* Added for consistency with tool-card */
 }
 
 .card:has(.badge-success) .card-title {
@@ -722,10 +720,15 @@ body {
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
     margin-bottom: 1.5rem;
     border: 1px solid var(--card-border);
-    width: 100%; /* Ensure it fills the column width */
+    width: 100%;
     box-sizing: border-box;
     padding: 1rem;
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 250px;
+    overflow: hidden;
 }
 
 .tool-card h3 {
@@ -733,6 +736,7 @@ body {
     font-size: 1.1rem;
     font-weight: 600;
     color: var(--card-text);
+    flex-shrink: 0;
 }
 
 .tool-card p {
@@ -740,6 +744,16 @@ body {
     margin-bottom: 1rem;
     margin-top: 1rem;
     color: var(--card-text);
+    flex-grow: 1;
+    overflow-wrap: break-word;
+    text-align: center;
+}
+
+.tool-card button {
+    margin-top: auto;
+    width: 100%;
+    max-width: 200px;
+    align-self: center;
 }
 
 .index-page .tool-title .card-title {
@@ -1008,43 +1022,51 @@ body {
     border: 1px solid var(--accordion-border);
     border-top: none;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Reduced minimum width for mobile */
-    gap: 1rem; /* Adjusted gap for better mobile spacing */
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
     justify-items: stretch;
+    align-items: stretch;
 }
 
-/* Override Bootstrap row and column behavior within accordion-body */
 .accordion-body .row {
-    display: contents; /* Remove row's default flex behavior to let grid take over */
+    display: contents;
 }
 
-/* Responsive adjustments for mobile */
 @media (max-width: 768px) {
     .accordion-body {
-        grid-template-columns: 1fr; /* Single column on mobile */
-        padding: 1rem; /* Reduced padding for smaller screens */
-        gap: 1rem; /* Consistent spacing */
+        grid-template-columns: 1fr;
+        padding: 1rem;
+        gap: 1rem;
     }
 
     .accordion-body .col-md-6,
     .accordion-body .col-md-4 {
-        width: 100%; /* Full width on mobile */
-        padding: 0; /* No extra padding */
+        width: 100%;
+        padding: 0;
     }
 
     .tool-card {
-        margin-bottom: 1rem; /* Reduced margin for tighter layout */
+        min-height: 200px;
+        margin-bottom: 1rem;
+    }
+
+    .tool-card button {
+        max-width: 150px;
     }
 }
 
-/* For screens above mobile (e.g., tablets and desktops) */
 @media (min-width: 769px) {
     .accordion-body .col-md-6,
     .accordion-body .col-md-4 {
-        width: 100%; /* Ensure columns fill grid cells */
-        padding: 0; /* Remove default Bootstrap padding */
+        width: 100%;
+        padding: 0;
+    }
+
+    .tool-card {
+        min-height: 250px;
     }
 }
+
 .accordion-item {
     border: 1px solid var(--accordion-border);
     border-radius: 8px;
@@ -1055,6 +1077,21 @@ body {
 
 .accordion-item:last-child {
     border-bottom: 1px solid var(--accordion-border);
+}
+
+@media (min-width: 1024px) {
+    .accordion-body {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 2rem;
+    }
+
+    .tool-card {
+        min-height: 300px;
+    }
+
+    .tool-card button {
+        max-width: 200px;
+    }
 }
 
 /* Progress Bar */
@@ -1156,9 +1193,9 @@ body {
 
 /* Info Box */
 .info-box {
-    background-color: var(--info-box-bg);
-    color: var(--info-box-text);
-    border: 1px solid var(--info-box-border);
+    background-color: var(--insights-box-bg, #E3F2FD); /* Fallback for undefined variable */
+    color: var(--text-color, #1a1a1a); /* Fallback for undefined variable */
+    border: 1px solid var(--card-border, #0288D1); /* Fallback for undefined variable */
     padding: 0.5rem;
     border-radius: 8px;
     margin-bottom: 0.8rem;
@@ -1187,8 +1224,8 @@ body {
 
 .social-icons {
     color: white;
-    margin: 0 .25rem;
-    font-size: .85rem;
+    margin: 0 0.25rem;
+    font-size: 0.85rem;
 }
 
 .social-icons a {
@@ -1204,15 +1241,15 @@ body {
 }
 
 .footer-disclaimer {
-    font-size: .75rem;
+    font-size: 0.75rem;
     color: var(--footer-disclaimer);
-    margin: .3rem 0;
+    margin: 0.3rem 0;
 }
 
 .footer-disclaimer i,
 .footer-disclaimer a {
     color: var(--footer-disclaimer);
-    font-size: .85rem;
+    font-size: 0.85rem;
 }
 
 .footer-disclaimer a:hover {
@@ -1235,7 +1272,7 @@ section {
     border-image: var(--section-border) 1;
     border-radius: 8px;
     padding: 1.5rem;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
     margin-bottom: 2rem;
 }
 
@@ -1288,15 +1325,15 @@ section {
 /* Resources */
 .resources {
     color: var(--link-color);
-    margin-bottom: .3rem;
+    margin-bottom: 0.3rem;
 }
 
 .resources a {
     color: var(--link-color);
     text-decoration: none;
     display: block;
-    margin: .3rem 0;
-    font-size: .85rem;
+    margin: 0.3rem 0;
+    font-size: 0.85rem;
 }
 
 .resources a:hover {
@@ -1305,30 +1342,30 @@ section {
 
 /* List Group */
 .list-group {
-    margin-top: .5rem;
+    margin-top: 0.5rem;
 }
 
 .list-group-item {
     border: none;
-    padding: .5rem;
+    padding: 0.5rem;
     background-color: var(--list-group-item-bg);
     border-bottom-radius: 0.5rem;
-    margin-bottom: .3rem;
+    margin-bottom: 0.3rem;
 }
 
 .list-group-item ul {
     list-style-type: none;
-    padding-left: .5rem;
+    padding-left: 0.5rem;
 }
 
 .list-group-item ul li {
-    margin-bottom: .3rem;
+    margin-bottom: 0.3rem;
 }
 
 .list-group-item a {
     color: var(--link-color);
     text-decoration: none;
-    font-size: .85rem;
+    font-size: 0.85rem;
 }
 
 .list-group-item a:hover {
@@ -1418,7 +1455,7 @@ section {
 
 .dark-mode .form-control:focus {
     border-color: var(--accent-blue);
-    box-shadow: 0 0 0 0.2rem rgba(77, 171, 247, 0.25);
+    box-shadow: 0 0 0 0.2rem rgba(77, 171, 247, 0.25); /* Corrected to match dark theme */
 }
 
 .dark-mode .form-check-label {
@@ -1456,7 +1493,7 @@ section {
 }
 
 .form-control.is-invalid ~ .invalid-feedback,
-.form-check-input.is-invalid-feedback .invalid-feedback {
+.form-check-input.is-invalid ~ .invalid-feedback {
     display: block;
 }
 
@@ -1693,29 +1730,29 @@ section {
 
     .navbar-toggler {
         padding: 0.3rem 6px;
-        font-size: .85rem;
+        font-size: 0.85rem;
     }
 
     .container {
         max-width: 100%;
         margin: 0;
-        padding: .3rem .5rem;
+        padding: 0.3rem 0.5rem;
     }
 
     .navbar-container, .footer-container {
-        padding: .3rem .5rem;
+        padding: 0.3rem 0.5rem;
     }
 
     .btn, .btn-primary, .btn-explore, .course-link, .tool-card button, .modal .btn, .btn-secondary {
         padding: 10px 20px;
-        font-size: .9rem;
+        font-size: 0.9rem;
         margin-top: 8px;
         margin-bottom: 12px;
     }
 
     .step-container .btn-nav, .quiz-container .btn-nav {
         padding: 10px 20px;
-        font-size: .9rem;
+        font-size: 0.9rem;
         margin: 8px 0.3rem 12px 0;
         min-width: 80px;
     }
@@ -1746,7 +1783,7 @@ section {
 
     #modeToggle {
         padding: 8px 16px;
-        font-size: .8rem;
+        font-size: 0.8rem;
         margin-top: 8px;
         margin-bottom: 12px;
     }
