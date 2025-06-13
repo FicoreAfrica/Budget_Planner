@@ -36,7 +36,7 @@
             <img src="{{ url_for('static', filename='img/ficore_logo.png') }}" alt="{{ trans('core_ficore_africa_logo') | default('Ficore Africa Logo') }}" class="logo-centered" style="border-radius: 50%; object-fit: contain; width: 80px; height: 80px;">
         </a>
         <a href="{{ url_for('set_language', lang='ha' if session.lang == 'en' else 'en') }}"
-           class="btn btn-primary navbar-btn btn-outline-light language-btn msഗms-1 me-1"
+           class="btn btn-primary navbar-btn btn-outline-light language-btn ms-1 me-1"
            title="{{ trans('core_change_language') | default('Change Language') }}"
            aria-label="{{ trans('core_switch_to') | default('Switch to') }} {{ 'Hausa' if session.lang == 'en' else 'English' }}"
            role="button">
@@ -48,7 +48,7 @@
             <i class="fas fa-moon" aria-hidden="true"></i>
         </button>
         <button class="navbar-toggler ms-auto" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="{{ trans('core_toggle_navigation') | default('Toggle navigation') }}">
-            <span class="navbar-toggler-icon" style="font-size: 1.2rem; width: 2rem; height: 2rem; background-color: white; color: #003366; border-radius: 5px;"></span>
+            <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ms-auto">
