@@ -274,7 +274,7 @@ def save_course_progress(course_id, course_progress):
             }
         }
         mongo.db.learning_materials.update_one(filter_kwargs, update_data, upsert=True)
-        current_app.logger.info(f"Saved progress for course {course_id}", extra={'session_id': session['sid']})
+        current_app.logger.info(f"Saved progress for course {course_id}", extra={'session_id': session.get('sid')})
     except Exception as e:
         current_app.logger.error(f"Error saving progress to MongoDB for course {course_id}: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
 
@@ -488,6 +488,19 @@ def lesson(course_id, lesson_id):
         else:
             course_progress = progress[course_id]
 
+        # Compute next_lesson_id
+        next_lesson_id = None
+        found = False
+        for m in course['modules']:
+            for l in m['lessons']:
+                if found and l.get('id'):
+                    next_lesson_id = l['id']
+                    break
+                if l['id'] == lesson_id:
+                    found = True
+            if next_lesson_id:
+                break
+
         if request.method == 'POST' and form.validate_on_submit():
             log_tool_usage(
                 mongo=mongo.db,
@@ -530,22 +543,21 @@ def lesson(course_id, lesson_id):
                         current_app.logger.error(f"Failed to send email for lesson {lesson_id}: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
                         flash(trans("email_send_failed", default="Failed to send email notification", lang=lang), "warning")
 
-                next_lesson_id = None
-                found = False
-                for m in course['modules']:
-                    for l in m['lessons']:
-                        if found and l.get('id'):
-                            next_lesson_id = l['id']
-                            break
-                        if l['id'] == lesson_id:
-                            found = True
-                    if next_lesson_id:
-                        break
                 if next_lesson_id:
                     return redirect(url_for('learning_hub.lesson', course_id=course_id, lesson_id=next_lesson_id))
                 return redirect(url_for('learning_hub.course_overview', course_id=course_id))
         current_app.logger.info(f"Rendering lesson page, Path: {request.path}, Course ID: {course_id}, Lesson ID: {lesson_id}", extra={'session_id': session.get('sid', 'no-session-id')})
-        return render_template('LEARNINGHUB/learning_hub_lesson.html', course=course, lesson=lesson, module=module, progress=course_progress, form=form, trans=trans, lang=lang)
+        return render_template(
+            'LEARNINGHUB/learning_hub_lesson.html',
+            course=course,
+            lesson=lesson,
+            module=module,
+            progress=course_progress,
+            form=form,
+            trans=trans,
+            lang=lang,
+            next_lesson_id=next_lesson_id
+        )
     except Exception as e:
         current_app.logger.error(f"Error in lesson page: {str(e)}", extra={'session_id': session.get('sid', 'no-session-id')})
         flash(trans("learning_hub_error_loading", default="Error loading lesson", lang=lang), "danger")
