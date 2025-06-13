@@ -147,7 +147,7 @@ def signup():
     form = SignupForm(lang=lang, formdata=request.form if request.method == 'POST' else None)
     referral_code = request.args.get('ref')
     referrer = None
-    session_id = session.get('sid', str(uuid.uuid4()))
+    session_id = session.get('sid', session.sid)
     session['sid'] = session_id
     
     # Log signup page view
@@ -217,7 +217,7 @@ def signin():
     
     lang = session.get('lang', 'en')
     form = SigninForm(lang=lang, formdata=request.form if request.method == 'POST' else None)
-    session_id = session.get('sid', str(uuid.uuid4()))
+    session_id = session.get('sid', session.sid)
     session['sid'] = session_id
     
     # Log signin page view
@@ -227,10 +227,12 @@ def signin():
         if request.method == 'POST' and form.validate_on_submit():
             user = get_user_by_email(mongo, form.email.data)
             if user and check_password_hash(getattr(user, 'password_hash', ''), form.password.data):
+                logger.info(f"User object: id={getattr(user, 'id', None)}, username={getattr(user, 'username', None)}", extra={'session_id': session_id})
                 login_user(user)
+                session.modified = True
                 username = getattr(user, 'username', 'unknown') if user else 'unknown'
                 user_id = getattr(user, 'id', None) if user else None
-                logger.info(f"User signed in: {username}", extra={'session_id': session_id})
+                logger.info(f"User signed in: {username}, user_id: {user_id}, session: {dict(session)}", extra={'session_id': session_id})
                 log_tool_usage(mongo, 'login', user_id=user_id, session_id=session_id, action='submit_success')
                 flash(trans('auth_signin_success', default='Signed in successfully!', lang=lang), 'success')
                 return redirect(url_for('index'))
@@ -240,7 +242,7 @@ def signin():
                 flash(trans('auth_invalid_credentials', default='Invalid email or password.', lang=lang), 'danger')
         elif form.errors:
             logger.error(f"Signin form validation failed: {form.errors}", extra={'session_id': session_id})
-            log_tool_usage(mongo, 'login', user_id=None, session_id=session_id, action='submit_error')
+            log_tool_usage(mongo, 'login', user_id=None, session_id=session_id, session_id=session_id, action='submit_error')
             flash(trans('auth_form_errors', default='Please correct the errors in the form.', lang=lang), 'danger')
     
         return render_template('signin.html', form=form, lang=lang)
@@ -258,7 +260,7 @@ def anonymous():
         return redirect(url_for('index'))
     
     lang = session.get('lang', 'en')
-    session_id = session.get('sid', str(uuid.uuid4()))
+    session_id = session.get('sid', session.sid)
     session['sid'] = session_id
     
     # Log anonymous access attempt
@@ -284,7 +286,7 @@ def logout():
     lang = session.get('lang', 'en')
     username = getattr(current_user, 'username', 'unknown') if current_user else 'unknown'
     user_id = getattr(current_user, 'id', None) if current_user else None
-    session_id = session.get('sid', str(uuid.uuid4()))
+    session_id = session.get('sid', session.sid)
     
     # Log logout action
     log_tool_usage(mongo, 'logout', user_id=user_id, session_id=session_id, action='submit')
@@ -299,7 +301,7 @@ def logout():
 def profile():
     lang = session.get('lang', 'en')
     password_form = ChangePasswordForm(lang=lang, formdata=request.form if request.method == 'POST' else None)
-    session_id = session.get('sid', str(uuid.uuid4()))
+    session_id = session.get('sid', session.sid)
     
     try:
         if request.method == 'POST' and password_form.validate_on_submit():
@@ -321,7 +323,7 @@ def profile():
         return render_template('profile.html', lang=lang, referral_link=referral_link, referral_count=referral_count, referred_users=referred_users, password_form=password_form)
     except Exception as e:
         logger.exception(f"Error in profile: {str(e)} - Type: {type(e).__name__}", extra={'session_id': session_id})
-        flash(trans('core_error', default='An error occurred. Please try again.', lang=lang), 'Danger')
+        flash(trans('core_error', default='An error occurred. Please try again.', lang=lang), 'danger')
         referral_code = getattr(current_user, 'referral_code', None) if current_user else None
         referral_link = url_for('auth.signup', ref=referral_code, _external=True)
         referred_users = []
@@ -332,11 +334,11 @@ def profile():
 
 @auth_bp.route('/debug/auth')
 def debug_auth():
-    session_id = session.get('sid', str(uuid.uuid4()))
+    session_id = session.get('sid', session.sid)
     try:
         return jsonify({
             'is_authenticated': current_user.is_authenticated,
-            'is_admin': getattr(current_user, 'is_admin', False) if current_user.is_authenticated else False,
+            'is_admin': getattr(current_user, 'id', None) if current_user.is_authenticated else False,
             'role': getattr(current_user, 'role', None) if current_user.is_authenticated else None,
             'email': getattr(current_user, 'email', None) if current_user.is_authenticated else None,
             'username': getattr(current_user, 'username', None) if current_user.is_authenticated else None,
@@ -355,7 +357,7 @@ def forgot_password():
     
     lang = session.get('lang', 'en')
     form = ForgotPasswordForm(lang=lang, formdata=request.form if request.method == 'POST' else None)
-    session_id = session.get('sid', str(uuid.uuid4()))
+    session_id = session.get('sid', session.sid)
     session['sid'] = session_id
     
     # Log forgot password page view
@@ -403,7 +405,7 @@ def reset_password(token):
     
     lang = session.get('lang', 'en')
     form = ResetPasswordForm(lang=lang, formdata=request.form if request.method == 'POST' else None)
-    session_id = session.get('sid', str(uuid.uuid4()))
+    session_id = session.get('sid', session.sid)
     session['sid'] = session_id
     
     # Log reset password page view
@@ -459,7 +461,7 @@ def google_login():
     if current_user.is_authenticated:
         return redirect(url_for('index'))
     
-    session_id = session.get('sid', str(uuid.uuid4()))
+    session_id = session.get('sid', session.sid)
     session['sid'] = session_id
     lang = session.get('lang', 'en')
     
@@ -501,7 +503,7 @@ def google_login():
 
 @auth_bp.route('/google-callback')
 def google_callback():
-    session_id = session.get('sid', str(uuid.uuid4()))
+    session_id = session.get('sid', session.sid)
     session['sid'] = session_id
     lang = session.get('lang', 'en')
     
@@ -562,7 +564,8 @@ def google_callback():
                 user = create_user(mongo, user_data)
         
         login_user(user)
-        logger.info(f"User signed in via Google: {user.email}", extra={'session_id': session_id})
+        session.modified = True
+        logger.info(f"User signed in via Google: {user.email}, user_id: {user.id}, session: {dict(session)}", extra={'session_id': session_id})
         log_tool_usage(mongo, 'google_login', user_id=user.id, session_id=session_id, action='submit_success')
         flash(trans('core_google_login_success', default='Successfully logged in with Google.', lang=lang), 'success')
         return redirect(url_for('index'))
