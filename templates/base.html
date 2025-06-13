@@ -221,5 +221,33 @@
     </script>
     {% endblock %}
     {% block extra_scripts %}{% endblock %}
+
+    <!-- Dark Mode Toggle Logic -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const themeToggle = document.getElementById('modeToggle');
+            const body = document.body;
+
+            // Check localStorage for theme preference on load
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                body.classList.add('dark-theme');
+                themeToggle.querySelector('i').classList.replace('fa-moon', 'fa-sun');
+            }
+
+            // Toggle dark mode
+            themeToggle.addEventListener('click', function() {
+                if (body.classList.contains('dark-theme')) {
+                    body.classList.remove('dark-theme');
+                    localStorage.setItem('theme', 'light');
+                    themeToggle.querySelector('i').classList.replace('fa-sun', 'fa-moon');
+                } else {
+                    body.classList.add('dark-theme');
+                    localStorage.setItem('theme', 'dark');
+                    themeToggle.querySelector('i').classList.replace('fa-moon', 'fa-sun');
+                }
+            });
+        });
+    </script>
 </body>
 </html>
