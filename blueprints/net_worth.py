@@ -10,7 +10,8 @@ import uuid
 import json
 from models import log_tool_usage  # Import log_tool_usage
 from extensions import mongo
-from app import custom_login_required, create_anonymous_session  # Import from app.py
+from session_utils import create_anonymous_session
+from app import custom_login_required
 
 net_worth_bp = Blueprint(
     'net_worth',
