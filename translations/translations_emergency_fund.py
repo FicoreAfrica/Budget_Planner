@@ -257,7 +257,7 @@ EMERGENCY_FUND_TRANSLATIONS = {
         'emergency_fund_insight_fully_funded': 'Aikin da kyau! Asusun gaggawarka ya cika.',
         'emergency_fund_insight_savings_gap': 'Kana buƙatar ₦{savings_gap} a cikin watanni {months} don cimma burinka.',
         'emergency_fund_insight_high_income': 'Shirin ka na iya buƙatar sama da 30% na kuɗin shigarka. Gwada rage kashewa.',
-        'emergency_fund_insight_large_family': 'Tare da iyali, ajiye don kashewar watanni {months}.',
+        'emergency_fund_insight_large_family': 'Idan kuna da iyali, ajiye kudi don kashewar duk wata {akalla wata 6}.',
         'emergency_fund_savings_tip': 'Ajiye ₦{monthly_savings} kowace wata har watanni {timeline}.',
         'emergency_fund_maintain_fund': 'Ci gaba da haɓaka asusun gaggawarka don aminci.',
         'emergency_fund_use_savings_apps': 'Yi amfani da manhajoji kamar PiggyVest ko Cowrywise don ajiya cikin sauƙi.',
