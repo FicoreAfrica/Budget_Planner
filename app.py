@@ -297,6 +297,9 @@ def create_app():
     app.config['SMTP_PORT'] = int(os.environ.get('SMTP_PORT', 587))
     app.config['SMTP_USERNAME'] = os.environ.get('SMTP_USERNAME')
     app.config['SMTP_PASSWORD'] = os.environ.get('SMTP_PASSWORD')
+    app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+    app.config['SESSION_COOKIE_SECURE'] = False  # Set to True for HTTPS
+    app.config['SESSION_COOKIE_HTTPONLY'] = True
     if not app.config['GOOGLE_CLIENT_ID'] or not app.config['GOOGLE_CLIENT_SECRET']:
         logger.warning("Google OAuth2 credentials (GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET) not set in environment variables")
     if not app.config['SMTP_USERNAME'] or not app.config['SMTP_PASSWORD']:
@@ -352,9 +355,14 @@ def create_app():
     logger.info("Flask-Login initialized successfully")
     @login_manager.user_loader
     def load_user(user_id):
+        logger.info(f"Attempting to load user with ID: {user_id}")
         try:
             from models import get_user
             user = get_user(mongo, user_id)
+            if user is None:
+                logger.warning(f"No user found for ID: {user_id}")
+            else:
+                logger.info(f"User loaded: {user.username}")
             return user
         except Exception as e:
             logger.error(f"Error loading user {user_id}: {str(e)}", exc_info=True)
@@ -471,20 +479,17 @@ def create_app():
         if request.path.startswith('/static/'):
             logger.info(f"Skipping session setup for static file request: {request.path}")
             return
+        logger.info(f"Starting before_request for path: {request.path}")
         try:
-            logger.info(f"Starting before_request for path: {request.path}")
             if 'sid' not in session:
-                if not current_user.is_authenticated:
-                    create_anonymous_session()
-                else:
-                    session['sid'] = str(uuid4())
-                    session['is_anonymous'] = False
-                    logger.info(f"New session ID generated for authenticated user: {session['sid']}")
+                session['sid'] = session.sid  # Reuse flask_session ID
+                session['is_anonymous'] = not current_user.is_authenticated
+                logger.info(f"Session ID set: {session['sid']}, is_anonymous: {session['is_anonymous']}")
             if 'lang' not in session:
                 session['lang'] = request.accept_languages.best_match(['en', 'ha'], 'en')
                 logger.info(f"Set default language to {session['lang']}")
             g.logger = logger
-            g.logger.info(f"Request processed for path: {request.path}")
+            logger.info(f"Request processed for path: {request.path}")
         except Exception as e:
             logger.error(f"Before request error for path {request.path}: {str(e)}", exc_info=True)
             raise
@@ -520,7 +525,7 @@ def create_app():
                     if not current_user.is_authenticated:
                         create_anonymous_session()
                     else:
-                        session['sid'] = str(uuid4())
+                        session['sid'] = session.sid
                         session['is_anonymous'] = False
                         logger.info(f"New session ID generated for authenticated user: {session['sid']}")
             except InvalidOperation as e:
@@ -530,7 +535,7 @@ def create_app():
     @app.route('/', methods=['GET', 'HEAD'])
     def index():
         lang = session.get('lang', 'en') if session is not None else 'en'
-        logger.info("Serving index page")
+        logger.info(f"Serving index page, authenticated: {current_user.is_authenticated}, user: {current_user.username if current_user.is_authenticated else 'None'}")
         if request.method == 'HEAD':
             return '', 200
         try:
