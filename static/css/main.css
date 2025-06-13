@@ -744,6 +744,8 @@ body {
     margin-bottom: 0.5rem;
     margin-top: 1rem;
     overflow-wrap: break-word; /* Added for consistency with tool-card */
+    text-align: center;
+    flex-grow: 1; /* Allows text to fill available space */
 }
 
 .card:has(.badge-success) .card-title {
