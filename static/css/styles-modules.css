@@ -146,6 +146,7 @@
     flex-direction: column;
     align-items: center;
     z-index: 2;
+    /* Added: Ensures relative positioning for journey-steps-line */
 }
 
 .journey-container h2 {
@@ -160,17 +161,33 @@
     padding-bottom: 0.25rem;
 }
 
+/* Horizontal progress line for desktop */
 .journey-container::before {
     content: '';
     position: absolute;
-    top: 50%;
-    left: 0;
-    right: 0;
+    top: calc(50% + 2rem); /* Adjusted to align with step centers - may need fine-tuning */
+    left: 5%; /* Start a bit from the left edge of the container */
+    right: 5%; /* End a bit from the right edge of the container */
     transform: translateY(-50%);
     height: 4px;
-    background: var(--journey-line-gradient-horizontal);
+    background: var(--journey-line-bg); /* Use a background color for the inactive line */
+    border-radius: 2px; /* Soften the ends */
     z-index: 0;
-    margin-top: 2rem;
+    /* margin-top: 2rem; - Removed, using top calc() for better alignment */
+}
+
+/* New: Active progress line overlay */
+.journey-container::after {
+    content: '';
+    position: absolute;
+    top: calc(50% + 2rem); /* Match ::before top */
+    left: 5%; /* Match ::before left */
+    width: var(--journey-progress-width, 0%); /* Controlled by JS/data attribute */
+    height: 4px;
+    background: var(--journey-line-gradient-horizontal); /* Your existing gradient */
+    border-radius: 2px;
+    z-index: 1; /* Slightly above inactive line */
+    transition: width 0.5s ease-in-out; /* Smooth animation for progress */
 }
 
 .journey-steps {
@@ -183,7 +200,39 @@
     max-width: 1200px; /* Constrain width for larger screens */
     z-index: 2;
     justify-content: space-between; /* Distribute steps evenly */
+    /* Added: Ensure items are centered within the main axis space */
+    align-items: center;
 }
+
+/* New: Vertical line for mobile */
+.journey-steps::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%; /* Center the line */
+    transform: translateX(-50%);
+    width: 2px; /* Thin vertical line */
+    background: var(--journey-line-bg); /* Inactive background */
+    z-index: 0;
+    display: none; /* Hidden by default, shown on mobile */
+}
+
+/* New: Active vertical progress line for mobile */
+.journey-steps::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    height: var(--journey-progress-height, 0%); /* Controlled by JS/data attribute */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 2px;
+    background: var(--journey-line-gradient-vertical); /* Define this variable in your theme */
+    z-index: 1;
+    transition: height 0.5s ease-in-out;
+    display: none; /* Hidden by default, shown on mobile */
+}
+
 
 .journey-step {
     display: flex;
@@ -196,25 +245,79 @@
     font-weight: 500;
     color: var(--text-color);
     text-decoration: none;
-    transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+    transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease, opacity 0.5s ease; /* Added opacity to transition */
     padding: 1.5rem; /* Consistent padding for touch targets */
     margin: 0;
     z-index: 3;
-    opacity: 0;
+    opacity: 0; /* Keep for fadeInOnScroll */
     animation: fadeInOnScroll 0.5s ease forwards;
     flex: 1 1 22%; /* Equal width for 4 steps, responsive */
     min-width: 120px; /* Ensure steps don’t shrink too much on mobile */
     max-width: 200px; /* Limit step width for balance */
+    border-radius: 8px; /* Apply border-radius here for consistent shape */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); /* Softer initial shadow */
 }
+
+/* New: Active state for journey step */
+.journey-step.active {
+    background-color: var(--journey-step-active-bg, var(--journey-step-hover-bg)); /* Use a distinct active background or hover bg */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 0 15px var(--accent-blue-rgba-soft); /* Enhanced glow for active */
+    transform: translateY(-5px) scale(1.02); /* Slight lift and scale */
+    transition: transform 0.3s ease-out, background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.journey-step.active .step-badge {
+    background: var(--accent-gradient); /* Make active badge use primary accent */
+    border-color: var(--accent-blue); /* Stronger border for active */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+.journey-step.active .step-badge::before {
+    opacity: 1; /* Make gradient ring fully visible on active */
+    animation: pulseBorder 1.5s infinite ease-in-out; /* Subtle pulsing animation */
+}
+
+/* New: Animation for active badge border */
+@keyframes pulseBorder {
+    0% { transform: scale(1); opacity: 0.7; }
+    50% { transform: scale(1.05); opacity: 1; }
+    100% { transform: scale(1); opacity: 0.7; }
+}
+
+.journey-step.completed {
+    opacity: 0.8; /* Slightly dim completed steps to de-emphasize */
+    /* background-color: var(--journey-step-completed-bg); /* Optional: specific background for completed */
+}
+
+.journey-step.completed .step-badge {
+    background: var(--button-gradient-completed); /* New variable for completed badge gradient */
+    color: var(--completed-icon-color, #ffffff); /* Color for checkmark/number on completed */
+}
+
+/* New: Checkmark icon for completed steps (requires specific HTML structure or JS) */
+.journey-step.completed .step-badge::after {
+    content: '✓'; /* Or a checkmark icon from your icon library */
+    position: absolute;
+    font-size: 1.2rem;
+    color: var(--completed-tick-color, #ffffff); /* Color of the tick */
+    z-index: 5;
+    animation: popIn 0.3s ease-out; /* Animation for checkmark appearance */
+}
+
+@keyframes popIn {
+    0% { transform: scale(0); opacity: 0; }
+    80% { transform: scale(1.2); opacity: 1; }
+    100% { transform: scale(1); }
+}
+
 
 @keyframes fadeInOnScroll {
     to { opacity: 1; }
 }
 
 .journey-step:hover {
-    transform: scale(1.05);
+    transform: scale(1.03); /* Slightly reduced scale on hover to distinguish from active */
     background-color: var(--journey-step-hover-bg);
-    border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* Subtle glow effect on hover */
 }
 
@@ -229,20 +332,25 @@
 
 @keyframes pulse {
     0% { transform: scale(1); }
-    50% { transform: scale(1.15); }
+    50% { transform: 1.15; } /* Simplified scale, no transform property */
     100% { transform: scale(1); }
 }
 
 .journey-icon {
     font-size: 1.5rem;
-    color: color-mix(in srgb, var(--journey-icon) 80%, #000 20%); /* Darkened icons for contrast */
+    color: var(--journey-icon-color); /* Use a variable for icons */
     margin-bottom: 0.75rem; /* Consistent vertical spacing */
-    transition: transform 0.2s ease, filter 0.2s ease;
+    transition: transform 0.2s ease, filter 0.2s ease, color 0.3s ease; /* Added color transition */
 }
 
 .journey-step:hover .journey-icon {
     transform: scale(1.1); /* Scale effect on hover */
     filter: brightness(110%) drop-shadow(0 0 8px rgba(0, 0, 0, 0.2)); /* Subtle glow */
+}
+
+.journey-step.active .journey-icon {
+    color: var(--accent-blue); /* Change icon color when active */
+    filter: drop-shadow(0 0 10px rgba(0, 123, 255, 0.4)); /* Enhanced glow for active icon */
 }
 
 .step-badge {
@@ -256,11 +364,12 @@
     border-radius: 50%;
     font-weight: 600;
     font-size: 1rem;
-    position: relative; /* Changed to relative for gradient ring */
+    position: relative;
     margin-bottom: 0.75rem; /* Consistent vertical spacing */
     z-index: 4;
-    border: 2px solid #fff;
+    border: 2px solid var(--badge-border-color, #fff); /* Use variable for border */
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 /* Gradient ring around step badge */
@@ -275,6 +384,7 @@
     background: var(--accent-gradient); /* Theme-matching gradient */
     z-index: -1;
     opacity: 0.7;
+    transition: opacity 0.3s ease, transform 0.3s ease; /* Added transitions */
 }
 
 .journey-step p {
@@ -283,6 +393,16 @@
     white-space: normal;
     position: relative;
     z-index: 3;
+    transition: color 0.3s ease; /* Add color transition */
+}
+
+.journey-step.active p {
+    color: var(--accent-blue); /* Or a highlight color for active text */
+    font-weight: 600; /* Make text bolder when active */
+}
+
+.journey-step.completed p {
+    color: var(--text-color-completed, var(--text-color-light)); /* Dim text for completed */
 }
 
 .journey-step p strong {
@@ -314,8 +434,16 @@
         font-size: 0.9rem; /* Adjusted font size */
     }
 
-    .journey-container::before {
-        display: none; /* Hide horizontal line on mobile for cleaner look */
+    /* Show vertical line on mobile */
+    .journey-steps::before,
+    .journey-steps::after {
+        display: block;
+    }
+
+    /* Hide horizontal line on mobile for cleaner look */
+    .journey-container::before,
+    .journey-container::after {
+        display: none;
     }
 }
 
