@@ -155,9 +155,9 @@ body {
     font-family: 'Poppins', 'Arial', sans-serif;
     background: var(--background-gradient);
     color: var(--text-color);
-    padding: 0.5rem;
+    padding: 0;
     margin: 0;
-    max-width: 100%;
+    width: 100%;
     overflow-x: hidden;
 }
 
@@ -219,6 +219,8 @@ body {
     position: relative;
     width: 100%;
     padding: 0;
+    margin: 0;
+    box-sizing: border-box;
 }
 
 .navbar::after {
@@ -233,12 +235,22 @@ body {
 }
 
 .navbar-container {
-    max-width: 1200px;
+    width: 100%;
     margin: 0 auto;
     padding: 0.5rem 1rem;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
+    box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+    .navbar-container {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem 2rem;
+    }
 }
 
 .navbar-brand {
@@ -577,19 +589,22 @@ body {
 
 /* Header Message */
 .header-message {
-    width: 100vw;
-    position: relative;
-    left: 50%;
-    right: 50%;
-    margin-left: -50vw;
-    margin-right: -50vw;
-    background: linear-gradient(to right, #006b9f, #00c18f);
+    width: 100%;
+    background: var(--header-message-gradient);
     padding: 10px 15px;
     color: white;
     text-align: center;
     font-size: 0.85rem;
     animation: fadeInOut 6s ease-in-out infinite;
     z-index: 900;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+    .header-message {
+        padding: 1rem 2rem;
+    }
 }
 
 @keyframes fadeInOut {
@@ -597,16 +612,6 @@ body {
     20% { opacity: 1; }
     80% { opacity: 1; }
     100% { opacity: 0; }
-}
-@media (min-width: 768px) {
-    .header-message {
-        padding: 1rem 2rem;
-    }
-    .navbar-container, .header-message {
-        max-width: none;
-        margin: 0;
-        padding: 1rem 2rem;
-    }
 }
 
 /* Consent Banner */
