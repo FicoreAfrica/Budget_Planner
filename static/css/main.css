@@ -1008,19 +1008,42 @@ body {
     border: 1px solid var(--accordion-border);
     border-top: none;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Adjust columns dynamically */
-    gap: 1.5rem; /* Space between cards */
-    justify-items: stretch; /* Ensure cards stretch to fill available space */
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Reduced minimum width for mobile */
+    gap: 1rem; /* Adjusted gap for better mobile spacing */
+    justify-items: stretch;
 }
+
 /* Override Bootstrap row and column behavior within accordion-body */
 .accordion-body .row {
     display: contents; /* Remove row's default flex behavior to let grid take over */
 }
 
-.accordion-body .col-md-6,
-.accordion-body .col-md-4 {
-    width: 100%; /* Ensure columns take full width of their grid cell */
-    padding: 0; /* Remove default Bootstrap padding to avoid extra space */
+/* Responsive adjustments for mobile */
+@media (max-width: 768px) {
+    .accordion-body {
+        grid-template-columns: 1fr; /* Single column on mobile */
+        padding: 1rem; /* Reduced padding for smaller screens */
+        gap: 1rem; /* Consistent spacing */
+    }
+
+    .accordion-body .col-md-6,
+    .accordion-body .col-md-4 {
+        width: 100%; /* Full width on mobile */
+        padding: 0; /* No extra padding */
+    }
+
+    .tool-card {
+        margin-bottom: 1rem; /* Reduced margin for tighter layout */
+    }
+}
+
+/* For screens above mobile (e.g., tablets and desktops) */
+@media (min-width: 769px) {
+    .accordion-body .col-md-6,
+    .accordion-body .col-md-4 {
+        width: 100%; /* Ensure columns fill grid cells */
+        padding: 0; /* Remove default Bootstrap padding */
+    }
 }
 .accordion-item {
     border: 1px solid var(--accordion-border);
