@@ -2,8 +2,8 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 from flask_wtf import FlaskForm
 from wtforms import StringField, SelectField, BooleanField, SubmitField, RadioField
 from wtforms.validators import DataRequired, Email, Optional
-from flask_login import current_user, login_required
-import uuid
+from flask_login import current_user
+from uuid import uuid4
 from datetime import datetime
 import json
 import logging
@@ -11,6 +11,7 @@ from translations import trans
 from mailersend_email import send_email, EMAIL_CONFIG
 from extensions import mongo
 from models import log_tool_usage
+from app import custom_login_required, create_anonymous_session  # Import from app.py
 
 # Configure logging
 logger = logging.getLogger('ficore_app')
@@ -182,10 +183,8 @@ def assign_badges(score, lang='en'):
 def step1():
     """Handle quiz step 1 form (personal information)."""
     if 'sid' not in session:
-        session['sid'] = str(uuid.uuid4())
-        session.permanent = True
-        session.modified = True
-        logger.debug(f"New session created with sid: {session['sid']}", extra={'session_id': session['sid']})
+        create_anonymous_session()
+        logger.debug(f"New anonymous session created with sid: {session['sid']}", extra={'session_id': session['sid']})
     lang = session.get('lang', 'en')
     course_id = request.args.get('course_id', 'financial_quiz')
     form_data = session.get('quiz_data', {})
@@ -238,7 +237,7 @@ def step1():
         return render_template('QUIZ/quiz_step1.html', form=form, course_id=course_id, lang=lang, total_steps=3), 500
 
 @quiz_bp.route('/step2a', methods=['GET', 'POST'])
-@login_required
+@custom_login_required
 def step2a():
     """Handle quiz step 2a form (questions 1-5)."""
     if 'sid' not in session or 'quiz_data' not in session:
@@ -263,7 +262,7 @@ def step2a():
         log_tool_usage(
             mongo,
             tool_name='quiz',
-            user_id=current_user.id,
+            user_id=current_user.id if current_user.is_authenticated else None,
             session_id=session['sid'],
             action='step2a_view'
         )
@@ -271,7 +270,7 @@ def step2a():
             log_tool_usage(
                 mongo,
                 tool_name='quiz',
-                user_id=current_user.id,
+                user_id=current_user.id if current_user.is_authenticated else None,
                 session_id=session['sid'],
                 action='step2a_submit'
             )
@@ -312,7 +311,7 @@ def step2a():
         return render_template('QUIZ/quiz_step.html', form=form, questions=questions, course_id=course_id, lang=lang, step_num=2, total_steps=3), 500
 
 @quiz_bp.route('/step2b', methods=['GET', 'POST'])
-@login_required
+@custom_login_required
 def step2b():
     """Handle quiz step 2b form (questions 6-10) and store results in MongoDB."""
     if 'sid' not in session or 'quiz_data' not in session:
@@ -337,7 +336,7 @@ def step2b():
         log_tool_usage(
             mongo,
             tool_name='quiz',
-            user_id=current_user.id,
+            user_id=current_user.id if current_user.is_authenticated else None,
             session_id=session['sid'],
             action='step2b_view'
         )
@@ -345,7 +344,7 @@ def step2b():
             log_tool_usage(
                 mongo,
                 tool_name='quiz',
-                user_id=current_user.id,
+                user_id=current_user.id if current_user.is_authenticated else None,
                 session_id=session['sid'],
                 action='step2b_submit'
             )
@@ -371,8 +370,8 @@ def step2b():
                 # Create and persist quiz result record to MongoDB
                 created_at = datetime.utcnow().isoformat()
                 quiz_result = {
-                    '_id': str(uuid.uuid4()),
-                    'user_id': current_user.id,
+                    '_id': str(uuid4()),
+                    'user_id': current_user.id if current_user.is_authenticated else None,
                     'session_id': session['sid'],
                     'created_at': created_at,
                     'first_name': session['quiz_data'].get('first_name', ''),
@@ -452,13 +451,12 @@ def step2b():
         return render_template('QUIZ/quiz_step.html', form=form, questions=questions, course_id=course_id, lang=lang, step_num=3, total_steps=3), 500
 
 @quiz_bp.route('/results', methods=['GET'])
-@login_required
+@custom_login_required
 def results():
     """Display quiz results from MongoDB."""
     if 'sid' not in session:
-        logger.warning("No session ID found", extra={'session_id': 'unknown'})
-        flash(trans('session_expired', default='Session expired. Please start again.', lang=session.get('lang', 'en')), 'danger')
-        return redirect(url_for('quiz.step1', course_id=request.args.get('course_id', 'financial_quiz')))
+        create_anonymous_session()
+        logger.warning("No session ID found, created new anonymous session", extra={'session_id': session['sid']})
     
     lang = session.get('lang', 'en')
     course_id = request.args.get('course_id', 'financial_quiz')
@@ -467,7 +465,7 @@ def results():
         log_tool_usage(
             mongo,
             tool_name='quiz',
-            user_id=current_user.id,
+            user_id=current_user.id if current_user.is_authenticated else None,
             session_id=session['sid'],
             action='results_view'
         )
@@ -485,14 +483,14 @@ def results():
             if not results:
                 # Fallback to latest result by user_id
                 quiz_result = mongo.db.quiz_responses.find_one(
-                    {'user_id': current_user.id},
+                    {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']},
                     sort=[('created_at', -1)]
                 )
                 if quiz_result:
                     results = quiz_result
-                    result_source = 'user_id'
-            if not results and current_user.email:
-                # Fallback to email
+                    result_source = 'user_id' if current_user.is_authenticated else 'session_id'
+            if not results and current_user.is_authenticated and current_user.email:
+                # Fallback to email for authenticated users
                 quiz_result = mongo.db.quiz_responses.find_one(
                     {'email': current_user.email},
                     sort=[('created_at', -1)]
