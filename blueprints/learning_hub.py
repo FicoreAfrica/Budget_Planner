@@ -4,7 +4,6 @@ from wtforms import StringField, BooleanField, SubmitField, HiddenField, FileFie
 from wtforms.validators import DataRequired, Email, Optional
 from flask_wtf.csrf import CSRFProtect, CSRFError
 from flask_login import current_user
-from app import custom_login_required
 from datetime import datetime
 from mailersend_email import send_email, EMAIL_CONFIG
 import uuid
@@ -17,6 +16,9 @@ from models import log_tool_usage
 import pymongo
 import logging
 from flask import g
+from session_utils import create_anonymous_session
+from app import custom_login_required
+
 
 learning_hub_bp = Blueprint(
     'learning_hub',
