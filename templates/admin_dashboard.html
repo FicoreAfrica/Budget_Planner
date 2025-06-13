@@ -3,6 +3,13 @@
 {% block content %}
 <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <h1 class="text-3xl font-bold mb-4">{{ trans('admin_dashboard_title', default='Admin Dashboard', lang=lang) }}</h1>
+    {% if current_user.is_authenticated and (current_user.is_admin or current_user.role == 'admin') %}
+    <a href="{{ url_for('learning_hub.upload_content') }}" 
+       class="inline-block bg-yellow-500 text-white hover:bg-yellow-600 py-2 px-4 rounded mb-4">
+        <i class="fas fa-upload"></i>
+        {{ trans('learning_hub_upload_content', default='Upload Learning Content', lang=lang) }}
+    </a>
+    {% endif %}
     <p class="text-lg text-gray-600 mb-6">{{ trans('admin_dashboard_desc', default='View and analyze platform usage and engagement metrics', lang=lang) }}</p>
 
     <!-- Navigation Tabs -->
@@ -80,7 +87,7 @@
         <div class="bg-white shadow-sm rounded-lg p-4">
             <h5 class="text-lg font-semibold text-gray-800">{{ trans('admin_tool_usage_total', default='Total Tool Usage', lang=lang) }}</h5>
             <p class="text-4xl font-bold text-gray-900 mt-2">{{ metrics.tool_usage_total }}</p>
-        </div>
+       若</div>
     </div>
 
     <!-- Top Tools and Action Breakdown -->
