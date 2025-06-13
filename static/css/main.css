@@ -175,6 +175,41 @@ body {
     padding: 0.5rem;
 }
 
+.step-progress {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+@media (max-width: 768px) {
+    .step-progress {
+        gap: 0.3rem;
+    }
+    .step-dot {
+        width: 0.8rem;
+        height: 0.8rem;
+    }
+    .step-connector {
+        width: 1.5rem;
+    }
+}
+
+.step-dot {
+    width: 1rem;
+    height: 1rem;
+    background: var(--step-dot-bg);
+    border-radius: 50%;
+    display: inline-block;
+}
+.step-dot.active {
+    background: var(--step-dot-active-bg);
+}
+.step-connector {
+    width: 2rem;
+    height: 2px;
+    background: var(--step-connector-bg);
+}
 /* Navbar */
 .navbar {
     background: var(--navbar-gradient);
@@ -756,16 +791,10 @@ body {
     align-self: center;
 }
 
-.index-page .tool-title .card-title {
-    background: var(--tool-title-gradient);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    margin-bottom: 0.2rem;
-}
-
 .index-container .tool-card .card-title {
     text-align: center !important;
 }
+
 
 /* Tool Header */
 .tool-header-container {
@@ -773,6 +802,14 @@ body {
     padding: 0.5rem;
     border-radius: 8px;
     border: 1px solid var(--tool-header-border);
+}
+
+.tool-header {
+    padding: 1rem 0;
+    margin-bottom: 1.5rem;
+    background-color: var(--tool-header-bg);
+    border: 1px solid var(--tool-header-border);
+    border-radius: 8px;
 }
 
 .tool-title {
@@ -785,6 +822,16 @@ body {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     margin: 0;
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+.tool-subtitle {
+    font-size: 0.85rem;
+    color: var(--tool-subtitle);
+    margin-bottom: 0.5rem;
+    margin-top: 0.5rem;
+    overflow-wrap: break-word;
 }
 
 .tool-icon {
