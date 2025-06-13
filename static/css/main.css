@@ -544,19 +544,13 @@ body {
 
 /* Header Message */
 .header-message {
-    background: var(--header-message-gradient);
+    width: 100%;
+    background: linear-gradient(to right, #006b9f, #00c18f);
+    padding: 10px 15px;
     color: white;
     text-align: center;
-    padding: 0.5rem;
     font-size: 0.85rem;
     animation: fadeInOut 6s ease-in-out infinite;
-    width: 100vw; /* Full viewport width */
-    position: relative; /* Ensure it stays in flow but can extend */
-    left: 50%; /* Offset to center */
-    right: 50%;
-    margin-left: -50vw; /* Negative margin to extend edge-to-edge */
-    margin-right: -50vw;
-    z-index: 999; /* Ensure it stays above other content */
 }
 
 @keyframes fadeInOut {
