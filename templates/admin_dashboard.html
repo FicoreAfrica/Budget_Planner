@@ -124,7 +124,7 @@
             <h5 class="text-lg font-semibold" style="color: #6be585;" id="metric-title-2">{{ trans('admin_new_users_24h', default='New Users (24h)', lang=lang) }}</h5>
             <p class="text-4xl font-bold mt-2" style="color: #e2e8f0;" id="metric-value-2">{{ metrics.new_users_last_24h }}</p>
         </div>
-        <div class="bg-white shadow-sm rounded-lg p-4" style="  background-color: #2d3748; box-shadow: 0 1px 3px rgba(0,0,0,0.3);" id="metric-3">
+        <div class="bg-white shadow-sm rounded-lg p-4" style="background-color: #2d3748; box-shadow: 0 1px 3px rgba(0,0,0,0.3);" id="metric-3">
             <h5 class="text-lg font-semibold" style="color: #ff9f43;" id="metric-title-3">{{ trans('admin_total_referrals', default='Total Referrals', lang=lang) }}</h5>
             <p class="text-4xl font-bold mt-2" style="color: #e2e8f0;" id="metric-value-3">{{ metrics.total_referrals }}</p>
         </div>
@@ -211,6 +211,7 @@
             </div>
         </div>
     </div>
+    {% endif %}
 
     <script>
         function changeColorScheme(theme) {
@@ -386,6 +387,5 @@
             }
         }
     </script>
-    {% endif %}
 </div>
 {% endblock %}
