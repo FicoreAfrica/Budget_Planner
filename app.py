@@ -18,7 +18,6 @@ from scheduler_setup import init_scheduler
 from models import create_user, get_user_by_email
 import json
 from functools import wraps
-from uuid import uuid4
 from werkzeug.security import generate_password_hash
 from mailersend_email import init_email_config
 from pymongo.errors import ConnectionFailure, ConfigurationError, InvalidOperation
@@ -27,6 +26,7 @@ from google.auth.transport import requests as google_requests
 from itsdangerous import URLSafeTimedSerializer
 import smtplib
 from email.mime.text import MIMEText
+from session_utils import create_anonymous_session
 
 # Load environment variables
 load_dotenv()
@@ -82,13 +82,6 @@ def custom_login_required(f):
             return f(*args, **kwargs)
         return redirect(url_for('auth.signin', next=request.url))
     return decorated_function
-
-def create_anonymous_session():
-    """Create a guest session for anonymous access."""
-    session['sid'] = str(uuid4())
-    session['is_anonymous'] = True
-    session['created_at'] = datetime.utcnow().isoformat()
-    logger.info(f"Created anonymous session: {session['sid']}")
 
 def setup_logging(app):
     handler = logging.StreamHandler(sys.stderr)
