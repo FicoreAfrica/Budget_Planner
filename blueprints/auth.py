@@ -17,7 +17,7 @@ from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 import smtplib
 from email.mime.text import MIMEText
-from app import create_anonymous_session  # Added for anonymous access
+from session_utils import create_anonymous_session
 
 # Configure logging
 logger = logging.getLogger('ficore_app')
