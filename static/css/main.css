@@ -290,8 +290,6 @@ body {
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
-.dark-elle
-
 .dark-mode .dropdown-menu {
     background: #343a40;
     border: 1px solid #495057;
@@ -718,7 +716,15 @@ body {
 
 /* Tool Card */
 .tool-card {
+    background: var(--card-bg);
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
     margin-bottom: 1.5rem;
+    border: 1px solid var(--card-border);
+    width: 100%; /* Ensure it fills the column width */
+    box-sizing: border-box;
+    padding: 1rem;
+    text-align: center;
 }
 
 .tool-card h3 {
@@ -994,13 +1000,27 @@ body {
     content: '\f077';
 }
 
+/* Accordion Body */
 .accordion-body {
     padding: 1.5rem;
     background-color: var(--card-bg);
     border: 1px solid var(--accordion-border);
     border-top: none;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Adjust columns dynamically */
+    gap: 1.5rem; /* Space between cards */
+    justify-items: stretch; /* Ensure cards stretch to fill available space */
+}
+/* Override Bootstrap row and column behavior within accordion-body */
+.accordion-body .row {
+    display: contents; /* Remove row's default flex behavior to let grid take over */
 }
 
+.accordion-body .col-md-6,
+.accordion-body .col-md-4 {
+    width: 100%; /* Ensure columns take full width of their grid cell */
+    padding: 0; /* Remove default Bootstrap padding to avoid extra space */
+}
 .accordion-item {
     border: 1px solid var(--accordion-border);
     border-radius: 8px;
@@ -1901,6 +1921,9 @@ section {
 
     .accordion-body {
         padding: 2rem;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 2rem;
     }
 
     .btn, .btn-primary, .btn-explore, .course-link, .tool-card button, .modal .btn {
