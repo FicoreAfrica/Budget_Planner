@@ -30,7 +30,7 @@ def create_user(mongo, user_data):
         if field not in user_data or user_data[field] is None:
             raise ValueError(f"Missing required field: {field}")
     user = {
-        'id': user_data.get('id', str(uuid.uuid4())),  # String UUID
+        'id': user_data.get('id', int(uuid.uuid4().int % 10000000000)),  # Integer ID
         'username': user_data['username'],
         'email': user_data['email'],
         'password_hash': user_data['password_hash'],
@@ -51,10 +51,23 @@ def create_user(mongo, user_data):
 
 def get_user(mongo, user_id):
     """Retrieve a user by ID."""
-    user = mongo.db.users.find_one({'id': str(user_id)}, {'_id': 0})
-    if user:
-        return User(user)
-    return None
+    try:
+        # Try querying as integer first
+        user = mongo.db.users.find_one({'id': int(user_id)}, {'_id': 0})
+        if user:
+            return User(user)
+        # Fallback to string query
+        user = mongo.db.users.find_one({'id': str(user_id)}, {'_id': 0})
+        if user:
+            return User(user)
+        current_app.logger.warning(f"No user found for id: {user_id}")
+        return None
+    except ValueError:
+        current_app.logger.error(f"Invalid user_id format: {user_id}")
+        return None
+    except Exception as e:
+        current_app.logger.error(f"Failed to retrieve user {user_id}: {str(e)}")
+        return None
 
 def get_user_by_email(mongo, email):
     """Retrieve a user by email."""
@@ -66,7 +79,13 @@ def get_user_by_email(mongo, email):
 def update_user(mongo, user_id, updates):
     """Update user fields."""
     try:
-        mongo.db.users.update_one({'id': str(user_id)}, {'$set': updates})
+        result = mongo.db.users.update_one({'id': int(user_id)}, {'$set': updates})
+        if result.matched_count == 0:
+            result = mongo.db.users.update_one({'id': str(user_id)}, {'$set': updates})
+            if result.matched_count == 0:
+                current_app.logger.warning(f"No user found for id: {user_id}")
+                return False
+        return True
     except Exception as e:
         current_app.logger.error(f"Failed to update user {user_id}: {str(e)}", extra={'updates': updates})
         raise
@@ -360,19 +379,19 @@ def to_dict_bill(bill):
     """Convert bill document to dict."""
     return {
         'id': bill.get('id', None),
-        'user_id': bill.get('user_id', None),
-        'session_id': bill.get('session_id', None),
-        'created_at': (bill['created_at'].isoformat() + "Z") if isinstance(bill.get('created_at'), datetime) else bill.get('created_at', ''),
-        'user_email': bill.get('user_email', None),
-        'first_name': bill.get('first_name', None),
-        'bill_name': bill.get('bill_name', ''),
+        'user_id': bill.get('user_id'),
+        'session_id': bill.get('session_id'),
+        'created_at': (bill['created_at'].isoformat() + "Z") if isinstance(bill.get('created_at'), datetime) else bill.get('created_at', '')
+        'user_email': bill.get('user_email'),
+        'first_name': bill.get('first_name'),
+        'bill_name': bill.get('bill_name'),
         'amount': bill.get('amount', 0.0),
-        'due_date': bill.get('due_date', ''),
+        'due_date': bill.get('due_date'),
         'frequency': bill.get('frequency', ''),
-        'category': bill.get('category', ''),
-        'status': bill.get('status', ''),
-        'send_email': bill.get('send_email', False),
-        'reminder_days': bill.get('reminder_days', None)
+        'category': bill.get('category'),
+        'status': bill.get('status'),
+        'send_email': bill.get('send_email', False)
+        'reminder_days': bill.get('reminder_days')
     }
 
 # NetWorth helper functions
@@ -408,12 +427,17 @@ def create_net_worth(mongo, nw_data):
 
 def get_net_worth(mongo, filters):
     """Retrieve net worth records by filters."""
-    records = mongo.db.net_worth.find(filters, {'_id': 0}).sort('created_at', -1)
-    valid_records = [r for r in records if 'id' in r]
-    for r in records:
-        if 'id' not in r:
-            current_app.logger.warning(f"Skipping net worth record without 'id': {r}")
-    return valid_records
+    try:
+        records = mongo.db.net_worth.find(filters, {'_id': 0}).sort('created_at', -1)
+        valid_records = [r for r in records if 'id' in r]
+        # Check for records without 'id' before the cursor is exhausted
+        for r in list(records.clone()):  # Clone the cursor to avoid exhaustion
+            if 'id' not in r:
+                current_app.logger.warning(f"Skipping net worth record without 'id': {r}")
+        return valid_records
+    except Exception as e:
+        current_app.logger.error(f"Failed to retrieve net worth records: {str(e)}", extra={'filters': filters})
+        return []
 
 def to_dict_net_worth(nw):
     """Convert net worth document to dict."""
@@ -426,7 +450,7 @@ def to_dict_net_worth(nw):
         'id': nw.get('id', None),
         'user_id': nw.get('user_id', None),
         'session_id': nw.get('session_id', None),
-        'created_at': (nw['created_at'].isoformat() + "Z") if isinstance(nw.get('created_at'), datetime) else nw.get('created_at', ''),
+        'created_at': (nw['created_at'].isoformat() + "Z" if isinstance(nw.get('created_at'), datetime) else nw.get('created_at', '')),
         'first_name': nw.get('first_name', None),
         'email': nw.get('email', None),
         'send_email': nw.get('send_email', False),
@@ -439,6 +463,10 @@ def to_dict_net_worth(nw):
         'net_worth': nw.get('net_worth', None),
         'badges': badges
     }
+
+def get_net_worth_records(mongo, filters):
+    """Legacy alias for get_net_worth to maintain compatibility."""
+    return get_net_worth(mongo, filters)
 
 # EmergencyFund helper functions
 def create_emergency_fund(mongo, ef_data):
