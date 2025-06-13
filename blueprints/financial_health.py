@@ -2,15 +2,15 @@ from flask import Blueprint, request, session, redirect, url_for, render_templat
 from flask_wtf import FlaskForm
 from wtforms import StringField, FloatField, SelectField, BooleanField, SubmitField
 from wtforms.validators import DataRequired, NumberRange, Optional, Email, ValidationError
-from flask_login import current_user, login_required
+from flask_login import current_user
 from datetime import datetime
 import uuid
 import json
 from mailersend_email import send_email, EMAIL_CONFIG
 from translations import trans
-from extensions import mongo  # Import mongo from extensions
-from models import log_tool_usage  # Import log_tool_usage
-
+from extensions import mongo
+from models import log_tool_usage
+from app import custom_login_required  # Added for anonymous access
 
 # Blueprint setup
 financial_health_bp = Blueprint(
@@ -123,7 +123,7 @@ class Step3Form(FlaskForm):
                 raise ValidationError(trans('financial_health_interest_rate_invalid', lang=session.get('lang', 'en')))
 
 @financial_health_bp.route('/step1', methods=['GET', 'POST'])
-@login_required
+@custom_login_required
 def step1():
     """Handle financial health step 1 form (personal info)."""
     if 'sid' not in session:
@@ -131,10 +131,21 @@ def step1():
         session.permanent = True
     lang = session.get('lang', 'en')
     form_data = session.get('health_step1', {})
-    form_data['email'] = form_data.get('email', current_user.email)
-    form_data['first_name'] = form_data.get('first_name', current_user.username)
+    if current_user.is_authenticated:
+        form_data['email'] = form_data.get('email', current_user.email)
+        form_data['first_name'] = form_data.get('first_name', current_user.username)
+    else:
+        form_data['email'] = form_data.get('email', '')
+        form_data['first_name'] = form_data.get('first_name', '')
     form = Step1Form(data=form_data)
-    current_app.logger.info(f"Starting step1 for session {session['sid']}")
+    current_app.logger.info(f"Starting step1 for session {session['sid']} {'(anonymous)' if session.get('is_anonymous') else ''}")
+    log_tool_usage(
+        mongo,
+        tool_name='financial_health',
+        user_id=current_user.id if current_user.is_authenticated else None,
+        session_id=session['sid'],
+        action='step1_view'
+    )
     try:
         if request.method == 'POST':
             if not form.validate_on_submit():
@@ -148,9 +159,10 @@ def step1():
                 raise ValueError(trans("financial_health_email_must_be_string", lang=lang))
 
             collection = get_mongo_collection()
-            record = collection.find_one({'user_id': current_user.id, 'step': 1})
+            filter_criteria = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
+            record = collection.find_one({**filter_criteria, 'step': 1})
             record_data = {
-                'user_id': current_user.id,
+                'user_id': current_user.id if current_user.is_authenticated else None,
                 'session_id': session['sid'],
                 'step': 1,
                 'first_name': form_data['first_name'],
@@ -169,6 +181,13 @@ def step1():
                 collection.insert_one(record_data)
 
             current_app.logger.info(f"Step1 data updated/saved to MongoDB with ID {record_data['_id']} for session {session['sid']}")
+            log_tool_usage(
+                mongo,
+                tool_name='financial_health',
+                user_id=current_user.id if current_user.is_authenticated else None,
+                session_id=session['sid'],
+                action='step1_submit'
+            )
 
             session['health_step1'] = form_data
             session.modified = True
@@ -181,7 +200,7 @@ def step1():
         return render_template('HEALTHSCORE/health_score_step1.html', form=form, trans=trans, lang=lang), 500
 
 @financial_health_bp.route('/step2', methods=['GET', 'POST'])
-@login_required
+@custom_login_required
 def step2():
     """Handle financial health step 2 form (income and expenses)."""
     if 'sid' not in session:
@@ -192,7 +211,14 @@ def step2():
         flash(trans('financial_health_missing_step1', lang=lang, default='Please complete step 1 first.'), 'danger')
         return redirect(url_for('financial_health.step1'))
     form = Step2Form()
-    current_app.logger.info(f"Starting step2 for session {session['sid']}")
+    current_app.logger.info(f"Starting step2 for session {session['sid']} {'(anonymous)' if session.get('is_anonymous') else ''}")
+    log_tool_usage(
+        mongo,
+        tool_name='financial_health',
+        user_id=current_user.id if current_user.is_authenticated else None,
+        session_id=session['sid'],
+        action='step2_view'
+    )
     try:
         if request.method == 'POST':
             if not form.validate_on_submit():
@@ -201,9 +227,10 @@ def step2():
                 return render_template('HEALTHSCORE/health_score_step2.html', form=form, trans=trans, lang=lang)
 
             collection = get_mongo_collection()
-            record = collection.find_one({'user_id': current_user.id, 'step': 2})
+            filter_criteria = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
+            record = collection.find_one({**filter_criteria, 'step': 2})
             record_data = {
-                'user_id': current_user.id,
+                'user_id': current_user.id if current_user.is_authenticated else None,
                 'session_id': session['sid'],
                 'step': 2,
                 'income': float(form.income.data),
@@ -220,6 +247,13 @@ def step2():
                 collection.insert_one(record_data)
 
             current_app.logger.info(f"Step2 data updated/saved to MongoDB with ID {record_data['_id']} for session {session['sid']}")
+            log_tool_usage(
+                mongo,
+                tool_name='financial_health',
+                user_id=current_user.id if current_user.is_authenticated else None,
+                session_id=session['sid'],
+                action='step2_submit'
+            )
 
             session['health_step2'] = {
                 'income': float(form.income.data),
@@ -235,7 +269,7 @@ def step2():
         return render_template('HEALTHSCORE/health_score_step2.html', form=form, trans=trans, lang=lang), 500
 
 @financial_health_bp.route('/step3', methods=['GET', 'POST'])
-@login_required
+@custom_login_required
 def step3():
     """Handle financial health step 3 form (debt and interest) and calculate score."""
     if 'sid' not in session:
@@ -246,7 +280,14 @@ def step3():
         flash(trans('financial_health_missing_step2', lang=lang, default='Please complete step 2 first.'), 'danger')
         return redirect(url_for('financial_health.step2'))
     form = Step3Form()
-    current_app.logger.info(f"Starting step3 for session {session['sid']}")
+    current_app.logger.info(f"Starting step3 for session {session['sid']} {'(anonymous)' if session.get('is_anonymous') else ''}")
+    log_tool_usage(
+        mongo,
+        tool_name='financial_health',
+        user_id=current_user.id if current_user.is_authenticated else None,
+        session_id=session['sid'],
+        action='step3_view'
+    )
     try:
         if request.method == 'POST':
             if not form.validate_on_submit():
@@ -301,9 +342,10 @@ def step3():
                 badges.append(trans("financial_health_badge_interest_free", lang=lang))
 
             collection = get_mongo_collection()
-            record = collection.find_one({'user_id': current_user.id, 'step': 3})
+            filter_criteria = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
+            record = collection.find_one({**filter_criteria, 'step': 3})
             record_data = {
-                'user_id': current_user.id,
+                'user_id': current_user.id if current_user.is_authenticated else None,
                 'session_id': session['sid'],
                 'step': 3,
                 'first_name': step1_data.get('first_name', ''),
@@ -333,6 +375,13 @@ def step3():
                 collection.insert_one(record_data)
 
             current_app.logger.info(f"Step3 data updated/saved to MongoDB with ID {record_data['_id']} for session {session['sid']}")
+            log_tool_usage(
+                mongo,
+                tool_name='financial_health',
+                user_id=current_user.id if current_user.is_authenticated else None,
+                session_id=session['sid'],
+                action='step3_submit'
+            )
 
             if step1_data.get('send_email', False) and step1_data.get('email'):
                 try:
@@ -379,17 +428,25 @@ def step3():
         return render_template('HEALTHSCORE/health_score_step3.html', form=form, trans=trans, lang=lang), 500
 
 @financial_health_bp.route('/dashboard', methods=['GET', 'POST'])
-@login_required
+@custom_login_required
 def dashboard():
     """Display financial health dashboard with comparison to others."""
     if 'sid' not in session:
         session['sid'] = str(uuid.uuid4())
         session.permanent = True
     lang = session.get('lang', 'en')
-    current_app.logger.info(f"Starting dashboard for session {session['sid']}")
+    current_app.logger.info(f"Starting dashboard for session {session['sid']} {'(anonymous)' if session.get('is_anonymous') else ''}")
+    log_tool_usage(
+        mongo,
+        tool_name='financial_health',
+        user_id=current_user.id if current_user.is_authenticated else None,
+        session_id=session['sid'],
+        action='dashboard_view'
+    )
     try:
         collection = get_mongo_collection()
-        stored_records = list(collection.find({'user_id': current_user.id, 'step': 3}).sort('created_at', -1))
+        filter_criteria = {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
+        stored_records = list(collection.find({**filter_criteria, 'step': 3}).sort('created_at', -1))
         if not stored_records:
             latest_record = {}
             records = []
