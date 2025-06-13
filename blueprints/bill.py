@@ -11,7 +11,8 @@ from pymongo.errors import DuplicateKeyError
 from bson import ObjectId
 from extensions import mongo
 from models import log_tool_usage
-from app import custom_login_required  # Added for anonymous access
+from session_utils import create_anonymous_session
+from app import custom_login_required
 
 
 bill_bp = Blueprint(
