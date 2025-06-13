@@ -12,7 +12,8 @@ from extensions import mongo
 from bson import ObjectId
 from models import log_tool_usage
 import os
-from app import custom_login_required  # Added for anonymous access
+from session_utils import create_anonymous_session
+from app import custom_login_required
 
 
 emergency_fund_bp = Blueprint(
