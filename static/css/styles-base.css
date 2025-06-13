@@ -279,7 +279,7 @@ body {
 }
 
 .navbar-toggler {
-    padding: 0.3rem 0.6rem;
+    padding: 0.5rem 0.8rem;
     font-size: 0.9rem;
     border: none;
     background: var(--button-nav-gradient);
@@ -292,15 +292,15 @@ body {
 }
 
 .navbar-toggler .navbar-toggler-icon {
-    font-size: 1.2rem;
-    width: 2rem;
-    height: 2rem;
-    background-color: white;
-    color: #003366;
-    border-radius: 5px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    font-size: 1.5rem; /* Increase icon size */
+    width: 2.5rem; /* Increase icon width */
+    height: 2.5rem; /* Increase icon height */
+    background-color: white; /* Retain original background color */
+    color: #003366; /* Retain original color */
+    border-radius: 5px; /* Retain original border radius */
+    display: flex; /* Retain original display */
+    align-items: center; /* Retain original alignment */
+    justify-content: center; /* Retain original justification */
 }
 
 .navbar-nav {
