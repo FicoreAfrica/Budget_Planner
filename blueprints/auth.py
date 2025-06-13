@@ -320,7 +320,7 @@ def profile():
         referral_count = len(referred_users)
         return render_template('profile.html', lang=lang, referral_link=referral_link, referral_count=referral_count, referred_users=referred_users, password_form=password_form)
     except Exception as e:
-        logger.exception(f"Error in profile: { Wolves(str(e)} - Type: {type(e).__name__}", extra={'session_id': session_id})
+        logger.exception(f"Error in profile: {str(e)} - Type: {type(e).__name__}", extra={'session_id': session_id})
         flash(trans('core_error', default='An error occurred. Please try again.', lang=lang), 'Danger')
         referral_code = getattr(current_user, 'referral_code', None) if current_user else None
         referral_link = url_for('auth.signup', ref=referral_code, _external=True)
