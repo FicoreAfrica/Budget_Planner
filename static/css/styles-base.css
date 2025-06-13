@@ -67,6 +67,24 @@
     --secondary-button-bg: white;
     --secondary-button-bg-hover: #e0e0e0;
     --secondary-button-border: #ced4da;
+
+    /* Journey Specific Colors/Gradients */
+    --journey-strip-bg: #ffffff; /* Example: white */
+    --journey-line-bg: #e0e0e0; /* Example: light grey for inactive line */
+    --journey-line-gradient-horizontal: linear-gradient(to right, var(--accent-blue), var(--accent-purple)); /* Example from your original */
+    --journey-line-gradient-vertical: linear-gradient(to bottom, var(--accent-blue), var(--accent-purple)); /* Example, can be same as horizontal */
+
+    --journey-step-hover-bg: #f5f9ff; /* Light hover background */
+    --journey-step-active-bg: #e6f0ff; /* A slightly stronger background for active */
+    --journey-step-completed-bg: #f0f0f0; /* Optional: very light grey for completed step background */
+
+    --journey-icon-color: #333333; /* Default icon color */
+    --badge-border-color: #ffffff; /* Default badge border */
+
+    --accent-blue-rgba-soft: rgba(0, 123, 255, 0.2); /* For soft glow */
+    --completed-tick-color: #ffffff; /* Color of the checkmark */
+    --text-color-completed: #999999; /* Text color for completed steps */
+    --button-gradient-completed: linear-gradient(to right, #a0a0a0, #707070); /* Grey gradient for completed badge */
 }
 
 /* Dark Mode Overrides */
@@ -139,6 +157,16 @@
     --secondary-button-bg: #343a40;
     --secondary-button-bg-hover: #495057;
     --secondary-button-border: #495057;
+
+    --journey-strip-bg: #2d2d2d;
+    --journey-line-bg: #444444;
+    --journey-step-hover-bg: #3a3a3a;
+    --journey-step-active-bg: #4a4a4a;
+    --journey-icon-color: #bbbbbb;
+    --badge-border-color: #333333;
+    --accent-blue-rgba-soft: rgba(135, 206, 250, 0.1); /* Lighter soft glow for dark mode */
+    --text-color-completed: #666666;
+    --button-gradient-completed: linear-gradient(to right, #505050, #303030);
 }
 
 /* General Transitions and Scroll Behavior */
@@ -235,12 +263,12 @@ body {
 .navbar-container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 0.75rem 1rem; /* Increased padding for breathing room */
+    padding: 0.75rem 1rem;
     display: flex;
-    flex-direction: row; /* Horizontal alignment for mobile */
-    align-items: center; /* Vertically center all items */
-    justify-content: space-between; /* Distribute items evenly */
-    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
 }
 
 .navbar-brand {
@@ -255,16 +283,16 @@ body {
 .logo-centered {
     border-radius: 50%;
     object-fit: contain;
-    width: 60px; /* Adjusted to match image size */
+    width: 60px;
     height: 60px;
-    margin-right: 1rem; /* Added spacing for breathing room */
+    margin-right: 1rem;
 }
 
 .navbar-actions {
     display: flex;
-    align-items: center; /* Vertically center toggles */
-    gap: 1rem; /* Increased for horizontal spacing */
-    margin: 0; /* Removed margin to align with row layout */
+    align-items: center;
+    gap: 1rem;
+    margin: 0;
 }
 
 .language-toggle, .dark-mode-toggle {
@@ -276,8 +304,8 @@ body {
     background: var(--button-nav-gradient);
     border-radius: 8px;
     padding: 0.5rem;
-    height: 36px; /* Fixed height for vertical alignment */
-    width: 60px; /* Adjusted to match image buttons */
+    height: 36px;
+    width: 60px;
     transition: background 0.3s ease;
 }
 
@@ -287,11 +315,11 @@ body {
 
 .navbar-collapse {
     width: 100%;
-    display: none; /* Hidden by default, shown via JS or :focus */
+    display: none;
 }
 
 .navbar-collapse.show {
-    display: block; /* Show when toggled */
+    display: block;
 }
 
 .navbar-nav {
@@ -302,8 +330,8 @@ body {
 }
 
 .navbar-toggler {
-    padding: 0.4rem 0.8rem; /* Slightly larger padding */
-    font-size: 1rem; /* Increased for larger icon */
+    padding: 0.4rem 0.8rem;
+    font-size: 1rem;
     border: none;
     background: var(--button-nav-gradient);
     color: white;
@@ -311,8 +339,8 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 36px; /* Match toggle height for vertical centering */
-    width: 36px; /* Adjusted for square icon */
+    height: 36px;
+    width: 36px;
 }
 
 .navbar-toggler:hover {
@@ -320,7 +348,7 @@ body {
 }
 
 .navbar-toggler .navbar-toggler-icon {
-    font-size: 1.2rem; /* Slightly larger for emphasis */
+    font-size: 1.2rem;
     background-color: white;
     color: #003366;
     border-radius: 5px;
@@ -392,11 +420,11 @@ body {
 /* Mobile responsiveness */
 @media (max-width: 768px) {
     .navbar-container {
-        padding: 0.5rem 1rem; /* Reduced padding for mobile */
+        padding: 0.5rem 1rem;
     }
 
     .navbar-actions {
-        gap: 0.75rem; /* Slightly reduced spacing for mobile */
+        gap: 0.75rem;
     }
 
     .logo-centered {
@@ -406,8 +434,8 @@ body {
     }
 
     .language-toggle, .dark-mode-toggle, .navbar-toggler {
-        height: 32px; /* Slightly smaller for mobile */
-        width: 50px; /* Adjusted to match image */
+        height: 32px;
+        width: 50px;
         padding: 0.4rem;
         font-size: 0.8rem;
     }
@@ -741,9 +769,9 @@ body {
     opacity: 0;
     transform: translateY(20px);
     animation: slideIn 0.5s forwards;
-    width: 100%; /* Ensure cards take full available width */
+    width: 100%;
     box-sizing: border-box;
-    padding: 1rem; /* Consistent padding */
+    padding: 1rem;
 }
 
 @keyframes slideIn {
