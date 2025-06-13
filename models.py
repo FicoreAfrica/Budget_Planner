@@ -379,19 +379,19 @@ def to_dict_bill(bill):
     """Convert bill document to dict."""
     return {
         'id': bill.get('id', None),
-        'user_id': bill.get('user_id'),
-        'session_id': bill.get('session_id'),
-        'created_at': (bill['created_at'].isoformat() + "Z") if isinstance(bill.get('created_at'), datetime) else bill.get('created_at', '')
-        'user_email': bill.get('user_email'),
-        'first_name': bill.get('first_name'),
-        'bill_name': bill.get('bill_name'),
+        'user_id': bill.get('user_id', None),
+        'session_id': bill.get('session_id', None),
+        'created_at': (bill['created_at'].isoformat() + "Z") if isinstance(bill.get('created_at'), datetime) else bill.get('created_at', ''),
+        'user_email': bill.get('user_email', None),
+        'first_name': bill.get('first_name', None),
+        'bill_name': bill.get('bill_name', ''),
         'amount': bill.get('amount', 0.0),
-        'due_date': bill.get('due_date'),
+        'due_date': bill.get('due_date', ''),
         'frequency': bill.get('frequency', ''),
-        'category': bill.get('category'),
-        'status': bill.get('status'),
-        'send_email': bill.get('send_email', False)
-        'reminder_days': bill.get('reminder_days')
+        'category': bill.get('category', ''),
+        'status': bill.get('status', ''),
+        'send_email': bill.get('send_email', False),
+        'reminder_days': bill.get('reminder_days', None)
     }
 
 # NetWorth helper functions
@@ -427,17 +427,12 @@ def create_net_worth(mongo, nw_data):
 
 def get_net_worth(mongo, filters):
     """Retrieve net worth records by filters."""
-    try:
-        records = mongo.db.net_worth.find(filters, {'_id': 0}).sort('created_at', -1)
-        valid_records = [r for r in records if 'id' in r]
-        # Check for records without 'id' before the cursor is exhausted
-        for r in list(records.clone()):  # Clone the cursor to avoid exhaustion
-            if 'id' not in r:
-                current_app.logger.warning(f"Skipping net worth record without 'id': {r}")
-        return valid_records
-    except Exception as e:
-        current_app.logger.error(f"Failed to retrieve net worth records: {str(e)}", extra={'filters': filters})
-        return []
+    records = mongo.db.net_worth.find(filters, {'_id': 0}).sort('created_at', -1)
+    valid_records = [r for r in records if 'id' in r]
+    for r in records:
+        if 'id' not in r:
+            current_app.logger.warning(f"Skipping net worth record without 'id': {r}")
+    return valid_records
 
 def to_dict_net_worth(nw):
     """Convert net worth document to dict."""
@@ -450,7 +445,7 @@ def to_dict_net_worth(nw):
         'id': nw.get('id', None),
         'user_id': nw.get('user_id', None),
         'session_id': nw.get('session_id', None),
-        'created_at': (nw['created_at'].isoformat() + "Z" if isinstance(nw.get('created_at'), datetime) else nw.get('created_at', '')),
+        'created_at': (nw['created_at'].isoformat() + "Z") if isinstance(nw.get('created_at'), datetime) else nw.get('created_at', ''),
         'first_name': nw.get('first_name', None),
         'email': nw.get('email', None),
         'send_email': nw.get('send_email', False),
@@ -463,10 +458,6 @@ def to_dict_net_worth(nw):
         'net_worth': nw.get('net_worth', None),
         'badges': badges
     }
-
-def get_net_worth_records(mongo, filters):
-    """Legacy alias for get_net_worth to maintain compatibility."""
-    return get_net_worth(mongo, filters)
 
 # EmergencyFund helper functions
 def create_emergency_fund(mongo, ef_data):
