@@ -513,7 +513,7 @@ body {
 
 .quiz-question p {
     font-size: 0.95rem;
-    color: var(--text-color); /* Corrected --text-light to --text-color as it was undefined */
+    color: var(--text-color);
     margin-top: 5px;
 }
 
@@ -576,19 +576,19 @@ body {
 
 /* Header Message */
 .header-message {
-    width: 100vw; /* Stretch to viewport width */
-    position: relative; /* Or absolute if within a positioned parent */
-    left: 50%; /* Offset to center */
-    right: 50%; /* Offset to center */
-    margin-left: -50vw; /* Negative margin to align with viewport edges */
-    margin-right: -50vw; /* Negative margin to align with viewport edges */
-    background: linear-gradient(to right, #006b9f, #00c18f); /* Ensure gradient is full width */
+    width: 100vw;
+    position: relative;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
+    background: linear-gradient(to right, #006b9f, #00c18f);
     padding: 10px 15px;
     color: white;
     text-align: center;
     font-size: 0.85rem;
     animation: fadeInOut 6s ease-in-out infinite;
-    z-index: 900; /* Ensure it stays above other content */
+    z-index: 900;
 }
 
 @keyframes fadeInOut {
@@ -599,10 +599,10 @@ body {
 }
 @media (min-width: 768px) {
     .header-message {
-        padding: 1rem 2rem; /* Adjust padding for larger screens */
+        padding: 1rem 2rem;
     }
     .navbar-container, .header-message {
-        max-width: none; /* Remove max-width constraint for full width */
+        max-width: none;
         margin: 0;
         padding: 1rem 2rem;
     }
@@ -759,9 +759,9 @@ body {
     font-size: 0.85rem;
     margin-bottom: 0.5rem;
     margin-top: 1rem;
-    overflow-wrap: break-word; /* Added for consistency with tool-card */
+    overflow-wrap: break-word;
     text-align: center;
-    flex-grow: 1; /* Allows text to fill available space */
+    flex-grow: 1;
 }
 
 .card:has(.badge-success) .card-title {
@@ -789,12 +789,40 @@ body {
 
 @media (max-width: 768px) {
     .tool-card {
-        min-height: 250px; /* Reduced but still uniform */
+        min-height: 280px;
+        padding: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .tool-card h3 {
+        font-size: 1rem;
+    }
+
+    .card-text {
+        font-size: 0.8rem;
+        margin-top: 0.5rem;
+        margin-bottom: 0.3rem;
+    }
+
+    .tool-card button {
+        max-width: 150px;
+        padding: 8px 16px;
+        font-size: 0.85rem;
+    }
+
+    .badge {
+        font-size: 0.75rem;
+        padding: 0.3rem 0.6rem;
+        margin: 0.3rem 0;
     }
 }
 @media (min-width: 1024px) {
     .tool-card {
-        min-height: 350px; /* Adjusted for larger screens */
+        min-height: 350px;
+    }
+
+    .tool-card button {
+        max-width: 200px;
     }
 }
 
@@ -821,12 +849,13 @@ body {
     width: 100%;
     max-width: 200px;
     align-self: center;
+    padding: 10px 20px;
+    font-size: 0.9rem;
 }
 
 .index-container .tool-card .card-title {
     text-align: center !important;
 }
-
 
 /* Tool Header */
 .tool-header-container {
@@ -1125,12 +1154,31 @@ body {
     }
 
     .tool-card {
-        min-height: 300px;
+        min-height: 280px;
+        padding: 0.75rem;
         margin-bottom: 1rem;
+    }
+
+    .tool-card h3 {
+        font-size: 1rem;
+    }
+
+    .card-text {
+        font-size: 0.8rem;
+        margin-top: 0.5rem;
+        margin-bottom: 0.3rem;
     }
 
     .tool-card button {
         max-width: 150px;
+        padding: 8px 16px;
+        font-size: 0.85rem;
+    }
+
+    .badge {
+        font-size: 0.75rem;
+        padding: 0.3rem 0.6rem;
+        margin: 0.3rem 0;
     }
 }
 
@@ -1139,10 +1187,6 @@ body {
     .accordion-body .col-md-4 {
         width: 100%;
         padding: 0;
-    }
-
-    .tool-card {
-        min-height: 300px;
     }
 }
 
@@ -1273,9 +1317,9 @@ body {
 
 /* Info Box */
 .info-box {
-    background-color: var(--insights-box-bg, #E3F2FD); /* Fallback for undefined variable */
-    color: var(--text-color, #1a1a1a); /* Fallback for undefined variable */
-    border: 1px solid var(--card-border, #0288D1); /* Fallback for undefined variable */
+    background-color: var(--insights-box-bg, #E3F2FD);
+    color: var(--text-color, #1a1a1a);
+    border: 1px solid var(--card-border, #0288D1);
     padding: 0.5rem;
     border-radius: 8px;
     margin-bottom: 0.8rem;
@@ -1535,7 +1579,7 @@ section {
 
 .dark-mode .form-control:focus {
     border-color: var(--accent-blue);
-    box-shadow: 0 0 0 0.2rem rgba(77, 171, 247, 0.25); /* Corrected to match dark theme */
+    box-shadow: 0 0 0 0.2rem rgba(77, 171, 247, 0.25);
 }
 
 .dark-mode .form-check-label {
