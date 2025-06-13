@@ -130,7 +130,8 @@ def step1():
                 tool_name='net_worth',
                 user_id=current_user.id if current_user.is_authenticated else None,
                 session_id=session['sid'],
-                action='step1_submit'
+                action='step1_submit',
+                mongo=mongo
             )
             if form.validate_on_submit():
                 form_data = form.data.copy()
@@ -145,7 +146,8 @@ def step1():
             tool_name='net_worth',
             user_id=current_user.id if current_user.is_authenticated else None,
             session_id=session['sid'],
-            action='step1_view'
+            action='step1_view',
+            mongo=mongo
         )
         return render_template('NETWORTH/net_worth_step1.html', form=form, trans=trans, lang=lang)
     except Exception as e:
@@ -171,7 +173,8 @@ def step2():
                 tool_name='net_worth',
                 user_id=current_user.id if current_user.is_authenticated else None,
                 session_id=session['sid'],
-                action='step2_submit'
+                action='step2_submit',
+                mongo=mongo
             )
             if form.validate_on_submit():
                 form_data = {
@@ -191,7 +194,8 @@ def step2():
             tool_name='net_worth',
             user_id=current_user.id if current_user.is_authenticated else None,
             session_id=session['sid'],
-            action='step2_view'
+            action='step2_view',
+            mongo=mongo
         )
         return render_template('NETWORTH/net_worth_step2.html', form=form, trans=trans, lang=lang)
     except Exception as e:
@@ -217,7 +221,8 @@ def step3():
                 tool_name='net_worth',
                 user_id=current_user.id if current_user.is_authenticated else None,
                 session_id=session['sid'],
-                action='step3_submit'
+                action='step3_submit',
+                mongo=mongo
             )
             if form.validate_on_submit():
                 step1_data = session.get('networth_step1_data', {})
@@ -249,7 +254,7 @@ def step3():
 
                 # Save to MongoDB
                 net_worth_record = {
-                    '_id': str(uuid4()),
+                    '_id': str(uuid.uuid4()),
                     'user_id': current_user.id if current_user.is_authenticated else None,
                     'session_id': session['sid'],
                     'first_name': step1_data.get('first_name', ''),
@@ -312,7 +317,8 @@ def step3():
             tool_name='net_worth',
             user_id=current_user.id if current_user.is_authenticated else None,
             session_id=session['sid'],
-            action='step3_view'
+            action='step3_view',
+            mongo=mongo
         )
         return render_template('NETWORTH/net_worth_step3.html', form=form, trans=trans, lang=lang)
     except Exception as e:
@@ -333,7 +339,8 @@ def dashboard():
             tool_name='net_worth',
             user_id=current_user.id if current_user.is_authenticated else None,
             session_id=session['sid'],
-            action='dashboard_view'
+            action='dashboard_view',
+            mongo=mongo
         )
         # Fetch records by user_id or session_id
         user_records = mongo.db.net_worth_data.find(
@@ -467,7 +474,8 @@ def unsubscribe(email):
             tool_name='net_worth',
             user_id=current_user.id if current_user.is_authenticated else None,
             session_id=session['sid'],
-            action='unsubscribe'
+            action='unsubscribe',
+            mongo=mongo
         )
         result = mongo.db.net_worth_data.update_many(
             {'email': email, 'user_id': current_user.id if current_user.is_authenticated else {'$exists': False}},
